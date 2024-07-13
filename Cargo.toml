@@ -1,7 +1,7 @@
 [package]
 edition = "2021"
 name = "bevy_ecs_tiled"
-version = "0.1.0"
+version = "0.2.0"
 
 authors = ["Steve Pryde <steve@stevepryde.com>"]
 description = "A Bevy plugin for loading Tiled maps"
@@ -24,9 +24,9 @@ serde = ["bevy_ecs_tilemap/serde"]
 wasm = ["tiled/wasm"]
 
 [dependencies]
-bevy = "0.12.0"
+bevy = "0.13.0"
 # TODO: use version when 0.14 version is released to crates.io
-bevy_ecs_tilemap = "0.12"
+bevy_ecs_tilemap = {git = "https://github.com/StarArawn/bevy_ecs_tilemap", rev = "e4f3cc6"}
 futures-lite = "2.3.0"
 thiserror = "1.0.62"
 tiled = "0.12.0"

@@ -16,6 +16,7 @@ Contributions are welcome.
 |bevy|bevy_ecs_tilemap|bevy_ecs_tiled|
 |---|---|---|
 |0.12|0.12|0.1|
+|0.13|main@e4f3cc6|0.2|
 
 ## LICENSE
 
