@@ -27,5 +27,6 @@ wasm = ["tiled/wasm"]
 bevy = "0.14.0"
 # TODO: use version when 0.14 version is released to crates.io
 bevy_ecs_tilemap = {git = "https://github.com/StarArawn/bevy_ecs_tilemap"}
+futures-lite = "2.3.0"
 thiserror = "1.0.62"
 tiled = "0.12.0"

@@ -26,12 +26,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use std::io::{Cursor, ErrorKind};
+use std::io::{Cursor, Error as IoError, ErrorKind, Read};
 use std::path::Path;
 use std::sync::Arc;
 
 use bevy::{
-    asset::{io::Reader, AssetLoader, AssetPath, AsyncReadExt},
+    asset::{io::Reader, AssetLoader, AssetPath, AsyncReadExt, LoadContext},
     log,
     prelude::{
         Added, Asset, AssetApp, AssetEvent, AssetId, Assets, Bundle, Commands, Component,
@@ -42,6 +42,7 @@ use bevy::{
     utils::HashMap,
 };
 use bevy_ecs_tilemap::prelude::*;
+use tiled::{ChunkData, FiniteTileLayer, InfiniteTileLayer};
 
 #[derive(Default)]
 pub struct TiledMapPlugin;
@@ -80,25 +81,33 @@ pub struct TiledMapBundle {
     pub render_settings: TilemapRenderSettings,
 }
 
-struct BytesResourceReader {
+struct BytesResourceReader<'a, 'b> {
     bytes: Arc<[u8]>,
+    context: &'a mut LoadContext<'b>,
 }
-
-impl BytesResourceReader {
-    fn new(bytes: &[u8]) -> Self {
+impl<'a, 'b> BytesResourceReader<'a, 'b> {
+    pub fn new(bytes: &'a [u8], context: &'a mut LoadContext<'b>) -> Self {
         Self {
             bytes: Arc::from(bytes),
+            context,
         }
     }
 }
 
-impl tiled::ResourceReader for BytesResourceReader {
-    type Resource = Cursor<Arc<[u8]>>;
-    type Error = std::io::Error;
+impl<'a, 'b> tiled::ResourceReader for BytesResourceReader<'a, 'b> {
+    type Resource = Box<dyn Read + 'a>;
+    type Error = IoError;
 
-    fn read_from(&mut self, _path: &Path) -> std::result::Result<Self::Resource, Self::Error> {
-        // In this case, the path is ignored because the byte data is already provided.
-        Ok(Cursor::new(self.bytes.clone()))
+    fn read_from(&mut self, path: &Path) -> std::result::Result<Self::Resource, Self::Error> {
+        if let Some(extension) = path.extension() {
+            if extension == "tsx" {
+                let future = self.context.read_asset_bytes(path.to_path_buf());
+                let data = futures_lite::future::block_on(future)
+                    .map_err(|err| IoError::new(ErrorKind::NotFound, err))?;
+                return Ok(Box::new(Cursor::new(data)));
+            }
+        }
+        Ok(Box::new(Cursor::new(self.bytes.clone())))
     }
 }
 
@@ -120,18 +129,24 @@ impl AssetLoader for TiledLoader {
         &'a self,
         reader: &'a mut Reader<'_>,
         _settings: &'a Self::Settings,
-        load_context: &'a mut bevy::asset::LoadContext<'_>,
+        load_context: &'a mut LoadContext<'_>,
     ) -> Result<Self::Asset, Self::Error> {
         let mut bytes = Vec::new();
         reader.read_to_end(&mut bytes).await?;
 
-        let mut loader = tiled::Loader::with_cache_and_reader(
-            tiled::DefaultResourceCache::new(),
-            BytesResourceReader::new(&bytes),
-        );
-        let map = loader.load_tmx_map(load_context.path()).map_err(|e| {
-            std::io::Error::new(ErrorKind::Other, format!("Could not load TMX map: {e}"))
-        })?;
+        let map_path = load_context.path().to_path_buf();
+
+        let map = {
+            // Allow the loader to also load tileset images.
+            let mut loader = tiled::Loader::with_cache_and_reader(
+                tiled::DefaultResourceCache::new(),
+                BytesResourceReader::new(&bytes, load_context),
+            );
+            // Load the map and all tiles.
+            loader.load_tmx_map(&map_path).map_err(|e| {
+                std::io::Error::new(ErrorKind::Other, format!("Could not load TMX map: {e}"))
+            })?
+        };
 
         let mut tilemap_textures = HashMap::default();
         #[cfg(not(feature = "atlas"))]
@@ -153,8 +168,7 @@ impl AssetLoader for TiledLoader {
                             if let Some(img) = &tile.image {
                                 // The load context path is the TMX file itself. If the file is at the root of the
                                 // assets/ directory structure then the tmx_dir will be empty, which is fine.
-                                let tmx_dir = load_context
-                                    .path()
+                                let tmx_dir = map_path
                                     .parent()
                                     .expect("The asset load context was empty.");
                                 let tile_path = tmx_dir.join(&img.source);
@@ -295,14 +309,6 @@ pub fn process_loaded_maps(
                             continue;
                         };
 
-                        let tiled::TileLayer::Finite(layer_data) = tile_layer else {
-                            log::info!(
-                                "Skipping layer {} because only finite layers are supported.",
-                                layer.id()
-                            );
-                            continue;
-                        };
-
                         let map_size = TilemapSize {
                             x: tiled_map.map.width,
                             y: tiled_map.map.height,
@@ -326,61 +332,26 @@ pub fn process_loaded_maps(
                             tiled::Orientation::Orthogonal => TilemapType::Square,
                         };
 
-                        let mut tile_storage = TileStorage::empty(map_size);
                         let layer_entity = commands.spawn_empty().id();
-
-                        for x in 0..map_size.x {
-                            for y in 0..map_size.y {
-                                // Transform TMX coords into bevy coords.
-                                let mapped_y = tiled_map.map.height - 1 - y;
-
-                                let mapped_x = x as i32;
-                                let mapped_y = mapped_y as i32;
-
-                                let layer_tile = match layer_data.get_tile(mapped_x, mapped_y) {
-                                    Some(t) => t,
-                                    None => {
-                                        continue;
-                                    }
-                                };
-                                if tileset_index != layer_tile.tileset_index() {
-                                    continue;
-                                }
-                                let layer_tile_data =
-                                    match layer_data.get_tile_data(mapped_x, mapped_y) {
-                                        Some(d) => d,
-                                        None => {
-                                            continue;
-                                        }
-                                    };
-
-                                let texture_index = match tilemap_texture {
-                                    TilemapTexture::Single(_) => layer_tile.id(),
-                                    #[cfg(not(feature = "atlas"))]
-                                    TilemapTexture::Vector(_) =>
-                                        *tiled_map.tile_image_offsets.get(&(tileset_index, layer_tile.id()))
-                                        .expect("The offset into to image vector should have been saved during the initial load."),
-                                    #[cfg(not(feature = "atlas"))]
-                                    _ => unreachable!()
-                                };
-
-                                let tile_pos = TilePos { x, y };
-                                let tile_entity = commands
-                                    .spawn(TileBundle {
-                                        position: tile_pos,
-                                        tilemap_id: TilemapId(layer_entity),
-                                        texture_index: TileTextureIndex(texture_index),
-                                        flip: TileFlip {
-                                            x: layer_tile_data.flip_h,
-                                            y: layer_tile_data.flip_v,
-                                            d: layer_tile_data.flip_d,
-                                        },
-                                        ..Default::default()
-                                    })
-                                    .id();
-                                tile_storage.set(&tile_pos, tile_entity);
-                            }
-                        }
+                        let tile_storage = match tile_layer {
+                            tiled::TileLayer::Finite(layer_data) => load_finite_tiles(
+                                &mut commands,
+                                layer_entity,
+                                map_size,
+                                &tiled_map,
+                                &layer_data,
+                                tileset_index,
+                                tilemap_texture,
+                            ),
+                            tiled::TileLayer::Infinite(layer_data) => load_infinite_tiles(
+                                &mut commands,
+                                layer_entity,
+                                &tiled_map,
+                                &layer_data,
+                                tileset_index,
+                                tilemap_texture,
+                            ),
+                        };
 
                         commands.entity(layer_entity).insert(TilemapBundle {
                             grid_size,
@@ -408,4 +379,165 @@ pub fn process_loaded_maps(
             }
         }
     }
+}
+
+pub fn load_finite_tiles(
+    commands: &mut Commands,
+    layer_entity: Entity,
+    map_size: TilemapSize,
+    tiled_map: &TiledMap,
+    layer_data: &FiniteTileLayer,
+    tileset_index: usize,
+    tilemap_texture: &TilemapTexture,
+) -> TileStorage {
+    let mut tile_storage = TileStorage::empty(map_size);
+    for x in 0..map_size.x {
+        for y in 0..map_size.y {
+            // Transform TMX coords into bevy coords.
+            let mapped_y = tiled_map.map.height - 1 - y;
+
+            let mapped_x = x as i32;
+            let mapped_y = mapped_y as i32;
+
+            let layer_tile = match layer_data.get_tile(mapped_x, mapped_y) {
+                Some(t) => t,
+                None => {
+                    continue;
+                }
+            };
+            if tileset_index != layer_tile.tileset_index() {
+                continue;
+            }
+            let layer_tile_data = match layer_data.get_tile_data(mapped_x, mapped_y) {
+                Some(d) => d,
+                None => {
+                    continue;
+                }
+            };
+
+            let texture_index = match tilemap_texture {
+                                    TilemapTexture::Single(_) => layer_tile.id(),
+                                    #[cfg(not(feature = "atlas"))]
+                                    TilemapTexture::Vector(_) =>
+                                        *tiled_map.tile_image_offsets.get(&(tileset_index, layer_tile.id()))
+                                        .expect("The offset into to image vector should have been saved during the initial load."),
+                                    #[cfg(not(feature = "atlas"))]
+                                    _ => unreachable!()
+                                };
+
+            let tile_pos = TilePos { x, y };
+            let tile_entity = commands
+                .spawn(TileBundle {
+                    position: tile_pos,
+                    tilemap_id: TilemapId(layer_entity),
+                    texture_index: TileTextureIndex(texture_index),
+                    flip: TileFlip {
+                        x: layer_tile_data.flip_h,
+                        y: layer_tile_data.flip_v,
+                        d: layer_tile_data.flip_d,
+                    },
+                    ..Default::default()
+                })
+                .id();
+            tile_storage.set(&tile_pos, tile_entity);
+        }
+    }
+
+    tile_storage
+}
+
+pub fn load_infinite_tiles(
+    commands: &mut Commands,
+    layer_entity: Entity,
+    tiled_map: &TiledMap,
+    infinite_layer: &InfiniteTileLayer,
+    tileset_index: usize,
+    tilemap_texture: &TilemapTexture,
+) -> TileStorage {
+    // Determine top left coordinate so we can offset the map.
+    let (topleft_x, topleft_y) = infinite_layer
+        .chunks()
+        .fold((0, 0), |acc, (pos, _)| (acc.0.min(pos.0), acc.1.min(pos.1)));
+
+    let (bottomright_x, bottomright_y) = infinite_layer
+        .chunks()
+        .fold((0, 0), |acc, (pos, _)| (acc.0.max(pos.0), acc.1.max(pos.1)));
+
+    // TODO: Provide a way to surface the origin point (the point that was 0,0 in Tiled)
+    //       to the caller.
+    let _origin = (
+        -topleft_x * ChunkData::WIDTH as i32,
+        -topleft_y * ChunkData::HEIGHT as i32,
+    );
+
+    // Recalculate map size based on the top left and bottom right coordinates.
+    let map_size = TilemapSize {
+        x: (bottomright_x - topleft_x + 1) as u32 * ChunkData::WIDTH as u32,
+        y: (bottomright_y - topleft_y + 1) as u32 * ChunkData::HEIGHT as u32,
+    };
+    let mut tile_storage = TileStorage::empty(map_size);
+
+    for (chunk_pos, chunk) in infinite_layer.chunks() {
+        // bevy_ecs_tilemap doesn't support negative tile coordinates, so shift all chunks
+        // such that the top-left chunk is at (0, 0).
+        let chunk_pos_mapped = (chunk_pos.0 - topleft_x, chunk_pos.1 - topleft_y);
+
+        for x in 0..ChunkData::WIDTH as u32 {
+            for y in 0..ChunkData::HEIGHT as u32 {
+                // Invert y to match bevy coordinates.
+                let layer_tile = match chunk.get_tile(x as i32, y as i32) {
+                    Some(t) => t,
+                    None => {
+                        continue;
+                    }
+                };
+                if tileset_index != layer_tile.tileset_index() {
+                    continue;
+                }
+
+                let layer_tile_data = match chunk.get_tile_data(x as i32, y as i32) {
+                    Some(d) => d,
+                    None => {
+                        continue;
+                    }
+                };
+
+                let (tile_x, tile_y) = (
+                    chunk_pos_mapped.0 * ChunkData::WIDTH as i32 + x as i32,
+                    chunk_pos_mapped.1 * ChunkData::HEIGHT as i32 + y as i32,
+                );
+
+                let texture_index = match tilemap_texture {
+                                            TilemapTexture::Single(_) => layer_tile.id(),
+                                            #[cfg(not(feature = "atlas"))]
+                                            TilemapTexture::Vector(_) =>
+                                                *tiled_map.tile_image_offsets.get(&(tileset_index, layer_tile.id()))
+                                                .expect("The offset into to image vector should have been saved during the initial load."),
+                                            #[cfg(not(feature = "atlas"))]
+                                            _ => unreachable!()
+                                        };
+
+                let tile_pos = TilePos {
+                    x: tile_x as u32,
+                    y: map_size.y - tile_y as u32,
+                };
+                let tile_entity = commands
+                    .spawn(TileBundle {
+                        position: tile_pos,
+                        tilemap_id: TilemapId(layer_entity),
+                        texture_index: TileTextureIndex(texture_index),
+                        flip: TileFlip {
+                            x: layer_tile_data.flip_h,
+                            y: layer_tile_data.flip_v,
+                            d: layer_tile_data.flip_d,
+                        },
+                        ..Default::default()
+                    })
+                    .id();
+                tile_storage.set(&tile_pos, tile_entity);
+            }
+        }
+    }
+
+    tile_storage
 }
