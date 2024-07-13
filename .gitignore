@@ -14,3 +14,4 @@ Cargo.lock
 .vscode
 .DS_Store
 .idea
+/assets/*.tiled-session
