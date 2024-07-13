@@ -11,6 +11,12 @@ I'm still new to Bevy so I'm learning as I go.
 
 Contributions are welcome.
 
+## Bevy Compatibility
+
+|bevy|bevy_ecs_tilemap|bevy_ecs_tiled|
+|---|---|---|
+|0.12|0.12|0.1|
+
 ## LICENSE
 
 This work is licensed under the MIT license.
