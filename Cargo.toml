@@ -24,9 +24,9 @@ serde = ["bevy_ecs_tilemap/serde"]
 wasm = ["tiled/wasm"]
 
 [dependencies]
-bevy = "0.14.0"
+bevy = "0.12.0"
 # TODO: use version when 0.14 version is released to crates.io
-bevy_ecs_tilemap = {git = "https://github.com/StarArawn/bevy_ecs_tilemap"}
+bevy_ecs_tilemap = "0.12"
 futures-lite = "2.3.0"
 thiserror = "1.0.62"
 tiled = "0.12.0"
