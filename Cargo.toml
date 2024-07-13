@@ -1,0 +1,21 @@
+[package]
+edition = "2021"
+name = "bevy_ecs_tiled"
+version = "0.1.0"
+
+[features]
+default = ["render"]
+# Expose features of the bevy_ecs_tilemap crate.
+atlas = ["bevy_ecs_tilemap/atlas"]
+render = ["bevy_ecs_tilemap/render"]
+serde = ["bevy_ecs_tilemap/serde"]
+
+# Expose features of the tiled crate.
+wasm = ["tiled/wasm"]
+
+[dependencies]
+bevy = "0.14.0"
+# TODO: use version when 0.14 version is released to crates.io
+bevy_ecs_tilemap = {git = "https://github.com/StarArawn/bevy_ecs_tilemap"}
+thiserror = "1.0.62"
+tiled = "0.12.0"
