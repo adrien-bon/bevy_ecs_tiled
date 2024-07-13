@@ -1,5 +1,11 @@
 # bevy_ecs_tiled
 
+[![Crates.io](https://img.shields.io/crates/v/bevy_ecs_tiled)](https://crates.io/crates/bevy_ecs_tiled)
+[![docs](https://docs.rs/bevy_ecs_tiled/badge.svg)](https://docs.rs/bevy_ecs_tiled/)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/stevepryde/bevy_ecs_tiled/blob/main/LICENSE)
+[![Crates.io](https://img.shields.io/crates/d/bevy_ecs_tiled)](https://crates.io/crates/bevy_ecs_tiled)
+[![Following released Bevy versions](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://bevyengine.org/learn/quick-start/plugin-development/#main-branch-tracking)
+
 Plugin for working with 2D tilemaps created with the Tiled map editor.
 
 ## Status
@@ -63,9 +69,9 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 |bevy|bevy_ecs_tilemap|bevy_ecs_tiled|
 |---|---|---|
-|0.12|0.12|0.1|
-|0.13|main@e4f3cc6|0.2 *|
 |0.14|main|main (0.3 *)|
+|0.13|main@e4f3cc6|0.2 *|
+|0.12|0.12|0.1|
 
 \* These versions are not yet published to crates.io as they are waiting on 
   upstream versions to be published. Use git dependencies instead.
