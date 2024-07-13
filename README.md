@@ -13,12 +13,14 @@ Plugin for working with 2D tilemaps created with the Tiled map editor.
 ** **VERY EARLY BUILD - EXPECT BUGS AND BREAKING CHANGES** **
 
 This crate is currently in a very early state while I build the basics.
-I'm still new to Bevy so I'm learning as I go.
+I'm new to Bevy (but not new to Rust or game dev) so I'm learning as I go.
 
 The code was originally copied from the Tiled example in `bevy_ecs_tilemap`,
 plus the fix from [this PR](https://github.com/StarArawn/bevy_ecs_tilemap/pull/429).
 
-Contributions are welcome.
+If you can contribute, please do!
+
+If you would like to contribute but don't know where to start, [click here](https://github.com/stevepryde/bevy_ecs_tiled/discussions/1).
 
 ## Features
 
