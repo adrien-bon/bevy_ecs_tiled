@@ -41,7 +41,7 @@ use bevy::{
         ResMut, Transform, Update, With,
     },
     reflect::TypePath,
-    render::view::InheritedVisibility,
+    render::view::{InheritedVisibility, Visibility},
     utils::HashMap,
 };
 use bevy_ecs_tilemap::prelude::*;
@@ -382,6 +382,7 @@ fn load_map(
 ) {
     commands
         .entity(map_entity)
+        .insert(Visibility::Visible)
         .insert(InheritedVisibility::VISIBLE)
         .insert(Name::new(format!(
             "TiledMap({} x {})",
