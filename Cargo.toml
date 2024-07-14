@@ -31,6 +31,10 @@ futures-lite = "2.3.0"
 thiserror = "1.0.62"
 tiled = "0.12.0"
 
+[dev-dependencies]
+bevy-inspector-egui = "0.25.1"
+log = "0.4"
+
 [[example]]
 name = "finite"
 
@@ -42,3 +46,6 @@ name = "infinite"
 
 [[example]]
 name = "infinite_embedded"
+
+[[example]]
+name = "reload"

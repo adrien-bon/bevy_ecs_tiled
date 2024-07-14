@@ -32,13 +32,16 @@ use std::sync::Arc;
 
 use bevy::{
     asset::{io::Reader, AssetLoader, AssetPath, AsyncReadExt, LoadContext},
+    core::Name,
+    hierarchy::BuildChildren,
     log,
     prelude::{
-        Added, Asset, AssetApp, AssetEvent, AssetId, Assets, Bundle, Commands, Component,
+        Asset, AssetApp, AssetEvent, AssetId, Assets, Bundle, Commands, Component,
         DespawnRecursiveExt, Entity, EventReader, GlobalTransform, Handle, Image, Plugin, Query,
-        Res, Transform, Update,
+        ResMut, Transform, Update, With,
     },
     reflect::TypePath,
+    render::view::InheritedVisibility,
     utils::HashMap,
 };
 use bevy_ecs_tilemap::prelude::*;
@@ -72,6 +75,19 @@ pub struct TiledLayersStorage {
     pub storage: HashMap<u32, Entity>,
 }
 
+/// Marker component for a Tiled map.
+#[derive(Component)]
+pub struct TiledMapMarker;
+
+/// Marker component for a Tiled map layer.
+#[derive(Component)]
+pub struct TiledMapLayer {
+    // Store the map id so that we can delete layers for this map later.
+    // We don't want to store the handle as a component because the parent
+    // entity already has it and it complicates queries.
+    pub map_handle_id: AssetId<TiledMap>,
+}
+
 #[derive(Default, Bundle)]
 pub struct TiledMapBundle {
     pub tiled_map: Handle<TiledMap>,
@@ -86,7 +102,7 @@ struct BytesResourceReader<'a, 'b> {
     context: &'a mut LoadContext<'b>,
 }
 impl<'a, 'b> BytesResourceReader<'a, 'b> {
-    pub fn new(bytes: &'a [u8], context: &'a mut LoadContext<'b>) -> Self {
+    fn new(bytes: &'a [u8], context: &'a mut LoadContext<'b>) -> Self {
         Self {
             bytes: Arc::from(bytes),
             context,
@@ -219,169 +235,267 @@ impl AssetLoader for TiledLoader {
     }
 }
 
-pub fn process_loaded_maps(
+/// System to update maps as they are added, changed or removed.
+fn process_loaded_maps(
     mut commands: Commands,
     mut map_events: EventReader<AssetEvent<TiledMap>>,
-    maps: Res<Assets<TiledMap>>,
+    mut maps: ResMut<Assets<TiledMap>>,
     tile_storage_query: Query<(Entity, &TileStorage)>,
     mut map_query: Query<(
+        Entity,
         &Handle<TiledMap>,
         &mut TiledLayersStorage,
         &TilemapRenderSettings,
     )>,
-    new_maps: Query<&Handle<TiledMap>, Added<Handle<TiledMap>>>,
+    layer_query: Query<(Entity, &TiledMapLayer), With<TiledMapLayer>>,
 ) {
-    let mut changed_maps = Vec::<AssetId<TiledMap>>::default();
     for event in map_events.read() {
         match event {
             AssetEvent::Added { id } => {
-                log::info!("Map added!");
-                changed_maps.push(*id);
+                log::info!("Map added: {id}");
+                load_map_by_asset_id(
+                    &mut commands,
+                    &mut maps,
+                    &tile_storage_query,
+                    &mut map_query,
+                    id,
+                )
             }
             AssetEvent::Modified { id } => {
-                log::info!("Map changed!");
-                changed_maps.push(*id);
+                log::info!("Map changed: {id}");
+                load_map_by_asset_id(
+                    &mut commands,
+                    &mut maps,
+                    &tile_storage_query,
+                    &mut map_query,
+                    id,
+                )
             }
             AssetEvent::Removed { id } => {
-                log::info!("Map removed!");
-                // if mesh was modified and removed in the same update, ignore the modification
-                // events are ordered so future modification events are ok
-                changed_maps.retain(|changed_handle| changed_handle == id);
+                log::info!("Map removed: {id}");
+                remove_map_by_asset_id(
+                    &mut commands,
+                    &tile_storage_query,
+                    &mut map_query,
+                    &layer_query,
+                    id,
+                )
             }
             _ => continue,
         }
     }
+}
 
-    // If we have new map entities add them to the changed_maps list.
-    for new_map_handle in new_maps.iter() {
-        changed_maps.push(new_map_handle.id());
+fn remove_map_by_asset_id(
+    mut commands: &mut Commands,
+    tile_storage_query: &Query<(Entity, &TileStorage)>,
+    map_query: &mut Query<(
+        Entity,
+        &Handle<TiledMap>,
+        &mut TiledLayersStorage,
+        &TilemapRenderSettings,
+    )>,
+    layer_query: &Query<(Entity, &TiledMapLayer), With<TiledMapLayer>>,
+    asset_id: &AssetId<TiledMap>,
+) {
+    log::info!("removing map by asset id: {}", asset_id);
+    for (_, map_handle, mut layer_storage, _) in map_query.iter_mut() {
+        log::info!("checking layer to remove: {}", map_handle.id());
+
+        // Only process the map that was removed.
+        if map_handle.id() != *asset_id {
+            continue;
+        }
+
+        remove_layers(&mut commands, tile_storage_query, &mut layer_storage);
     }
 
-    for changed_map in changed_maps.iter() {
-        for (map_handle, mut layer_storage, render_settings) in map_query.iter_mut() {
-            // only deal with currently changed map
-            if map_handle.id() != *changed_map {
-                continue;
+    // Also manually despawn layers for this map.
+    // This is necessary because when a new layer is added, the map handle
+    // generation is incremented, and then a subsequent removal event will not
+    // match the map_handle in the loop above.
+    for (layer_entity, map_layer) in layer_query.iter() {
+        // only deal with currently changed map
+        if map_layer.map_handle_id != *asset_id {
+            continue;
+        }
+
+        commands.entity(layer_entity).despawn_recursive();
+    }
+}
+
+fn remove_layers(
+    commands: &mut Commands,
+    tile_storage_query: &Query<(Entity, &TileStorage)>,
+    layer_storage: &mut TiledLayersStorage,
+) {
+    for layer_entity in layer_storage.storage.values() {
+        if let Ok((_, layer_tile_storage)) = tile_storage_query.get(*layer_entity) {
+            for tile in layer_tile_storage.iter().flatten() {
+                commands.entity(*tile).despawn_recursive()
             }
-            if let Some(tiled_map) = maps.get(map_handle) {
-                // TODO: Create a RemoveMap component..
-                for layer_entity in layer_storage.storage.values() {
-                    if let Ok((_, layer_tile_storage)) = tile_storage_query.get(*layer_entity) {
-                        for tile in layer_tile_storage.iter().flatten() {
-                            commands.entity(*tile).despawn_recursive()
-                        }
-                    }
-                    // commands.entity(*layer_entity).despawn_recursive();
-                }
+        }
+        commands.entity(*layer_entity).despawn_recursive();
+    }
+    layer_storage.storage.clear();
+}
 
-                // The TilemapBundle requires that all tile images come exclusively from a single
-                // tiled texture or from a Vec of independent per-tile images. Furthermore, all of
-                // the per-tile images must be the same size. Since Tiled allows tiles of mixed
-                // tilesets on each layer and allows differently-sized tile images in each tileset,
-                // this means we need to load each combination of tileset and layer separately.
-                for (tileset_index, tileset) in tiled_map.map.tilesets().iter().enumerate() {
-                    let Some(tilemap_texture) = tiled_map.tilemap_textures.get(&tileset_index)
-                    else {
-                        log::warn!("Skipped creating layer with missing tilemap textures.");
-                        continue;
-                    };
+fn load_map_by_asset_id(
+    mut commands: &mut Commands,
+    maps: &mut ResMut<Assets<TiledMap>>,
+    tile_storage_query: &Query<(Entity, &TileStorage)>,
+    map_query: &mut Query<(
+        Entity,
+        &Handle<TiledMap>,
+        &mut TiledLayersStorage,
+        &TilemapRenderSettings,
+    )>,
+    asset_id: &AssetId<TiledMap>,
+) {
+    for (map_entity, map_handle, mut layer_storage, render_settings) in map_query.iter_mut() {
+        // only deal with currently changed map
+        if map_handle.id() != *asset_id {
+            continue;
+        }
 
-                    let tile_size = TilemapTileSize {
-                        x: tileset.tile_width as f32,
-                        y: tileset.tile_height as f32,
-                    };
-
-                    let tile_spacing = TilemapSpacing {
-                        x: tileset.spacing as f32,
-                        y: tileset.spacing as f32,
-                    };
-
-                    // Once materials have been created/added we need to then create the layers.
-                    for (layer_index, layer) in tiled_map.map.layers().enumerate() {
-                        let offset_x = layer.offset_x;
-                        let offset_y = layer.offset_y;
-
-                        let tiled::LayerType::Tiles(tile_layer) = layer.layer_type() else {
-                            log::info!(
-                                "Skipping layer {} because only tile layers are supported.",
-                                layer.id()
-                            );
-                            continue;
-                        };
-
-                        let map_size = TilemapSize {
-                            x: tiled_map.map.width,
-                            y: tiled_map.map.height,
-                        };
-
-                        let grid_size = TilemapGridSize {
-                            x: tiled_map.map.tile_width as f32,
-                            y: tiled_map.map.tile_height as f32,
-                        };
-
-                        let map_type = match tiled_map.map.orientation {
-                            tiled::Orientation::Hexagonal => {
-                                TilemapType::Hexagon(HexCoordSystem::Row)
-                            }
-                            tiled::Orientation::Isometric => {
-                                TilemapType::Isometric(IsoCoordSystem::Diamond)
-                            }
-                            tiled::Orientation::Staggered => {
-                                TilemapType::Isometric(IsoCoordSystem::Staggered)
-                            }
-                            tiled::Orientation::Orthogonal => TilemapType::Square,
-                        };
-
-                        let layer_entity = commands.spawn_empty().id();
-                        let tile_storage = match tile_layer {
-                            tiled::TileLayer::Finite(layer_data) => load_finite_tiles(
-                                &mut commands,
-                                layer_entity,
-                                map_size,
-                                &tiled_map,
-                                &layer_data,
-                                tileset_index,
-                                tilemap_texture,
-                            ),
-                            tiled::TileLayer::Infinite(layer_data) => load_infinite_tiles(
-                                &mut commands,
-                                layer_entity,
-                                &tiled_map,
-                                &layer_data,
-                                tileset_index,
-                                tilemap_texture,
-                            ),
-                        };
-
-                        commands.entity(layer_entity).insert(TilemapBundle {
-                            grid_size,
-                            size: map_size,
-                            storage: tile_storage,
-                            texture: tilemap_texture.clone(),
-                            tile_size,
-                            spacing: tile_spacing,
-                            transform: get_tilemap_center_transform(
-                                &map_size,
-                                &grid_size,
-                                &map_type,
-                                layer_index as f32,
-                            ) * Transform::from_xyz(offset_x, -offset_y, 0.0),
-                            map_type,
-                            render_settings: *render_settings,
-                            ..Default::default()
-                        });
-
-                        layer_storage
-                            .storage
-                            .insert(layer_index as u32, layer_entity);
-                    }
-                }
-            }
+        if let Some(tiled_map) = maps.get(map_handle) {
+            remove_layers(&mut commands, tile_storage_query, &mut layer_storage);
+            load_map(
+                &mut commands,
+                &mut layer_storage,
+                map_entity,
+                map_handle,
+                tiled_map,
+                render_settings,
+            );
         }
     }
 }
 
-pub fn load_finite_tiles(
+fn load_map(
+    mut commands: &mut Commands,
+    layer_storage: &mut TiledLayersStorage,
+    map_entity: Entity,
+    map_handle: &Handle<TiledMap>,
+    tiled_map: &TiledMap,
+    render_settings: &TilemapRenderSettings,
+) {
+    commands
+        .entity(map_entity)
+        .insert(InheritedVisibility::VISIBLE)
+        .insert(Name::new(format!(
+            "TiledMap({} x {})",
+            tiled_map.map.width, tiled_map.map.height
+        )));
+
+    // The TilemapBundle requires that all tile images come exclusively from a single
+    // tiled texture or from a Vec of independent per-tile images. Furthermore, all of
+    // the per-tile images must be the same size. Since Tiled allows tiles of mixed
+    // tilesets on each layer and allows differently-sized tile images in each tileset,
+    // this means we need to load each combination of tileset and layer separately.
+    for (tileset_index, tileset) in tiled_map.map.tilesets().iter().enumerate() {
+        let Some(tilemap_texture) = tiled_map.tilemap_textures.get(&tileset_index) else {
+            log::warn!("Skipped creating layer with missing tilemap textures.");
+            continue;
+        };
+
+        let tile_size = TilemapTileSize {
+            x: tileset.tile_width as f32,
+            y: tileset.tile_height as f32,
+        };
+
+        let tile_spacing = TilemapSpacing {
+            x: tileset.spacing as f32,
+            y: tileset.spacing as f32,
+        };
+
+        // Once materials have been created/added we need to then create the layers.
+        for (layer_index, layer) in tiled_map.map.layers().enumerate() {
+            let offset_x = layer.offset_x;
+            let offset_y = layer.offset_y;
+
+            let tiled::LayerType::Tiles(tile_layer) = layer.layer_type() else {
+                log::info!(
+                    "Skipping layer {} because only tile layers are supported.",
+                    layer.id()
+                );
+                continue;
+            };
+
+            let map_size = TilemapSize {
+                x: tiled_map.map.width,
+                y: tiled_map.map.height,
+            };
+
+            let grid_size = TilemapGridSize {
+                x: tiled_map.map.tile_width as f32,
+                y: tiled_map.map.tile_height as f32,
+            };
+
+            let map_type = match tiled_map.map.orientation {
+                tiled::Orientation::Hexagonal => TilemapType::Hexagon(HexCoordSystem::Row),
+                tiled::Orientation::Isometric => TilemapType::Isometric(IsoCoordSystem::Diamond),
+                tiled::Orientation::Staggered => TilemapType::Isometric(IsoCoordSystem::Staggered),
+                tiled::Orientation::Orthogonal => TilemapType::Square,
+            };
+
+            let layer_entity = commands
+                .spawn(TiledMapLayer {
+                    map_handle_id: map_handle.id(),
+                })
+                .set_parent(map_entity)
+                .id();
+
+            let tile_storage = match tile_layer {
+                tiled::TileLayer::Finite(layer_data) => load_finite_tiles(
+                    &mut commands,
+                    layer_entity,
+                    map_size,
+                    &tiled_map,
+                    &layer_data,
+                    tileset_index,
+                    tilemap_texture,
+                ),
+                tiled::TileLayer::Infinite(layer_data) => load_infinite_tiles(
+                    &mut commands,
+                    layer_entity,
+                    &tiled_map,
+                    &layer_data,
+                    tileset_index,
+                    tilemap_texture,
+                ),
+            };
+
+            commands
+                .entity(layer_entity)
+                .insert(Name::new(format!("TiledMapLayer({})", layer.name)))
+                .insert(TilemapBundle {
+                    grid_size,
+                    size: map_size,
+                    storage: tile_storage,
+                    texture: tilemap_texture.clone(),
+                    tile_size,
+                    spacing: tile_spacing,
+                    transform: get_tilemap_center_transform(
+                        &map_size,
+                        &grid_size,
+                        &map_type,
+                        layer_index as f32,
+                    ) * Transform::from_xyz(offset_x, -offset_y, 0.0),
+                    map_type,
+                    render_settings: *render_settings,
+                    ..Default::default()
+                })
+                .insert(TiledMapMarker);
+
+            layer_storage
+                .storage
+                .insert(layer_index as u32, layer_entity);
+        }
+    }
+}
+
+fn load_finite_tiles(
     commands: &mut Commands,
     layer_entity: Entity,
     map_size: TilemapSize,
@@ -416,14 +530,14 @@ pub fn load_finite_tiles(
             };
 
             let texture_index = match tilemap_texture {
-                                    TilemapTexture::Single(_) => layer_tile.id(),
-                                    #[cfg(not(feature = "atlas"))]
-                                    TilemapTexture::Vector(_) =>
-                                        *tiled_map.tile_image_offsets.get(&(tileset_index, layer_tile.id()))
-                                        .expect("The offset into to image vector should have been saved during the initial load."),
-                                    #[cfg(not(feature = "atlas"))]
-                                    _ => unreachable!()
-                                };
+                TilemapTexture::Single(_) => layer_tile.id(),
+                #[cfg(not(feature = "atlas"))]
+                TilemapTexture::Vector(_) =>
+                    *tiled_map.tile_image_offsets.get(&(tileset_index, layer_tile.id()))
+                    .expect("The offset into to image vector should have been saved during the initial load."),
+                #[cfg(not(feature = "atlas"))]
+                _ => unreachable!()
+            };
 
             let tile_pos = TilePos { x, y };
             let tile_entity = commands
@@ -438,6 +552,11 @@ pub fn load_finite_tiles(
                     },
                     ..Default::default()
                 })
+                .set_parent(layer_entity)
+                .insert(Name::new(format!(
+                    "TiledMapTile({},{})",
+                    tile_pos.x, tile_pos.y
+                )))
                 .id();
             tile_storage.set(&tile_pos, tile_entity);
         }
@@ -446,7 +565,7 @@ pub fn load_finite_tiles(
     tile_storage
 }
 
-pub fn load_infinite_tiles(
+fn load_infinite_tiles(
     commands: &mut Commands,
     layer_entity: Entity,
     tiled_map: &TiledMap,
@@ -533,7 +652,10 @@ pub fn load_infinite_tiles(
                         },
                         ..Default::default()
                     })
+                    .set_parent(layer_entity)
+                    .insert(Name::new(format!("Tile({},{})", tile_pos.x, tile_pos.y)))
                     .id();
+
                 tile_storage.set(&tile_pos, tile_entity);
             }
         }
