@@ -26,6 +26,10 @@ If you would like to contribute but don't know where to start, [click here](http
 
 - Finite and infinite maps
 - Embedded and separate tileset
+- Layers are children of the tilemap entity. Tiles are children of layers.
+- Visibility is inherited: map -> layer -> tile
+- Spawn/despawn
+
 
 ## Getting started
 

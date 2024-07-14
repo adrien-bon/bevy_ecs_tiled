@@ -88,6 +88,9 @@ pub struct TiledMapLayer {
     pub map_handle_id: AssetId<TiledMap>,
 }
 
+#[derive(Component)]
+pub struct TiledMapTile;
+
 #[derive(Default, Bundle)]
 pub struct TiledMapBundle {
     pub tiled_map: Handle<TiledMap>,
@@ -558,6 +561,7 @@ fn load_finite_tiles(
                     "TiledMapTile({},{})",
                     tile_pos.x, tile_pos.y
                 )))
+                .insert(TiledMapTile)
                 .id();
             tile_storage.set(&tile_pos, tile_entity);
         }
@@ -628,14 +632,14 @@ fn load_infinite_tiles(
                 );
 
                 let texture_index = match tilemap_texture {
-                                            TilemapTexture::Single(_) => layer_tile.id(),
-                                            #[cfg(not(feature = "atlas"))]
-                                            TilemapTexture::Vector(_) =>
-                                                *tiled_map.tile_image_offsets.get(&(tileset_index, layer_tile.id()))
-                                                .expect("The offset into to image vector should have been saved during the initial load."),
-                                            #[cfg(not(feature = "atlas"))]
-                                            _ => unreachable!()
-                                        };
+                    TilemapTexture::Single(_) => layer_tile.id(),
+                    #[cfg(not(feature = "atlas"))]
+                    TilemapTexture::Vector(_) =>
+                        *tiled_map.tile_image_offsets.get(&(tileset_index, layer_tile.id()))
+                        .expect("The offset into to image vector should have been saved during the initial load."),
+                    #[cfg(not(feature = "atlas"))]
+                    _ => unreachable!()
+                };
 
                 let tile_pos = TilePos {
                     x: tile_x as u32,
@@ -655,6 +659,7 @@ fn load_infinite_tiles(
                     })
                     .set_parent(layer_entity)
                     .insert(Name::new(format!("Tile({},{})", tile_pos.x, tile_pos.y)))
+                    .insert(TiledMapTile)
                     .id();
 
                 tile_storage.set(&tile_pos, tile_entity);
