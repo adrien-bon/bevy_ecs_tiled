@@ -387,7 +387,8 @@ fn load_map(
         .insert(Name::new(format!(
             "TiledMap({} x {})",
             tiled_map.map.width, tiled_map.map.height
-        )));
+        )))
+        .insert(TiledMapMarker);
 
     // The TilemapBundle requires that all tile images come exclusively from a single
     // tiled texture or from a Vec of independent per-tile images. Furthermore, all of
@@ -486,8 +487,7 @@ fn load_map(
                     map_type,
                     render_settings: *render_settings,
                     ..Default::default()
-                })
-                .insert(TiledMapMarker);
+                });
 
             layer_storage
                 .storage
