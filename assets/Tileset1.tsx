@@ -3,9 +3,19 @@
  <grid orientation="orthogonal" width="1" height="1"/>
  <tile id="0">
   <image source="tiles/tile0.png" width="32" height="32"/>
+  <objectgroup draworder="index" id="2">
+   <object id="1" name="collider" x="0" y="0" width="32" height="32"/>
+  </objectgroup>
  </tile>
  <tile id="1">
   <image source="tiles/tile1.png" width="32" height="32"/>
+  <objectgroup draworder="index" id="2">
+   <object id="1" name="collision" x="0" y="0" width="32" height="32"/>
+   <object id="2" x="4.09091" y="6.63636" width="10.6364" height="21.0909"/>
+   <object id="3" x="0.363636" y="6.54545" width="21.0909" height="19.5455">
+    <ellipse/>
+   </object>
+  </objectgroup>
  </tile>
  <tile id="2">
   <image source="tiles/tile2.png" width="32" height="32"/>

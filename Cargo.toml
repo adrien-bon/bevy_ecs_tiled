@@ -20,19 +20,29 @@ atlas = ["bevy_ecs_tilemap/atlas"]
 render = ["bevy_ecs_tilemap/render"]
 serde = ["bevy_ecs_tilemap/serde"]
 
-# Expose features of the tiled crate.
-wasm = ["tiled/wasm"]
+# Physics
+rapier = ["bevy_rapier2d"]
+rapier_debug = ["bevy_rapier2d/debug-render-2d"]
 
 [dependencies]
 bevy = "0.14.0"
 # TODO: use version when 0.14 version is released to crates.io
 bevy_ecs_tilemap = {git = "https://github.com/StarArawn/bevy_ecs_tilemap"}
 futures-lite = "2.3.0"
+log = "0.4"
 thiserror = "1.0.62"
 tiled = "0.12.0"
 
+# Optional dependencies, enabled via features.
+bevy_rapier2d = {version = "0.27.0", optional = true}
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+bevy_rapier2d = {version = "0.27.0", features = ["wasm-bindgen"], optional = true}
+tiled = {version = "0.12.0", features = ["wasm"]}
+
 [dev-dependencies]
 bevy-inspector-egui = "0.25.1"
+bevy_rapier2d = {version = "0.27.0", features = ["debug-render-2d"]}
 log = "0.4"
 
 [[example]]
@@ -49,3 +59,11 @@ name = "infinite_embedded"
 
 [[example]]
 name = "reload"
+
+[[example]]
+name = "rapier_finite"
+required-features = ["rapier"]
+
+[[example]]
+name = "rapier_infinite"
+required-features = ["rapier"]

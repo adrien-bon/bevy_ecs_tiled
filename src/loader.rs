@@ -42,10 +42,11 @@ use bevy::{
     },
     reflect::TypePath,
     render::view::{InheritedVisibility, Visibility},
+    transform::bundles::TransformBundle,
     utils::HashMap,
 };
 use bevy_ecs_tilemap::prelude::*;
-use tiled::{ChunkData, FiniteTileLayer, InfiniteTileLayer};
+use tiled::{ChunkData, FiniteTileLayer, InfiniteTileLayer, LayerType};
 
 #[derive(Default)]
 pub struct TiledMapPlugin;
@@ -87,6 +88,13 @@ pub struct TiledMapLayer {
     // entity already has it and it complicates queries.
     pub map_handle_id: AssetId<TiledMap>,
 }
+
+/// Marker component for a Tiled map tile layer.
+#[derive(Component)]
+pub struct TiledMapTileLayer;
+
+#[derive(Component)]
+pub struct TiledMapObjectLayer;
 
 #[derive(Component)]
 pub struct TiledMapTile;
@@ -416,18 +424,10 @@ fn load_map(
 
         // Once materials have been created/added we need to then create the layers.
         for (layer_index, layer) in tiled_map.map.layers().enumerate() {
-            let offset_x = layer.offset_x;
-            let offset_y = layer.offset_y;
+            let mut offset_x = layer.offset_x;
+            let mut offset_y = layer.offset_y;
 
-            let tiled::LayerType::Tiles(tile_layer) = layer.layer_type() else {
-                log::info!(
-                    "Skipping layer {} because only tile layers are supported.",
-                    layer.id()
-                );
-                continue;
-            };
-
-            let map_size = TilemapSize {
+            let mut map_size = TilemapSize {
                 x: tiled_map.map.width,
                 y: tiled_map.map.height,
             };
@@ -445,52 +445,90 @@ fn load_map(
             };
 
             let layer_entity = commands
-                .spawn(TiledMapLayer {
-                    map_handle_id: map_handle.id(),
-                })
+                .spawn((
+                    TiledMapLayer {
+                        map_handle_id: map_handle.id(),
+                    },
+                    TransformBundle::from_transform(Transform::from_xyz(0., 0., 0.)),
+                ))
                 .set_parent(map_entity)
                 .id();
 
-            let tile_storage = match tile_layer {
-                tiled::TileLayer::Finite(layer_data) => load_finite_tiles(
-                    &mut commands,
-                    layer_entity,
-                    map_size,
-                    &tiled_map,
-                    &layer_data,
-                    tileset_index,
-                    tilemap_texture,
-                ),
-                tiled::TileLayer::Infinite(layer_data) => load_infinite_tiles(
-                    &mut commands,
-                    layer_entity,
-                    &tiled_map,
-                    &layer_data,
-                    tileset_index,
-                    tilemap_texture,
-                ),
-            };
+            match layer.layer_type() {
+                LayerType::Tiles(tile_layer) => {
+                    commands.entity(layer_entity).insert(TiledMapTileLayer);
+                    let tile_storage = match tile_layer {
+                        tiled::TileLayer::Finite(layer_data) => load_finite_tiles(
+                            &mut commands,
+                            layer_entity,
+                            map_size,
+                            &tiled_map,
+                            &layer_data,
+                            tileset_index,
+                            tilemap_texture,
+                        ),
+                        tiled::TileLayer::Infinite(layer_data) => {
+                            let (storage, new_map_size, origin) = load_infinite_tiles(
+                                &mut commands,
+                                layer_entity,
+                                &tiled_map,
+                                &layer_data,
+                                tileset_index,
+                                tilemap_texture,
+                            );
+                            map_size = new_map_size;
+                            log::info!("Infinite layer origin: {:?}", origin);
+                            offset_x += origin.0 * grid_size.x;
+                            offset_y -= origin.1 * grid_size.y;
+                            storage
+                        }
+                    };
 
-            commands
-                .entity(layer_entity)
-                .insert(Name::new(format!("TiledMapLayer({})", layer.name)))
-                .insert(TilemapBundle {
-                    grid_size,
-                    size: map_size,
-                    storage: tile_storage,
-                    texture: tilemap_texture.clone(),
-                    tile_size,
-                    spacing: tile_spacing,
-                    transform: get_tilemap_center_transform(
-                        &map_size,
-                        &grid_size,
-                        &map_type,
-                        layer_index as f32,
-                    ) * Transform::from_xyz(offset_x, -offset_y, 0.0),
-                    map_type,
-                    render_settings: *render_settings,
-                    ..Default::default()
-                });
+                    commands
+                        .entity(layer_entity)
+                        .insert(Name::new(format!("TiledMapTileLayer({})", layer.name)))
+                        .insert(TilemapBundle {
+                            grid_size,
+                            size: map_size,
+                            storage: tile_storage,
+                            texture: tilemap_texture.clone(),
+                            tile_size,
+                            spacing: tile_spacing,
+                            transform: Transform::from_xyz(offset_x, -offset_y, 0.0),
+                            map_type,
+                            render_settings: *render_settings,
+                            ..Default::default()
+                        });
+                }
+                LayerType::Objects(_object_layer) => {
+                    commands
+                        .entity(layer_entity)
+                        .insert(Name::new(format!("TiledMapObjectLayer({})", layer.name)));
+
+                    #[cfg(feature = "rapier")]
+                    crate::physics_rapier::load_physics_layer(
+                        &mut commands,
+                        layer_entity,
+                        _object_layer,
+                        map_size,
+                        grid_size,
+                        offset_x,
+                        offset_y,
+                    );
+                }
+                LayerType::Group(_group_layer) => {
+                    commands
+                        .entity(layer_entity)
+                        .insert(Name::new(format!("TiledMapGroupLayer({})", layer.name)));
+                    // TODO: not implemented yet.
+                }
+                LayerType::Image(_image_layer) => {
+                    commands
+                        .entity(layer_entity)
+                        .insert(Name::new(format!("TiledMapImageLayer({})", layer.name)));
+                    // TODO: not implemented yet.
+                }
+            }
 
             layer_storage
                 .storage
@@ -577,28 +615,42 @@ fn load_infinite_tiles(
     infinite_layer: &InfiniteTileLayer,
     tileset_index: usize,
     tilemap_texture: &TilemapTexture,
-) -> TileStorage {
+) -> (TileStorage, TilemapSize, (f32, f32)) {
     // Determine top left coordinate so we can offset the map.
     let (topleft_x, topleft_y) = infinite_layer
         .chunks()
-        .fold((0, 0), |acc, (pos, _)| (acc.0.min(pos.0), acc.1.min(pos.1)));
+        .fold((999999, 999999), |acc, (pos, _)| {
+            (acc.0.min(pos.0), acc.1.min(pos.1))
+        });
 
     let (bottomright_x, bottomright_y) = infinite_layer
         .chunks()
-        .fold((0, 0), |acc, (pos, _)| (acc.0.max(pos.0), acc.1.max(pos.1)));
+        .fold((topleft_x, topleft_y), |acc, (pos, _)| {
+            (acc.0.max(pos.0), acc.1.max(pos.1))
+        });
+
+    log::info!(
+        "topleft: ({}, {}), bottomright: ({}, {})",
+        topleft_x,
+        topleft_y,
+        bottomright_x,
+        bottomright_y
+    );
 
     // TODO: Provide a way to surface the origin point (the point that was 0,0 in Tiled)
     //       to the caller.
-    let _origin = (
-        -topleft_x * ChunkData::WIDTH as i32,
-        -topleft_y * ChunkData::HEIGHT as i32,
-    );
 
     // Recalculate map size based on the top left and bottom right coordinates.
     let map_size = TilemapSize {
         x: (bottomright_x - topleft_x + 1) as u32 * ChunkData::WIDTH as u32,
         y: (bottomright_y - topleft_y + 1) as u32 * ChunkData::HEIGHT as u32,
     };
+    log::info!("map size: {:?}", map_size);
+    let origin = (
+        topleft_x as f32 * ChunkData::WIDTH as f32,
+        ((topleft_y as f32 / 2.) * ChunkData::HEIGHT as f32) + 1.,
+    );
+
     let mut tile_storage = TileStorage::empty(map_size);
 
     for (chunk_pos, chunk) in infinite_layer.chunks() {
@@ -667,5 +719,5 @@ fn load_infinite_tiles(
         }
     }
 
-    tile_storage
+    (tile_storage, map_size, origin)
 }

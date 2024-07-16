@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="10" height="10" tilewidth="32" tileheight="32" infinite="1" nextlayerid="2" nextobjectid="1">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="10" height="10" tilewidth="32" tileheight="32" infinite="1" nextlayerid="3" nextobjectid="2">
  <tileset firstgid="1" source="Tileset1.tsx"/>
- <layer id="1" name="Tile Layer 1" width="10" height="10">
+ <layer id="1" name="Tile Layer 1" width="10" height="10" offsetx="0" offsety="1">
   <data encoding="csv">
    <chunk x="-16" y="-16" width="16" height="16">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -77,4 +77,7 @@
 </chunk>
   </data>
  </layer>
+ <objectgroup id="2" name="Collisions">
+  <object id="1" x="-128" y="97" width="223" height="157"/>
+ </objectgroup>
 </map>
