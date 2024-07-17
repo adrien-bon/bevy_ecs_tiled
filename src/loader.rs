@@ -46,7 +46,7 @@ use bevy::{
     utils::HashMap,
 };
 use bevy_ecs_tilemap::prelude::*;
-use tiled::{ChunkData, FiniteTileLayer, InfiniteTileLayer, LayerType};
+use tiled::{ChunkData, FiniteTileLayer, InfiniteTileLayer, LayerType, Tileset};
 
 use crate::prelude::TiledMapSettings;
 
@@ -392,6 +392,7 @@ fn load_map_by_asset_id(
     }
 }
 
+#[allow(unused_variables)]
 fn load_map(
     mut commands: &mut Commands,
     layer_storage: &mut TiledLayersStorage,
@@ -411,8 +412,12 @@ fn load_map(
         )))
         .insert(TiledMapMarker);
 
-    #[allow(unused)] // Only used for physics.
-    let collision_layer_names = tiled_settings.collision_layer_names();
+    #[cfg(feature = "rapier")]
+    let collision_object_names =
+        crate::prelude::ObjectNameFilter::from(&tiled_settings.collision_object_names);
+    #[cfg(feature = "rapier")]
+    let collision_layer_names =
+        crate::prelude::ObjectNameFilter::from(&tiled_settings.collision_layer_names);
 
     // The TilemapBundle requires that all tile images come exclusively from a single
     // tiled texture or from a Vec of independent per-tile images. Furthermore, all of
@@ -475,22 +480,30 @@ fn load_map(
                             &mut commands,
                             layer_entity,
                             map_size,
+                            grid_size,
                             &tiled_map,
                             &layer_data,
                             tileset_index,
+                            tileset.as_ref(),
                             tilemap_texture,
+                            #[cfg(feature = "rapier")]
+                            &collision_object_names,
                         ),
                         tiled::TileLayer::Infinite(layer_data) => {
                             let (storage, new_map_size, origin) = load_infinite_tiles(
                                 &mut commands,
                                 layer_entity,
                                 &tiled_map,
+                                grid_size,
                                 &layer_data,
                                 tileset_index,
+                                tileset.as_ref(),
                                 tilemap_texture,
+                                #[cfg(feature = "rapier")]
+                                &collision_object_names,
                             );
                             map_size = new_map_size;
-                            log::info!("Infinite layer origin: {:?}", origin);
+                            // log::info!("Infinite layer origin: {:?}", origin);
                             offset_x += origin.0 * grid_size.x;
                             offset_y -= origin.1 * grid_size.y;
                             storage
@@ -520,19 +533,18 @@ fn load_map(
 
                     #[cfg(feature = "rapier")]
                     {
-                        if collision_layer_names
-                            .as_ref()
-                            .map(|x| x.contains(&layer.name.to_lowercase()))
-                            .unwrap_or(true)
-                        {
-                            crate::physics::rapier::object_layer_shapes::load_object_layer(
+                        if collision_layer_names.contains(&layer.name.trim().to_lowercase()) {
+                            crate::physics::rapier::shapes::load_object_layer(
                                 &mut commands,
+                                &crate::prelude::ObjectNameFilter::All,
                                 layer_entity,
                                 _object_layer,
                                 map_size,
                                 grid_size,
-                                offset_x,
-                                offset_y,
+                                bevy::math::Vec2 {
+                                    x: offset_x,
+                                    y: offset_y,
+                                },
                             );
                         }
                     }
@@ -558,14 +570,18 @@ fn load_map(
     }
 }
 
+#[allow(unused)]
 fn load_finite_tiles(
     commands: &mut Commands,
     layer_entity: Entity,
     map_size: TilemapSize,
+    grid_size: TilemapGridSize,
     tiled_map: &TiledMap,
     layer_data: &FiniteTileLayer,
     tileset_index: usize,
+    tileset: &Tileset,
     tilemap_texture: &TilemapTexture,
+    #[cfg(feature = "rapier")] collision_object_names: &crate::prelude::ObjectNameFilter,
 ) -> TileStorage {
     let mut tile_storage = TileStorage::empty(map_size);
     for x in 0..map_size.x {
@@ -615,6 +631,11 @@ fn load_finite_tiles(
                     },
                     ..Default::default()
                 })
+                .insert(TransformBundle::from_transform(Transform::from_xyz(
+                    tile_pos.x as f32 * grid_size.x,
+                    tile_pos.y as f32 * grid_size.y,
+                    0.0,
+                )))
                 .set_parent(layer_entity)
                 .insert(Name::new(format!(
                     "TiledMapTile({},{})",
@@ -623,19 +644,38 @@ fn load_finite_tiles(
                 .insert(TiledMapTile)
                 .id();
             tile_storage.set(&tile_pos, tile_entity);
+
+            #[cfg(feature = "rapier")]
+            {
+                if let Some(tile) = tileset.get_tile(layer_tile_data.id()) {
+                    if let Some(collision) = tile.collision.as_ref() {
+                        crate::physics::rapier::shapes::insert_tile_colliders(
+                            commands,
+                            collision_object_names,
+                            tile_entity,
+                            grid_size,
+                            collision,
+                        );
+                    }
+                }
+            }
         }
     }
 
     tile_storage
 }
 
+#[allow(unused)]
 fn load_infinite_tiles(
     commands: &mut Commands,
     layer_entity: Entity,
     tiled_map: &TiledMap,
+    grid_size: TilemapGridSize,
     infinite_layer: &InfiniteTileLayer,
     tileset_index: usize,
+    tileset: &Tileset,
     tilemap_texture: &TilemapTexture,
+    #[cfg(feature = "rapier")] collision_object_names: &crate::prelude::ObjectNameFilter,
 ) -> (TileStorage, TilemapSize, (f32, f32)) {
     // Determine top left coordinate so we can offset the map.
     let (topleft_x, topleft_y) = infinite_layer
@@ -730,12 +770,32 @@ fn load_infinite_tiles(
                         },
                         ..Default::default()
                     })
+                    .insert(TransformBundle::from_transform(Transform::from_xyz(
+                        tile_pos.x as f32 * grid_size.x,
+                        tile_pos.y as f32 * grid_size.y,
+                        0.0,
+                    )))
                     .set_parent(layer_entity)
                     .insert(Name::new(format!("Tile({},{})", tile_pos.x, tile_pos.y)))
                     .insert(TiledMapTile)
                     .id();
 
                 tile_storage.set(&tile_pos, tile_entity);
+
+                #[cfg(feature = "rapier")]
+                {
+                    if let Some(tile) = tileset.get_tile(layer_tile_data.id()) {
+                        if let Some(collision) = tile.collision.as_ref() {
+                            crate::physics::rapier::shapes::insert_tile_colliders(
+                                commands,
+                                collision_object_names,
+                                tile_entity,
+                                grid_size,
+                                collision,
+                            );
+                        }
+                    }
+                }
             }
         }
     }

@@ -14,6 +14,7 @@ fn main() {
         .add_plugins(RapierDebugRenderPlugin::default())
         .add_systems(Startup, startup)
         .add_systems(Update, helper::movement)
+        .add_systems(Update, rotate_map)
         .run();
 }
 
@@ -25,10 +26,26 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         tiled_map: map_handle,
         tiled_settings: TiledMapSettings {
             // By default `bevy_ecs_tiled` will add colliders for all object layers.
-            // This shows how we can specify exactly which layers to process.
-            collision_layer_names: CollisionLayerNames::Named(vec!["collisions".to_string()]),
+            // This shows how we can specify exactly which layers and objects to process.
+            collision_object_names: ObjectNames::Names(vec!["collision".to_string()]),
             ..default()
         },
         ..default()
     });
+}
+
+pub fn rotate_map(
+    time: Res<Time>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut tilemap: Query<(Entity, &mut Transform), With<TiledMapMarker>>,
+) {
+    for (_, mut transform) in tilemap.iter_mut() {
+        if keyboard_input.pressed(KeyCode::KeyO) {
+            transform.rotate_z(f32::to_radians(90.0 * time.delta_seconds()));
+        }
+
+        if keyboard_input.pressed(KeyCode::KeyP) {
+            transform.rotate_z(f32::to_radians(-90.0 * time.delta_seconds()));
+        }
+    }
 }
