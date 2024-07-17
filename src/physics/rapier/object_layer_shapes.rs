@@ -5,10 +5,12 @@ use tiled::ObjectLayer;
 
 /// Loads shapes from an object layer as physics colliders.
 ///
-/// TODO: This is not ideal because object layers could be used for many
-///       things, not just collisions. We shouldn't assume a shape is intended
-///       for a collider.
-pub fn load_physics_layer(
+/// By default `bevy_ecs_tiled` will only process object layers
+/// named in `collision_layer_names` in `TiledMapSettings`.
+///
+/// Collision layer names are case-insensitive and leading/trailing
+/// whitespace is stripped out.
+pub fn load_object_layer(
     commands: &mut Commands,
     layer_entity: Entity,
     object_layer: ObjectLayer,

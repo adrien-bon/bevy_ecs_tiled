@@ -48,6 +48,8 @@ use bevy::{
 use bevy_ecs_tilemap::prelude::*;
 use tiled::{ChunkData, FiniteTileLayer, InfiniteTileLayer, LayerType};
 
+use crate::prelude::TiledMapSettings;
+
 #[derive(Default)]
 pub struct TiledMapPlugin;
 
@@ -106,6 +108,7 @@ pub struct TiledMapBundle {
     pub transform: Transform,
     pub global_transform: GlobalTransform,
     pub render_settings: TilemapRenderSettings,
+    pub tiled_settings: TiledMapSettings,
 }
 
 struct BytesResourceReader<'a, 'b> {
@@ -257,6 +260,7 @@ fn process_loaded_maps(
         &Handle<TiledMap>,
         &mut TiledLayersStorage,
         &TilemapRenderSettings,
+        &TiledMapSettings,
     )>,
     layer_query: Query<(Entity, &TiledMapLayer), With<TiledMapLayer>>,
 ) {
@@ -305,12 +309,13 @@ fn remove_map_by_asset_id(
         &Handle<TiledMap>,
         &mut TiledLayersStorage,
         &TilemapRenderSettings,
+        &TiledMapSettings,
     )>,
     layer_query: &Query<(Entity, &TiledMapLayer), With<TiledMapLayer>>,
     asset_id: &AssetId<TiledMap>,
 ) {
     log::info!("removing map by asset id: {}", asset_id);
-    for (_, map_handle, mut layer_storage, _) in map_query.iter_mut() {
+    for (_, map_handle, mut layer_storage, _, _) in map_query.iter_mut() {
         log::info!("checking layer to remove: {}", map_handle.id());
 
         // Only process the map that was removed.
@@ -360,10 +365,13 @@ fn load_map_by_asset_id(
         &Handle<TiledMap>,
         &mut TiledLayersStorage,
         &TilemapRenderSettings,
+        &TiledMapSettings,
     )>,
     asset_id: &AssetId<TiledMap>,
 ) {
-    for (map_entity, map_handle, mut layer_storage, render_settings) in map_query.iter_mut() {
+    for (map_entity, map_handle, mut layer_storage, render_settings, tiled_settings) in
+        map_query.iter_mut()
+    {
         // only deal with currently changed map
         if map_handle.id() != *asset_id {
             continue;
@@ -378,6 +386,7 @@ fn load_map_by_asset_id(
                 map_handle,
                 tiled_map,
                 render_settings,
+                tiled_settings,
             );
         }
     }
@@ -390,6 +399,7 @@ fn load_map(
     map_handle: &Handle<TiledMap>,
     tiled_map: &TiledMap,
     render_settings: &TilemapRenderSettings,
+    tiled_settings: &TiledMapSettings,
 ) {
     commands
         .entity(map_entity)
@@ -400,6 +410,9 @@ fn load_map(
             tiled_map.map.width, tiled_map.map.height
         )))
         .insert(TiledMapMarker);
+
+    #[allow(unused)] // Only used for physics.
+    let collision_layer_names = tiled_settings.collision_layer_names();
 
     // The TilemapBundle requires that all tile images come exclusively from a single
     // tiled texture or from a Vec of independent per-tile images. Furthermore, all of
@@ -506,15 +519,23 @@ fn load_map(
                         .insert(Name::new(format!("TiledMapObjectLayer({})", layer.name)));
 
                     #[cfg(feature = "rapier")]
-                    crate::physics_rapier::load_physics_layer(
-                        &mut commands,
-                        layer_entity,
-                        _object_layer,
-                        map_size,
-                        grid_size,
-                        offset_x,
-                        offset_y,
-                    );
+                    {
+                        if collision_layer_names
+                            .as_ref()
+                            .map(|x| x.contains(&layer.name.to_lowercase()))
+                            .unwrap_or(true)
+                        {
+                            crate::physics::rapier::object_layer_shapes::load_object_layer(
+                                &mut commands,
+                                layer_entity,
+                                _object_layer,
+                                map_size,
+                                grid_size,
+                                offset_x,
+                                offset_y,
+                            );
+                        }
+                    }
                 }
                 LayerType::Group(_group_layer) => {
                     commands

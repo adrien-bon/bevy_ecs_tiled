@@ -23,6 +23,12 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let map_handle: Handle<TiledMap> = asset_server.load("infinite.tmx");
     commands.spawn(TiledMapBundle {
         tiled_map: map_handle,
-        ..Default::default()
+        tiled_settings: TiledMapSettings {
+            // By default `bevy_ecs_tiled` will add colliders for all object layers.
+            // This shows how we can specify exactly which layers to process.
+            collision_layer_names: CollisionLayerNames::Named(vec!["collisions".to_string()]),
+            ..default()
+        },
+        ..default()
     });
 }

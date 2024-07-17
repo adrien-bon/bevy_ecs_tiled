@@ -23,6 +23,11 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let map_handle: Handle<TiledMap> = asset_server.load("finite.tmx");
     commands.spawn(TiledMapBundle {
         tiled_map: map_handle,
+        tiled_settings: TiledMapSettings {
+            // This is the default, but we're setting it explicitly here for clarity.
+            collision_layer_names: CollisionLayerNames::All,
+            ..default()
+        },
         ..Default::default()
     });
 }

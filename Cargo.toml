@@ -21,8 +21,9 @@ render = ["bevy_ecs_tilemap/render"]
 serde = ["bevy_ecs_tilemap/serde"]
 
 # Physics
-rapier = ["bevy_rapier2d"]
-rapier_debug = ["bevy_rapier2d/debug-render-2d"]
+physics = []
+rapier = ["bevy_rapier2d", "physics"]
+rapier_debug = ["rapier", "bevy_rapier2d/debug-render-2d"]
 
 [dependencies]
 bevy = "0.14.0"
@@ -61,9 +62,9 @@ name = "infinite_embedded"
 name = "reload"
 
 [[example]]
-name = "rapier_finite"
-required-features = ["rapier"]
+name = "finite_rapier"
+required-features = ["rapier_debug"]
 
 [[example]]
-name = "rapier_infinite"
-required-features = ["rapier"]
+name = "infinite_rapier"
+required-features = ["rapier_debug"]
