@@ -10,10 +10,12 @@ Plugin for working with 2D tilemaps created with the Tiled map editor.
 
 ## Status
 
-** **VERY EARLY BUILD - EXPECT BUGS AND BREAKING CHANGES** **
+** **EARLY DEVELOPMENT BUT USABLE** **
 
 This crate is currently in a very early state while I build the basics.
 I'm new to Bevy (but not new to Rust or game dev) so I'm learning as I go.
+
+It should be quite usable already, and I plan to follow semver.
 
 The code was originally copied from the Tiled example in `bevy_ecs_tilemap`,
 plus the fix from [this PR](https://github.com/StarArawn/bevy_ecs_tilemap/pull/429).
@@ -29,12 +31,9 @@ If you would like to contribute but don't know where to start, [click here](http
 - Layers are children of the tilemap entity. Tiles are children of layers.
 - Visibility is inherited: map -> layer -> tile
 - Spawn/despawn
-
+- Rapier Colliders added from tilesets and object layers (`rapier` feature flag)
 
 ## Getting started
-
-Add this crate to your Cargo.toml. For Bevy 0.14 this requires a git 
-dependency until a compatible release is published for bevy_ecs_tilemap.
 
 ```toml
 [dependencies]
