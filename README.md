@@ -38,9 +38,9 @@ dependency until a compatible release is published for bevy_ecs_tilemap.
 
 ```toml
 [dependencies]
-bevy = {version = "0.14.0"}
-bevy_ecs_tiled = {git = "https://github.com/stevepryde/bevy_ecs_tiled"}
-bevy_ecs_tilemap = {git = "https://github.com/StarArawn/bevy_ecs_tilemap"}
+bevy = "0.14"
+bevy_ecs_tiled = "0.3"
+bevy_ecs_tilemap = "0.14"
 ```
 
 Then add the plugin to your app:
@@ -75,12 +75,10 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 |bevy|bevy_ecs_tilemap|bevy_ecs_tiled|
 |---|---|---|
-|0.14|main|main (0.3 *)|
-|0.13|main@e4f3cc6|0.2 *|
+|0.14|0.14|0.3|
+|0.13|main@e4f3cc6|branch 0.2|
 |0.12|0.12|0.1|
 
-\* These versions are not yet published to crates.io as they are waiting on 
-  upstream versions to be published. Use git dependencies instead.
 
 ## LICENSE
 
