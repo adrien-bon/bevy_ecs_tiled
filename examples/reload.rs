@@ -1,3 +1,5 @@
+//! This example demonstrates how to load and unload maps.
+
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 use bevy_ecs_tilemap::prelude::*;

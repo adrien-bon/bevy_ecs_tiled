@@ -1,3 +1,5 @@
+//! This example shows the use of an infinite map with an embedded tileset.
+
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 use bevy_ecs_tilemap::prelude::*;

@@ -1,3 +1,5 @@
+//! This example shows an infinite map with an external tileset and Rapier physics.
+
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
