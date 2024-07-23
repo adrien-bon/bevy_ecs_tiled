@@ -196,13 +196,7 @@ impl AssetLoader for TiledLoader {
                         let mut tile_images: Vec<Handle<Image>> = Vec::new();
                         for (tile_id, tile) in tileset.tiles() {
                             if let Some(img) = &tile.image {
-                                // The load context path is the TMX file itself. If the file is at the root of the
-                                // assets/ directory structure then the tmx_dir will be empty, which is fine.
-                                let tmx_dir = map_path
-                                    .parent()
-                                    .expect("The asset load context was empty.");
-                                let tile_path = tmx_dir.join(&img.source);
-                                let asset_path = AssetPath::from(tile_path);
+                                let asset_path = AssetPath::from(img.source.clone());
                                 log::info!("Loading tile image from {asset_path:?} as image ({tileset_index}, {tile_id})");
                                 let texture: Handle<Image> = load_context.load(asset_path.clone());
                                 tile_image_offsets
@@ -215,14 +209,7 @@ impl AssetLoader for TiledLoader {
                     }
                 }
                 Some(img) => {
-                    // The load context path is the TMX file itself. If the file is at the root of the
-                    // assets/ directory structure then the tmx_dir will be empty, which is fine.
-                    let tmx_dir = load_context
-                        .path()
-                        .parent()
-                        .expect("The asset load context was empty.");
-                    let tile_path = tmx_dir.join(&img.source);
-                    let asset_path = AssetPath::from(tile_path);
+                    let asset_path = AssetPath::from(img.source.clone());
                     let texture: Handle<Image> = load_context.load(asset_path.clone());
 
                     TilemapTexture::Single(texture.clone())
