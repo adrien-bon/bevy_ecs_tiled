@@ -456,7 +456,29 @@ fn load_map(
             };
 
             let map_type = match tiled_map.map.orientation {
-                tiled::Orientation::Hexagonal => TilemapType::Hexagon(HexCoordSystem::Row),
+                tiled::Orientation::Hexagonal => match tiled_map.map.stagger_axis {
+                    tiled::StaggerAxis::X
+                        if tiled_map.map.stagger_index == tiled::StaggerIndex::Even =>
+                    {
+                        TilemapType::Hexagon(HexCoordSystem::ColumnOdd)
+                    }
+                    tiled::StaggerAxis::X
+                        if tiled_map.map.stagger_index == tiled::StaggerIndex::Odd =>
+                    {
+                        TilemapType::Hexagon(HexCoordSystem::ColumnEven)
+                    }
+                    tiled::StaggerAxis::Y
+                        if tiled_map.map.stagger_index == tiled::StaggerIndex::Even =>
+                    {
+                        TilemapType::Hexagon(HexCoordSystem::RowOdd)
+                    }
+                    tiled::StaggerAxis::Y
+                        if tiled_map.map.stagger_index == tiled::StaggerIndex::Odd =>
+                    {
+                        TilemapType::Hexagon(HexCoordSystem::RowEven)
+                    }
+                    _ => unreachable!(),
+                },
                 tiled::Orientation::Isometric => TilemapType::Isometric(IsoCoordSystem::Diamond),
                 tiled::Orientation::Staggered => TilemapType::Isometric(IsoCoordSystem::Staggered),
                 tiled::Orientation::Orthogonal => TilemapType::Square,
