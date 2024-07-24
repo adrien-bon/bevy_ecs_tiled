@@ -46,7 +46,7 @@ use bevy::{
     utils::HashMap,
 };
 use bevy_ecs_tilemap::prelude::*;
-use tiled::{ChunkData, FiniteTileLayer, InfiniteTileLayer, LayerType, Tileset};
+use tiled::{ChunkData, FiniteTileLayer, InfiniteTileLayer, LayerType, Tile, Tileset};
 
 use crate::prelude::TiledMapSettings;
 
@@ -289,7 +289,7 @@ fn process_loaded_maps(
 }
 
 fn remove_map_by_asset_id(
-    mut commands: &mut Commands,
+    commands: &mut Commands,
     tile_storage_query: &Query<(Entity, &TileStorage)>,
     map_query: &mut Query<(
         Entity,
@@ -310,7 +310,7 @@ fn remove_map_by_asset_id(
             continue;
         }
 
-        remove_layers(&mut commands, tile_storage_query, &mut layer_storage);
+        remove_layers(commands, tile_storage_query, &mut layer_storage);
     }
 
     // Also manually despawn layers for this map.
@@ -344,7 +344,7 @@ fn remove_layers(
 }
 
 fn load_map_by_asset_id(
-    mut commands: &mut Commands,
+    commands: &mut Commands,
     maps: &mut ResMut<Assets<TiledMap>>,
     tile_storage_query: &Query<(Entity, &TileStorage)>,
     map_query: &mut Query<(
@@ -365,9 +365,9 @@ fn load_map_by_asset_id(
         }
 
         if let Some(tiled_map) = maps.get(map_handle) {
-            remove_layers(&mut commands, tile_storage_query, &mut layer_storage);
+            remove_layers(commands, tile_storage_query, &mut layer_storage);
             load_map(
-                &mut commands,
+                commands,
                 &mut layer_storage,
                 map_entity,
                 map_handle,
@@ -381,7 +381,7 @@ fn load_map_by_asset_id(
 
 #[allow(unused_variables)]
 fn load_map(
-    mut commands: &mut Commands,
+    commands: &mut Commands,
     layer_storage: &mut TiledLayersStorage,
     map_entity: Entity,
     map_handle: &Handle<TiledMap>,
@@ -427,10 +427,15 @@ fn load_map(
             y: tileset.spacing as f32,
         };
 
+        // Order of the differents layers in the .TMX file is important:
+        // a layer appearing last in the .TMX should appear "on top" of previous layers
+        let mut offset_z = 0.;
+
         // Once materials have been created/added we need to then create the layers.
         for (layer_index, layer) in tiled_map.map.layers().enumerate() {
             let mut offset_x = layer.offset_x;
             let mut offset_y = layer.offset_y;
+            offset_z += 100.;
 
             let mut map_size = TilemapSize {
                 x: tiled_map.map.width,
@@ -486,11 +491,11 @@ fn load_map(
                     commands.entity(layer_entity).insert(TiledMapTileLayer);
                     let tile_storage = match tile_layer {
                         tiled::TileLayer::Finite(layer_data) => load_finite_tiles(
-                            &mut commands,
+                            commands,
                             layer_entity,
                             map_size,
                             grid_size,
-                            &tiled_map,
+                            tiled_map,
                             &layer_data,
                             tileset_index,
                             tileset.as_ref(),
@@ -500,9 +505,9 @@ fn load_map(
                         ),
                         tiled::TileLayer::Infinite(layer_data) => {
                             let (storage, new_map_size, origin) = load_infinite_tiles(
-                                &mut commands,
+                                commands,
                                 layer_entity,
-                                &tiled_map,
+                                tiled_map,
                                 grid_size,
                                 &layer_data,
                                 tileset_index,
@@ -529,7 +534,7 @@ fn load_map(
                             texture: tilemap_texture.clone(),
                             tile_size,
                             spacing: tile_spacing,
-                            transform: Transform::from_xyz(offset_x, -offset_y, 0.0),
+                            transform: Transform::from_xyz(offset_x, -offset_y, offset_z),
                             map_type,
                             render_settings: *render_settings,
                             ..Default::default()
@@ -579,7 +584,7 @@ fn load_map(
     }
 }
 
-#[allow(unused)]
+#[allow(unused, clippy::too_many_arguments)]
 fn load_finite_tiles(
     commands: &mut Commands,
     layer_entity: Entity,
@@ -601,20 +606,17 @@ fn load_finite_tiles(
             let mapped_x = x as i32;
             let mapped_y = mapped_y as i32;
 
-            let layer_tile = match layer_data.get_tile(mapped_x, mapped_y) {
-                Some(t) => t,
-                None => {
-                    continue;
-                }
+            let Some(layer_tile) = layer_data.get_tile(mapped_x, mapped_y) else {
+                continue;
             };
             if tileset_index != layer_tile.tileset_index() {
                 continue;
             }
-            let layer_tile_data = match layer_data.get_tile_data(mapped_x, mapped_y) {
-                Some(d) => d,
-                None => {
-                    continue;
-                }
+            let Some(layer_tile_data) = layer_data.get_tile_data(mapped_x, mapped_y) else {
+                continue;
+            };
+            let Some(tile) = layer_tile.get_tile() else {
+                continue;
             };
 
             let texture_index = match tilemap_texture {
@@ -652,6 +654,11 @@ fn load_finite_tiles(
                 )))
                 .insert(TiledMapTile)
                 .id();
+
+            if let Some(animated_tile) = get_animated_tile(tile) {
+                commands.entity(tile_entity).insert(animated_tile);
+            }
+
             tile_storage.set(&tile_pos, tile_entity);
 
             #[cfg(feature = "rapier")]
@@ -674,7 +681,7 @@ fn load_finite_tiles(
     tile_storage
 }
 
-#[allow(unused)]
+#[allow(unused, clippy::too_many_arguments)]
 fn load_infinite_tiles(
     commands: &mut Commands,
     layer_entity: Entity,
@@ -712,8 +719,8 @@ fn load_infinite_tiles(
 
     // Recalculate map size based on the top left and bottom right coordinates.
     let map_size = TilemapSize {
-        x: (bottomright_x - topleft_x + 1) as u32 * ChunkData::WIDTH as u32,
-        y: (bottomright_y - topleft_y + 1) as u32 * ChunkData::HEIGHT as u32,
+        x: (bottomright_x - topleft_x + 1) as u32 * ChunkData::WIDTH,
+        y: (bottomright_y - topleft_y + 1) as u32 * ChunkData::HEIGHT,
     };
     log::info!("map size: {:?}", map_size);
     let origin = (
@@ -728,24 +735,20 @@ fn load_infinite_tiles(
         // such that the top-left chunk is at (0, 0).
         let chunk_pos_mapped = (chunk_pos.0 - topleft_x, chunk_pos.1 - topleft_y);
 
-        for x in 0..ChunkData::WIDTH as u32 {
-            for y in 0..ChunkData::HEIGHT as u32 {
+        for x in 0..ChunkData::WIDTH {
+            for y in 0..ChunkData::HEIGHT {
                 // Invert y to match bevy coordinates.
-                let layer_tile = match chunk.get_tile(x as i32, y as i32) {
-                    Some(t) => t,
-                    None => {
-                        continue;
-                    }
+                let Some(layer_tile) = chunk.get_tile(x as i32, y as i32) else {
+                    continue;
                 };
                 if tileset_index != layer_tile.tileset_index() {
                     continue;
                 }
-
-                let layer_tile_data = match chunk.get_tile_data(x as i32, y as i32) {
-                    Some(d) => d,
-                    None => {
-                        continue;
-                    }
+                let Some(layer_tile_data) = chunk.get_tile_data(x as i32, y as i32) else {
+                    continue;
+                };
+                let Some(tile) = layer_tile.get_tile() else {
+                    continue;
                 };
 
                 let (tile_x, tile_y) = (
@@ -789,6 +792,10 @@ fn load_infinite_tiles(
                     .insert(TiledMapTile)
                     .id();
 
+                if let Some(animated_tile) = get_animated_tile(tile) {
+                    commands.entity(tile_entity).insert(animated_tile);
+                }
+
                 tile_storage.set(&tile_pos, tile_entity);
 
                 #[cfg(feature = "rapier")]
@@ -810,4 +817,34 @@ fn load_infinite_tiles(
     }
 
     (tile_storage, map_size, origin)
+}
+
+fn get_animated_tile(tile: Tile) -> Option<AnimatedTile> {
+    let Some(animation_data) = &tile.animation else {
+        return None;
+    };
+    let mut previous_tile_id = None;
+    let first_tile = animation_data.iter().next()?;
+    let last_tile = animation_data.iter().last()?;
+
+    // Sanity checks: current limitations from bevy_ecs_tilemap
+    for frame in animation_data {
+        if frame.duration != first_tile.duration {
+            log::warn!("Animated tile with non constant frame duration is currently not supported");
+            return None;
+        }
+        if let Some(id) = previous_tile_id {
+            if frame.tile_id != id + 1 {
+                log::warn!("Animated tile with non-aligned frame tiles is currently not supported");
+                return None;
+            }
+        }
+        previous_tile_id = Some(frame.tile_id);
+    }
+
+    Some(AnimatedTile {
+        start: first_tile.tile_id,
+        end: last_tile.tile_id,
+        speed: 1000. / first_tile.duration as f32, // duration is in ms and we want a 'frames per second' speed
+    })
 }
