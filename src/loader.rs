@@ -46,7 +46,7 @@ use bevy::{
     utils::HashMap,
 };
 use bevy_ecs_tilemap::prelude::*;
-use tiled::{ChunkData, FiniteTileLayer, InfiniteTileLayer, LayerType, Tileset};
+use tiled::{ChunkData, FiniteTileLayer, InfiniteTileLayer, LayerType, Tile, Tileset};
 
 use crate::prelude::TiledMapSettings;
 
@@ -601,20 +601,17 @@ fn load_finite_tiles(
             let mapped_x = x as i32;
             let mapped_y = mapped_y as i32;
 
-            let layer_tile = match layer_data.get_tile(mapped_x, mapped_y) {
-                Some(t) => t,
-                None => {
-                    continue;
-                }
+            let Some(layer_tile) = layer_data.get_tile(mapped_x, mapped_y) else {
+                continue;
             };
             if tileset_index != layer_tile.tileset_index() {
                 continue;
             }
-            let layer_tile_data = match layer_data.get_tile_data(mapped_x, mapped_y) {
-                Some(d) => d,
-                None => {
-                    continue;
-                }
+            let Some(layer_tile_data) = layer_data.get_tile_data(mapped_x, mapped_y) else {
+                continue;
+            };
+            let Some(tile) = layer_tile.get_tile() else {
+                continue;
             };
 
             let texture_index = match tilemap_texture {
@@ -652,6 +649,11 @@ fn load_finite_tiles(
                 )))
                 .insert(TiledMapTile)
                 .id();
+
+            if let Some(animated_tile) = get_animated_tile(tile) {
+                commands.entity(tile_entity).insert(animated_tile);
+            }
+
             tile_storage.set(&tile_pos, tile_entity);
 
             #[cfg(feature = "rapier")]
@@ -731,21 +733,17 @@ fn load_infinite_tiles(
         for x in 0..ChunkData::WIDTH {
             for y in 0..ChunkData::HEIGHT {
                 // Invert y to match bevy coordinates.
-                let layer_tile = match chunk.get_tile(x as i32, y as i32) {
-                    Some(t) => t,
-                    None => {
-                        continue;
-                    }
+                let Some(layer_tile) = chunk.get_tile(x as i32, y as i32) else {
+                    continue;
                 };
                 if tileset_index != layer_tile.tileset_index() {
                     continue;
                 }
-
-                let layer_tile_data = match chunk.get_tile_data(x as i32, y as i32) {
-                    Some(d) => d,
-                    None => {
-                        continue;
-                    }
+                let Some(layer_tile_data) = chunk.get_tile_data(x as i32, y as i32) else {
+                    continue;
+                };
+                let Some(tile) = layer_tile.get_tile() else {
+                    continue;
                 };
 
                 let (tile_x, tile_y) = (
@@ -789,6 +787,10 @@ fn load_infinite_tiles(
                     .insert(TiledMapTile)
                     .id();
 
+                if let Some(animated_tile) = get_animated_tile(tile) {
+                    commands.entity(tile_entity).insert(animated_tile);
+                }
+
                 tile_storage.set(&tile_pos, tile_entity);
 
                 #[cfg(feature = "rapier")]
@@ -810,4 +812,33 @@ fn load_infinite_tiles(
     }
 
     (tile_storage, map_size, origin)
+}
+
+fn get_animated_tile(tile: Tile) -> Option<AnimatedTile> {
+    if let Some(animation_data) = &tile.animation {
+        let mut previous_tile_id = None;
+        let duration = animation_data.iter().next().unwrap().duration;
+
+        // Current limitations from bevy_ecs_tilemap
+        for frame in animation_data {
+            if frame.duration != duration {
+                log::warn!("Animated tile with non constant frame duration is currently not supported");
+                return None;
+            }
+            if let Some(id) = previous_tile_id {
+                if frame.tile_id != id + 1 {
+                    log::warn!("Animated tile with non-aligned frame tiles is currently not supported");
+                    return None;
+                }
+            }
+            previous_tile_id = Some(frame.tile_id);
+        }
+
+        return Some(AnimatedTile {
+            start: animation_data.iter().next().unwrap().tile_id,
+            end: animation_data.iter().last().unwrap().tile_id,
+            speed: 1000. / duration as f32, // duration is in ms and we want a 'frame per second' speed
+        });
+    }
+    None
 }
