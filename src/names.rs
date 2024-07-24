@@ -13,7 +13,7 @@ pub enum ObjectNames {
 
 #[allow(dead_code)]
 #[derive(Clone)]
-pub(crate) enum ObjectNameFilter {
+pub enum ObjectNameFilter {
     All,
     Names(HashSet<String>),
     None,

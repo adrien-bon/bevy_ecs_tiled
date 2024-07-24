@@ -10,7 +10,7 @@ Cargo.lock
 
 # Added by cargo
 
-/target
+target/
 .vscode
 .DS_Store
 .idea
