@@ -25,7 +25,7 @@ impl From<&ObjectNames> for ObjectNameFilter {
             ObjectNames::All => ObjectNameFilter::All,
             ObjectNames::Names(names) => {
                 let names = names
-                    .into_iter()
+                    .iter()
                     .map(|x| x.trim().to_lowercase())
                     .filter(|x| !x.is_empty())
                     .collect();

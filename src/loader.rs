@@ -289,7 +289,7 @@ fn process_loaded_maps(
 }
 
 fn remove_map_by_asset_id(
-    mut commands: &mut Commands,
+    commands: &mut Commands,
     tile_storage_query: &Query<(Entity, &TileStorage)>,
     map_query: &mut Query<(
         Entity,
@@ -310,7 +310,7 @@ fn remove_map_by_asset_id(
             continue;
         }
 
-        remove_layers(&mut commands, tile_storage_query, &mut layer_storage);
+        remove_layers(commands, tile_storage_query, &mut layer_storage);
     }
 
     // Also manually despawn layers for this map.
@@ -344,7 +344,7 @@ fn remove_layers(
 }
 
 fn load_map_by_asset_id(
-    mut commands: &mut Commands,
+    commands: &mut Commands,
     maps: &mut ResMut<Assets<TiledMap>>,
     tile_storage_query: &Query<(Entity, &TileStorage)>,
     map_query: &mut Query<(
@@ -365,9 +365,9 @@ fn load_map_by_asset_id(
         }
 
         if let Some(tiled_map) = maps.get(map_handle) {
-            remove_layers(&mut commands, tile_storage_query, &mut layer_storage);
+            remove_layers(commands, tile_storage_query, &mut layer_storage);
             load_map(
-                &mut commands,
+                commands,
                 &mut layer_storage,
                 map_entity,
                 map_handle,
@@ -381,7 +381,7 @@ fn load_map_by_asset_id(
 
 #[allow(unused_variables)]
 fn load_map(
-    mut commands: &mut Commands,
+    commands: &mut Commands,
     layer_storage: &mut TiledLayersStorage,
     map_entity: Entity,
     map_handle: &Handle<TiledMap>,
@@ -486,11 +486,11 @@ fn load_map(
                     commands.entity(layer_entity).insert(TiledMapTileLayer);
                     let tile_storage = match tile_layer {
                         tiled::TileLayer::Finite(layer_data) => load_finite_tiles(
-                            &mut commands,
+                            commands,
                             layer_entity,
                             map_size,
                             grid_size,
-                            &tiled_map,
+                            tiled_map,
                             &layer_data,
                             tileset_index,
                             tileset.as_ref(),
@@ -500,9 +500,9 @@ fn load_map(
                         ),
                         tiled::TileLayer::Infinite(layer_data) => {
                             let (storage, new_map_size, origin) = load_infinite_tiles(
-                                &mut commands,
+                                commands,
                                 layer_entity,
-                                &tiled_map,
+                                tiled_map,
                                 grid_size,
                                 &layer_data,
                                 tileset_index,
@@ -579,7 +579,7 @@ fn load_map(
     }
 }
 
-#[allow(unused)]
+#[allow(unused, clippy::too_many_arguments)]
 fn load_finite_tiles(
     commands: &mut Commands,
     layer_entity: Entity,
@@ -674,7 +674,7 @@ fn load_finite_tiles(
     tile_storage
 }
 
-#[allow(unused)]
+#[allow(unused, clippy::too_many_arguments)]
 fn load_infinite_tiles(
     commands: &mut Commands,
     layer_entity: Entity,
@@ -712,8 +712,8 @@ fn load_infinite_tiles(
 
     // Recalculate map size based on the top left and bottom right coordinates.
     let map_size = TilemapSize {
-        x: (bottomright_x - topleft_x + 1) as u32 * ChunkData::WIDTH as u32,
-        y: (bottomright_y - topleft_y + 1) as u32 * ChunkData::HEIGHT as u32,
+        x: (bottomright_x - topleft_x + 1) as u32 * ChunkData::WIDTH,
+        y: (bottomright_y - topleft_y + 1) as u32 * ChunkData::HEIGHT,
     };
     log::info!("map size: {:?}", map_size);
     let origin = (
@@ -728,8 +728,8 @@ fn load_infinite_tiles(
         // such that the top-left chunk is at (0, 0).
         let chunk_pos_mapped = (chunk_pos.0 - topleft_x, chunk_pos.1 - topleft_y);
 
-        for x in 0..ChunkData::WIDTH as u32 {
-            for y in 0..ChunkData::HEIGHT as u32 {
+        for x in 0..ChunkData::WIDTH {
+            for y in 0..ChunkData::HEIGHT {
                 // Invert y to match bevy coordinates.
                 let layer_tile = match chunk.get_tile(x as i32, y as i32) {
                     Some(t) => t,
