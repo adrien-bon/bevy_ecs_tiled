@@ -427,10 +427,15 @@ fn load_map(
             y: tileset.spacing as f32,
         };
 
+        // Order of the differents layers in the .TMX file is important:
+        // a layer appearing last in the .TMX should appear "on top" of previous layers
+        let mut offset_z = 0.;
+
         // Once materials have been created/added we need to then create the layers.
         for (layer_index, layer) in tiled_map.map.layers().enumerate() {
             let mut offset_x = layer.offset_x;
             let mut offset_y = layer.offset_y;
+            offset_z += 100.;
 
             let mut map_size = TilemapSize {
                 x: tiled_map.map.width,
@@ -529,7 +534,7 @@ fn load_map(
                             texture: tilemap_texture.clone(),
                             tile_size,
                             spacing: tile_spacing,
-                            transform: Transform::from_xyz(offset_x, -offset_y, 0.0),
+                            transform: Transform::from_xyz(offset_x, -offset_y, offset_z),
                             map_type,
                             render_settings: *render_settings,
                             ..Default::default()
