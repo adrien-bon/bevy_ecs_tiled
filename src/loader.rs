@@ -820,34 +820,31 @@ fn load_infinite_tiles(
 }
 
 fn get_animated_tile(tile: Tile) -> Option<AnimatedTile> {
-    if let Some(animation_data) = &tile.animation {
-        let mut previous_tile_id = None;
-        let duration = animation_data.iter().next().unwrap().duration;
+    let Some(animation_data) = &tile.animation else {
+        return None;
+    };
+    let mut previous_tile_id = None;
+    let first_tile = animation_data.iter().next()?;
+    let last_tile = animation_data.iter().last()?;
 
-        // Current limitations from bevy_ecs_tilemap
-        for frame in animation_data {
-            if frame.duration != duration {
-                log::warn!(
-                    "Animated tile with non constant frame duration is currently not supported"
-                );
+    // Sanity checks: current limitations from bevy_ecs_tilemap
+    for frame in animation_data {
+        if frame.duration != first_tile.duration {
+            log::warn!("Animated tile with non constant frame duration is currently not supported");
+            return None;
+        }
+        if let Some(id) = previous_tile_id {
+            if frame.tile_id != id + 1 {
+                log::warn!("Animated tile with non-aligned frame tiles is currently not supported");
                 return None;
             }
-            if let Some(id) = previous_tile_id {
-                if frame.tile_id != id + 1 {
-                    log::warn!(
-                        "Animated tile with non-aligned frame tiles is currently not supported"
-                    );
-                    return None;
-                }
-            }
-            previous_tile_id = Some(frame.tile_id);
         }
-
-        return Some(AnimatedTile {
-            start: animation_data.iter().next().unwrap().tile_id,
-            end: animation_data.iter().last().unwrap().tile_id,
-            speed: 1000. / duration as f32, // duration is in ms and we want a 'frame per second' speed
-        });
+        previous_tile_id = Some(frame.tile_id);
     }
-    None
+
+    Some(AnimatedTile {
+        start: first_tile.tile_id,
+        end: last_tile.tile_id,
+        speed: 1000. / first_tile.duration as f32, // duration is in ms and we want a 'frames per second' speed
+    })
 }
