@@ -99,7 +99,7 @@ fn handle_unload(
         // `TiledMap` asset is removed.
         //
         // However, typically you would remove the map entity instead.
-        let handles: Vec<_> = maps.iter().map(|(handle, _)| handle.clone()).collect();
+        let handles: Vec<_> = maps.iter().map(|(handle, _)| handle).collect();
         for handle in handles {
             // This will cause the map to unload.
             maps.remove(handle);
