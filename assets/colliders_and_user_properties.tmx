@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="20" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="3" nextobjectid="6">
+ <tileset firstgid="1" source="Tileset1.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="20" height="20">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,6,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,6,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,6,6,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,
+0,6,6,3,3,3,3,0,0,0,0,0,0,4,4,0,0,0,0,0,
+0,6,6,3,3,3,3,1,1,0,0,0,4,4,4,0,0,0,0,0,
+4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,0,0,0,0,0
+</data>
+ </layer>
+ <objectgroup id="2" name="Object Layer 1">
+  <object id="1" name="SquareCollider" type="ColliderComponent" x="364.131" y="434.057" width="36.6689" height="96.3624">
+   <properties>
+    <property name="DamagePerSecond" type="float" value="50"/>
+   </properties>
+  </object>
+  <object id="2" name="RoundCollider" type="ColliderComponent" x="115.976" y="414.444" width="98.068" height="104.89">
+   <properties>
+    <property name="is_visible" type="bool" value="true"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="4" name="PlayerSpawn" type="SpawnBundle" x="256.682" y="567.089">
+   <properties>
+    <property name="SpawnInfos" type="class" propertytype="SpawnInfos">
+     <properties>
+      <property name="Type" propertytype="SpawnType" value="Player"/>
+     </properties>
+    </property>
+   </properties>
+   <point/>
+  </object>
+  <object id="5" name="EnemySpawn" type="SpawnBundle" x="40.9327" y="382.891" width="55.4297" height="57.1352">
+   <properties>
+    <property name="SpawnInfos" type="class" propertytype="SpawnInfos">
+     <properties>
+      <property name="Type" propertytype="SpawnType" value="Enemy"/>
+     </properties>
+    </property>
+   </properties>
+   <ellipse/>
+  </object>
+ </objectgroup>
+</map>

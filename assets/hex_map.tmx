@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.10.2" orientation="hexagonal" renderorder="right-down" width="20" height="20" tilewidth="16" tileheight="16" infinite="0" hexsidelength="8" staggeraxis="y" staggerindex="odd" nextlayerid="3" nextobjectid="1">
+<map version="1.10" tiledversion="1.10.2" orientation="hexagonal" renderorder="right-down" width="20" height="20" tilewidth="16" tileheight="16" infinite="0" hexsidelength="8" staggeraxis="y" staggerindex="odd" nextlayerid="4" nextobjectid="5">
  <tileset firstgid="1" source="drjamgo_hex_16x16.tsx"/>
  <layer id="1" name="TerrainLayer" width="20" height="20">
   <data encoding="csv">
@@ -25,6 +25,27 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
+ <objectgroup id="3" name="Object Layer ">
+  <object id="1" type="SpawnBundle" x="98.0258" y="124.343" width="11.1064" height="7.24328">
+   <properties>
+    <property name="SpawnInfos" type="class" propertytype="SpawnInfos">
+     <properties>
+      <property name="Type" propertytype="SpawnType" value="Player"/>
+     </properties>
+    </property>
+   </properties>
+  </object>
+  <object id="4" type="SpawnBundle" x="180.358" y="147.522" width="9.89915" height="9.65771">
+   <properties>
+    <property name="SpawnInfos" type="class" propertytype="SpawnInfos">
+     <properties>
+      <property name="Type" propertytype="SpawnType" value="Enemy"/>
+     </properties>
+    </property>
+   </properties>
+   <ellipse/>
+  </object>
+ </objectgroup>
  <layer id="2" name="BuildingsLayer" width="20" height="20">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,

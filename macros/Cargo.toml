@@ -1,0 +1,22 @@
+[package]
+edition = "2021"
+name = "bevy_ecs_tiled_macros"
+version = "0.1.0"
+
+authors = ["Adrien Bon"]
+description = "Derive macros for bevy_ecs_tiled"
+homepage = "https://github.com/adrien-bon/bevy_ecs_tiled"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/adrien-bon/bevy_ecs_tiled"
+
+categories = ["game-development"]
+keywords = ["bevy", "tiled", "tilemap", "game", "plugin"]
+
+[dependencies]
+syn = "2.0"
+quote = "1.0"
+proc-macro2 = "1.0"
+
+[lib]
+proc-macro = true
