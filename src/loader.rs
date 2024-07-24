@@ -549,7 +549,7 @@ fn load_map(
                     {
                         if collision_layer_names.contains(&layer.name.trim().to_lowercase()) {
                             crate::physics::rapier::shapes::load_object_layer(
-                                &mut commands,
+                                commands,
                                 &crate::prelude::ObjectNameFilter::All,
                                 layer_entity,
                                 _object_layer,

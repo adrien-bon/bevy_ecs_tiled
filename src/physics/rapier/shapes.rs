@@ -46,14 +46,14 @@ pub(crate) fn insert_tile_colliders(
         collision_object_names,
         tile_entity,
         grid_size,
-        collision.object_data().into_iter().cloned(),
+        collision.object_data().iter().cloned(),
         grid_size.y,
         Vec2::ZERO,
     );
 }
 
 /// Insert shapes as physics colliders.
-pub(crate) fn insert_colliders_from_shapes<'a>(
+pub(crate) fn insert_colliders_from_shapes(
     commands: &mut Commands,
     collision_object_names: &ObjectNameFilter,
     parent_entity: Entity,
