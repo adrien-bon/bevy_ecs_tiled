@@ -827,12 +827,16 @@ fn get_animated_tile(tile: Tile) -> Option<AnimatedTile> {
         // Current limitations from bevy_ecs_tilemap
         for frame in animation_data {
             if frame.duration != duration {
-                log::warn!("Animated tile with non constant frame duration is currently not supported");
+                log::warn!(
+                    "Animated tile with non constant frame duration is currently not supported"
+                );
                 return None;
             }
             if let Some(id) = previous_tile_id {
                 if frame.tile_id != id + 1 {
-                    log::warn!("Animated tile with non-aligned frame tiles is currently not supported");
+                    log::warn!(
+                        "Animated tile with non-aligned frame tiles is currently not supported"
+                    );
                     return None;
                 }
             }
