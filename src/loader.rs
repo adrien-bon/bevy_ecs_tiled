@@ -429,13 +429,17 @@ fn load_map(
 
         // Order of the differents layers in the .TMX file is important:
         // a layer appearing last in the .TMX should appear "on top" of previous layers
-        let mut offset_z = 0.;
+        let offset_z = 0.;
 
         // Once materials have been created/added we need to then create the layers.
         for (layer_index, layer) in tiled_map.map.layers().enumerate() {
             let mut offset_x = layer.offset_x;
             let mut offset_y = layer.offset_y;
-            offset_z += 100.;
+
+            // TODO: GH #7 - Implement layer Z offset.
+            //       Unfortunately this currently affects the rapier physics
+            //       colliders as well (even in 2D), so it's disabled for now.
+            // offset_z += 100.;
 
             let mut map_size = TilemapSize {
                 x: tiled_map.map.width,
