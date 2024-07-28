@@ -25,6 +25,9 @@ physics = []
 rapier = ["bevy_rapier2d", "physics"]
 rapier_debug = ["rapier", "bevy_rapier2d/debug-render-2d"]
 
+# WASM
+wasm = ["bevy_rapier2d/wasm-bindgen", "tiled/wasm"]
+
 [dependencies]
 bevy = "0.14.0"
 bevy_ecs_tilemap = "0.14"
