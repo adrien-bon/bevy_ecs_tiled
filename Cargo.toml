@@ -73,3 +73,7 @@ required-features = ["rapier_debug"]
 
 [[example]]
 name = "hex_map"
+
+[[example]]
+name = "controller_rapier"
+required-features = ["rapier_debug"]

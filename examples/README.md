@@ -10,3 +10,4 @@
 | `finite_rapier` | `rapier_debug` | This example shows a finite orthogonal map with an external tileset and Rapier physics. |
 | `infinite_rapier` | `rapier_debug` | This example shows an infinite orthogonal map with an external tileset and Rapier physics. |
 | `hex_map` | None | This example shows a finite hexagonal map with an external tileset, multiple layers and animated tiles. |
+| `controller_rapier` | `rapier_debug` | This example shows a simple player-controlled object using Rapier physics. |

@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Features
+
+- Add a new example with a simple player-controlled object using Rapier physics
+
 ## v0.3.3
 
 ### Features
