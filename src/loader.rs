@@ -48,7 +48,7 @@ use bevy::{
 use bevy_ecs_tilemap::prelude::*;
 use tiled::{ChunkData, FiniteTileLayer, InfiniteTileLayer, LayerType, Tile, Tileset};
 
-use crate::prelude::TiledMapSettings;
+use crate::prelude::{MapPositioning, TiledMapSettings};
 
 #[derive(Default)]
 pub struct TiledMapPlugin;
@@ -538,7 +538,19 @@ fn load_map(
                             texture: tilemap_texture.clone(),
                             tile_size,
                             spacing: tile_spacing,
-                            transform: Transform::from_xyz(offset_x, -offset_y, offset_z),
+                            transform: match &tiled_settings.map_positioning {
+                                MapPositioning::LayerOffset => {
+                                    Transform::from_xyz(offset_x, -offset_y, offset_z)
+                                }
+                                MapPositioning::Centered => {
+                                    get_tilemap_center_transform(
+                                        &map_size,
+                                        &grid_size,
+                                        &map_type,
+                                        layer_index as f32,
+                                    ) * Transform::from_xyz(offset_x, -offset_y, offset_z)
+                                }
+                            },
                             map_type,
                             render_settings: *render_settings,
                             ..Default::default()
