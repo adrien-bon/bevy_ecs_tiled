@@ -2,7 +2,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/bevy_ecs_tiled)](https://crates.io/crates/bevy_ecs_tiled)
 [![docs](https://docs.rs/bevy_ecs_tiled/badge.svg)](https://docs.rs/bevy_ecs_tiled/)
-[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/stevepryde/bevy_ecs_tiled/blob/main/LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/LICENSE)
 [![Crates.io](https://img.shields.io/crates/d/bevy_ecs_tiled)](https://crates.io/crates/bevy_ecs_tiled)
 [![Following released Bevy versions](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://bevyengine.org/learn/quick-start/plugin-development/#main-branch-tracking)
 
@@ -22,7 +22,7 @@ plus the fix from [this PR](https://github.com/StarArawn/bevy_ecs_tilemap/pull/4
 
 If you can contribute, please do!
 
-If you would like to contribute but don't know where to start, [click here](https://github.com/stevepryde/bevy_ecs_tiled/discussions/1).
+If you would like to contribute but don't know where to start, [click here](https://github.com/adrien-bon/bevy_ecs_tiled/discussions/1).
 
 ## Features
 

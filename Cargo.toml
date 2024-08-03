@@ -3,12 +3,12 @@ edition = "2021"
 name = "bevy_ecs_tiled"
 version = "0.3.3"
 
-authors = ["Steve Pryde <steve@stevepryde.com>"]
+authors = ["Steve Pryde <steve@stevepryde.com>", "Adrien Bon"]
 description = "A Bevy plugin for loading Tiled maps"
-homepage = "https://github.com/stevepryde/bevy_ecs_tiled"
+homepage = "https://github.com/adrien-bon/bevy_ecs_tiled"
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/stevepryde/bevy_ecs_tiled"
+repository = "https://github.com/adrien-bon/bevy_ecs_tiled"
 
 categories = ["game-development"]
 keywords = ["bevy", "tiled", "tilemap", "game", "plugin"]
