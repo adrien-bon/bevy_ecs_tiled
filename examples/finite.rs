@@ -1,4 +1,4 @@
-//! This example shows a finite map with an external tileset.
+//! This example shows a finite orthogonal map with an external tileset.
 
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
@@ -11,8 +11,8 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugins(TilemapPlugin)
         .add_plugins(TiledMapPlugin)
+        .add_plugins(helper::HelperPlugin)
         .add_systems(Startup, startup)
-        .add_systems(Update, helper::movement)
         .run();
 }
 

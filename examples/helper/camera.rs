@@ -28,8 +28,9 @@
 
 use bevy::{input::ButtonInput, math::Vec3, prelude::*, render::camera::Camera};
 
+const MINIMUM_SCALE: f32 = 0.1;
+
 // A simple camera system for moving and zooming the camera.
-#[allow(dead_code)]
 pub fn movement(
     time: Res<Time>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
@@ -62,8 +63,8 @@ pub fn movement(
             ortho.scale -= 0.1;
         }
 
-        if ortho.scale < 0.5 {
-            ortho.scale = 0.5;
+        if ortho.scale < MINIMUM_SCALE {
+            ortho.scale = MINIMUM_SCALE;
         }
 
         let z = transform.translation.z;

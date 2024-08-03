@@ -70,3 +70,6 @@ required-features = ["rapier_debug"]
 [[example]]
 name = "infinite_rapier"
 required-features = ["rapier_debug"]
+
+[[example]]
+name = "hex_map"

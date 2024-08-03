@@ -3,19 +3,17 @@
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 mod helper;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugins(WorldInspectorPlugin::new())
         .add_plugins(TilemapPlugin)
         .add_plugins(TiledMapPlugin)
+        .add_plugins(helper::HelperPlugin)
         .init_state::<MapState>()
         .add_systems(Startup, startup)
-        .add_systems(Update, helper::movement)
         .add_systems(
             Update,
             (

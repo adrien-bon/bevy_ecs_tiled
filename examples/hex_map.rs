@@ -11,8 +11,8 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugins(TilemapPlugin)
         .add_plugins(TiledMapPlugin)
+        .add_plugins(helper::HelperPlugin)
         .add_systems(Startup, startup)
-        .add_systems(Update, helper::movement)
         .run();
 }
 
