@@ -28,6 +28,12 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         tiled_settings: TiledMapSettings {
             // This is the default, but we're setting it explicitly here for clarity.
             collision_object_names: ObjectNames::All,
+            // By default, colliders are added without associated RigidBody
+            // for this example, let's add a RigidBody::KinematicPositionBased
+            // you can also add any physic related component using this mecanism
+            collider_callback: |entity_commands| {
+                entity_commands.insert(RigidBody::KinematicPositionBased);
+            },
             ..default()
         },
         ..Default::default()

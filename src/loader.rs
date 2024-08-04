@@ -400,9 +400,6 @@ fn load_map(
         .insert(TiledMapMarker);
 
     #[cfg(feature = "rapier")]
-    let collision_object_names =
-        crate::prelude::ObjectNameFilter::from(&tiled_settings.collision_object_names);
-    #[cfg(feature = "rapier")]
     let collision_layer_names =
         crate::prelude::ObjectNameFilter::from(&tiled_settings.collision_layer_names);
 
@@ -429,17 +426,13 @@ fn load_map(
 
         // Order of the differents layers in the .TMX file is important:
         // a layer appearing last in the .TMX should appear "on top" of previous layers
-        let offset_z = 0.;
+        let mut offset_z = 0.;
 
         // Once materials have been created/added we need to then create the layers.
         for (layer_index, layer) in tiled_map.map.layers().enumerate() {
             let mut offset_x = layer.offset_x;
             let mut offset_y = layer.offset_y;
-
-            // TODO: GH #7 - Implement layer Z offset.
-            //       Unfortunately this currently affects the rapier physics
-            //       colliders as well (even in 2D), so it's disabled for now.
-            // offset_z += 100.;
+            offset_z += 100.;
 
             let mut map_size = TilemapSize {
                 x: tiled_map.map.width,
@@ -504,8 +497,7 @@ fn load_map(
                             tileset_index,
                             tileset.as_ref(),
                             tilemap_texture,
-                            #[cfg(feature = "rapier")]
-                            &collision_object_names,
+                            tiled_settings,
                         ),
                         tiled::TileLayer::Infinite(layer_data) => {
                             let (storage, new_map_size, origin) = load_infinite_tiles(
@@ -517,8 +509,7 @@ fn load_map(
                                 tileset_index,
                                 tileset.as_ref(),
                                 tilemap_texture,
-                                #[cfg(feature = "rapier")]
-                                &collision_object_names,
+                                tiled_settings,
                             );
                             map_size = new_map_size;
                             // log::info!("Infinite layer origin: {:?}", origin);
@@ -568,13 +559,14 @@ fn load_map(
                                 commands,
                                 &crate::prelude::ObjectNameFilter::All,
                                 layer_entity,
-                                _object_layer,
+                                &_object_layer,
                                 map_size,
                                 grid_size,
                                 bevy::math::Vec2 {
                                     x: offset_x,
                                     y: offset_y,
                                 },
+                                &tiled_settings.collider_callback,
                             );
                         }
                     }
@@ -611,8 +603,13 @@ fn load_finite_tiles(
     tileset_index: usize,
     tileset: &Tileset,
     tilemap_texture: &TilemapTexture,
-    #[cfg(feature = "rapier")] collision_object_names: &crate::prelude::ObjectNameFilter,
+    tiled_settings: &TiledMapSettings,
 ) -> TileStorage {
+
+    #[cfg(feature = "rapier")]
+    let collision_object_names =
+        crate::prelude::ObjectNameFilter::from(&tiled_settings.collision_object_names);
+
     let mut tile_storage = TileStorage::empty(map_size);
     for x in 0..map_size.x {
         for y in 0..map_size.y {
@@ -683,10 +680,11 @@ fn load_finite_tiles(
                     if let Some(collision) = tile.collision.as_ref() {
                         crate::physics::rapier::shapes::insert_tile_colliders(
                             commands,
-                            collision_object_names,
+                            &collision_object_names,
                             tile_entity,
                             grid_size,
                             collision,
+                            &tiled_settings.collider_callback,
                         );
                     }
                 }
@@ -707,7 +705,7 @@ fn load_infinite_tiles(
     tileset_index: usize,
     tileset: &Tileset,
     tilemap_texture: &TilemapTexture,
-    #[cfg(feature = "rapier")] collision_object_names: &crate::prelude::ObjectNameFilter,
+    tiled_settings: &TiledMapSettings,
 ) -> (TileStorage, TilemapSize, (f32, f32)) {
     // Determine top left coordinate so we can offset the map.
     let (topleft_x, topleft_y) = infinite_layer
@@ -729,6 +727,10 @@ fn load_infinite_tiles(
         bottomright_x,
         bottomright_y
     );
+
+    #[cfg(feature = "rapier")]
+    let collision_object_names =
+        crate::prelude::ObjectNameFilter::from(&tiled_settings.collision_object_names);
 
     // TODO: Provide a way to surface the origin point (the point that was 0,0 in Tiled)
     //       to the caller.
@@ -820,10 +822,11 @@ fn load_infinite_tiles(
                         if let Some(collision) = tile.collision.as_ref() {
                             crate::physics::rapier::shapes::insert_tile_colliders(
                                 commands,
-                                collision_object_names,
+                                &collision_object_names,
                                 tile_entity,
                                 grid_size,
                                 collision,
+                                &tiled_settings.collider_callback,
                             );
                         }
                     }
