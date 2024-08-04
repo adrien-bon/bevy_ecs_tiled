@@ -5,6 +5,8 @@
 ### Features
 
 - Add a new example with a simple player-controlled object using Rapier physics
+- Properly handle layers Z-order (see #4, #7 and #9)
+- Provide a callback to attach additional components to tiles / objects colliders to improve collisions detection (#7 and #9)
 
 ## v0.3.3
 

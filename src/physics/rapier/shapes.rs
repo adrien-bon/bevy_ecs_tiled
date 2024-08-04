@@ -3,7 +3,7 @@ use bevy_ecs_tilemap::prelude::*;
 use bevy_rapier2d::prelude::*;
 use tiled::{ObjectData, ObjectLayer, ObjectLayerData};
 
-use crate::names::ObjectNameFilter;
+use crate::{names::ObjectNameFilter, prelude::ColliderCallback};
 
 /// Load shapes from an object layer as physics colliders.
 ///
@@ -17,10 +17,11 @@ pub(crate) fn load_object_layer(
     commands: &mut Commands,
     collision_object_names: &ObjectNameFilter,
     layer_entity: Entity,
-    object_layer: ObjectLayer,
+    object_layer: &ObjectLayer,
     map_size: TilemapSize,
     grid_size: TilemapGridSize,
     offset: Vec2,
+    collider_callback: &ColliderCallback,
 ) {
     insert_colliders_from_shapes(
         commands,
@@ -30,6 +31,7 @@ pub(crate) fn load_object_layer(
         object_layer.objects().map(|x| (*x).clone()),
         map_size.y as f32 * grid_size.y,
         offset,
+        collider_callback,
     );
 }
 
@@ -39,6 +41,7 @@ pub(crate) fn insert_tile_colliders(
     tile_entity: Entity,
     grid_size: TilemapGridSize,
     collision: &ObjectLayerData,
+    collider_callback: &ColliderCallback,
 ) {
     // commands,
     insert_colliders_from_shapes(
@@ -49,6 +52,7 @@ pub(crate) fn insert_tile_colliders(
         collision.object_data().iter().cloned(),
         grid_size.y,
         Vec2::ZERO,
+        collider_callback,
     );
 }
 
@@ -61,6 +65,7 @@ pub(crate) fn insert_colliders_from_shapes(
     objects: impl Iterator<Item = ObjectData>,
     max_y: f32,
     offset: Vec2,
+    collider_callback: &ColliderCallback,
 ) {
     for object_data in objects {
         if !collision_object_names.contains(&object_data.name.trim().to_lowercase()) {
@@ -133,8 +138,8 @@ pub(crate) fn insert_colliders_from_shapes(
             ..default()
         } * Transform::from_translation(Vec3::new(pos.x, pos.y, 0.));
 
-        commands
-            .spawn((collider, TransformBundle::from_transform(transform)))
-            .set_parent(parent_entity);
+        let mut entity_commands = commands.spawn((collider, TransformBundle::from_transform(transform)));
+        entity_commands.set_parent(parent_entity);
+        collider_callback(&mut entity_commands);
     }
 }
