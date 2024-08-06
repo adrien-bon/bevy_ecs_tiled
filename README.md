@@ -78,6 +78,10 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 |0.13|main@e4f3cc6|branch 0.2|
 |0.12|0.12|0.1|
 
+## Assets credits
+
+- [drjamgo_hex_16x16](https://opengameart.org/content/basic-hex-tile-set-16x16): an hexagonal tileset from [Dr. Jango](https://opengameart.org/users/dr-jamgo), licensed under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
+- [kenney-sketch-desert](https://kenney.nl/assets/sketch-desert): an isometric tileset from [Kenney](https://kenney.nl/), licensed under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 
 ## LICENSE
 

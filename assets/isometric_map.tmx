@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.10.2" orientation="isometric" renderorder="right-down" width="10" height="10" tilewidth="232" tileheight="110" infinite="0" nextlayerid="3" nextobjectid="1">
+ <tileset firstgid="1" source="kenney-sketch-desert.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="10" height="10">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,
+0,2,2,2,2,2,2,2,0,0,
+0,2,2,2,2,2,2,2,0,2,
+0,2,2,2,0,0,0,0,0,2,
+0,3,3,3,0,2,2,2,2,2,
+0,2,2,2,0,0,3,3,3,2,
+0,2,2,2,0,2,2,2,3,2,
+0,2,2,2,0,2,2,2,3,2,
+0,0,0,0,0,2,2,2,3,2
+</data>
+ </layer>
+ <layer id="2" name="Tile Layer 2" width="10" height="10">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,1,0,0,0,0,
+0,0,0,0,5,0,0,0,0,0,
+0,1,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,5,0,0,
+0,0,0,0,4,0,0,0,0,0,
+0,5,0,0,0,0,0,0,0,0,
+0,0,0,0,0,1,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+</map>

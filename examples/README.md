@@ -23,3 +23,4 @@ In most of the examples, you can use the following action keys:
 | `controller_rapier` | `rapier_debug` | This example shows a simple player-controlled object using Rapier physics. |
 | `custom_tile_properties` | `user_properties` | This example shows how to map custom tiles properties from Tiled to Bevy Components. |
 | `user_properties_rapier` | `user_properties`, `rapier_debug` | This example shows how to map custom tiles / objects properties from Tiled to Bevy Components and manually spawn Rapier colliders from them. |
+| `isometric_map`| None | This example shows a finite isometric map with an external tileset. |
