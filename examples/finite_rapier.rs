@@ -28,6 +28,8 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         tiled_settings: TiledMapSettings {
             // This is the default, but we're setting it explicitly here for clarity.
             collision_object_names: ObjectNames::All,
+            // Not related to current example, but center the map
+            map_positioning: MapPositioning::Centered,
             ..default()
         },
         ..Default::default()

@@ -22,6 +22,11 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let map_handle: Handle<TiledMap> = asset_server.load("infinite.tmx");
     commands.spawn(TiledMapBundle {
         tiled_map: map_handle,
+        tiled_settings: TiledMapSettings {
+            // Not related to current example, but center the map
+            map_positioning: MapPositioning::Centered,
+            ..default()
+        },
         ..Default::default()
     });
 }
