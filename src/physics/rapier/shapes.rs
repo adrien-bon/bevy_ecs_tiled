@@ -138,7 +138,8 @@ pub(crate) fn insert_colliders_from_shapes(
             ..default()
         } * Transform::from_translation(Vec3::new(pos.x, pos.y, 0.));
 
-        let mut entity_commands = commands.spawn((collider, TransformBundle::from_transform(transform)));
+        let mut entity_commands =
+            commands.spawn((collider, TransformBundle::from_transform(transform)));
         entity_commands.set_parent(parent_entity);
         collider_callback(&mut entity_commands);
     }

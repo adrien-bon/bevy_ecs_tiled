@@ -605,7 +605,6 @@ fn load_finite_tiles(
     tilemap_texture: &TilemapTexture,
     tiled_settings: &TiledMapSettings,
 ) -> TileStorage {
-
     #[cfg(feature = "rapier")]
     let collision_object_names =
         crate::prelude::ObjectNameFilter::from(&tiled_settings.collision_object_names);
