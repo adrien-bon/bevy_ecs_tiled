@@ -6,23 +6,7 @@
 [![Crates.io](https://img.shields.io/crates/d/bevy_ecs_tiled)](https://crates.io/crates/bevy_ecs_tiled)
 [![Following released Bevy versions](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://bevyengine.org/learn/quick-start/plugin-development/#main-branch-tracking)
 
-Plugin for working with 2D tilemaps created with the Tiled map editor.
-
-## Status
-
-** **EARLY DEVELOPMENT BUT USABLE** **
-
-This crate is currently in a very early state while I build the basics.
-I'm new to Bevy (but not new to Rust or game dev) so I'm learning as I go.
-
-It should be quite usable already, and I plan to follow semver.
-
-The code was originally copied from the Tiled example in `bevy_ecs_tilemap`,
-plus the fix from [this PR](https://github.com/StarArawn/bevy_ecs_tilemap/pull/429).
-
-If you can contribute, please do!
-
-If you would like to contribute but don't know where to start, [click here](https://github.com/adrien-bon/bevy_ecs_tiled/discussions/1).
+Plugin for working with 2D tilemaps created with the [Tiled](https://www.mapeditor.org/) map editor using the [`bevy_ecs_tilemap`](https://github.com/StarArawn/bevy_ecs_tilemap) to perform rendering and so each tile is represented by a Bevy entity.
 
 ## Features
 
@@ -32,6 +16,8 @@ If you would like to contribute but don't know where to start, [click here](http
 - Visibility is inherited: map -> layer -> tile
 - Spawn/despawn
 - Rapier Colliders added from tilesets and object layers (`rapier` feature flag)
+- Animated tiles
+- Map Tiled custom properties to Bevy components (`user_properties` feature flag)
 
 ## Getting started
 
@@ -70,6 +56,8 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 ```
 
+See the [examples](./examples/README.md) for more advanced use cases.
+
 ## Bevy Compatibility
 
 |bevy|bevy_ecs_tilemap|bevy_ecs_tiled|
@@ -82,6 +70,12 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 - [drjamgo_hex_16x16](https://opengameart.org/content/basic-hex-tile-set-16x16): an hexagonal tileset from [Dr. Jango](https://opengameart.org/users/dr-jamgo), licensed under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 - [kenney-sketch-desert](https://kenney.nl/assets/sketch-desert): an isometric tileset from [Kenney](https://kenney.nl/), licensed under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
+
+## Contributing
+
+If you can contribute, please do!
+
+If you would like to contribute but don't know where to start, [read this discussion](https://github.com/adrien-bon/bevy_ecs_tiled/discussions/1).
 
 ## LICENSE
 
