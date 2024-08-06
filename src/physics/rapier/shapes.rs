@@ -13,6 +13,7 @@ use crate::{names::ObjectNameFilter, prelude::ColliderCallback};
 ///
 /// Collision layer names are case-insensitive and leading/trailing
 /// whitespace is stripped out.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn load_object_layer(
     commands: &mut Commands,
     collision_object_names: &ObjectNameFilter,
@@ -57,6 +58,7 @@ pub(crate) fn insert_tile_colliders(
 }
 
 /// Insert shapes as physics colliders.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn insert_colliders_from_shapes(
     commands: &mut Commands,
     collision_object_names: &ObjectNameFilter,
