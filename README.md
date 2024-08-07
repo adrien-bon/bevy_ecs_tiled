@@ -7,17 +7,19 @@
 [![Following released Bevy versions](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://bevyengine.org/learn/quick-start/plugin-development/#main-branch-tracking)
 
 Plugin for working with 2D tilemaps created with the [Tiled](https://www.mapeditor.org/) map editor using the [`bevy_ecs_tilemap`](https://github.com/StarArawn/bevy_ecs_tilemap) to perform rendering and so each tile is represented by a Bevy entity.
+Layers are children of the tilemap entity, tiles and objects are children of layers. Visibility is inherited: map -> layer -> tile
+
+![screenshot](./res/screenshot.gif)
 
 ## Features
 
+- Orthogonal, isometric and hexagonal maps
 - Finite and infinite maps
 - Embedded and separate tileset
-- Layers are children of the tilemap entity. Tiles are children of layers.
-- Visibility is inherited: map -> layer -> tile
-- Spawn/despawn
-- Rapier Colliders added from tilesets and object layers (`rapier` feature flag)
+- Easily spawn / despawn maps
 - Animated tiles
-- Map Tiled custom properties to Bevy components (`user_properties` feature flag)
+- Rapier Colliders added from tilesets and object layers (`rapier` feature flag)
+- Tiled custom properties mapped to Bevy components (`user_properties` feature flag)
 
 ## Getting started
 
@@ -68,6 +70,7 @@ See the [examples](./examples/README.md) for more advanced use cases.
 
 ## Assets credits
 
+- [colored tiles](./assets/tiles/): orthogonal tileset from [Steve Pryde](https://github.com/stevepryde), licensed under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 - [drjamgo_hex_16x16](https://opengameart.org/content/basic-hex-tile-set-16x16): an hexagonal tileset from [Dr. Jango](https://opengameart.org/users/dr-jamgo), licensed under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 - [kenney-sketch-desert](https://kenney.nl/assets/sketch-desert): an isometric tileset from [Kenney](https://kenney.nl/), licensed under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 
