@@ -499,6 +499,11 @@ fn load_map(
                         }
                     };
 
+                    let offset_transform = Transform::from_xyz(
+                        offset_x + grid_size.x / 2.,
+                        -offset_y + grid_size.y / 2.,
+                        offset_z,
+                    );
                     commands
                         .entity(layer_entity)
                         .insert(Name::new(format!("TiledMapTileLayer({})", layer.name)))
@@ -510,16 +515,14 @@ fn load_map(
                             tile_size,
                             spacing: tile_spacing,
                             transform: match &tiled_settings.map_positioning {
-                                MapPositioning::LayerOffset => {
-                                    Transform::from_xyz(offset_x, -offset_y, offset_z)
-                                }
+                                MapPositioning::LayerOffset => offset_transform,
                                 MapPositioning::Centered => {
                                     get_tilemap_center_transform(
                                         &map_size,
                                         &grid_size,
                                         &map_type,
                                         layer_index as f32,
-                                    ) * Transform::from_xyz(offset_x, -offset_y, offset_z)
+                                    ) * offset_transform
                                 }
                             },
                             map_type,
@@ -528,13 +531,29 @@ fn load_map(
                         });
                 }
                 LayerType::Objects(object_layer) => {
+                    let offset_transform = Transform::from_xyz(offset_x, -offset_y, offset_z);
                     commands
                         .entity(layer_entity)
-                        .insert(Name::new(format!("TiledMapObjectLayer({})", layer.name)));
+                        .insert(Name::new(format!("TiledMapObjectLayer({})", layer.name)))
+                        .insert(match &tiled_settings.map_positioning {
+                            MapPositioning::LayerOffset => offset_transform,
+                            MapPositioning::Centered => {
+                                get_tilemap_center_transform(
+                                    &map_size,
+                                    &grid_size,
+                                    &map_type,
+                                    layer_index as f32,
+                                ) * offset_transform
+                            }
+                        });
 
                     for object_data in object_layer.objects() {
                         let _object_entity = commands
-                            .spawn(TransformBundle::default())
+                            .spawn(TransformBundle::from_transform(Transform::from_xyz(
+                                object_data.x,
+                                map_size.y as f32 * grid_size.y - object_data.y,
+                                0.,
+                            )))
                             .insert(Name::new(format!("Object({})", object_data.name)))
                             .set_parent(layer_entity)
                             .id();
@@ -545,13 +564,7 @@ fn load_map(
                                 insert_object_colliders(
                                     commands,
                                     _object_entity,
-                                    &map_size,
-                                    &grid_size,
                                     &object_data,
-                                    bevy::math::Vec2 {
-                                        x: offset_x,
-                                        y: offset_y,
-                                    },
                                     tiled_settings.collider_callback,
                                 );
                             }
@@ -565,12 +578,7 @@ fn load_map(
                                     &TiledObjectCreated {
                                         entity: _object_entity,
                                         object_data: object_data.deref().clone(),
-                                        offset: bevy::math::Vec2 {
-                                            x: offset_x,
-                                            y: offset_y,
-                                        },
                                         map_size,
-                                        grid_size,
                                     },
                                 );
                             } else {

@@ -9,9 +9,7 @@ use crate::prelude::*;
 pub struct TiledObjectCreated {
     pub entity: Entity,
     pub object_data: ObjectData,
-    pub offset: bevy::math::Vec2,
     pub map_size: TilemapSize,
-    pub grid_size: TilemapGridSize,
 }
 
 #[derive(Event, Clone, Debug)]
@@ -32,10 +30,7 @@ impl TiledObjectCreated {
         insert_object_colliders(
             &mut commands,
             self.entity,
-            &self.map_size,
-            &self.grid_size,
             &self.object_data,
-            self.offset,
             collider_callback,
         )
     }
