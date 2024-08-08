@@ -10,6 +10,10 @@
 - Provide a callback to attach additional components to tiles / objects colliders to improve collisions detection (#7 and #9)
 - New feature flag: `user_properties`, map Tiled user properties on tiles and objects to Bevy components (#5 and #10)
 
+### Bugfixes
+
+- Fix bad positioning of objects collider when using MapPositioning::Centered (#11)
+
 ## v0.3.3
 
 ### Features
