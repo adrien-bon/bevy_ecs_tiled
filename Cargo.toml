@@ -90,3 +90,6 @@ required-features = ["user_properties"]
 [[example]]
 name = "user_properties_rapier"
 required-features = ["user_properties","rapier_debug"]
+
+[[example]]
+name = "isometric_map"
