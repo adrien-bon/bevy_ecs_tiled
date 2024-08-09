@@ -12,6 +12,7 @@ repository = "https://github.com/adrien-bon/bevy_ecs_tiled"
 
 categories = ["game-development"]
 keywords = ["bevy", "tiled", "tilemap", "game", "plugin"]
+exclude = ["assets/*", "res/*"]
 
 [features]
 default = ["render"]
