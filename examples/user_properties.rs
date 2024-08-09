@@ -1,4 +1,4 @@
-//! This example shows how to map custom tiles / objects properties from Tiled to Bevy Components.
+//! This example shows how to map custom tiles and objects properties from Tiled to Bevy Components.
 
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;

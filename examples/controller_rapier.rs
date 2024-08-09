@@ -1,4 +1,4 @@
-//! This example shows a simple player-controlled object using Rapier physics.
+//! This example shows a simple player-controlled object using Rapier physics. You can move the object using arrow keys.
 
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
