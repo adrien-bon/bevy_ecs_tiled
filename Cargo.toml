@@ -83,6 +83,14 @@ name = "infinite_rapier"
 required-features = ["rapier_debug"]
 
 [[example]]
+name = "finite_avian"
+required-features = ["avian"]
+
+[[example]]
+name = "infinite_avian"
+required-features = ["avian"]
+
+[[example]]
 name = "hex_map"
 
 [[example]]
@@ -90,12 +98,20 @@ name = "controller_rapier"
 required-features = ["rapier_debug"]
 
 [[example]]
+name = "controller_avian"
+required-features = ["avian"]
+
+[[example]]
 name = "user_properties"
 required-features = ["user_properties"]
 
 [[example]]
 name = "user_properties_rapier"
-required-features = ["user_properties","rapier_debug"]
+required-features = ["user_properties", "rapier_debug"]
+
+[[example]]
+name = "user_properties_avian"
+required-features = ["user_properties", "avian"]
 
 [[example]]
 name = "isometric_map"
