@@ -1,12 +1,12 @@
+use avian2d::{math::Vector, prelude::*};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
-use bevy_rapier2d::prelude::*;
 use tiled::ObjectData;
 
 use crate::prelude::*;
 
 /// Insert shapes as physics colliders.
-pub(crate) fn insert_rapier_colliders_from_shapes(
+pub(crate) fn insert_avian_colliders_from_shapes(
     commands: &mut Commands,
     parent_entity: Entity,
     grid_size: Option<&TilemapGridSize>,
@@ -17,41 +17,28 @@ pub(crate) fn insert_rapier_colliders_from_shapes(
     let (pos, collider) = match &object_data.shape {
         tiled::ObjectShape::Rect { width, height } => {
             // The origin is the top-left corner of the rectangle when not rotated.
-            let shape = Collider::cuboid(width / 2., height / 2.);
-            let pos = Vect::new(width / 2., -height / 2.);
+            let shape = Collider::rectangle(*width, *height);
+            let pos = Vector::new(width / 2., -height / 2.);
             (pos, shape)
         }
         tiled::ObjectShape::Ellipse { width, height } => {
-            let shape = if width > height {
-                Collider::capsule(
-                    Vec2::new((-width + height) / 2., 0.),
-                    Vec2::new((width - height) / 2., 0.),
-                    height / 2.,
-                )
-            } else {
-                Collider::capsule(
-                    Vec2::new(0., (-height + width) / 2.),
-                    Vec2::new(0., (height - width) / 2.),
-                    width / 2.,
-                )
-            };
-
-            let pos = Vect::new(width / 2., -height / 2.);
+            let shape = Collider::ellipse(width / 2., height / 2.);
+            let pos = Vector::new(width / 2., -height / 2.);
             (pos, shape)
         }
         tiled::ObjectShape::Polyline { points } => {
             let shape = Collider::polyline(
-                points.iter().map(|(x, y)| Vect::new(*x, -*y)).collect(),
+                points.iter().map(|(x, y)| Vector::new(*x, -*y)).collect(),
                 None,
             );
-            (Vect::ZERO, shape)
+            (Vector::ZERO, shape)
         }
         tiled::ObjectShape::Polygon { points } => {
             let shape = match Collider::convex_hull(
-                &points
+                points
                     .iter()
-                    .map(|(x, y)| Vect::new(*x, -*y))
-                    .collect::<Vec<_>>(),
+                    .map(|(x, y)| Vector::new(*x, -*y))
+                    .collect::<Vec<Vector>>(),
             ) {
                 Some(x) => x,
                 None => {
@@ -59,7 +46,7 @@ pub(crate) fn insert_rapier_colliders_from_shapes(
                 }
             };
 
-            (Vect::ZERO, shape)
+            (Vector::ZERO, shape)
         }
         _ => {
             return;

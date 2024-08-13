@@ -1,9 +1,9 @@
-//! This example shows how to map custom tiles / objects properties from Tiled to Bevy Components and manually spawn Rapier colliders from them.
+//! This example shows how to map custom tiles / objects properties from Tiled to Bevy Components and manually spawn Avian colliders from them.
 
+use avian2d::prelude::*;
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
-use bevy_rapier2d::prelude::*;
 
 mod helper;
 
@@ -13,8 +13,8 @@ fn main() {
         .add_plugins(TilemapPlugin)
         .add_plugins(TiledMapPlugin)
         .add_plugins(helper::HelperPlugin)
-        .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
-        .add_plugins(RapierDebugRenderPlugin::default())
+        .add_plugins(PhysicsPlugins::default().with_length_unit(100.0))
+        .add_plugins(PhysicsDebugPlugin::default())
         .add_systems(Startup, startup)
         .add_systems(Update, display_custom_tiles)
         .add_systems(Update, display_objects)

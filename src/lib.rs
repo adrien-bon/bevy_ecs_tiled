@@ -13,7 +13,7 @@ pub mod prelude {
     pub use crate::loader::*;
     pub use crate::names::*;
     #[cfg(feature = "physics")]
-    pub use crate::physics::prelude::*;
+    pub use crate::physics::*;
     #[cfg(feature = "user_properties")]
     pub use crate::properties::prelude::*;
 }

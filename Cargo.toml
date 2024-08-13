@@ -26,6 +26,7 @@ serde = ["bevy_ecs_tilemap/serde"]
 physics = []
 rapier = ["bevy_rapier2d", "physics"]
 rapier_debug = ["rapier", "bevy_rapier2d/debug-render-2d"]
+avian = ["dep:avian2d", "physics"]
 
 # WASM
 wasm = ["bevy_rapier2d/wasm-bindgen", "tiled/wasm"]
@@ -42,16 +43,20 @@ thiserror = "1.0.62"
 tiled = "0.12.0"
 
 # Optional dependencies, enabled via features.
-bevy_rapier2d = {version = "0.27.0", optional = true}
+bevy_rapier2d = { version = "0.27.0", optional = true }
+avian2d = { version = "0.1.1", optional = true }
 bevy_ecs_tiled_macros = { version = "0.1.0", optional = true, path = "macros" }
 
 [target.'cfg(target_family = "wasm")'.dependencies]
-bevy_rapier2d = {version = "0.27.0", features = ["wasm-bindgen"], optional = true}
-tiled = {version = "0.12.0", features = ["wasm"]}
+bevy_rapier2d = { version = "0.27.0", features = [
+    "wasm-bindgen",
+], optional = true }
+tiled = { version = "0.12.0", features = ["wasm"] }
 
 [dev-dependencies]
 bevy-inspector-egui = "0.25.1"
-bevy_rapier2d = {version = "0.27.0", features = ["debug-render-2d"]}
+bevy_rapier2d = { version = "0.27.0", features = ["debug-render-2d"] }
+avian2d = "0.1.1"
 log = "0.4"
 
 [[example]]
@@ -78,6 +83,14 @@ name = "infinite_rapier"
 required-features = ["rapier_debug"]
 
 [[example]]
+name = "finite_avian"
+required-features = ["avian"]
+
+[[example]]
+name = "infinite_avian"
+required-features = ["avian"]
+
+[[example]]
 name = "hex_map"
 
 [[example]]
@@ -85,12 +98,20 @@ name = "controller_rapier"
 required-features = ["rapier_debug"]
 
 [[example]]
+name = "controller_avian"
+required-features = ["avian"]
+
+[[example]]
 name = "user_properties"
 required-features = ["user_properties"]
 
 [[example]]
 name = "user_properties_rapier"
-required-features = ["user_properties","rapier_debug"]
+required-features = ["user_properties", "rapier_debug"]
+
+[[example]]
+name = "user_properties_avian"
+required-features = ["user_properties", "avian"]
 
 [[example]]
 name = "isometric_map"
