@@ -2,6 +2,12 @@
 
 ## [unreleased]
 
+## v0.3.5
+
+### Features
+
+- Add support for Avian2D Colliders added from tilesets and object layers (`avian` feature flag) (#14 and #20)
+
 ## v0.3.4
 
 ### Features
