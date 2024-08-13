@@ -377,7 +377,7 @@ fn load_map(
         )))
         .insert(TiledMapMarker);
 
-    #[cfg(feature = "rapier")]
+    #[cfg(any(feature = "rapier", feature = "avian"))]
     let collision_layer_names =
         crate::prelude::ObjectNameFilter::from(&tiled_settings.collision_layer_names);
 
@@ -558,7 +558,7 @@ fn load_map(
                             .set_parent(layer_entity)
                             .id();
 
-                        #[cfg(feature = "rapier")]
+                        #[cfg(any(feature = "rapier", feature = "avian"))]
                         {
                             if collision_layer_names.contains(&layer.name.trim().to_lowercase()) {
                                 insert_object_colliders(
@@ -734,7 +734,7 @@ fn load_infinite_tiles_layer(
         bottomright_y
     );
 
-    #[cfg(feature = "rapier")]
+    #[cfg(any(feature = "rapier", feature = "avian"))]
     let collision_object_names =
         crate::prelude::ObjectNameFilter::from(&tiled_settings.collision_object_names);
 
@@ -899,7 +899,7 @@ fn handle_special_tile(
     }
 
     // Handle tiles with collision
-    #[cfg(feature = "rapier")]
+    #[cfg(any(feature = "rapier", feature = "avian"))]
     {
         if let Some(collision) = tile.collision.as_ref() {
             insert_tile_colliders(
