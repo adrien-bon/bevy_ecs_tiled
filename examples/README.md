@@ -24,3 +24,7 @@ In most of the examples, you can use the following action keys:
 | `user_properties` | `user_properties` | This example shows how to map custom tiles and objects properties from Tiled to Bevy Components. |
 | `user_properties_rapier` | `user_properties`, `rapier_debug` | This example shows how to map custom tiles / objects properties from Tiled to Bevy Components and manually spawn Rapier colliders from them. |
 | `isometric_map`| None | This example shows a finite isometric map with an external tileset. |
+| `finite_avian` | `avian` | This example shows a finite orthogonal map with an external tileset and Avian2D physics. |
+| `infinite_avian` | `avian` | This example shows an infinite orthogonal map with an external tileset and Avian2D physics. |
+| `controller_avian` | `avian` | This example shows a simple player-controlled object using Avian2D physics. You can move the object using arrow keys. |
+| `user_properties_avian` | `user_properties`, `avian` | This example shows how to map custom tiles / objects properties from Tiled to Bevy Components and manually spawn Avian colliders from them. |
