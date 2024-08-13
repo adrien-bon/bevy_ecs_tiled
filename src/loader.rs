@@ -39,6 +39,9 @@ use bevy::{
     utils::HashMap,
 };
 
+#[cfg(feature = "physics")]
+use crate::physics::{insert_object_colliders, insert_tile_colliders};
+
 use crate::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use tiled::{ChunkData, FiniteTileLayer, InfiniteTileLayer, LayerType, Tile};

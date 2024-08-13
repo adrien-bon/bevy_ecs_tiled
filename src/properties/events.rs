@@ -2,7 +2,9 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use tiled::{ObjectData, TileData};
 
-#[cfg(any(feature = "rapier", feature = "avian"))]
+#[cfg(feature = "physics")]
+use crate::physics::{insert_object_colliders, insert_tile_colliders};
+#[cfg(feature = "physics")]
 use crate::prelude::*;
 
 #[derive(Event, Clone, Debug)]
@@ -32,7 +34,7 @@ impl TiledObjectCreated {
     }
 }
 
-#[cfg(any(feature = "rapier", feature = "avian"))]
+#[cfg(feature = "physics")]
 impl TiledCustomTileCreated {
     pub fn spawn_collider(
         &self,
