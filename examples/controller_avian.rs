@@ -15,6 +15,7 @@ fn main() {
         .add_plugins(helper::HelperPlugin)
         .add_plugins(PhysicsPlugins::default().with_length_unit(100.0))
         .add_plugins(PhysicsDebugPlugin::default())
+        .insert_resource(Gravity(Vec2::NEG_Y * 1000.0))
         .add_systems(Startup, startup)
         .run();
 }
@@ -29,10 +30,10 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             // This is the default, but we're setting it explicitly here for clarity.
             collision_object_names: ObjectNames::All,
             // By default, colliders are added without associated RigidBody
-            // for this example, let's add a RigidBody::Kinematic
+            // for this example, let's add a RigidBody::Static
             // you can also add any physic related component using this mecanism
             collider_callback: |entity_commands| {
-                entity_commands.insert(RigidBody::Kinematic);
+                entity_commands.insert(RigidBody::Static);
             },
             ..default()
         },
