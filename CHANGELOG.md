@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Bugfixes
+
+- Remove the need to add an explicit dependency against 'tiled' crate when using the 'user_properties' feature flag (#21)
+
 ## v0.3.5
 
 ### Features

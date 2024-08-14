@@ -16,4 +16,5 @@ pub mod prelude {
     pub use crate::physics::*;
     #[cfg(feature = "user_properties")]
     pub use crate::properties::prelude::*;
+    pub use tiled;
 }
