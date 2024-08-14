@@ -4,12 +4,6 @@ pub mod rapier;
 #[cfg(feature = "avian")]
 pub mod avian;
 
-#[cfg(feature = "avian")]
-use avian::insert_avian_colliders_from_shapes;
-
-#[cfg(feature = "rapier")]
-use rapier::insert_rapier_colliders_from_shapes;
-
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use tiled::{ObjectData, ObjectLayerData};
@@ -31,7 +25,7 @@ pub fn insert_object_colliders(
     collider_callback: ColliderCallback,
 ) {
     #[cfg(feature = "rapier")]
-    insert_rapier_colliders_from_shapes(
+    rapier::insert_rapier_colliders_from_shapes(
         commands,
         object_entity,
         None,
@@ -40,7 +34,7 @@ pub fn insert_object_colliders(
     );
 
     #[cfg(feature = "avian")]
-    insert_avian_colliders_from_shapes(
+    avian::insert_avian_colliders_from_shapes(
         commands,
         object_entity,
         None,
@@ -60,7 +54,7 @@ pub fn insert_tile_colliders(
     for object_data in collision.object_data().iter() {
         if collision_object_names.contains(&object_data.name.trim().to_lowercase()) {
             #[cfg(feature = "rapier")]
-            insert_rapier_colliders_from_shapes(
+            rapier::insert_rapier_colliders_from_shapes(
                 commands,
                 tile_entity,
                 Some(grid_size),
@@ -69,7 +63,7 @@ pub fn insert_tile_colliders(
             );
 
             #[cfg(feature = "avian")]
-            insert_avian_colliders_from_shapes(
+            avian::insert_avian_colliders_from_shapes(
                 commands,
                 tile_entity,
                 Some(grid_size),
