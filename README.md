@@ -18,7 +18,7 @@ Layers are children of the tilemap entity, tiles and objects are children of lay
 - Embedded and separate tileset
 - Easily spawn / despawn maps
 - Animated tiles
-- Rapier Colliders added from tilesets and object layers (`rapier` feature flag)
+- Rapier and Avian colliders added from tilesets and object layers (`rapier` or `avian` feature flag)
 - Tiled custom properties mapped to Bevy components (`user_properties` feature flag)
 
 ## Getting started
