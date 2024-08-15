@@ -57,12 +57,12 @@ impl Plugin for TiledMapPlugin {
             app.init_non_send_resource::<TiledCustomTileRegistry>();
         }
         app.init_asset::<TiledMap>()
-            .register_asset_loader(TiledLoader)
+            .init_asset_loader::<TiledLoader>()
             .add_systems(Update, process_loaded_maps);
     }
 }
 
-#[derive(TypePath, Asset)]
+#[derive(Debug, TypePath, Asset)]
 pub struct TiledMap {
     pub map: tiled::Map,
 
@@ -103,6 +103,7 @@ impl<'a, 'b> tiled::ResourceReader for BytesResourceReader<'a, 'b> {
     }
 }
 
+#[derive(Default)]
 pub struct TiledLoader;
 
 #[derive(Debug, thiserror::Error)]
@@ -219,18 +220,7 @@ fn process_loaded_maps(
     for event in map_events.read() {
         match event {
             AssetEvent::Added { id } => {
-                log::info!("Map added: {id}");
-                load_map_by_asset_id(
-                    &mut commands,
-                    &mut maps,
-                    &tile_storage_query,
-                    &mut map_query,
-                    id,
-                    #[cfg(feature = "user_properties")]
-                    &objects_registry,
-                    #[cfg(feature = "user_properties")]
-                    &custom_tiles_registry,
-                )
+                log::info!("Map asset added: {id}");
             }
             AssetEvent::Modified { id } => {
                 log::info!("Map changed: {id}");
@@ -316,7 +306,7 @@ fn remove_layers(
     layer_storage.storage.clear();
 }
 
-fn load_map_by_asset_id(
+pub(crate) fn load_map_by_asset_id(
     commands: &mut Commands,
     maps: &mut ResMut<Assets<TiledMap>>,
     tile_storage_query: &Query<(Entity, &TileStorage)>,

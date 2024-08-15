@@ -1,6 +1,7 @@
 pub mod components;
 pub mod loader;
 pub mod names;
+pub mod spawner;
 
 #[cfg(feature = "physics")]
 pub mod physics;

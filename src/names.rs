@@ -1,7 +1,7 @@
 use bevy::utils::HashSet;
 
 /// A filter to specify names of Tiled objects.
-#[derive(Default, Clone)]
+#[derive(Debug, Default, Clone)]
 pub enum ObjectNames {
     #[default]
     All,
