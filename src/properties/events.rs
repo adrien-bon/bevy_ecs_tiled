@@ -22,7 +22,7 @@ pub struct TiledCustomTileCreated {
     pub grid_size: TilemapGridSize,
 }
 
-#[cfg(any(feature = "rapier", feature = "avian"))]
+#[cfg(feature = "physics")]
 impl TiledObjectCreated {
     pub fn spawn_collider(&self, mut commands: Commands, collider_callback: ColliderCallback) {
         insert_object_colliders(
