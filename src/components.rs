@@ -29,6 +29,10 @@ pub struct TiledMapTileLayer;
 #[derive(Component)]
 pub struct TiledMapObjectLayer;
 
+/// Marker component for a Tiled map object.
+#[derive(Component)]
+pub struct TiledMapObject;
+
 /// Marker component for a Tiled map tile.
 #[derive(Component)]
 pub struct TiledMapTile;

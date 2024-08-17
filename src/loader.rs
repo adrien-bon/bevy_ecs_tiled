@@ -558,6 +558,7 @@ fn load_map(
                                 0.,
                             )))
                             .insert(Name::new(format!("Object({})", object_data.name)))
+                            .insert(TiledMapObject)
                             .set_parent(layer_entity)
                             .id();
 

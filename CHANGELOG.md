@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Features
+
+- Add dedicated marker for Tiled objects (#22)
+
 ## v0.3.6
 
 ### Bugfixes
