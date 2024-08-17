@@ -34,7 +34,9 @@ use std::sync::Arc;
 use std::ops::Deref;
 
 use bevy::{
-    asset::{io::Reader, AssetLoader, AssetPath, AsyncReadExt, LoadContext},
+    asset::{
+        io::Reader, AssetLoader, AssetPath, AsyncReadExt, LoadContext, RecursiveDependencyLoadState,
+    },
     prelude::*,
     utils::HashMap,
 };
@@ -58,7 +60,7 @@ impl Plugin for TiledMapPlugin {
         }
         app.init_asset::<TiledMap>()
             .register_asset_loader(TiledLoader)
-            .add_systems(Update, process_loaded_maps);
+            .add_systems(Update, (handle_map_events, process_loaded_maps));
     }
 }
 
@@ -198,53 +200,24 @@ impl AssetLoader for TiledLoader {
     }
 }
 
-/// System to update maps as they are added, changed or removed.
+/// System to update maps as they are changed or removed.
 #[allow(clippy::too_many_arguments)]
-fn process_loaded_maps(
+fn handle_map_events(
     mut commands: Commands,
     mut map_events: EventReader<AssetEvent<TiledMap>>,
-    mut maps: ResMut<Assets<TiledMap>>,
     tile_storage_query: Query<(Entity, &TileStorage)>,
-    mut map_query: Query<(
-        Entity,
-        &Handle<TiledMap>,
-        &mut TiledLayersStorage,
-        &TilemapRenderSettings,
-        &TiledMapSettings,
-    )>,
+    mut map_query: Query<(Entity, &Handle<TiledMap>, &mut TiledLayersStorage)>,
     layer_query: Query<(Entity, &TiledMapLayer), With<TiledMapLayer>>,
-    #[cfg(feature = "user_properties")] objects_registry: NonSend<TiledObjectRegistry>,
-    #[cfg(feature = "user_properties")] custom_tiles_registry: NonSend<TiledCustomTileRegistry>,
 ) {
     for event in map_events.read() {
         match event {
-            AssetEvent::Added { id } => {
-                log::info!("Map added: {id}");
-                load_map_by_asset_id(
-                    &mut commands,
-                    &mut maps,
-                    &tile_storage_query,
-                    &mut map_query,
-                    id,
-                    #[cfg(feature = "user_properties")]
-                    &objects_registry,
-                    #[cfg(feature = "user_properties")]
-                    &custom_tiles_registry,
-                )
-            }
             AssetEvent::Modified { id } => {
                 log::info!("Map changed: {id}");
-                load_map_by_asset_id(
-                    &mut commands,
-                    &mut maps,
-                    &tile_storage_query,
-                    &mut map_query,
-                    id,
-                    #[cfg(feature = "user_properties")]
-                    &objects_registry,
-                    #[cfg(feature = "user_properties")]
-                    &custom_tiles_registry,
-                )
+                for (map_entity, map_handle, _) in map_query.iter() {
+                    if map_handle.id() == *id {
+                        commands.entity(map_entity).insert(RespawnTiledMap);
+                    }
+                }
             }
             AssetEvent::Removed { id } => {
                 log::info!("Map removed: {id}");
@@ -261,21 +234,67 @@ fn process_loaded_maps(
     }
 }
 
+/// System to spawn a map once it has been fully loaded.
+#[allow(clippy::type_complexity)]
+fn process_loaded_maps(
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+    maps: ResMut<Assets<TiledMap>>,
+    tile_storage_query: Query<(Entity, &TileStorage)>,
+    mut map_query: Query<
+        (
+            Entity,
+            &Handle<TiledMap>,
+            &mut TiledLayersStorage,
+            &TilemapRenderSettings,
+            &TiledMapSettings,
+        ),
+        Or<(Changed<Handle<TiledMap>>, With<RespawnTiledMap>)>,
+    >,
+    #[cfg(feature = "user_properties")] objects_registry: NonSend<TiledObjectRegistry>,
+    #[cfg(feature = "user_properties")] custom_tiles_registry: NonSend<TiledCustomTileRegistry>,
+) {
+    for (map_entity, map_handle, mut layer_storage, render_settings, tiled_settings) in
+        map_query.iter_mut()
+    {
+        if let Some(load_state) = asset_server.get_recursive_dependency_load_state(map_handle) {
+            if load_state != RecursiveDependencyLoadState::Loaded {
+                // If not fully loaded yet, insert the 'Respawn' marker so we will to load it at next frame
+                commands.entity(map_entity).insert(RespawnTiledMap);
+                debug!("Map {:?} is not yet loaded...", map_handle.path());
+                continue;
+            }
+            if let Some(tiled_map) = maps.get(map_handle) {
+                info!("Spawning map {:?}", map_handle.path());
+                remove_layers(&mut commands, &tile_storage_query, &mut layer_storage);
+                load_map(
+                    &mut commands,
+                    &mut layer_storage,
+                    map_entity,
+                    map_handle,
+                    tiled_map,
+                    render_settings,
+                    tiled_settings,
+                    #[cfg(feature = "user_properties")]
+                    &objects_registry,
+                    #[cfg(feature = "user_properties")]
+                    &custom_tiles_registry,
+                );
+                commands.entity(map_entity).remove::<RespawnTiledMap>();
+            }
+        }
+    }
+}
+
 fn remove_map_by_asset_id(
     commands: &mut Commands,
     tile_storage_query: &Query<(Entity, &TileStorage)>,
-    map_query: &mut Query<(
-        Entity,
-        &Handle<TiledMap>,
-        &mut TiledLayersStorage,
-        &TilemapRenderSettings,
-        &TiledMapSettings,
-    )>,
+    map_query: &mut Query<(Entity, &Handle<TiledMap>, &mut TiledLayersStorage)>,
     layer_query: &Query<(Entity, &TiledMapLayer), With<TiledMapLayer>>,
     asset_id: &AssetId<TiledMap>,
 ) {
     log::info!("removing map by asset id: {}", asset_id);
-    for (_, map_handle, mut layer_storage, _, _) in map_query.iter_mut() {
+    for (_, map_handle, mut layer_storage) in map_query.iter_mut() {
         log::info!("checking layer to remove: {}", map_handle.id());
 
         // Only process the map that was removed.
@@ -314,48 +333,6 @@ fn remove_layers(
         commands.entity(*layer_entity).despawn_recursive();
     }
     layer_storage.storage.clear();
-}
-
-fn load_map_by_asset_id(
-    commands: &mut Commands,
-    maps: &mut ResMut<Assets<TiledMap>>,
-    tile_storage_query: &Query<(Entity, &TileStorage)>,
-    map_query: &mut Query<(
-        Entity,
-        &Handle<TiledMap>,
-        &mut TiledLayersStorage,
-        &TilemapRenderSettings,
-        &TiledMapSettings,
-    )>,
-    asset_id: &AssetId<TiledMap>,
-    #[cfg(feature = "user_properties")] objects_registry: &TiledObjectRegistry,
-    #[cfg(feature = "user_properties")] custom_tiles_registry: &TiledCustomTileRegistry,
-) {
-    for (map_entity, map_handle, mut layer_storage, render_settings, tiled_settings) in
-        map_query.iter_mut()
-    {
-        // only deal with currently changed map
-        if map_handle.id() != *asset_id {
-            continue;
-        }
-
-        if let Some(tiled_map) = maps.get(map_handle) {
-            remove_layers(commands, tile_storage_query, &mut layer_storage);
-            load_map(
-                commands,
-                &mut layer_storage,
-                map_entity,
-                map_handle,
-                tiled_map,
-                render_settings,
-                tiled_settings,
-                #[cfg(feature = "user_properties")]
-                objects_registry,
-                #[cfg(feature = "user_properties")]
-                custom_tiles_registry,
-            );
-        }
-    }
 }
 
 #[allow(clippy::too_many_arguments, unused_mut)]

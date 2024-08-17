@@ -2,6 +2,10 @@ use crate::prelude::*;
 use bevy::{ecs::system::EntityCommands, prelude::*, utils::HashMap};
 use bevy_ecs_tilemap::prelude::*;
 
+/// Marker component for re-spawning the whole map
+#[derive(Component)]
+pub struct RespawnTiledMap;
+
 // Stores a list of tiled layers.
 #[derive(Component, Default)]
 pub struct TiledLayersStorage {
