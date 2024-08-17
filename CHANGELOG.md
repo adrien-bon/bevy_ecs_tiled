@@ -2,6 +2,12 @@
 
 ## [unreleased]
 
+### Bugfixes
+
+- Do not rely upon `AssetEvent::added()` to actually spawn a map (#23)
+  Instead, query all maps that have a `Changed<Handle<TiledMap>>` or are explictelly marked for reload.
+  This allows to delay actual map spawn from asset loading (hence allowing to pre-load maps).
+
 ## v0.3.6
 
 ### Bugfixes
