@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="10" height="10" tilewidth="32" tileheight="32" infinite="0" nextlayerid="3" nextobjectid="3">
+ <tileset firstgid="1" source="Tileset1.tsx"/>
+ <tileset firstgid="8" source="Tileset2.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="10" height="10">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,
+0,1,0,0,0,0,0,0,0,0,
+0,1,0,0,0,0,0,0,0,0,
+0,1,0,10,10,10,10,0,0,0,
+0,1,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,7,0,0,
+0,0,0,0,0,0,0,7,0,0,
+0,0,12,12,12,12,0,7,0,0,
+0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <objectgroup id="2" name="Object Layer 1">
+  <object id="1" name="My object" x="169.544" y="211.836">
+   <point/>
+  </object>
+ </objectgroup>
+</map>

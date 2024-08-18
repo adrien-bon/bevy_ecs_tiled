@@ -28,3 +28,4 @@ In most of the examples, you can use the following action keys:
 | `infinite_avian` | `avian` | This example shows an infinite orthogonal map with an external tileset and Avian2D physics. |
 | `controller_avian` | `avian` | This example shows a simple player-controlled object using Avian2D physics. You can move the object using arrow keys. |
 | `user_properties_avian` | `user_properties`, `avian` | This example shows how to map custom tiles / objects properties from Tiled to Bevy Components and manually spawn Avian colliders from them. |
+| `multiple_tilesets` | None | This example shows a finite orthogonal map with multiple external tilesets. |
