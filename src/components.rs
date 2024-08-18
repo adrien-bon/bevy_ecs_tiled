@@ -25,13 +25,29 @@ pub struct TiledMapLayer {
 #[derive(Component)]
 pub struct TiledMapTileLayer;
 
+/// Marker component for a Tiled map tile layer for a given tileset.
+#[derive(Component)]
+pub struct TiledMapTileLayerForTileset;
+
 /// Marker component for a Tiled map object layer.
 #[derive(Component)]
 pub struct TiledMapObjectLayer;
 
+/// Marker component for a Tiled map group layer.
+#[derive(Component)]
+pub struct TiledMapGroupLayer;
+
+/// Marker component for a Tiled map image layer.
+#[derive(Component)]
+pub struct TiledMapImageLayer;
+
 /// Marker component for a Tiled map tile.
 #[derive(Component)]
 pub struct TiledMapTile;
+
+/// Marker component for a Tiled map object.
+#[derive(Component)]
+pub struct TiledMapObject;
 
 #[derive(Default, Clone)]
 pub enum MapPositioning {
