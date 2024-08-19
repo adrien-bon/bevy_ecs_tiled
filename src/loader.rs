@@ -44,7 +44,9 @@ use crate::physics::{insert_object_colliders, insert_tile_colliders};
 
 use crate::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
-use tiled::{ChunkData, FiniteTileLayer, InfiniteTileLayer, LayerType, Tile};
+use tiled::{
+    ChunkData, FiniteTileLayer, InfiniteTileLayer, Layer, LayerType, ObjectLayer, Tile, TileLayer,
+};
 
 #[derive(Default)]
 pub struct TiledMapPlugin;
@@ -159,7 +161,7 @@ impl AssetLoader for TiledLoader {
                         for (tile_id, tile) in tileset.tiles() {
                             if let Some(img) = &tile.image {
                                 let asset_path = AssetPath::from(img.source.clone());
-                                log::info!("Loading tile image from {asset_path:?} as image ({tileset_index}, {tile_id})");
+                                log::debug!("Loading tile image from {asset_path:?} as image ({tileset_index}, {tile_id})");
                                 let texture: Handle<Image> = load_context.load(asset_path.clone());
                                 tile_image_offsets
                                     .insert((tileset_index, tile_id), tile_images.len() as u32);
@@ -380,10 +382,148 @@ fn load_map(
         )))
         .insert(TiledMapMarker);
 
-    #[cfg(feature = "physics")]
-    let collision_layer_names =
-        crate::prelude::ObjectNameFilter::from(&tiled_settings.collision_layer_names);
+    let map_type = match tiled_map.map.orientation {
+        tiled::Orientation::Hexagonal => match tiled_map.map.stagger_axis {
+            tiled::StaggerAxis::X if tiled_map.map.stagger_index == tiled::StaggerIndex::Even => {
+                TilemapType::Hexagon(HexCoordSystem::ColumnOdd)
+            }
+            tiled::StaggerAxis::X if tiled_map.map.stagger_index == tiled::StaggerIndex::Odd => {
+                TilemapType::Hexagon(HexCoordSystem::ColumnEven)
+            }
+            tiled::StaggerAxis::Y if tiled_map.map.stagger_index == tiled::StaggerIndex::Even => {
+                TilemapType::Hexagon(HexCoordSystem::RowOdd)
+            }
+            tiled::StaggerAxis::Y if tiled_map.map.stagger_index == tiled::StaggerIndex::Odd => {
+                TilemapType::Hexagon(HexCoordSystem::RowEven)
+            }
+            _ => unreachable!(),
+        },
+        tiled::Orientation::Isometric => TilemapType::Isometric(IsoCoordSystem::Diamond),
+        tiled::Orientation::Staggered => TilemapType::Isometric(IsoCoordSystem::Staggered),
+        tiled::Orientation::Orthogonal => TilemapType::Square,
+    };
 
+    let map_size = TilemapSize {
+        x: tiled_map.map.width,
+        y: tiled_map.map.height,
+    };
+
+    let grid_size = TilemapGridSize {
+        x: tiled_map.map.tile_width as f32,
+        y: tiled_map.map.tile_height as f32,
+    };
+
+    // Order of the differents layers in the .TMX file is important:
+    // a layer appearing last in the .TMX should appear "on top" of previous layers
+    let mut offset_z = 0.;
+
+    // Once materials have been created/added we need to then create the layers.
+    for (layer_index, layer) in tiled_map.map.layers().enumerate() {
+        // Spawn layer entity and attach it to the map entity
+        let layer_entity = commands
+            .spawn((
+                TiledMapLayer {
+                    map_handle_id: map_handle.id(),
+                },
+                TransformBundle::from_transform(Transform::from_xyz(0., 0., 0.)),
+            ))
+            .set_parent(map_entity)
+            .id();
+
+        // Increment Z offset
+        offset_z += 100.;
+
+        // Apply layer offset and MapPositioning setting
+        let offset_transform = Transform::from_xyz(layer.offset_x, -layer.offset_y, offset_z);
+        commands.entity(layer_entity).insert(SpatialBundle {
+            transform: match &tiled_settings.map_positioning {
+                MapPositioning::LayerOffset => offset_transform,
+                MapPositioning::Centered => {
+                    get_tilemap_center_transform(
+                        &map_size,
+                        &grid_size,
+                        &map_type,
+                        layer_index as f32,
+                    ) * offset_transform
+                }
+            },
+            ..default()
+        });
+
+        match layer.layer_type() {
+            LayerType::Tiles(tile_layer) => {
+                commands
+                    .entity(layer_entity)
+                    .insert(Name::new(format!("TiledMapTileLayer({})", layer.name)))
+                    .insert(TiledMapTileLayer);
+                load_tiles_layer(
+                    commands,
+                    layer_entity,
+                    layer,
+                    tile_layer,
+                    tiled_map,
+                    &map_type,
+                    &map_size,
+                    &grid_size,
+                    render_settings,
+                    tiled_settings,
+                    #[cfg(feature = "user_properties")]
+                    custom_tiles_registry,
+                );
+            }
+            LayerType::Objects(object_layer) => {
+                commands
+                    .entity(layer_entity)
+                    .insert(Name::new(format!("TiledMapObjectLayer({})", layer.name)))
+                    .insert(TiledMapObjectLayer);
+                load_objects_layer(
+                    commands,
+                    layer_entity,
+                    layer,
+                    object_layer,
+                    &map_size,
+                    &grid_size,
+                    tiled_settings,
+                    #[cfg(feature = "user_properties")]
+                    objects_registry,
+                );
+            }
+            LayerType::Group(_group_layer) => {
+                commands
+                    .entity(layer_entity)
+                    .insert(Name::new(format!("TiledMapGroupLayer({})", layer.name)))
+                    .insert(TiledMapGroupLayer);
+                // TODO: not implemented yet.
+            }
+            LayerType::Image(_image_layer) => {
+                commands
+                    .entity(layer_entity)
+                    .insert(Name::new(format!("TiledMapImageLayer({})", layer.name)))
+                    .insert(TiledMapImageLayer);
+                // TODO: not implemented yet.
+            }
+        }
+
+        layer_storage
+            .storage
+            .insert(layer_index as u32, layer_entity);
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn load_tiles_layer(
+    commands: &mut Commands,
+    layer_entity: Entity,
+    layer: Layer,
+    tile_layer: TileLayer,
+    tiled_map: &TiledMap,
+    map_type: &TilemapType,
+    map_size: &TilemapSize,
+    grid_size: &TilemapGridSize,
+    render_settings: &TilemapRenderSettings,
+    tiled_settings: &TiledMapSettings,
+    #[cfg(feature = "user_properties")] custom_tiles_registry: &TiledCustomTileRegistry,
+) {
     // The TilemapBundle requires that all tile images come exclusively from a single
     // tiled texture or from a Vec of independent per-tile images. Furthermore, all of
     // the per-tile images must be the same size. Since Tiled allows tiles of mixed
@@ -395,6 +535,8 @@ fn load_map(
             continue;
         };
 
+        let mut map_size = *map_size;
+
         let tile_size = TilemapTileSize {
             x: tileset.tile_width as f32,
             y: tileset.tile_height as f32,
@@ -405,213 +547,75 @@ fn load_map(
             y: tileset.spacing as f32,
         };
 
-        // Order of the differents layers in the .TMX file is important:
-        // a layer appearing last in the .TMX should appear "on top" of previous layers
-        let mut offset_z = 0.;
+        let mut offset_x = 0.;
+        let mut offset_y = 0.;
 
-        // Once materials have been created/added we need to then create the layers.
-        for (layer_index, layer) in tiled_map.map.layers().enumerate() {
-            let mut offset_x = layer.offset_x;
-            let mut offset_y = layer.offset_y;
-            offset_z += 100.;
+        let layer_for_tileset_entity = commands
+            .spawn((
+                Name::new(format!(
+                    "TiledMapTileLayerForTileset({}, {})",
+                    layer.name, tileset.name
+                )),
+                TiledMapTileLayerForTileset,
+            ))
+            .set_parent(layer_entity)
+            .id();
 
-            let mut map_size = TilemapSize {
-                x: tiled_map.map.width,
-                y: tiled_map.map.height,
-            };
-
-            let grid_size = TilemapGridSize {
-                x: tiled_map.map.tile_width as f32,
-                y: tiled_map.map.tile_height as f32,
-            };
-
-            let map_type = match tiled_map.map.orientation {
-                tiled::Orientation::Hexagonal => match tiled_map.map.stagger_axis {
-                    tiled::StaggerAxis::X
-                        if tiled_map.map.stagger_index == tiled::StaggerIndex::Even =>
-                    {
-                        TilemapType::Hexagon(HexCoordSystem::ColumnOdd)
-                    }
-                    tiled::StaggerAxis::X
-                        if tiled_map.map.stagger_index == tiled::StaggerIndex::Odd =>
-                    {
-                        TilemapType::Hexagon(HexCoordSystem::ColumnEven)
-                    }
-                    tiled::StaggerAxis::Y
-                        if tiled_map.map.stagger_index == tiled::StaggerIndex::Even =>
-                    {
-                        TilemapType::Hexagon(HexCoordSystem::RowOdd)
-                    }
-                    tiled::StaggerAxis::Y
-                        if tiled_map.map.stagger_index == tiled::StaggerIndex::Odd =>
-                    {
-                        TilemapType::Hexagon(HexCoordSystem::RowEven)
-                    }
-                    _ => unreachable!(),
-                },
-                tiled::Orientation::Isometric => TilemapType::Isometric(IsoCoordSystem::Diamond),
-                tiled::Orientation::Staggered => TilemapType::Isometric(IsoCoordSystem::Staggered),
-                tiled::Orientation::Orthogonal => TilemapType::Square,
-            };
-
-            let layer_entity = commands
-                .spawn((
-                    TiledMapLayer {
-                        map_handle_id: map_handle.id(),
-                    },
-                    TransformBundle::from_transform(Transform::from_xyz(0., 0., 0.)),
-                ))
-                .set_parent(map_entity)
-                .id();
-
-            match layer.layer_type() {
-                LayerType::Tiles(tile_layer) => {
-                    commands.entity(layer_entity).insert(TiledMapTileLayer);
-                    let tile_storage = match tile_layer {
-                        tiled::TileLayer::Finite(layer_data) => load_finite_tiles_layer(
-                            commands,
-                            layer_entity,
-                            &map_size,
-                            &grid_size,
-                            tiled_map,
-                            &layer_data,
-                            tileset_index,
-                            tilemap_texture,
-                            tiled_settings,
-                            #[cfg(feature = "user_properties")]
-                            custom_tiles_registry,
-                        ),
-                        tiled::TileLayer::Infinite(layer_data) => {
-                            let (storage, new_map_size, origin) = load_infinite_tiles_layer(
-                                commands,
-                                layer_entity,
-                                tiled_map,
-                                &grid_size,
-                                &layer_data,
-                                tileset_index,
-                                tilemap_texture,
-                                tiled_settings,
-                                #[cfg(feature = "user_properties")]
-                                custom_tiles_registry,
-                            );
-                            map_size = new_map_size;
-                            // log::info!("Infinite layer origin: {:?}", origin);
-                            offset_x += origin.0 * grid_size.x;
-                            offset_y -= origin.1 * grid_size.y;
-                            storage
-                        }
-                    };
-
-                    let offset_transform = Transform::from_xyz(
-                        offset_x + grid_size.x / 2.,
-                        -offset_y + grid_size.y / 2.,
-                        offset_z,
-                    );
-                    commands
-                        .entity(layer_entity)
-                        .insert(Name::new(format!("TiledMapTileLayer({})", layer.name)))
-                        .insert(TilemapBundle {
-                            grid_size,
-                            size: map_size,
-                            storage: tile_storage,
-                            texture: tilemap_texture.clone(),
-                            tile_size,
-                            spacing: tile_spacing,
-                            transform: match &tiled_settings.map_positioning {
-                                MapPositioning::LayerOffset => offset_transform,
-                                MapPositioning::Centered => {
-                                    get_tilemap_center_transform(
-                                        &map_size,
-                                        &grid_size,
-                                        &map_type,
-                                        layer_index as f32,
-                                    ) * offset_transform
-                                }
-                            },
-                            map_type,
-                            render_settings: *render_settings,
-                            ..Default::default()
-                        });
-                }
-                LayerType::Objects(object_layer) => {
-                    let offset_transform = Transform::from_xyz(offset_x, -offset_y, offset_z);
-                    commands
-                        .entity(layer_entity)
-                        .insert(Name::new(format!("TiledMapObjectLayer({})", layer.name)))
-                        .insert(match &tiled_settings.map_positioning {
-                            MapPositioning::LayerOffset => offset_transform,
-                            MapPositioning::Centered => {
-                                get_tilemap_center_transform(
-                                    &map_size,
-                                    &grid_size,
-                                    &map_type,
-                                    layer_index as f32,
-                                ) * offset_transform
-                            }
-                        });
-
-                    for object_data in object_layer.objects() {
-                        let _object_entity = commands
-                            .spawn(TransformBundle::from_transform(Transform::from_xyz(
-                                object_data.x,
-                                map_size.y as f32 * grid_size.y - object_data.y,
-                                0.,
-                            )))
-                            .insert(Name::new(format!("Object({})", object_data.name)))
-                            .set_parent(layer_entity)
-                            .id();
-
-                        #[cfg(feature = "physics")]
-                        {
-                            if collision_layer_names.contains(&layer.name.trim().to_lowercase()) {
-                                insert_object_colliders(
-                                    commands,
-                                    _object_entity,
-                                    &object_data,
-                                    tiled_settings.collider_callback,
-                                );
-                            }
-                        }
-
-                        #[cfg(feature = "user_properties")]
-                        {
-                            if let Some(phantom) = objects_registry.get(&object_data.user_type) {
-                                phantom.initialize(
-                                    commands,
-                                    &TiledObjectCreated {
-                                        entity: _object_entity,
-                                        object_data: object_data.deref().clone(),
-                                        map_size,
-                                    },
-                                );
-                            } else {
-                                log::warn!(
-                                    "Skipping unregistered object (name='{}' type='{}')",
-                                    object_data.name,
-                                    object_data.user_type
-                                );
-                            }
-                        }
-                    }
-                }
-                LayerType::Group(_group_layer) => {
-                    commands
-                        .entity(layer_entity)
-                        .insert(Name::new(format!("TiledMapGroupLayer({})", layer.name)));
-                    // TODO: not implemented yet.
-                }
-                LayerType::Image(_image_layer) => {
-                    commands
-                        .entity(layer_entity)
-                        .insert(Name::new(format!("TiledMapImageLayer({})", layer.name)));
-                    // TODO: not implemented yet.
-                }
+        let tile_storage = match tile_layer {
+            tiled::TileLayer::Finite(layer_data) => load_finite_tiles_layer(
+                commands,
+                layer_for_tileset_entity,
+                &map_size,
+                grid_size,
+                tiled_map,
+                &layer_data,
+                tileset_index,
+                tilemap_texture,
+                tiled_settings,
+                #[cfg(feature = "user_properties")]
+                custom_tiles_registry,
+            ),
+            tiled::TileLayer::Infinite(layer_data) => {
+                let (storage, new_map_size, origin) = load_infinite_tiles_layer(
+                    commands,
+                    layer_for_tileset_entity,
+                    tiled_map,
+                    grid_size,
+                    &layer_data,
+                    tileset_index,
+                    tilemap_texture,
+                    tiled_settings,
+                    #[cfg(feature = "user_properties")]
+                    custom_tiles_registry,
+                );
+                map_size = new_map_size;
+                // log::info!("Infinite layer origin: {:?}", origin);
+                offset_x += origin.0 * grid_size.x;
+                offset_y -= origin.1 * grid_size.y;
+                storage
             }
+        };
 
-            layer_storage
-                .storage
-                .insert(layer_index as u32, layer_entity);
-        }
+        let offset_transform = Transform::from_xyz(
+            offset_x + grid_size.x / 2.,
+            -offset_y + grid_size.y / 2.,
+            0.,
+        );
+
+        commands
+            .entity(layer_for_tileset_entity)
+            .insert(TilemapBundle {
+                grid_size: *grid_size,
+                size: map_size,
+                storage: tile_storage,
+                texture: tilemap_texture.clone(),
+                tile_size,
+                spacing: tile_spacing,
+                transform: offset_transform,
+                map_type: *map_type,
+                render_settings: *render_settings,
+                ..Default::default()
+            });
     }
 }
 
@@ -835,6 +839,67 @@ fn load_infinite_tiles_layer(
     }
 
     (tile_storage, map_size, origin)
+}
+
+#[allow(clippy::too_many_arguments, unused)]
+fn load_objects_layer(
+    commands: &mut Commands,
+    layer_entity: Entity,
+    layer: Layer,
+    object_layer: ObjectLayer,
+    map_size: &TilemapSize,
+    grid_size: &TilemapGridSize,
+    tiled_settings: &TiledMapSettings,
+    #[cfg(feature = "user_properties")] objects_registry: &TiledObjectRegistry,
+) {
+    #[cfg(feature = "physics")]
+    let collision_layer_names =
+        crate::prelude::ObjectNameFilter::from(&tiled_settings.collision_layer_names);
+
+    for object_data in object_layer.objects() {
+        let _object_entity = commands
+            .spawn(TransformBundle::from_transform(Transform::from_xyz(
+                object_data.x,
+                map_size.y as f32 * grid_size.y - object_data.y,
+                0.,
+            )))
+            .insert(Name::new(format!("Object({})", object_data.name)))
+            .insert(TiledMapObject)
+            .set_parent(layer_entity)
+            .id();
+
+        #[cfg(feature = "physics")]
+        {
+            if collision_layer_names.contains(&layer.name.trim().to_lowercase()) {
+                insert_object_colliders(
+                    commands,
+                    _object_entity,
+                    &object_data,
+                    tiled_settings.collider_callback,
+                );
+            }
+        }
+
+        #[cfg(feature = "user_properties")]
+        {
+            if let Some(phantom) = objects_registry.get(&object_data.user_type) {
+                phantom.initialize(
+                    commands,
+                    &TiledObjectCreated {
+                        entity: _object_entity,
+                        object_data: object_data.deref().clone(),
+                        map_size: *map_size,
+                    },
+                );
+            } else {
+                log::warn!(
+                    "Skipping unregistered object (name='{}' type='{}')",
+                    object_data.name,
+                    object_data.user_type
+                );
+            }
+        }
+    }
 }
 
 fn get_animated_tile(tile: &Tile) -> Option<AnimatedTile> {

@@ -2,6 +2,15 @@
 
 ## [unreleased]
 
+### Features
+
+- Add dedicated marker for Tiled objects (#22) and for objects layer, group layer and images layer
+- Regroup tilemaps of the same tile layer using different tilesets under a common parent entity `TiledMapTileLayerForTileset`
+
+### Bugfixes
+
+- Prevent duplicating objects when there are multiple tilesets (#28)
+
 ## v0.3.6
 
 ### Bugfixes

@@ -115,3 +115,6 @@ required-features = ["user_properties", "avian"]
 
 [[example]]
 name = "isometric_map"
+
+[[example]]
+name = "multiple_tilesets"
