@@ -19,7 +19,7 @@ In most of the examples, you can use the following action keys:
 | `reload` | None | This example demonstrates how to load and unload maps. |
 | `finite_rapier` | `rapier_debug` | This example shows a finite orthogonal map with an external tileset and Rapier physics. |
 | `infinite_rapier` | `rapier_debug` | This example shows an infinite orthogonal map with an external tileset and Rapier physics. |
-| `hex_map` | None | This example shows a finite hexagonal map with an external tileset, multiple layers and animated tiles. |
+| `hex_map` | None | This example cycle through all four kinds of hexagonal maps and display debug informations about Tiled objects. |
 | `controller_rapier` | `rapier_debug` | This example shows a simple player-controlled object using Rapier physics. You can move the object using arrow keys. |
 | `user_properties` | `user_properties` | This example shows how to map custom tiles and objects properties from Tiled to Bevy Components. |
 | `user_properties_rapier` | `user_properties`, `rapier_debug` | This example shows how to map custom tiles / objects properties from Tiled to Bevy Components and manually spawn Rapier colliders from them. |

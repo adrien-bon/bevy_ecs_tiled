@@ -7,6 +7,9 @@
 - Add dedicated marker for Tiled objects (#22) and for objects layer, group layer and images layer
 - Regroup tilemaps of the same tile layer using different tilesets under a common parent entity `TiledMapTileLayerForTileset`
 - Add a new `TiledMapDebugPlugin` to draw a simple gizmo where Tiled objects are spawned (#18)
+- Add a `README.md` file to describe Tiled maps used in examples
+- Add `simple hex flat top` asset so we can have some hexagonal 'flat-top' examples
+- Rework the `hex_map` example to cycle through all four kinds of hexagonal maps
 
 ### Bugfixes
 

@@ -26,7 +26,7 @@ fn main() {
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
 
-    let map_handle: Handle<TiledMap> = asset_server.load("hex_map.tmx");
+    let map_handle: Handle<TiledMap> = asset_server.load("hex_map_pointy_top_odd.tmx");
     commands.spawn(TiledMapBundle {
         tiled_map: map_handle,
         ..Default::default()
