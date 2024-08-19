@@ -1,4 +1,5 @@
 pub mod components;
+pub mod debug;
 pub mod loader;
 pub mod names;
 
@@ -10,6 +11,7 @@ pub mod properties;
 
 pub mod prelude {
     pub use crate::components::*;
+    pub use crate::debug::*;
     pub use crate::loader::*;
     pub use crate::names::*;
     #[cfg(feature = "physics")]
