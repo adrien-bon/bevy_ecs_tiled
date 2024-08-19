@@ -118,3 +118,6 @@ name = "isometric_map"
 
 [[example]]
 name = "delayed_spawn"
+
+[[example]]
+name = "multiple_tilesets"
