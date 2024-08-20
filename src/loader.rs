@@ -420,7 +420,7 @@ fn load_map(
                         &map_size,
                         &grid_size,
                         &map_type,
-                        layer_index as f32,
+                        0.,
                     ) * offset_transform
                 }
             },
