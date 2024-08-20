@@ -458,6 +458,7 @@ fn load_map(
                     layer_entity,
                     layer,
                     object_layer,
+                    &map_type,
                     &map_size,
                     &grid_size,
                     tiled_settings,
@@ -824,6 +825,7 @@ fn load_objects_layer(
     layer_entity: Entity,
     layer: Layer,
     object_layer: ObjectLayer,
+    map_type: &TilemapType,
     map_size: &TilemapSize,
     grid_size: &TilemapGridSize,
     tiled_settings: &TiledMapSettings,
@@ -834,10 +836,33 @@ fn load_objects_layer(
         crate::prelude::ObjectNameFilter::from(&tiled_settings.collision_layer_names);
 
     for object_data in object_layer.objects() {
+        let object_position = match map_type {
+            TilemapType::Hexagon(HexCoordSystem::ColumnOdd) => Vec2::new(
+                object_data.x + grid_size.x / 4.,
+                (map_size.y as f32 + 0.5) * grid_size.y - object_data.y
+            ),
+            TilemapType::Hexagon(HexCoordSystem::ColumnEven) => Vec2::new(
+                object_data.x + grid_size.x / 4.,
+                (map_size.y as f32 + 0.) * grid_size.y - object_data.y
+            ),
+            TilemapType::Hexagon(HexCoordSystem::RowOdd) => Vec2::new(
+                object_data.x,
+                map_size.y as f32 * grid_size.y * 0.75 + grid_size.y / 4.  - object_data.y,
+            ),
+            TilemapType::Hexagon(HexCoordSystem::RowEven) => Vec2::new(
+                object_data.x - grid_size.x / 2.,
+                map_size.y as f32 * grid_size.y * 0.75 + grid_size.y / 4.  - object_data.y,
+            ),
+            _ => Vec2::new(
+                object_data.x,
+                map_size.y as f32 * grid_size.y - object_data.y
+            )
+        };
+
         let _object_entity = commands
             .spawn(TransformBundle::from_transform(Transform::from_xyz(
-                object_data.x,
-                map_size.y as f32 * grid_size.y - object_data.y,
+                object_position.x,
+                object_position.y,
                 0.,
             )))
             .insert(Name::new(format!("Object({})", object_data.name)))
