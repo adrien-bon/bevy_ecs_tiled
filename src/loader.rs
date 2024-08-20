@@ -416,12 +416,8 @@ fn load_map(
             transform: match &tiled_settings.map_positioning {
                 MapPositioning::LayerOffset => offset_transform,
                 MapPositioning::Centered => {
-                    get_tilemap_center_transform(
-                        &map_size,
-                        &grid_size,
-                        &map_type,
-                        0.,
-                    ) * offset_transform
+                    get_tilemap_center_transform(&map_size, &grid_size, &map_type, 0.)
+                        * offset_transform
                 }
             },
             ..default()
@@ -839,24 +835,24 @@ fn load_objects_layer(
         let object_position = match map_type {
             TilemapType::Hexagon(HexCoordSystem::ColumnOdd) => Vec2::new(
                 object_data.x + grid_size.x / 4.,
-                (map_size.y as f32 + 0.5) * grid_size.y - object_data.y
+                (map_size.y as f32 + 0.5) * grid_size.y - object_data.y,
             ),
             TilemapType::Hexagon(HexCoordSystem::ColumnEven) => Vec2::new(
                 object_data.x + grid_size.x / 4.,
-                (map_size.y as f32 + 0.) * grid_size.y - object_data.y
+                (map_size.y as f32 + 0.) * grid_size.y - object_data.y,
             ),
             TilemapType::Hexagon(HexCoordSystem::RowOdd) => Vec2::new(
                 object_data.x,
-                map_size.y as f32 * grid_size.y * 0.75 + grid_size.y / 4.  - object_data.y,
+                map_size.y as f32 * grid_size.y * 0.75 + grid_size.y / 4. - object_data.y,
             ),
             TilemapType::Hexagon(HexCoordSystem::RowEven) => Vec2::new(
                 object_data.x - grid_size.x / 2.,
-                map_size.y as f32 * grid_size.y * 0.75 + grid_size.y / 4.  - object_data.y,
+                map_size.y as f32 * grid_size.y * 0.75 + grid_size.y / 4. - object_data.y,
             ),
             _ => Vec2::new(
                 object_data.x,
-                map_size.y as f32 * grid_size.y - object_data.y
-            )
+                map_size.y as f32 * grid_size.y - object_data.y,
+            ),
         };
 
         let _object_entity = commands

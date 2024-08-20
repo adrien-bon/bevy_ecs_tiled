@@ -58,7 +58,6 @@ impl AssetsManager {
     }
 
     fn cycle_map(&mut self, commands: &mut Commands) {
-
         info!(
             " => Switching to map '{}'",
             self.map_assets[self.map_index].path
