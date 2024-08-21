@@ -2,6 +2,8 @@
 
 ## [unreleased]
 
+## v0.3.7
+
 ### Features
 
 - Add dedicated marker for Tiled objects (#22), object layers, group layers and image layers
