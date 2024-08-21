@@ -1,9 +1,12 @@
 use crate::prelude::*;
 use bevy::{color::palettes::css::RED, prelude::*};
 
+/// Debug gizmos configuration
 #[derive(Resource, Clone)]
 pub struct TiledMapGizmosConfig {
+    /// Color of the arrow_2d gizmo
     color: Color,
+    /// Length of the arrow_2d gizmo
     arrow_length: Vec2,
 }
 
@@ -16,8 +19,10 @@ impl Default for TiledMapGizmosConfig {
     }
 }
 
+/// Debug configuration
 #[derive(Default, Clone)]
 pub struct TiledMapDebugPlugin {
+    /// Debug gizmos configuration
     gizmos_config: TiledMapGizmosConfig,
 }
 
