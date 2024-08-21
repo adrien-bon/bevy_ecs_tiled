@@ -4,12 +4,12 @@
 
 ### Features
 
-- Add dedicated marker for Tiled objects (#22) and for objects layer, group layer and images layer
-- Regroup tilemaps of the same tile layer using different tilesets under a common parent entity `TiledMapTileLayerForTileset`
-- Add a new `TiledMapDebugPlugin` to draw a simple gizmo where Tiled objects are spawned (#18)
+- Add dedicated marker for Tiled objects (#22), object layers, group layers and image layers
+- Regroup tilemaps from the same tile layer but using different tilesets under a common parent entity `TiledMapTileLayerForTileset`
+- Add a new `TiledMapDebugPlugin` to draw a simple `arrow_2d` gizmo where Tiled objects are spawned (#18)
 - Add a `README.md` file to describe Tiled maps used in examples
 - Add `simple hex flat top` asset so we can have some hexagonal 'flat-top' examples
-- Rework the `hex_map` example to cycle through all four kinds of hexagonal maps
+- Rework the `hex_map` example to cycle through different kinds of hexagonal maps
 
 ### Bugfixes
 
@@ -17,7 +17,7 @@
 - Do not rely upon `AssetEvent::added()` to actually spawn a map (#23)
   Instead, query all maps that have a `Changed<Handle<TiledMap>>` or are explictelly marked for reload.
   This allows to delay actual map spawn from asset loading (hence allowing to pre-load maps).
-- Fix objects position for hexagonal maps: may not work totally, especially for 'infinite' maps
+- Fix objects position for hexagonal maps: may not work in all cases, especially for 'infinite' maps
 
 ## v0.3.6
 
