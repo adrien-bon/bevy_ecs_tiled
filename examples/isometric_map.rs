@@ -11,6 +11,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugins(TilemapPlugin)
         .add_plugins(TiledMapPlugin)
+        .add_plugins(TiledMapDebugPlugin::default())
         .add_plugins(helper::HelperPlugin)
         .add_systems(Startup, startup)
         .run();
