@@ -376,7 +376,10 @@ fn load_map(
             _ => unreachable!(),
         },
         tiled::Orientation::Isometric => TilemapType::Isometric(IsoCoordSystem::Diamond),
-        tiled::Orientation::Staggered => TilemapType::Isometric(IsoCoordSystem::Staggered),
+        tiled::Orientation::Staggered => {
+            warn!("Isometric (Staggered) map is not supported");
+            TilemapType::Isometric(IsoCoordSystem::Staggered)
+        }
         tiled::Orientation::Orthogonal => TilemapType::Square,
     };
 
