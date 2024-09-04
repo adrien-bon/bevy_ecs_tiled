@@ -1,7 +1,9 @@
 use bevy::prelude::*;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
+#[allow(dead_code)]
 pub mod assets;
+
 mod camera;
 mod map;
 
