@@ -858,15 +858,11 @@ fn load_objects_layer(
                 object_data.x - grid_size.x / 2.,
                 map_size.y as f32 * grid_size.y * 0.75 + grid_size.y / 4. - object_data.y,
             ),
-            TilemapType::Isometric(IsoCoordSystem::Diamond) => Vec2::new(
-                ((object_data.x - object_data.y) / grid_size.y + map_size.y as f32) * grid_size.x
-                    / 2.,
-                (map_size.y as f32
-                    - object_data.x / grid_size.y
-                    - object_data.y / grid_size.y
-                    - 1.)
-                    * grid_size.y
-                    / 2.,
+            TilemapType::Isometric(coords_system) => from_isometric_coords_to_bevy(
+                *coords_system,
+                Vec2::new(object_data.x, object_data.y),
+                map_size,
+                grid_size,
             ),
             _ => Vec2::new(
                 object_data.x,

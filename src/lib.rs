@@ -2,6 +2,7 @@ pub mod components;
 pub mod debug;
 pub mod loader;
 pub mod names;
+pub mod utils;
 
 #[cfg(feature = "physics")]
 pub mod physics;
@@ -18,5 +19,6 @@ pub mod prelude {
     pub use crate::physics::*;
     #[cfg(feature = "user_properties")]
     pub use crate::properties::prelude::*;
+    pub use crate::utils::*;
     pub use tiled;
 }
