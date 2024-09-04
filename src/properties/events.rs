@@ -10,6 +10,7 @@ use crate::prelude::*;
 #[derive(Event, Clone, Debug)]
 pub struct TiledObjectCreated {
     pub entity: Entity,
+    pub map_type: TilemapType,
     pub object_data: ObjectData,
     pub map_size: TilemapSize,
 }
@@ -17,6 +18,7 @@ pub struct TiledObjectCreated {
 #[derive(Event, Clone, Debug)]
 pub struct TiledCustomTileCreated {
     pub entity: Entity,
+    pub map_type: TilemapType,
     pub tile_data: TileData,
     pub map_size: TilemapSize,
     pub grid_size: TilemapGridSize,
@@ -28,6 +30,7 @@ impl TiledObjectCreated {
         insert_object_colliders(
             &mut commands,
             self.entity,
+            &self.map_type,
             &self.object_data,
             collider_callback,
         )
@@ -47,6 +50,7 @@ impl TiledCustomTileCreated {
                 &mut commands,
                 &ObjectNameFilter::from(&collision_object_names),
                 self.entity,
+                &self.map_type,
                 &self.grid_size,
                 collision,
                 collider_callback,

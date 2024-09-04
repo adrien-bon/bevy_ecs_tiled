@@ -542,6 +542,7 @@ fn load_tiles_layer(
             tiled::TileLayer::Finite(layer_data) => load_finite_tiles_layer(
                 commands,
                 layer_for_tileset_entity,
+                map_type,
                 &map_size,
                 grid_size,
                 tiled_map,
@@ -557,6 +558,7 @@ fn load_tiles_layer(
                     commands,
                     layer_for_tileset_entity,
                     tiled_map,
+                    map_type,
                     grid_size,
                     &layer_data,
                     tileset_index,
@@ -600,6 +602,7 @@ fn load_tiles_layer(
 fn load_finite_tiles_layer(
     commands: &mut Commands,
     layer_entity: Entity,
+    _map_type: &TilemapType,
     map_size: &TilemapSize,
     grid_size: &TilemapGridSize,
     tiled_map: &TiledMap,
@@ -672,6 +675,7 @@ fn load_finite_tiles_layer(
                 tile_entity,
                 &tile,
                 tiled_settings,
+                _map_type,
                 map_size,
                 grid_size,
                 #[cfg(feature = "user_properties")]
@@ -690,6 +694,7 @@ fn load_infinite_tiles_layer(
     commands: &mut Commands,
     layer_entity: Entity,
     tiled_map: &TiledMap,
+    _map_type: &TilemapType,
     grid_size: &TilemapGridSize,
     infinite_layer: &InfiniteTileLayer,
     tileset_index: usize,
@@ -804,6 +809,7 @@ fn load_infinite_tiles_layer(
                     tile_entity,
                     &tile,
                     tiled_settings,
+                    _map_type,
                     &map_size,
                     grid_size,
                     #[cfg(feature = "user_properties")]
@@ -885,6 +891,7 @@ fn load_objects_layer(
                 insert_object_colliders(
                     commands,
                     _object_entity,
+                    map_type,
                     &object_data,
                     tiled_settings.collider_callback,
                 );
@@ -899,6 +906,7 @@ fn load_objects_layer(
                     &TiledObjectCreated {
                         entity: _object_entity,
                         object_data: object_data.deref().clone(),
+                        map_type: *map_type,
                         map_size: *map_size,
                     },
                 );
@@ -943,11 +951,13 @@ fn get_animated_tile(tile: &Tile) -> Option<AnimatedTile> {
     })
 }
 
+#[allow(clippy::too_many_arguments)]
 fn handle_special_tile(
     commands: &mut Commands,
     tile_entity: Entity,
     tile: &Tile,
     _tiled_settings: &TiledMapSettings,
+    _map_type: &TilemapType,
     _map_size: &TilemapSize,
     _grid_size: &TilemapGridSize,
     #[cfg(feature = "user_properties")] custom_tiles_registry: &TiledCustomTileRegistry,
@@ -966,6 +976,7 @@ fn handle_special_tile(
                     commands,
                     &TiledCustomTileCreated {
                         entity: tile_entity,
+                        map_type: *_map_type,
                         tile_data: tile.deref().clone(),
                         map_size: *_map_size,
                         grid_size: *_grid_size,
@@ -985,6 +996,7 @@ fn handle_special_tile(
                 commands,
                 &ObjectNameFilter::from(&_tiled_settings.collision_object_names),
                 tile_entity,
+                _map_type,
                 _grid_size,
                 collision,
                 _tiled_settings.collider_callback,

@@ -9,6 +9,7 @@ use crate::prelude::*;
 pub(crate) fn insert_avian_colliders_from_shapes(
     commands: &mut Commands,
     parent_entity: Entity,
+    _map_type: &TilemapType,
     grid_size: Option<&TilemapGridSize>,
     object_data: &ObjectData,
     collider_callback: ColliderCallback,

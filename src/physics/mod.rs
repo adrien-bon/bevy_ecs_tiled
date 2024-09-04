@@ -21,6 +21,7 @@ use crate::prelude::*;
 pub fn insert_object_colliders(
     commands: &mut Commands,
     object_entity: Entity,
+    map_type: &TilemapType,
     object_data: &ObjectData,
     collider_callback: ColliderCallback,
 ) {
@@ -28,6 +29,7 @@ pub fn insert_object_colliders(
     rapier::insert_rapier_colliders_from_shapes(
         commands,
         object_entity,
+        map_type,
         None,
         object_data,
         collider_callback,
@@ -37,6 +39,7 @@ pub fn insert_object_colliders(
     avian::insert_avian_colliders_from_shapes(
         commands,
         object_entity,
+        map_type,
         None,
         object_data,
         collider_callback,
@@ -47,6 +50,7 @@ pub fn insert_tile_colliders(
     commands: &mut Commands,
     collision_object_names: &ObjectNameFilter,
     tile_entity: Entity,
+    map_type: &TilemapType,
     grid_size: &TilemapGridSize,
     collision: &ObjectLayerData,
     collider_callback: ColliderCallback,
@@ -57,6 +61,7 @@ pub fn insert_tile_colliders(
             rapier::insert_rapier_colliders_from_shapes(
                 commands,
                 tile_entity,
+                map_type,
                 Some(grid_size),
                 object_data,
                 collider_callback,
@@ -66,6 +71,7 @@ pub fn insert_tile_colliders(
             avian::insert_avian_colliders_from_shapes(
                 commands,
                 tile_entity,
+                map_type,
                 Some(grid_size),
                 object_data,
                 collider_callback,
