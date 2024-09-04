@@ -11,7 +11,8 @@
 | `hex_map_pointy_top_odd.tmx` | `drjamgo_hex_16x16.tsx` | Tileset image in `tiles/drjamgo_hex_16x16.png` | Finite hexagonal pointy top (odd index) | Yes |
 | `infinite_embedded.tmx` | N/A (embedded in map) | Images collection in `tiles/` | Infinite orthogonal | No |
 | `finite.tmx` | `Tileset1.tsx` | Images collection in `tiles/` | Infinite orthogonal | No |
-| `isometric_map.tmx` | `kenney-sketch-desert.tsx` | Images collection in `tiles/kenney-sketch-desert/` | Finite isometric | No |
+| `isometric_diamond_map.tmx` | `kenney-sketch-desert.tsx` | Images collection in `tiles/kenney-sketch-desert/` | Finite diamond isometric | Yes |
+| `isometric_staggered_map.tmx` | `kenney-sketch-desert.tsx` | Images collection in `tiles/kenney-sketch-desert/` | Finite staggered isometric | Yes |
 | `multiple_layers_with_colliders.tmx` | `Tileset1.tsx` | Images collection in `tiles/` | Finite orthogonal | Yes |
 | `multiple_tilesets.tmx` | `Tileset1.tsx` + `Tileset2.tsx` | Images collection in `tiles/` | Finite orthogonal | Yes |
 

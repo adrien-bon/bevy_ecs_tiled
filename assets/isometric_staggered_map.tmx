@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.10.2" orientation="staggered" renderorder="right-down" width="5" height="10" tilewidth="232" tileheight="110" infinite="0" staggeraxis="y" staggerindex="odd" nextlayerid="4" nextobjectid="7">
+ <tileset firstgid="1" source="kenney-sketch-desert.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="5" height="10">
+  <data encoding="csv">
+0,0,0,0,0,
+0,0,0,0,0,
+3,2,2,2,0,
+3,2,3,2,0,
+2,3,3,2,2,
+2,3,2,2,0,
+2,2,3,2,0,
+2,3,3,0,0,
+0,2,2,4,0,
+0,2,0,0,0
+</data>
+ </layer>
+ <layer id="2" name="Tile Layer 2" width="5" height="10">
+  <data encoding="csv">
+0,0,0,0,0,
+0,5,1,0,0,
+0,0,0,0,0,
+0,0,0,5,0,
+0,0,0,0,0,
+5,0,0,0,0,
+0,1,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0
+</data>
+ </layer>
+ <objectgroup id="3" name="Object Layer 1">
+  <object id="1" x="819.789" y="280.211">
+   <point/>
+  </object>
+  <object id="2" x="353.158" y="274.421">
+   <point/>
+  </object>
+  <object id="3" x="135.474" y="54.4211">
+   <point/>
+  </object>
+  <object id="4" x="576.632" y="74.1053">
+   <point/>
+  </object>
+ </objectgroup>
+</map>
