@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{ecs::system::EntityCommands, prelude::*};
 use bevy_ecs_tilemap::prelude::*;
 use bevy_rapier2d::prelude::*;
 use tiled::ObjectData;
@@ -6,14 +6,13 @@ use tiled::ObjectData;
 use crate::prelude::*;
 
 /// Insert shapes as physics colliders.
-pub(crate) fn insert_rapier_colliders_from_shapes(
-    commands: &mut Commands,
+pub(crate) fn insert_rapier_colliders_from_shapes<'a>(
+    commands: &'a mut Commands,
     parent_entity: Entity,
     _map_type: &TilemapType,
     grid_size: Option<&TilemapGridSize>,
     object_data: &ObjectData,
-    collider_callback: ColliderCallback,
-) {
+) -> Option<EntityCommands<'a>> {
     let rot = object_data.rotation;
     let (pos, collider) = match &object_data.shape {
         tiled::ObjectShape::Rect { width, height } => {
@@ -56,14 +55,14 @@ pub(crate) fn insert_rapier_colliders_from_shapes(
             ) {
                 Some(x) => x,
                 None => {
-                    return;
+                    return None;
                 }
             };
 
             (Vect::ZERO, shape)
         }
         _ => {
-            return;
+            return None;
         }
     };
 
@@ -91,5 +90,5 @@ pub(crate) fn insert_rapier_colliders_from_shapes(
         .insert(TransformBundle::from_transform(transform))
         .insert(Name::new(format!("Collider({})", object_data.name)))
         .set_parent(parent_entity);
-    collider_callback(&mut entity_commands);
+    Some(entity_commands)
 }

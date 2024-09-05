@@ -41,9 +41,6 @@ use bevy::{
     utils::HashMap,
 };
 
-#[cfg(feature = "physics")]
-use crate::physics::{insert_object_colliders, insert_tile_colliders};
-
 use crate::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use tiled::{
@@ -61,8 +58,8 @@ impl Plugin for TiledMapPlugin {
             app.init_non_send_resource::<TiledCustomTileRegistry>();
         }
         app.init_asset::<TiledMap>()
-            .register_asset_loader(TiledLoader)
-            .add_systems(Update, (handle_map_events, process_loaded_maps));
+            .register_asset_loader(TiledLoader);
+        app.add_systems(Update, (handle_map_events, process_loaded_maps));
     }
 }
 
@@ -881,10 +878,11 @@ fn load_objects_layer(
             .set_parent(layer_entity)
             .id();
 
+        let physics_backend = &tiled_settings.physics_backend;
         #[cfg(feature = "physics")]
         {
             if collision_layer_names.contains(&layer.name.trim().to_lowercase()) {
-                insert_object_colliders(
+                physics_backend.insert_object_colliders(
                     commands,
                     _object_entity,
                     map_type,
@@ -904,6 +902,7 @@ fn load_objects_layer(
                         object_data: object_data.deref().clone(),
                         map_type: *map_type,
                         map_size: *map_size,
+                        physics_backend: physics_backend.clone(),
                     },
                 );
             } else {
@@ -976,6 +975,7 @@ fn handle_special_tile(
                         tile_data: tile.deref().clone(),
                         map_size: *_map_size,
                         grid_size: *_grid_size,
+                        physics_backend: _tiled_settings.physics_backend.clone(),
                     },
                 );
             } else {
@@ -987,8 +987,9 @@ fn handle_special_tile(
     // Handle tiles with collision
     #[cfg(feature = "physics")]
     {
+        let physics_backend = &_tiled_settings.physics_backend;
         if let Some(collision) = tile.collision.as_ref() {
-            insert_tile_colliders(
+            physics_backend.insert_tile_colliders(
                 commands,
                 &ObjectNameFilter::from(&_tiled_settings.collision_object_names),
                 tile_entity,

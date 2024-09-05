@@ -90,6 +90,10 @@ pub struct TiledMapSettings {
     /// By default, the layer's offset will be used.
     /// For Bevy's coordinate system use MapPositioning::Centered
     pub map_positioning: MapPositioning,
+    /// Specify which physics backend to use. This is necessary for adding
+    /// the appropriate colliders to Bevy based on the colliders within the
+    /// Tiled map.
+    pub physics_backend: PhysicsBackend,
 }
 
 impl Default for TiledMapSettings {
@@ -99,6 +103,7 @@ impl Default for TiledMapSettings {
             collision_layer_names: ObjectNames::default(),
             collision_object_names: ObjectNames::default(),
             map_positioning: MapPositioning::default(),
+            physics_backend: PhysicsBackend::default(),
         }
     }
 }
