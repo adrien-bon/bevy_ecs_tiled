@@ -5,33 +5,25 @@ pub mod rapier;
 pub mod avian;
 
 use core::fmt;
-use std::sync::Arc;
 
-use bevy::{ecs::system::EntityCommands, prelude::*};
+use bevy::{ecs::world::Command, prelude::*};
 use bevy_ecs_tilemap::prelude::*;
 use tiled::{ObjectData, ObjectLayerData};
 
 use crate::prelude::*;
 
-/// Trait defining a generic way of handling colliders
-/// across different physics backends.
-pub trait HandleColliders {
-    /// Load shapes from an object layer as physics colliders.
-    ///
-    /// By default `bevy_ecs_tiled` will only process object layers
-    /// named in `collision_layer_names` in `TiledMapSettings`,
-    /// and tileset collision shapes named in `collision_object_names`.
-    ///
-    /// Collision layer names are case-insensitive and leading/trailing
-    /// whitespace is stripped out.
-    fn insert_colliders_from_shapes<'a>(
-        &self,
-        commands: &'a mut Commands,
-        parent_entity: Entity,
-        map_type: &TilemapType,
-        grid_size: Option<&TilemapGridSize>,
-        object_data: &ObjectData,
-    ) -> Option<EntityCommands<'a>>;
+#[derive(Event, Clone, Debug)]
+pub struct CustomColliderCreationEvent {
+    pub collider_entity: Entity,
+    pub map_type: TilemapType,
+    pub grid_size: Option<TilemapGridSize>,
+    pub object_data: ObjectData,
+}
+
+impl Command for CustomColliderCreationEvent {
+    fn apply(self, world: &mut World) {
+        world.send_event(self);
+    }
 }
 
 #[derive(Clone, Resource)]
@@ -39,7 +31,7 @@ pub enum PhysicsBackend {
     Rapier,
     Avian,
     None,
-    Custom(Arc<Box<dyn HandleColliders + Send + Sync>>),
+    Custom,
 }
 
 impl fmt::Debug for PhysicsBackend {
@@ -48,7 +40,7 @@ impl fmt::Debug for PhysicsBackend {
             PhysicsBackend::Rapier => write!(f, "rapier"),
             PhysicsBackend::Avian => write!(f, "avian"),
             PhysicsBackend::None => write!(f, "none"),
-            PhysicsBackend::Custom(_) => write!(f, "custom"),
+            PhysicsBackend::Custom => write!(f, "custom"),
         }
     }
 }
@@ -58,11 +50,14 @@ impl Default for PhysicsBackend {
         #[cfg(not(any(feature = "rapier", feature = "avian")))]
         return PhysicsBackend::None;
 
-        #[cfg(feature = "rapier")]
-        return PhysicsBackend::Rapier;
-
-        #[cfg(feature = "avian")]
+        #[cfg(all(feature = "rapier", feature = "avian"))]
         return PhysicsBackend::Avian;
+
+        #[cfg(all(feature = "avian", not(feature = "rapier")))]
+        return PhysicsBackend::Avian;
+
+        #[cfg(all(feature = "rapier", not(feature = "avian")))]
+        return PhysicsBackend::Rapier;
     }
 }
 
@@ -87,20 +82,13 @@ impl PhysicsBackend {
             PhysicsBackend::Rapier => {
                 #[cfg(feature = "rapier")]
                 {
-                    let e = rapier::insert_rapier_colliders_from_shapes(
+                    rapier::insert_rapier_colliders_from_shapes(
                         commands,
                         object_entity,
                         map_type,
                         None,
                         object_data,
-                    );
-
-                    if e.is_none() {
-                        debug!("failed to create rapier colliders from shapes");
-                        return None;
-                    }
-
-                    e
+                    )
                 }
                 #[cfg(not(feature = "rapier"))]
                 {
@@ -110,40 +98,41 @@ impl PhysicsBackend {
             PhysicsBackend::Avian => {
                 #[cfg(feature = "avian")]
                 {
-                    let e = avian::insert_avian_colliders_from_shapes(
+                    avian::insert_avian_colliders_from_shapes(
                         commands,
                         object_entity,
                         map_type,
                         None,
                         object_data,
-                    );
-
-                    if e.is_none() {
-                        debug!("failed to create avian colliders from shapes");
-                        return;
-                    }
-
-                    e
+                    )
                 }
                 #[cfg(not(feature = "avian"))]
                 {
                     panic!("Requested Avian physics backend but feature is disabled");
                 }
             }
-            PhysicsBackend::Custom(backend) => {
-                let e = backend.insert_colliders_from_shapes(
-                    commands,
-                    object_entity,
-                    map_type,
-                    None,
-                    object_data,
-                );
+            PhysicsBackend::Custom => {
+                // Spawn an 'empty collider'
+                let collider_entity = commands
+                    .spawn_empty()
+                    .insert(Name::new(format!("Collider({})", object_data.name)))
+                    .set_parent(object_entity)
+                    .id();
 
-                e
+                // Send event so the user can add its own components
+                commands.add(CustomColliderCreationEvent {
+                    collider_entity,
+                    map_type: *map_type,
+                    grid_size: None,
+                    object_data: object_data.clone(),
+                });
+
+                // Do not return EntityCommands: we don't want to trigger the callback
+                None
             }
             PhysicsBackend::None => {
                 trace!("No physics backend enabled, skipping inserting object colliders");
-                None
+                return;
             }
         };
 
@@ -152,6 +141,7 @@ impl PhysicsBackend {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn insert_tile_colliders(
         &self,
         commands: &mut Commands,
@@ -168,20 +158,13 @@ impl PhysicsBackend {
                     PhysicsBackend::Rapier => {
                         #[cfg(feature = "rapier")]
                         {
-                            let e = rapier::insert_rapier_colliders_from_shapes(
+                            rapier::insert_rapier_colliders_from_shapes(
                                 commands,
                                 tile_entity,
                                 map_type,
                                 Some(grid_size),
                                 object_data,
-                            );
-
-                            if e.is_none() {
-                                debug!("failed to create rapier colliders from shapes");
-                                return;
-                            }
-
-                            e
+                            )
                         }
                         #[cfg(not(feature = "rapier"))]
                         {
@@ -191,40 +174,41 @@ impl PhysicsBackend {
                     PhysicsBackend::Avian => {
                         #[cfg(feature = "avian")]
                         {
-                            let e = avian::insert_avian_colliders_from_shapes(
+                            avian::insert_avian_colliders_from_shapes(
                                 commands,
                                 tile_entity,
                                 map_type,
                                 Some(grid_size),
                                 object_data,
-                            );
-
-                            if e.is_none() {
-                                debug!("failed to create avian colliders from shapes");
-                                return;
-                            }
-
-                            e
+                            )
                         }
                         #[cfg(not(feature = "avian"))]
                         {
                             panic!("Requested Avian physics backend but feature is disabled");
                         }
                     }
-                    PhysicsBackend::Custom(backend) => {
-                        let e = backend.insert_colliders_from_shapes(
-                            commands,
-                            tile_entity,
-                            map_type,
-                            Some(grid_size),
-                            object_data,
-                        );
+                    PhysicsBackend::Custom => {
+                        // Spawn an 'empty collider'
+                        let collider_entity = commands
+                            .spawn_empty()
+                            .insert(Name::new(format!("Collider({})", object_data.name)))
+                            .set_parent(tile_entity)
+                            .id();
 
-                        e
+                        // Send event so the user can add its own components
+                        commands.add(CustomColliderCreationEvent {
+                            collider_entity,
+                            map_type: *map_type,
+                            grid_size: Some(*grid_size),
+                            object_data: object_data.clone(),
+                        });
+
+                        // Do not return EntityCommands: we don't want to trigger the callback
+                        None
                     }
                     PhysicsBackend::None => {
                         trace!("No physics backend enabled, skipping inserting tilecolliders");
-                        None
+                        return;
                     }
                 };
 

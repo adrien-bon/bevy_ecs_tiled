@@ -121,3 +121,7 @@ name = "delayed_spawn"
 
 [[example]]
 name = "multiple_tilesets"
+
+[[example]]
+name = "custom_physics"
+required-features = ["physics"]

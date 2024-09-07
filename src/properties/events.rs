@@ -24,7 +24,7 @@ pub struct TiledCustomTileCreated {
     pub physics_backend: PhysicsBackend,
 }
 
-#[cfg(any(feature = "rapier", feature = "avian"))]
+#[cfg(feature = "physics")]
 impl TiledObjectCreated {
     pub fn spawn_collider(&self, mut commands: Commands, collider_callback: ColliderCallback) {
         self.physics_backend.insert_object_colliders(

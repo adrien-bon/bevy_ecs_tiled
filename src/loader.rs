@@ -60,6 +60,9 @@ impl Plugin for TiledMapPlugin {
         app.init_asset::<TiledMap>()
             .register_asset_loader(TiledLoader);
         app.add_systems(Update, (handle_map_events, process_loaded_maps));
+
+        #[cfg(feature = "physics")]
+        app.add_event::<CustomColliderCreationEvent>();
     }
 }
 
@@ -654,7 +657,7 @@ fn load_finite_tiles_layer(
                     },
                     ..Default::default()
                 })
-                .insert(TransformBundle::from_transform(Transform::from_xyz(
+                .insert(SpatialBundle::from_transform(Transform::from_xyz(
                     tile_pos.x as f32 * grid_size.x,
                     tile_pos.y as f32 * grid_size.y,
                     0.0,
@@ -792,7 +795,7 @@ fn load_infinite_tiles_layer(
                         },
                         ..Default::default()
                     })
-                    .insert(TransformBundle::from_transform(Transform::from_xyz(
+                    .insert(SpatialBundle::from_transform(Transform::from_xyz(
                         tile_pos.x as f32 * grid_size.x,
                         tile_pos.y as f32 * grid_size.y,
                         0.0,
@@ -868,7 +871,7 @@ fn load_objects_layer(
         };
 
         let _object_entity = commands
-            .spawn(TransformBundle::from_transform(Transform::from_xyz(
+            .spawn(SpatialBundle::from_transform(Transform::from_xyz(
                 object_position.x,
                 object_position.y,
                 0.,

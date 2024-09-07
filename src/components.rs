@@ -85,15 +85,15 @@ pub struct TiledMapSettings {
     /// By default, we add a single collider to the shape: you can use
     /// this callback to add additional components to the collider
     pub collider_callback: ColliderCallback,
+    /// Specify which physics backend to use. This is necessary for adding
+    /// the appropriate colliders to Bevy based on the colliders within the
+    /// Tiled map.
+    pub physics_backend: PhysicsBackend,
     /// Specify which position transformation offset should be applied.
     ///
     /// By default, the layer's offset will be used.
     /// For Bevy's coordinate system use MapPositioning::Centered
     pub map_positioning: MapPositioning,
-    /// Specify which physics backend to use. This is necessary for adding
-    /// the appropriate colliders to Bevy based on the colliders within the
-    /// Tiled map.
-    pub physics_backend: PhysicsBackend,
 }
 
 impl Default for TiledMapSettings {
