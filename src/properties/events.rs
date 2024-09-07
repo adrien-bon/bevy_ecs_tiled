@@ -3,8 +3,6 @@ use bevy_ecs_tilemap::prelude::*;
 use tiled::{ObjectData, TileData};
 
 #[cfg(feature = "physics")]
-use crate::physics::{insert_object_colliders, insert_tile_colliders};
-#[cfg(feature = "physics")]
 use crate::prelude::*;
 
 #[derive(Event, Clone, Debug)]
@@ -13,6 +11,7 @@ pub struct TiledObjectCreated {
     pub map_type: TilemapType,
     pub object_data: ObjectData,
     pub map_size: TilemapSize,
+    pub physics_backend: PhysicsBackend,
 }
 
 #[derive(Event, Clone, Debug)]
@@ -22,12 +21,13 @@ pub struct TiledCustomTileCreated {
     pub tile_data: TileData,
     pub map_size: TilemapSize,
     pub grid_size: TilemapGridSize,
+    pub physics_backend: PhysicsBackend,
 }
 
-#[cfg(any(feature = "rapier", feature = "avian"))]
+#[cfg(feature = "physics")]
 impl TiledObjectCreated {
     pub fn spawn_collider(&self, mut commands: Commands, collider_callback: ColliderCallback) {
-        insert_object_colliders(
+        self.physics_backend.insert_object_colliders(
             &mut commands,
             self.entity,
             &self.map_type,
@@ -46,7 +46,7 @@ impl TiledCustomTileCreated {
         collider_callback: ColliderCallback,
     ) {
         if let Some(collision) = &self.tile_data.collision {
-            insert_tile_colliders(
+            self.physics_backend.insert_tile_colliders(
                 &mut commands,
                 &ObjectNameFilter::from(&collision_object_names),
                 self.entity,

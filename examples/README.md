@@ -30,3 +30,4 @@ In most of the examples, you can use the following action keys:
 | `user_properties_avian` | `user_properties`, `avian` | This example shows how to map custom tiles / objects properties from Tiled to Bevy Components and manually spawn Avian colliders from them. |
 | `delayed_spawn` | None | This example will delay map spawn from asset loading to demonstrate both are decoupled. |
 | `multiple_tilesets` | None | This example shows a finite orthogonal map with multiple external tilesets. |
+| `custom_physics` | `physics` | This example shows how to use a custom physics backend. |
