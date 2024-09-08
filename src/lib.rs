@@ -27,7 +27,7 @@
 //!
 //! Then add the plugin to your app:
 //!
-//! ```rust
+//! ```no_run
 //! use bevy::prelude::*;
 //! use bevy_ecs_tiled::prelude::*;
 //! use bevy_ecs_tilemap::prelude::*;
@@ -54,7 +54,7 @@
 //! }
 //! ```
 //!
-//! See documentation for [TiledMapBundle] and the [examples](https://github.com/adrien-bon/bevy_ecs_tiled/examples/README.md) for more advanced use cases.
+//! See documentation for [components::TiledMapBundle] and the [examples](https://github.com/adrien-bon/bevy_ecs_tiled/examples/README.md) for more advanced use cases.
 //!
 
 pub mod components;

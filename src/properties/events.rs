@@ -5,7 +5,7 @@ use tiled::{ObjectData, TileData};
 #[cfg(feature = "physics")]
 use crate::prelude::*;
 
-/// This event is sent when an object registered with [register_tiled_object] is spawned.
+/// This event is sent when an object registered with [crate::properties::app::TiledApp::register_tiled_object] is spawned.
 /// It should be handled using an observer. See [associated example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/user_properties.rs#L99)
 #[derive(Event, Clone, Debug)]
 pub struct TiledObjectCreated {
@@ -21,7 +21,7 @@ pub struct TiledObjectCreated {
     pub physics_backend: PhysicsBackend,
 }
 
-/// This event is sent when a tile registered with [register_tiled_custom_tile] is spawned.
+/// This event is sent when a tile registered with [crate::properties::app::TiledApp::register_tiled_custom_tile] is spawned.
 /// It should be handled using an observer. See [associated example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/user_properties.rs#L79)
 #[derive(Event, Clone, Debug)]
 pub struct TiledCustomTileCreated {
