@@ -18,7 +18,7 @@ fn main() {
             Update,
             (
                 handle_load.run_if(in_state(MapState::Unloaded)),
-                (handle_unload, handle_reload).run_if(in_state(MapState::Loaded)),
+                (handle_unload, handle_reload, handle_respawn).run_if(in_state(MapState::Loaded)),
             ),
         )
         .add_systems(Update, log_transitions)
@@ -32,7 +32,7 @@ fn startup(
 ) {
     commands.spawn(Camera2dBundle::default());
     commands.spawn(TextBundle::from(
-        "U = Unload map by removing asset\nI = Unload map by despawning entity\nL = Load finite map\nK = Replace loaded map component without unloading",
+        "U = Unload map by removing asset\nI = Unload map by despawning entity\nL = Load finite map\nK = Replace loaded map component without unloading\nR = Reload map using the RespawnTiledMap component",
     ));
 
     let map_handle: Handle<TiledMap> = asset_server.load("finite.tmx");
@@ -116,6 +116,17 @@ fn handle_unload(
             commands.entity(map.0).despawn_recursive();
         }
         next_state.set(MapState::Unloaded);
+    }
+}
+
+fn handle_respawn(
+    mut commands: Commands,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    maps_query: Query<(Entity, &Handle<TiledMap>)>,
+) {
+    if keyboard_input.just_pressed(KeyCode::KeyR) {
+        let (entity, _) = maps_query.single();
+        commands.entity(entity).insert(RespawnTiledMap);
     }
 }
 
