@@ -4,7 +4,12 @@
 
 ### Features
 
-- Add the possibility for the user to use a custom physics backend
+- Add the possibility for the user to use a custom physics backend and add an associated example (#30)
+- Add a note about isometric (staggered) maps which are not supported and add a dedicated example
+
+### Bugfixes
+
+- Fix objects position for isometric (diamond) maps and update associated example
 
 ## v0.3.7
 
