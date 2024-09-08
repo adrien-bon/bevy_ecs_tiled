@@ -2,7 +2,6 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use tiled::{ObjectData, TileData};
 
-#[cfg(feature = "physics")]
 use crate::prelude::*;
 
 /// This event is sent when an object registered with [crate::properties::app::TiledApp::register_tiled_object] is spawned.
