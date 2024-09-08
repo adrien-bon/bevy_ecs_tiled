@@ -2,6 +2,8 @@
 
 ## [unreleased]
 
+## v0.3.8
+
 ### Features
 
 - Add the possibility for the user to use a custom physics backend and add an associated example (#30)
