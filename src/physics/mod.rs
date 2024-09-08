@@ -12,11 +12,19 @@ use tiled::{ObjectData, ObjectLayerData};
 
 use crate::prelude::*;
 
+/// This event is sent when a collider with custom physics backend is created
 #[derive(Event, Clone, Debug)]
 pub struct CustomColliderCreationEvent {
+    /// Collider entity
     pub collider_entity: Entity,
+    /// Tiled map type
     pub map_type: TilemapType,
+    /// Tile size, expressed in pixels.
+    /// If None, it means collider is associated to an object.
+    /// If Some, it means collider is associated to a tile.
     pub grid_size: Option<TilemapGridSize>,
+    /// Tiled object data. There can be several objects (hence, several events)
+    /// when adding colliders to a tile.
     pub object_data: ObjectData,
 }
 
@@ -26,11 +34,18 @@ impl Command for CustomColliderCreationEvent {
     }
 }
 
+/// Physics backend to use
 #[derive(Clone, Resource)]
 pub enum PhysicsBackend {
+    /// Rapier physics backend
     Rapier,
+    /// Avian physics backend
     Avian,
+    /// No physics backend
     None,
+    /// Custom physics backend,
+    /// [CustomColliderCreationEvent] will be triggered
+    /// when adding a new collider.
     Custom,
 }
 

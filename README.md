@@ -6,8 +6,14 @@
 [![Crates.io](https://img.shields.io/crates/d/bevy_ecs_tiled)](https://crates.io/crates/bevy_ecs_tiled)
 [![Following released Bevy versions](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://bevyengine.org/learn/quick-start/plugin-development/#main-branch-tracking)
 
-Plugin for working with 2D tilemaps created with the [Tiled](https://www.mapeditor.org/) map editor using the [`bevy_ecs_tilemap`](https://github.com/StarArawn/bevy_ecs_tilemap) crate to perform rendering so each tile is represented by a Bevy entity.
-Layers are children of the tilemap entity, tiles and objects are children of layers. Visibility is inherited: map -> layer -> tile
+[`bevy_ecs_tiled`](https://github.com/adrien-bon/bevy_ecs_tiled) is a [`Bevy`](https://bevyengine.org/) plugin for working with 2D tilemaps created with the [Tiled](https://www.mapeditor.org/) map editor.
+
+It uses the [`bevy_ecs_tilemap`](https://github.com/StarArawn/bevy_ecs_tilemap) crate to perform rendering, so each tile or object is represented by a Bevy entity:
+
+- layers are children of the tilemap entity
+- tiles and objects are children of layers
+
+`Visibility` and `Transform` are inherited: map -> layer -> tile / object
 
 ![screenshot](./res/screenshot.gif)
 
@@ -47,6 +53,7 @@ fn main() {
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    // Spawn a 2D camera
     commands.spawn(Camera2dBundle::default());
 
     // Ensure any tile / tileset paths are relative to assets/

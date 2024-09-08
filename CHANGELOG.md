@@ -6,6 +6,7 @@
 
 - Add the possibility for the user to use a custom physics backend and add an associated example (#30)
 - Add a note about isometric (staggered) maps which are not supported and add a dedicated example
+- Add a bit of documentation
 
 ### Bugfixes
 

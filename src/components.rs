@@ -6,9 +6,10 @@ use bevy_ecs_tilemap::prelude::*;
 #[derive(Component)]
 pub struct RespawnTiledMap;
 
-// Stores a list of tiled layers.
+/// Stores a list of tiled layers.
 #[derive(Component, Default)]
 pub struct TiledLayersStorage {
+    /// Hashmap containing the list of loaded layers.
     pub storage: HashMap<u32, Entity>,
 }
 
@@ -53,20 +54,29 @@ pub struct TiledMapTile;
 #[derive(Component)]
 pub struct TiledMapObject;
 
+/// Controls position of the map in the world
 #[derive(Default, Clone)]
 pub enum MapPositioning {
     #[default]
-    /// Transforms TilemapBundle starting from the layer's offset.
+    /// Raw position from Tiled: only use layer offset to position the map.
     LayerOffset,
-    /// Mimics Bevy's coordinate system so that (0, 0) is at the center of the map.
+    /// Update layers position and mimics Bevy's coordinate system so that (0, 0) is at the center of the map.
     Centered,
 }
 
+/// This bundle holds all the configuration needed to load a map with `bevy_ecs_tiled` plugin.
+/// Only thing to do is to initialize this bundle then spawn it.
 #[derive(Default, Bundle)]
 pub struct TiledMapBundle {
+    /// Handle to the .tmx file to load reprenseting the map.
+    /// It is the only field mandatory to actually spawn the map.
     pub tiled_map: Handle<TiledMap>,
+    /// Hashmap holding all the layers of the map
+    /// Should be left as default when spawning the bundle
     pub storage: TiledLayersStorage,
+    /// Render settings from `bevy_ecs_tilemap`
     pub render_settings: TilemapRenderSettings,
+    /// Settings from `bevy_ecs_tiled`
     pub tiled_settings: TiledMapSettings,
 }
 
