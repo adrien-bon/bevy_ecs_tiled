@@ -2,6 +2,8 @@
 
 ## [unreleased]
 
+## v0.3.9
+
 ### Bugfixes
 
 - Fix compilation issue when not using `physics` feature
