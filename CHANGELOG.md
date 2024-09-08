@@ -7,6 +7,7 @@
 - Add the possibility for the user to use a custom physics backend and add an associated example (#30)
 - Add a note about isometric (staggered) maps which are not supported and add a dedicated example
 - Add a bit of documentation
+- Update layers Z-offset so the upper layer will be at offset 0 and layers behind will have negative offset values
 
 ### Bugfixes
 
