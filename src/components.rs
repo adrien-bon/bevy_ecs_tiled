@@ -66,8 +66,6 @@ pub enum MapPositioning {
 pub struct TiledMapBundle {
     pub tiled_map: Handle<TiledMap>,
     pub storage: TiledLayersStorage,
-    pub transform: Transform,
-    pub global_transform: GlobalTransform,
     pub render_settings: TilemapRenderSettings,
     pub tiled_settings: TiledMapSettings,
 }

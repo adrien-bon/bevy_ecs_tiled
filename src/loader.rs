@@ -268,6 +268,7 @@ fn process_loaded_maps(
             }
             if let Some(tiled_map) = maps.get(map_handle) {
                 info!("Spawning map {:?}", map_handle.path());
+                commands.entity(map_entity).insert(SpatialBundle::default());
                 remove_layers(&mut commands, &tile_storage_query, &mut layer_storage);
                 load_map(
                     &mut commands,
