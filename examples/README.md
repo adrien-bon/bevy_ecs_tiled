@@ -1,5 +1,18 @@
 # Examples
 
+This directory provides a list of examples which demonstrate how to use the crate.
+
+To run an example, you can run the following command, where XXX is the example name:
+
+```bash
+cargo run --example XXX
+```
+
+Be advised that some of the examples require to enable one or multiple feature.
+In that case, cargo will return an error and print the proper command to run.
+
+Please note that if you want a more in-depth explanation of some of the crate concepts, there is a [dedicated book](https://adrien-bon.github.io/bevy_ecs_tiled/) to cover that.
+
 ## Keyboard controls
 
 In most of the examples, you can use the following action keys:
@@ -7,6 +20,10 @@ In most of the examples, you can use the following action keys:
 - **WASD**: to move around the camera
 - **Z/X**: to zoom out / zoom in
 - **A/E**: to rotate the map (not only the camera)
+
+Note: some of on the key can be differents for "non-QWERTY" keyboard layout.
+
+For instance, on an "AZERTY" keyboard, you must use `A` instead of `Q` and `Z` instead of `W`.
 
 ## Examples list
 

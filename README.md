@@ -6,9 +6,14 @@
 [![Crates.io](https://img.shields.io/crates/d/bevy_ecs_tiled)](https://crates.io/crates/bevy_ecs_tiled)
 [![Following released Bevy versions](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://bevyengine.org/learn/quick-start/plugin-development/#main-branch-tracking)
 
-[`bevy_ecs_tiled`](https://github.com/adrien-bon/bevy_ecs_tiled) is a [`Bevy`](https://bevyengine.org/) plugin for working with 2D tilemaps created with the [Tiled](https://www.mapeditor.org/) map editor.
+[`bevy_ecs_tiled`](https://github.com/adrien-bon/bevy_ecs_tiled) is a [Bevy](https://bevyengine.org/) plugin for working with 2D tilemaps created with the [Tiled](https://www.mapeditor.org/) map editor.
 
-It uses the [`bevy_ecs_tilemap`](https://github.com/StarArawn/bevy_ecs_tilemap) crate to perform rendering, so each tile or object is represented by a Bevy entity:
+It relies upon:
+
+- the official [Tiled Rust bindings](https://github.com/mapeditor/rs-tiled) to parse Tiled maps
+- the [`bevy_ecs_tilemap` crate](https://github.com/StarArawn/bevy_ecs_tilemap) to perform rendering
+
+Each tile or object is represented by a Bevy entity:
 
 - layers are children of the tilemap entity
 - tiles and objects are children of layers
@@ -27,7 +32,14 @@ It uses the [`bevy_ecs_tilemap`](https://github.com/StarArawn/bevy_ecs_tilemap) 
 - Rapier and Avian colliders added from tilesets and object layers (`rapier` or `avian` feature flag)
 - Tiled custom properties mapped to Bevy components (`user_properties` feature flag)
 
+## Documentation
+
+- [`bevy_ecs_tiled` book](https://adrien-bon.github.io/bevy_ecs_tiled/)
+- [API reference](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/)
+
 ## Getting started
+
+Add dependencies to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
@@ -36,9 +48,9 @@ bevy_ecs_tiled = "0.3"
 bevy_ecs_tilemap = "0.14"
 ```
 
-Then add the plugin to your app:
+Then add the plugin to your app and spawn a map:
 
-```rust
+```rust no_run
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
@@ -64,6 +76,8 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 }
 ```
+
+Please note that you should have the `map.tmx` file in your local `assets/` folder (as well as required dependencies, for instance associated tilesets).
 
 See the [examples](./examples/README.md) for more advanced use cases.
 

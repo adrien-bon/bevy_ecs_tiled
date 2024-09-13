@@ -1,0 +1,6 @@
+[book]
+authors = ["Adrien BON"]
+language = "en"
+multilingual = false
+src = "src"
+title = "bevy_ecs_tiled Documentation"

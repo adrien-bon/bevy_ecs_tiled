@@ -1,60 +1,15 @@
-//! [`bevy_ecs_tiled`](https://github.com/adrien-bon/bevy_ecs_tiled) is a [`Bevy`](https://bevyengine.org/) plugin for working with 2D tilemaps created with the [Tiled](https://www.mapeditor.org/) map editor.
-//!
-//! It uses the [`bevy_ecs_tilemap`](https://github.com/StarArawn/bevy_ecs_tilemap) crate to perform rendering, so each tile is represented by a Bevy entity:
-//! - layers are children of the tilemap entity
-//! - tiles and objects are children of layers
-//!
-//! `Visibility` and `Transform` are inherited: map -> layer -> tile / object
-//!
-//! ## Features
-//!
-//! - Orthogonal, isometric and hexagonal maps
-//! - Finite and infinite maps
-//! - Embedded and separate tileset
-//! - Easily spawn / despawn maps
-//! - Animated tiles
-//! - Rapier and Avian colliders added from tilesets and object layers (`rapier` or `avian` feature flag)
-//! - Tiled custom properties mapped to Bevy components (`user_properties` feature flag)
+#![doc = include_str!("../book/src/intro.md")]
 //!
 //! ## Getting started
 //!
-//! ```toml
-//! [dependencies]
-//! bevy = "0.14"
-//! bevy_ecs_tiled = "0.3"
-//! bevy_ecs_tilemap = "0.14"
-//! ```
+#![doc = include_str!("../book/src/getting-started.md")]
 //!
-//! Then add the plugin to your app:
+//! ## API reference
 //!
-//! ```no_run
-//! use bevy::prelude::*;
-//! use bevy_ecs_tiled::prelude::*;
-//! use bevy_ecs_tilemap::prelude::*;
+//! As the name implies, this API reference documentation purpose is to describe the API provided by `bevy_ecs_tiled`.
+//! A good entry-point would be the [components::TiledMapBundle] component which is the component used to actually spawn a map.
 //!
-//! fn main() {
-//!     App::new()
-//!         .add_plugins(DefaultPlugins)
-//!         .add_plugins(TilemapPlugin)
-//!         .add_plugins(TiledMapPlugin)
-//!         .add_systems(Startup, startup)
-//!         .run();
-//! }
-
-//! fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
-//!     // Spawn a 2D camera
-//!     commands.spawn(Camera2dBundle::default());
-//!
-//!     // Ensure any tile / tileset paths are relative to assets/
-//!     let map_handle: Handle<TiledMap> = asset_server.load("map.tmx");
-//!     commands.spawn(TiledMapBundle {
-//!         tiled_map: map_handle,
-//!         ..Default::default()
-//!     });
-//! }
-//! ```
-//!
-//! See documentation for [components::TiledMapBundle] and the [examples](https://github.com/adrien-bon/bevy_ecs_tiled/examples/README.md) for more advanced use cases.
+//! For a more use-cases oriented documentation please have a look to the [`bevy_ecs_tiled` book](https://adrien-bon.github.io/bevy_ecs_tiled/).
 //!
 
 pub mod components;
