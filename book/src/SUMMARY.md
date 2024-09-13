@@ -5,7 +5,7 @@
 
 # Design and explanation
 
-- [Why using Tiled ?]()
+- [Why using Tiled ?](design/why-tiled.md)
 - [Entities tree and component markers]()
 - [Layers Z-ordering]()
 

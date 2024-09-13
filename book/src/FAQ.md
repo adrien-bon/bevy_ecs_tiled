@@ -1,5 +1,13 @@
 # FAQ
 
+## What is the current status of the crate ?
+
+While the crate is already definitely usable, it is still under active development.
+
+Expect bugs and missing features !
+
+I plan to follow semver and try to only break API upon new Bevy release.
+
 ## What kind of maps are supported ?
 
 Currently, we support :

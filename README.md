@@ -100,7 +100,7 @@ See the [examples](./examples/README.md) for more advanced use cases.
 
 If you can contribute, please do!
 
-If you would like to contribute but don't know where to start, [read this discussion](https://github.com/adrien-bon/bevy_ecs_tiled/discussions/1).
+If you would like to contribute but don't know where to start, [read this section in the book](https://adrien-bon.github.io/bevy_ecs_tiled/misc/contributing.html).
 
 ## LICENSE
 
