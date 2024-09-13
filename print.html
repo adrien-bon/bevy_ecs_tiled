@@ -163,14 +163,14 @@ Thanks for the inspiration! :)</p>
 <hr />
 <h2 id="purpose-of-this-book"><a class="header" href="#purpose-of-this-book">Purpose of this book</a></h2>
 <p>This book aims to give you a better understanding of how <a href="https://github.com/adrien-bon/bevy_ecs_tiled"><code>bevy_ecs_tiled</code></a> works, what you can achieve with it and how you can do it.</p>
-<p>It will focus more on concepts and design concerns.
+<p>It will focus on concepts, design concerns and basic tutorials.
 If you need an API reference, please have a look at the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/"><code>bevy_ecs_tiled</code> API reference</a>.</p>
 <p>Finally, this book assume you already have some sort of knowledge about <a href="https://bevyengine.org/">Bevy</a> and <a href="https://www.mapeditor.org/">Tiled</a> map editor.
 There are already some good documentations available on these topics and some resources are referenced <a href="misc/useful-links.html">in the dedicated section</a>.</p>
 <h2 id="architecture-of-this-book"><a class="header" href="#architecture-of-this-book">Architecture of this book</a></h2>
 <p>This book is divided in several categories:</p>
 <ul>
-<li><strong>Design and explanation</strong>: how does the plugin works and why some technical choices have been made;</li>
+<li><strong>Design and explanation</strong>: how does the plugin work and why some technical choices have been made;</li>
 <li><strong>How-To's</strong>: in-depth tutorials about a specific aspect of  the plugin;</li>
 <li><strong>Migration guides</strong>: migration guides for specific versions;</li>
 <li><strong>Miscellaneous</strong>: other topics that did not fit in other categories.</li>
@@ -226,7 +226,7 @@ bevy_ecs_tiled = &quot;0.3&quot;
 bevy_ecs_tilemap = &quot;0.14&quot;
 </code></pre>
 <p>Then add the plugin to your app and spawn a map:</p>
-<pre><pre class="playground"><code class="language-rustno_run">use bevy::prelude::*;
+<pre><pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 
