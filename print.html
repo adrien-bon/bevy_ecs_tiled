@@ -83,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="FAQ.html">FAQ</a></li><li class="chapter-item expanded affix "><li class="part-title">Design and explanation</li><li class="chapter-item expanded "><div><strong aria-hidden="true">1.</strong> Why using Tiled ?</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">2.</strong> Entities tree and component markers</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">3.</strong> Layers Z-ordering</div></li><li class="chapter-item expanded affix "><li class="part-title">How-To's</li><li class="chapter-item expanded "><a href="guides/minimal.html"><strong aria-hidden="true">4.</strong> Minimal working example</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">5.</strong> Spawn / Despawn / Reload a map</div></li><li class="chapter-item expanded "><a href="guides/physics.html"><strong aria-hidden="true">6.</strong> Use a physics backend</a></li><li class="chapter-item expanded "><a href="guides/properties.html"><strong aria-hidden="true">7.</strong> Use Tiled custom properties</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">8.</strong> Animate tiles</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">9.</strong> Debug your project</div></li><li class="chapter-item expanded affix "><li class="part-title">Migration guides</li><li class="chapter-item expanded "><div><strong aria-hidden="true">10.</strong> From v0.3.X to v0.4.X</div></li><li class="chapter-item expanded affix "><li class="part-title">Miscellaneous</li><li class="chapter-item expanded "><a href="misc/useful-links.html"><strong aria-hidden="true">11.</strong> Useful links</a></li><li class="chapter-item expanded "><a href="misc/contributing.html"><strong aria-hidden="true">12.</strong> Contributing</a></li><li class="chapter-item expanded "><a href="misc/api-reference.html"><strong aria-hidden="true">13.</strong> API reference</a></li></ol>            </div>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="FAQ.html">FAQ</a></li><li class="chapter-item expanded affix "><li class="part-title">Design and explanation</li><li class="chapter-item expanded "><a href="design/why-tiled.html"><strong aria-hidden="true">1.</strong> Why using Tiled ?</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">2.</strong> Entities tree and component markers</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">3.</strong> Layers Z-ordering</div></li><li class="chapter-item expanded affix "><li class="part-title">How-To's</li><li class="chapter-item expanded "><a href="guides/minimal.html"><strong aria-hidden="true">4.</strong> Minimal working example</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">5.</strong> Spawn / Despawn / Reload a map</div></li><li class="chapter-item expanded "><a href="guides/physics.html"><strong aria-hidden="true">6.</strong> Use a physics backend</a></li><li class="chapter-item expanded "><a href="guides/properties.html"><strong aria-hidden="true">7.</strong> Use Tiled custom properties</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">8.</strong> Animate tiles</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">9.</strong> Debug your project</div></li><li class="chapter-item expanded affix "><li class="part-title">Migration guides</li><li class="chapter-item expanded "><div><strong aria-hidden="true">10.</strong> From v0.3.X to v0.4.X</div></li><li class="chapter-item expanded affix "><li class="part-title">Miscellaneous</li><li class="chapter-item expanded "><a href="misc/useful-links.html"><strong aria-hidden="true">11.</strong> Useful links</a></li><li class="chapter-item expanded "><a href="misc/contributing.html"><strong aria-hidden="true">12.</strong> Contributing</a></li><li class="chapter-item expanded "><a href="misc/api-reference.html"><strong aria-hidden="true">13.</strong> API reference</a></li></ol>            </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
@@ -177,6 +177,10 @@ There are already some good documentations available on these topics and some re
 </ul>
 <p>Good reading ! :)</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="faq"><a class="header" href="#faq">FAQ</a></h1>
+<h2 id="what-is-the-current-status-of-the-crate-"><a class="header" href="#what-is-the-current-status-of-the-crate-">What is the current status of the crate ?</a></h2>
+<p>While the crate is already definitely usable, it is still under active development.</p>
+<p>Expect bugs and missing features !</p>
+<p>I plan to follow semver and try to only break API upon new Bevy release.</p>
 <h2 id="what-kind-of-maps-are-supported-"><a class="header" href="#what-kind-of-maps-are-supported-">What kind of maps are supported ?</a></h2>
 <p>Currently, we support :</p>
 <ul>
@@ -197,6 +201,23 @@ There are already some good documentations available on these topics and some re
 <h2 id="i-want-to-add-a-new-feature-thats-not-yet-in-the-crate"><a class="header" href="#i-want-to-add-a-new-feature-thats-not-yet-in-the-crate">I want to add a new feature that's not yet in the crate!</a></h2>
 <p>Great news!
 Please have a look to <a href="misc/contributing.html">the dedicated section</a></p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="why-using-tiled-"><a class="header" href="#why-using-tiled-">Why using Tiled ?</a></h1>
+<p><a href="https://www.mapeditor.org/">Tiled</a> may feel a bit outdated in terms of &quot;look and feel&quot;, especially when compared with more modern map editor tools like <a href="https://ldtk.io/">LDTK</a>.
+However it has <strong>a lot</strong> of features which make it very interesting.</p>
+<p>If we compare with <a href="https://ldtk.io/">LDTK</a>, they both have a set of powerful features like:</p>
+<ul>
+<li>auto-tiling</li>
+<li>adding gameplay informations to map tiles and objects</li>
+<li>working with worlds</li>
+</ul>
+<p>But <a href="https://www.mapeditor.org/">Tiled</a> also have a set of unique features:</p>
+<ul>
+<li>support for both isometric and hexagonal maps</li>
+<li>native support for animated tiled</li>
+</ul>
+<p>Since I specifically wanted to work with hexagonal maps the choice was obvious for me!</p>
+<p>However, if it's not your case and you just want to use orthogonal map, you could give a shot at using <a href="https://ldtk.io/">LDTK</a> instead, especially using the <a href="https://github.com/Trouv/bevy_ecs_ldtk"><code>bevy_ecs_ldtk</code> crate</a>.
+Or stay with <a href="https://www.mapeditor.org/">Tiled</a>, it also works :)</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="minimal-working-example"><a class="header" href="#minimal-working-example">Minimal working example</a></h1>
 <p>Add dependencies to your <code>Cargo.toml</code> file:</p>
 <pre><code class="language-toml">[dependencies]
