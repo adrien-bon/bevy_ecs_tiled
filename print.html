@@ -1,0 +1,329 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>bevy_ecs_tiled Documentation</title>
+                <meta name="robots" content="noindex" />
+                
+
+        <!-- Custom HTML head -->
+        
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+                <link rel="icon" href="favicon.svg">
+                        <link rel="shortcut icon" href="favicon.png">
+                <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+                <link rel="stylesheet" href="css/print.css" media="print">
+        
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+                <link rel="stylesheet" href="fonts/fonts.css">
+        
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+            </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="FAQ.html">FAQ</a></li><li class="chapter-item expanded affix "><li class="part-title">Design and explanation</li><li class="chapter-item expanded "><div><strong aria-hidden="true">1.</strong> Why using Tiled ?</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">2.</strong> Entities tree and component markers</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">3.</strong> Layers Z-ordering</div></li><li class="chapter-item expanded affix "><li class="part-title">How-To's</li><li class="chapter-item expanded "><a href="guides/minimal.html"><strong aria-hidden="true">4.</strong> Minimal working example</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">5.</strong> Spawn / Despawn / Reload a map</div></li><li class="chapter-item expanded "><a href="guides/physics.html"><strong aria-hidden="true">6.</strong> Use a physics backend</a></li><li class="chapter-item expanded "><a href="guides/properties.html"><strong aria-hidden="true">7.</strong> Use Tiled custom properties</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">8.</strong> Animate tiles</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">9.</strong> Debug your project</div></li><li class="chapter-item expanded affix "><li class="part-title">Migration guides</li><li class="chapter-item expanded "><div><strong aria-hidden="true">10.</strong> From v0.3.X to v0.4.X</div></li><li class="chapter-item expanded affix "><li class="part-title">Miscellaneous</li><li class="chapter-item expanded "><a href="misc/useful-links.html"><strong aria-hidden="true">11.</strong> Useful links</a></li><li class="chapter-item expanded "><a href="misc/contributing.html"><strong aria-hidden="true">12.</strong> Contributing</a></li><li class="chapter-item expanded "><a href="misc/api-reference.html"><strong aria-hidden="true">13.</strong> API reference</a></li></ol>            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                                                <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                                            </div>
+
+                    <h1 class="menu-title">bevy_ecs_tiled Documentation</h1>
+
+                    <div class="right-buttons">
+                                                <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                                                                        
+                    </div>
+                </div>
+
+                                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
+<p><a href="https://github.com/adrien-bon/bevy_ecs_tiled"><code>bevy_ecs_tiled</code></a> is a <a href="https://bevyengine.org/">Bevy</a> plugin for working with 2D tilemaps created with the <a href="https://www.mapeditor.org/">Tiled</a> map editor.</p>
+<p>It relies upon:</p>
+<ul>
+<li>the official <a href="https://github.com/mapeditor/rs-tiled">Tiled Rust bindings</a> to parse Tiled maps</li>
+<li>the <a href="https://github.com/StarArawn/bevy_ecs_tilemap"><code>bevy_ecs_tilemap</code> crate</a> to perform rendering</li>
+</ul>
+<p>Each tile or object is represented by a Bevy entity:</p>
+<ul>
+<li>layers are children of the tilemap entity</li>
+<li>tiles and objects are children of layers</li>
+</ul>
+<p><code>Visibility</code> and <code>Transform</code> are inherited: map -&gt; layer -&gt; tile / object</p>
+<hr />
+<p><strong>Disclaimer:</strong> both this book and the whole crate have been heavilly inspired by the <a href="https://github.com/Trouv/bevy_ecs_ldtk"><code>bevy_ecs_ldtk</code> crate</a>, which is basically the equivalent of <code>bevy_ecs_tiled</code> but for the <a href="https://ldtk.io/">LDTK</a> map editor.
+Thanks for the inspiration! :)</p>
+<hr />
+<h2 id="purpose-of-this-book"><a class="header" href="#purpose-of-this-book">Purpose of this book</a></h2>
+<p>This book aims to give you a better understanding of how <a href="https://github.com/adrien-bon/bevy_ecs_tiled"><code>bevy_ecs_tiled</code></a> works, what you can achieve with it and how you can do it.</p>
+<p>It will focus more on concepts and design concerns.
+If you need an API reference, please have a look at the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/"><code>bevy_ecs_tiled</code> API reference</a>.</p>
+<p>Finally, this book assume you already have some sort of knowledge about <a href="https://bevyengine.org/">Bevy</a> and <a href="https://www.mapeditor.org/">Tiled</a> map editor.
+There are already some good documentations available on these topics and some resources are referenced <a href="misc/useful-links.html">in the dedicated section</a>.</p>
+<h2 id="architecture-of-this-book"><a class="header" href="#architecture-of-this-book">Architecture of this book</a></h2>
+<p>This book is divided in several categories:</p>
+<ul>
+<li><strong>Design and explanation</strong>: how does the plugin works and why some technical choices have been made;</li>
+<li><strong>How-To's</strong>: in-depth tutorials about a specific aspect of  the plugin;</li>
+<li><strong>Migration guides</strong>: migration guides for specific versions;</li>
+<li><strong>Miscellaneous</strong>: other topics that did not fit in other categories.</li>
+</ul>
+<p>Good reading ! :)</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="faq"><a class="header" href="#faq">FAQ</a></h1>
+<h2 id="what-kind-of-maps-are-supported-"><a class="header" href="#what-kind-of-maps-are-supported-">What kind of maps are supported ?</a></h2>
+<p>Currently, we support :</p>
+<ul>
+<li>orthogonal maps</li>
+<li>(mostly) isometric &quot;diamond&quot; maps</li>
+<li>hexagonal &quot;flat-top&quot; maps</li>
+<li>hexagonal &quot;pointy-top&quot; maps</li>
+</ul>
+<p>Isometric &quot;diamond&quot; maps currently have an issue with colliders not having the proper shape (see <a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues/32">GH issue #32</a>).</p>
+<p>Isometric &quot;staggered&quot; maps are not supported at all (see <a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues/31">GH issue #31</a>).</p>
+<h2 id="is-it-possible-to-automatically-add-physics-colliders-"><a class="header" href="#is-it-possible-to-automatically-add-physics-colliders-">Is it possible to automatically add physics colliders ?</a></h2>
+<p>Yes, see the <a href="guides/physics.html">dedicated guide</a>.</p>
+<p>We currently support both <a href="https://github.com/Jondolf/avian">Avian</a> and <a href="https://github.com/dimforge/bevy_rapier">Rapier</a> physics backend.</p>
+<h2 id="is-it-possible-to-use-tiled-custom-properties-"><a class="header" href="#is-it-possible-to-use-tiled-custom-properties-">Is it possible to use Tiled &quot;custom properties&quot; ?</a></h2>
+<p>Yes, see the <a href="guides/properties.html">dedicated guide</a>.</p>
+<h2 id="i-found-a-bug-what-should-i-do-"><a class="header" href="#i-found-a-bug-what-should-i-do-">I found a bug! What should I do ?</a></h2>
+<p>Please have a look to <a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues">already openned issues</a> and if it does not already exists, please fill a new one !</p>
+<h2 id="i-want-to-add-a-new-feature-thats-not-yet-in-the-crate"><a class="header" href="#i-want-to-add-a-new-feature-thats-not-yet-in-the-crate">I want to add a new feature that's not yet in the crate!</a></h2>
+<p>Great news!
+Please have a look to <a href="misc/contributing.html">the dedicated section</a></p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="minimal-working-example"><a class="header" href="#minimal-working-example">Minimal working example</a></h1>
+<p>Add dependencies to your <code>Cargo.toml</code> file:</p>
+<pre><code class="language-toml">[dependencies]
+bevy = &quot;0.14&quot;
+bevy_ecs_tiled = &quot;0.3&quot;
+bevy_ecs_tilemap = &quot;0.14&quot;
+</code></pre>
+<p>Then add the plugin to your app and spawn a map:</p>
+<pre><pre class="playground"><code class="language-rustno_run">use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+use bevy_ecs_tilemap::prelude::*;
+
+fn main() {
+    App::new()
+        .add_plugins(DefaultPlugins)
+        .add_plugins(TilemapPlugin)
+        .add_plugins(TiledMapPlugin)
+        .add_systems(Startup, startup)
+        .run();
+}
+
+fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
+    // Spawn a 2D camera
+    commands.spawn(Camera2dBundle::default());
+
+    // Load the map: ensure any tile / tileset paths are relative to assets/ folder
+    let map_handle: Handle&lt;TiledMap&gt; = asset_server.load(&quot;map.tmx&quot;);
+
+    // Spawn the map with default options
+    commands.spawn(TiledMapBundle {
+        tiled_map: map_handle,
+        ..Default::default()
+    });
+}
+</code></pre></pre>
+<p>Please note that you should have the <code>map.tmx</code> file in your local <code>assets/</code> folder (as well as required dependencies, for instance associated tilesets).</p>
+<p>See the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/README.md">examples</a> for more advanced use cases.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="use-a-physics-backend"><a class="header" href="#use-a-physics-backend">Use a physics backend</a></h1>
+<p>TODO</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="use-tiled-custom-properties"><a class="header" href="#use-tiled-custom-properties">Use Tiled custom properties</a></h1>
+<p>TODO</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="useful-links"><a class="header" href="#useful-links">Useful links</a></h1>
+<p>Here is an unordered list of useful resources that may help when working on a 2D tile-base game.</p>
+<p>Feel free to suggest any other link!</p>
+<h2 id="notable-crates"><a class="header" href="#notable-crates">Notable crates</a></h2>
+<ul>
+<li><a href="https://github.com/bevyengine/bevy"><code>bevy</code></a>: the Bevy engine</li>
+<li><a href="https://github.com/StarArawn/bevy_ecs_tilemap"><code>bevy_ecs_tilemap</code></a>: the crate we use for rendering our tiles</li>
+<li><a href="https://github.com/mapeditor/rs-tiled"><code>rs-tiled</code></a>: official Tiled rust bindings</li>
+<li><a href="https://github.com/Trouv/bevy_ecs_ldtk"><code>bevy_ecs_ldtk</code></a>: an equivalent of <code>bevy_ecs_tiled</code> but for the <a href="https://ldtk.io/">LDTK</a> map editor</li>
+<li><a href="https://github.com/ManevilleF/hexx"><code>hexx</code></a>: an hexagonal tools lib for stuff like path-finding or hex coordinates manipulation</li>
+<li><a href="https://github.com/aevyrie/bevy_mod_picking/"><code>bevy_mod_picking</code></a>: a flexible set of plugins that add picking functionality to your bevy app</li>
+<li><a href="https://github.com/zacryol/bevy_picking_tilemap"><code>bevy_picking_tilemap</code></a>: provides a <a href="https://github.com/aevyrie/bevy_mod_picking/"><code>bevy_mod_picking</code></a> backend to add integration with <a href="https://github.com/StarArawn/bevy_ecs_tilemap"><code>bevy_ecs_tilemap</code></a>, enabling individual Tile entities to receive the picking events</li>
+<li><a href="https://github.com/Jondolf/avian"><code>avian</code></a>: Avian physic backend</li>
+<li><a href="https://github.com/dimforge/bevy_rapier"><code>bevy_rapier</code></a>: Rapier physic backend</li>
+</ul>
+<h2 id="notable-resources"><a class="header" href="#notable-resources">Notable resources</a></h2>
+<ul>
+<li><a href="https://bevyengine.org/">Bevy official website</a>: lots of examples and learning materials</li>
+<li><a href="https://docs.rs/bevy/latest/bevy/">Bevy API reference</a></li>
+<li><a href="https://bevy-cheatbook.github.io/">Unofficial Bevy Cheat Book</a>: one the best resource to learn Bevy</li>
+<li><a href="https://www.mapeditor.org/">Tiled official website</a>: to get the latest Tiled version and read associated documentation</li>
+<li><a href="https://www.redblobgames.com/">Red Blob Games</a>: collections of tutorials on various gamedev topics, especially the <a href="https://www.redblobgames.com/grids/hexagons/">hexagonal grids reference</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="contributing"><a class="header" href="#contributing">Contributing</a></h1>
+<p>If you would like to contribute but you're unsure where to start, here is a short wishlist and some notes on how to get started.</p>
+<p>First, you can have a look at <a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues">GH issues</a>.
+More specifically, the ones that are:</p>
+<ul>
+<li><a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement">tagged with <code>enhancement</code> label</a></li>
+<li><a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues?q=is%3Aopen+is%3Aissue+label%3Alimitation">tagged with <code>limitation</code> label</a></li>
+</ul>
+<p>If you feel like you can tackle on of these, please, feel free to submit a PR!</p>
+<p>Helping other users, respond to issues, help review PRs or just openning new issues is also very helpful !</p>
+<p>Also, another way of helping is to contribute on crates we rely on, namely <a href="https://github.com/mapeditor/rs-tiled"><code>rs-tiled</code></a> and <a href="https://github.com/StarArawn/bevy_ecs_tilemap"><code>bevy_ecs_tilemap</code></a>, or anything else in the Bevy ecosystem.</p>
+<h2 id="contribution-guidelines"><a class="header" href="#contribution-guidelines">Contribution guidelines</a></h2>
+<p>If you submit a PR, please make sure that:</p>
+<ul>
+<li>the CI is green</li>
+<li>you add proper in-code documentation</li>
+<li>you update the <code>CHANGELOG.md</code> file with a description of your fix</li>
+<li>if you add a new example, update the <code>examples/README.md</code> file with a description of your example and the <code>Cargo.toml</code> file with your example name (and any feature it may need)</li>
+<li>if you add a new map, update the <code>assets/README.md</code> file with your map characteristics</li>
+<li>if you add a new asset, update the &quot;Assets credits&quot; section of the <code>README.md</code> file and make sure that you actually have the right to use it!</li>
+</ul>
+<p>Thanks in advance! :)</p>
+<div style="break-before: page; page-break-before: always;"></div><meta http-equiv="Refresh" content="0; url='https://docs.rs/bevy_ecs_tiled/'" />
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                        
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                            </nav>
+
+        </div>
+
+        
+        
+        
+                <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+        
+                <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+                        <script type="text/javascript">
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+                
+    </body>
+</html>
