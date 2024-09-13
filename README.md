@@ -50,7 +50,7 @@ bevy_ecs_tilemap = "0.14"
 
 Then add the plugin to your app and spawn a map:
 
-```rust no_run
+```rust,no_run
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
