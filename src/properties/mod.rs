@@ -1,15 +1,24 @@
+//! This modules handles all things related to Tiled custom properties
+//! 
+//! It is only available when the `user_properties` feature is enabled.
+//! 
+//! See the [associated example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/user_properties.rs) or the [dedicated book section](https://adrien-bon.github.io/bevy_ecs_tiled/guides/properties.html) for more information.
+
 pub mod app;
 pub mod events;
 pub mod traits;
 
+/// Re-exports, notably derive macros
 pub mod prelude {
     pub use crate::properties::app::*;
     pub use crate::properties::events::*;
     pub use crate::properties::traits::*;
     pub use crate::properties::*;
+    #[doc(inline)]
     pub use bevy_ecs_tiled_macros::*;
 }
 
+/// Conversion methods between Tiled types and Rust types.
 pub trait IntoUserType<T> {
     fn into_user_type(self) -> T;
 }

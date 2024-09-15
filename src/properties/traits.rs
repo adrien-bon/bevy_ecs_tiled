@@ -1,15 +1,33 @@
+//! Traits related to Tiled custom properties.
+//! 
+//! These traits should be used exclusively through the [derive macros](../prelude/index.html) from `bevy_ecs_tiled_macro`.
+
 use crate::prelude::*;
 use bevy::{prelude::*, utils::HashMap};
 use std::marker::PhantomData;
 use tiled::Properties;
 
-pub type TiledObjectRegistry = HashMap<String, Box<dyn PhantomTiledObjectTrait>>;
-
 pub trait TiledObject {
     fn initialize(commands: &mut Commands, create_event: &TiledObjectCreated);
 }
 
-pub struct PhantomTiledObject<T: TiledObject + Bundle> {
+pub trait TiledCustomTile {
+    fn initialize(commands: &mut Commands, create_event: &TiledCustomTileCreated);
+}
+
+pub trait TiledClass {
+    fn create(properties: &Properties) -> Self;
+}
+
+pub trait TiledEnum {
+    fn get_identifier(ident: &str) -> Self;
+}
+
+
+pub(crate) type TiledObjectRegistry = HashMap<String, Box<dyn PhantomTiledObjectTrait>>;
+pub(crate) type TiledCustomTileRegistry = HashMap<String, Box<dyn PhantomTiledCustomTileTrait>>;
+
+pub(crate) struct PhantomTiledObject<T: TiledObject + Bundle> {
     marker: PhantomData<T>,
 }
 
@@ -22,7 +40,7 @@ impl<T: TiledObject + Bundle> PhantomTiledObject<T> {
     }
 }
 
-pub trait PhantomTiledObjectTrait {
+pub(crate) trait PhantomTiledObjectTrait {
     fn initialize(&self, commands: &mut Commands, create_event: &TiledObjectCreated);
 }
 
@@ -32,13 +50,7 @@ impl<T: TiledObject + Bundle> PhantomTiledObjectTrait for PhantomTiledObject<T> 
     }
 }
 
-pub type TiledCustomTileRegistry = HashMap<String, Box<dyn PhantomTiledCustomTileTrait>>;
-
-pub trait TiledCustomTile {
-    fn initialize(commands: &mut Commands, create_event: &TiledCustomTileCreated);
-}
-
-pub struct PhantomTiledCustomTile<T: TiledCustomTile + Bundle> {
+pub(crate) struct PhantomTiledCustomTile<T: TiledCustomTile + Bundle> {
     marker: PhantomData<T>,
 }
 
@@ -51,7 +63,7 @@ impl<T: TiledCustomTile + Bundle> PhantomTiledCustomTile<T> {
     }
 }
 
-pub trait PhantomTiledCustomTileTrait {
+pub(crate) trait PhantomTiledCustomTileTrait {
     fn initialize(&self, commands: &mut Commands, create_event: &TiledCustomTileCreated);
 }
 
@@ -59,12 +71,4 @@ impl<T: TiledCustomTile + Bundle> PhantomTiledCustomTileTrait for PhantomTiledCu
     fn initialize(&self, commands: &mut Commands, create_event: &TiledCustomTileCreated) {
         T::initialize(commands, create_event);
     }
-}
-
-pub trait TiledClass {
-    fn create(properties: &Properties) -> Self;
-}
-
-pub trait TiledEnum {
-    fn get_identifier(ident: &str) -> Self;
 }

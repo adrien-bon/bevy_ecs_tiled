@@ -10,7 +10,7 @@
 
 It relies upon:
 
-- the official [Tiled Rust bindings](https://github.com/mapeditor/rs-tiled) to parse Tiled maps
+- the official [Tiled Rust bindings](https://github.com/mapeditor/rs-tiled) to load Tiled map files
 - the [`bevy_ecs_tilemap` crate](https://github.com/StarArawn/bevy_ecs_tilemap) to perform rendering
 
 Each tile or object is represented by a Bevy entity:
@@ -57,9 +57,13 @@ use bevy_ecs_tilemap::prelude::*;
 
 fn main() {
     App::new()
+        // Add Bevy default plugins
         .add_plugins(DefaultPlugins)
+        // Add bevy_ecs_tilemap plugin
         .add_plugins(TilemapPlugin)
+        // Add bevy_ecs_tiled plugin
         .add_plugins(TiledMapPlugin)
+        // Add our startup function to the schedule and run the app
         .add_systems(Startup, startup)
         .run();
 }

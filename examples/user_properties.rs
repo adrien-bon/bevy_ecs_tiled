@@ -25,7 +25,6 @@ fn main() {
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
-
     let map_handle: Handle<TiledMap> = asset_server.load("hex_map_pointy_top_odd.tmx");
     commands.spawn(TiledMapBundle {
         tiled_map: map_handle,
@@ -52,21 +51,13 @@ fn display_objects(q_object: Query<(&Transform, &SpawnInfos)>) {
     }
 }
 
-// Custom types definition for custom tiles
-//
-// They must implement the following traits:
-// - 'TiledCustomTile', to declare it as a custom tile and trigger the custom properties mapping
-// - 'Bundle' or 'Component', so we can insert it on the tile entity
-// - 'Default' trait, in case a property is not set in Tiled
-// 'Debug' and 'Reflect' traits are for convenience but are not mandatory
-//
-// 'TiledCustomTile' struct accept the following attributes:
-// - tiled_observer: name of an observer which will be triggered once the tile is actually added to the world
-//   Please note that it accepts any arguments compatible with Bevy observers
-// - tiled_rename: name of the Tiled type, in case it's different from the structure field
-// - tiled_skip: skip the following field and do not try to get it's value from Tiled custom properties.
-//   Instead use the struct default value.
-
+// Here, we define our custom tiles:
+// - `TileBundle` reference `BiomeInfos`, which is another custom type, so it needs to derive `Bundle`.
+//    When checking the corresponding entity, we will only see the `BiomeInfos` component since
+//    `TileBundle` is a `Bundle`.
+// - `TileComponent` only reference "standard" types, so it needs to derive `Component`.
+//    When checking the corresponding entity, we will see the `TileComponent` component.
+// Note that `Debug` and `Reflect` traits are only here for convenience and are not required.
 #[derive(TiledCustomTile, Bundle, Default, Debug, Reflect)]
 struct TileBundle {
     // We expect this field to be named 'BiomeInfos' in Tiled custom properties
@@ -75,44 +66,25 @@ struct TileBundle {
     infos: BiomeInfos,
 }
 
+// Here, we also declare an observer: when a new `TileComponent` is spawned, the
+// observer will automatically be triggered with a `TiledCustomTileCreated` event (see below).
 #[derive(TiledCustomTile, Component, Default, Debug, Reflect)]
 #[tiled_observer(test_tile_observer)]
 struct TileComponent {
     prefered_color: bevy::color::Color,
 }
 
-// Custom types definition for objects
-//
-// They must implement the following traits:
-// - 'TiledObject', to declare it as an object and trigger the custom properties mapping
-// - 'Bundle' or 'Component', so we can insert it on the object entity
-// - 'Default' trait, in case a property is not set in Tiled
-// 'Debug' and 'Reflect' traits are for convenience but are not mandatory
-//
-// 'TiledCustomTile' struct accept the following attributes:
-// - tiled_observer: name of an observer which will be triggered once the object is actually added to the world
-//   Please note that it accepts any arguments compatible with Bevy observers
-// - tiled_rename: name of the Tiled type, in case it's different from the structure field
-// - tiled_skip: skip the following field and do not try to get it's value from Tiled custom properties
 
+// Same thing as above, but for an object.
+// Note that the observer will be triggered with a `TiledObjectCreatedEvent` (see below).
 #[derive(TiledObject, Bundle, Default, Reflect, Debug)]
 #[tiled_observer(test_object_observer)]
 struct SpawnBundle {
     infos: SpawnInfos,
 }
 
-// We can also define custom classes
-//
-// They must implement the following traits:
-// - 'TiledClass', to declare it as a custom class and trigger the custom properties mapping
-// - 'Component', so we can insert it on the custom tile / object entity
-// - 'Default' trait, in case a property is not set in Tiled
-// 'Debug' and 'Reflect' traits are for convenience but are not mandatory
-//
-// 'TiledClass' struct accept the following attributes:
-// - tiled_rename: name of the Tiled type, in case it's different from the structure field
-// - tiled_skip: skip the following field and do not try to get it's value from Tiled custom properties
-
+// Here, we define our "custom types" which are Bevy `Component`s, since they
+// are part of `TileBundle` and `SpawnBundle` (which are `Bundle`s).
 #[derive(TiledClass, Component, Default, Debug, Reflect)]
 struct BiomeInfos {
     #[tiled_rename = "Type"]
@@ -128,13 +100,6 @@ struct SpawnInfos {
 }
 
 // We can also define custom enums
-// Please note that only 'string' enum from Tiled are supported
-//
-// They must implement the following traits:
-// - 'TiledEnum', to declare it as a custom enum and trigger the custom properties mapping
-// - 'Default' trait, in case a property is not set in Tiled
-// 'Debug' and 'Reflect' traits are for convenience but are not mandatory
-
 #[derive(TiledEnum, Default, Reflect, Debug)]
 enum BiomeType {
     #[default]
@@ -152,9 +117,13 @@ enum SpawnType {
     Player,
 }
 
-// Here are a custom tile / an object observer: they can use all arguments available to observers: Commands, Query, Res, etc...
-// Note that trigger.event().entity and trigger.entity() are equivalent
-// WARNING: since observers are fired as we load the map, some entity could have been not yet spawned
+// Finally, declare our observers for tiles and objects.
+// They can use all arguments available to observers: like `Commands`, `Query`, `Res`, etc...
+// The only restriction is to have as first arguement:
+// - `Trigger<TiledCustomTileCreated>` for tiles observers
+// - `Trigger<TiledObjectCreated>` for objects observers
+// Note that trigger.event().entity and trigger.entity() are equivalent.
+// WARNING: since observers are fired as we load the map, some entity could have been not yet spawned.
 fn test_tile_observer(
     trigger: Trigger<TiledCustomTileCreated>,
     q_tile: Query<&TileComponent>,

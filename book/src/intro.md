@@ -3,7 +3,7 @@
 
 It relies upon:
 
-- the official [Tiled Rust bindings](https://github.com/mapeditor/rs-tiled) to parse Tiled maps
+- the official [Tiled Rust bindings](https://github.com/mapeditor/rs-tiled) to load Tiled map files
 - the [`bevy_ecs_tilemap` crate](https://github.com/StarArawn/bevy_ecs_tilemap) to perform rendering
 
 Each tile or object is represented by a Bevy entity:

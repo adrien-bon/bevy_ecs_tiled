@@ -15,7 +15,6 @@
 - [Spawn / Despawn / Reload a map]()
 - [Use a physics backend](guides/physics.md)
 - [Use Tiled custom properties](guides/properties.md)
-- [Animate tiles]()
 - [Debug your project]()
 
 # Migration guides
