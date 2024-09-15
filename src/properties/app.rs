@@ -5,9 +5,9 @@ use bevy::{app::App, ecs::bundle::Bundle};
 
 pub trait TiledApp {
     /// Register a Tiled object.
-    /// 
+    ///
     /// This function triggers the spawn of the corresponding [TiledObject](../prelude/derive.TiledObject.html) whenever it is encountered in a Tiled map.
-    /// 
+    ///
     /// Example:
     /// ```rust,no_run
     /// // `ObjectBundle` definition
@@ -25,9 +25,9 @@ pub trait TiledApp {
     fn register_tiled_object<T: TiledObject + Bundle>(&mut self, ident: &str) -> &mut Self;
 
     /// Register a Tiled custom tile.
-    /// 
+    ///
     /// This function triggers the spawn of the corresponding [TiledCustomTile](../prelude/derive.TiledCustomTile.html) whenever it is encountered in a Tiled map.
-    /// 
+    ///
     /// Example:
     /// ```rust,no_run
     /// // `TileBundle` definition

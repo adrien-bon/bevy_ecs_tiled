@@ -34,8 +34,13 @@ Each tile or object is represented by a Bevy entity:
 
 ## Documentation
 
-- [`bevy_ecs_tiled` book](https://adrien-bon.github.io/bevy_ecs_tiled/)
-- [API reference](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/)
+This crate is documented in three places:
+
+- The [`bevy_ecs_tiled` book](https://adrien-bon.github.io/bevy_ecs_tiled/) with design explanation and how-to guides.
+- The [API reference](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/)
+- The [examples folders](./examples/README.md), for concrete use cases.
+
+Good reading!
 
 ## Getting started
 
@@ -82,8 +87,6 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 ```
 
 Please note that you should have the `map.tmx` file in your local `assets/` folder (as well as required dependencies, for instance associated tilesets).
-
-See the [examples](./examples/README.md) for more advanced use cases.
 
 ## Bevy Compatibility
 

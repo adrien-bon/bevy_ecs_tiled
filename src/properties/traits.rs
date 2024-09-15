@@ -1,5 +1,5 @@
 //! Traits related to Tiled custom properties.
-//! 
+//!
 //! These traits should be used exclusively through the [derive macros](../prelude/index.html) from `bevy_ecs_tiled_macro`.
 
 use crate::prelude::*;
@@ -22,7 +22,6 @@ pub trait TiledClass {
 pub trait TiledEnum {
     fn get_identifier(ident: &str) -> Self;
 }
-
 
 pub(crate) type TiledObjectRegistry = HashMap<String, Box<dyn PhantomTiledObjectTrait>>;
 pub(crate) type TiledCustomTileRegistry = HashMap<String, Box<dyn PhantomTiledCustomTileTrait>>;

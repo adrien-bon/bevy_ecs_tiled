@@ -6,7 +6,7 @@
 //! A good entry-point would be the [TiledMapBundle](components::TiledMapBundle) component which is the `Component` used to spawn a map.
 //!
 //! For a more use-cases oriented documentation please have a look to the [`bevy_ecs_tiled` book](https://adrien-bon.github.io/bevy_ecs_tiled/).
-//! 
+//!
 //! ## Getting started
 //!
 #![doc = include_str!("../book/src/getting-started.md")]

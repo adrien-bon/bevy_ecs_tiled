@@ -50,15 +50,13 @@ use tiled::{
 };
 
 /// `bevy_ecs_tiled` main `Plugin`.
-/// 
+///
 /// This `Plugin` should be added to your application to actually be able to load a Tiled map.
-/// 
+///
 /// Example:
 /// ```rust,no_run
-/// fn main() {
 /// App::new()
 ///     .add_plugins(TiledMapPlugin)
-/// }
 /// ```
 #[derive(Default)]
 pub struct TiledMapPlugin;
@@ -80,7 +78,7 @@ impl Plugin for TiledMapPlugin {
 }
 
 /// Tiled map `Asset`.
-/// 
+///
 /// `Asset` holding Tiled map informations.
 #[derive(TypePath, Asset)]
 pub struct TiledMap {

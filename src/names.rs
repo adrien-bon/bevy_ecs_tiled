@@ -8,7 +8,7 @@ pub enum ObjectNames {
     #[default]
     All,
     /// Matches only provided names .
-    /// 
+    ///
     /// Names are case-insensitive and leading/trailing whitespace will be trimmed.
     Names(Vec<String>),
     /// Does not match any name.

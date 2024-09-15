@@ -74,7 +74,6 @@ struct TileComponent {
     prefered_color: bevy::color::Color,
 }
 
-
 // Same thing as above, but for an object.
 // Note that the observer will be triggered with a `TiledObjectCreatedEvent` (see below).
 #[derive(TiledObject, Bundle, Default, Reflect, Debug)]

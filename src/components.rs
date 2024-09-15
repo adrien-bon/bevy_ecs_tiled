@@ -5,7 +5,7 @@ use bevy::{ecs::system::EntityCommands, prelude::*, utils::HashMap};
 use bevy_ecs_tilemap::prelude::*;
 
 /// Marker `Component` for re-spawning the whole map
-/// 
+///
 /// Example:
 /// ```rust,no_run
 /// fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -77,9 +77,9 @@ pub enum MapPositioning {
 }
 
 /// `Bundle` holding all the configuration needed to load a map with `bevy_ecs_tiled` plugin.
-/// 
+///
 /// Only thing to do is to initialize this `Bundle` with a valid `Handle<TiledMap>`then spawn it.
-/// 
+///
 /// Example:
 /// ```rust,no_run
 /// fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -104,7 +104,7 @@ pub struct TiledMapBundle {
 }
 
 /// Callback for extending physics colliders.
-/// 
+///
 /// Provided `EntityCommands` can be used to add additionnal `Component`s to the collider.
 ///
 /// Example:
@@ -120,28 +120,28 @@ pub struct TiledMapBundle {
 pub type ColliderCallback = fn(&mut EntityCommands);
 
 /// `Component` holding Tiled related settings.
-/// 
+///
 /// Controls various settings related to the way we handle the Tiled map.
 #[derive(Clone, Component)]
 pub struct TiledMapSettings {
     /// Specify which Tiled object layers to add colliders for using their name.
     ///
     /// Colliders will be automatically added for all objects whose containing layer name matches this filter.
-    /// 
+    ///
     /// By default, we add colliders for all objects.
     pub collision_layer_names: ObjectNames,
     /// Specify which tiles collision object to add colliders for using their name.
-    /// 
+    ///
     /// Colliders will be automatically added for all tiles collision objects whose name matches this filter.
-    /// 
+    ///
     /// By default, we add colliders for all collision objects.
     pub collision_object_names: ObjectNames,
     /// Physics collider callback.
-    /// 
+    ///
     /// Using this callback, we can add extra `Component`s to colliders which were automatically spawned.
     pub collider_callback: ColliderCallback,
     /// Physics backend to use.
-    /// 
+    ///
     /// Specify which physics backend to use.
     pub physics_backend: PhysicsBackend,
     /// Specify which position transformation offset should be applied to the map.

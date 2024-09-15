@@ -1,7 +1,7 @@
 //! This module handles all things related to physics.
-//! 
+//!
 //! It is only available when the `physics` feature is enabled.
-//! 
+//!
 //! See the [dedicated book section](https://adrien-bon.github.io/bevy_ecs_tiled/guides/physics.html) for more information.
 
 #[cfg(feature = "rapier")]
@@ -14,16 +14,19 @@ use core::fmt;
 
 use bevy::{ecs::world::Command, prelude::*};
 use bevy_ecs_tilemap::prelude::*;
-use tiled::{ObjectData, ObjectLayerData};
+use tiled::ObjectData;
+
+#[cfg(feature = "physics")]
+use tiled::ObjectLayerData;
 
 use crate::prelude::*;
 
 /// This event is sent when a collider is created while we use [PhysicsBackend::Custom].
-/// 
+///
 /// This event contains an entity which should be extended by the user.
-/// 
+///
 /// Note that this empty collider is already attached to its parent (either a tile or an object) and has a `Name`.
-/// 
+///
 /// Example:
 /// ```rust,no_run
 /// fn handle_colliders_creation_event(
@@ -44,12 +47,12 @@ pub struct CustomColliderCreationEvent {
     /// Tiled map type.
     pub map_type: TilemapType,
     /// Tile size, expressed in pixels.
-    /// 
+    ///
     /// If `None`, it means collider is associated to an object.
     /// If `Some`, it means collider is associated to a tile collision object.
     pub grid_size: Option<TilemapGridSize>,
     /// Tiled object data.
-    /// 
+    ///
     /// There can be several objects (hence, several events) when adding colliders to a tile.
     pub object_data: ObjectData,
 }
@@ -61,11 +64,11 @@ impl Command for CustomColliderCreationEvent {
 }
 
 /// Physics backend in use.
-/// 
+///
 /// Determine which kind of physics colliders will be added.
-/// 
+///
 /// Note that the default value for this settings depends upon which feature flags are enabled:
-/// 
+///
 /// | Feature flag | Default `PhysicsBackend` |
 /// |--------------|--------------------------|
 /// | N/A          | `None`                   |
@@ -75,25 +78,25 @@ impl Command for CustomColliderCreationEvent {
 #[derive(Clone, Resource)]
 pub enum PhysicsBackend {
     /// Rapier physics backend.
-    /// 
+    ///
     /// The `rapier` feature must be enabled.
-    /// 
+    ///
     /// Uses the `bevy_rapier2d` crate to automatically add physics colliders.
     Rapier,
     /// Avian physics backend.
-    /// 
+    ///
     /// The `avian` feature must be enabled.
-    /// 
+    ///
     /// Uses the `avian2d` crate to automatically add physics colliders.
     Avian,
     /// No physics backend.
-    /// 
+    ///
     /// No collider will be created.
     None,
     /// Custom physics backend.
-    /// 
+    ///
     /// [CustomColliderCreationEvent] will be triggered when adding a new collider.
-    /// 
+    ///
     /// It's up to the user to handle this event and actually extend provided `Entity` to insert its own physics `Component`s.
     Custom,
 }
@@ -125,6 +128,7 @@ impl Default for PhysicsBackend {
     }
 }
 
+#[cfg(feature = "physics")]
 impl PhysicsBackend {
     /// Load shapes from an object layer as physics colliders.
     ///

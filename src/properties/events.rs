@@ -6,10 +6,10 @@ use tiled::{ObjectData, TileData};
 
 use crate::prelude::*;
 /// Entity-scoped event sent when a Tiled object `Entity` is spawned.
-/// 
+///
 /// Note this event is only sent for `Entity` which have been spawned using the [TiledObject](../prelude/derive.TiledObject.html) derive macros and with the `tiled_observer` attribute set.
 /// It should be handled using the observer function provided to this `tiled_observer` attribute.
-/// 
+///
 /// ```rust,no_run
 /// #[derive(TiledObject, Component, Default)]
 /// #[tiled_observer(my_observer)]
@@ -17,7 +17,7 @@ use crate::prelude::*;
 ///     color: bevy::color::Color,
 ///     is_visible: bool,
 /// }
-/// 
+///
 /// // Note this is a standard Bevy observer so it accepts any regular system parameters
 /// fn my_observer(trigger: Trigger<TiledObjectCreated>) {
 /// // do things here !
@@ -52,10 +52,10 @@ impl TiledObjectCreated {
 }
 
 /// Entity-scoped event sent when a Tiled custom tile `Entity` is spawned.
-/// 
+///
 /// Note this event is only sent for `Entity` which have been spawned using the [TiledCustomTile](../prelude/derive.TiledCustomTile.html) derive macros and with the `tiled_observer` attribute set.
 /// It should be handled using the observer function provided to this `tiled_observer` attribute.
-/// 
+///
 /// ```rust,no_run
 /// #[derive(TiledCustomTile, Component, Default)]
 /// #[tiled_observer(my_observer)]
@@ -63,7 +63,7 @@ impl TiledObjectCreated {
 ///     movement_cost: i32,
 ///     has_road: bool,
 /// }
-/// 
+///
 /// // Note this is a standard Bevy observer so it accepts any regular system parameters
 /// fn my_observer(trigger: Trigger<TiledCustomTileCreated>) {
 /// // do things here !
@@ -88,7 +88,7 @@ pub struct TiledCustomTileCreated {
 #[cfg(feature = "physics")]
 impl TiledCustomTileCreated {
     /// Automatically spawn physics colliders associated to this tile
-    /// 
+    ///
     /// Note you must provide a custom [ObjectNames] filter to select which objects your want to add colliders for.
     pub fn spawn_collider(
         &self,

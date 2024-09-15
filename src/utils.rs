@@ -3,9 +3,9 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 
 /// Convert from Tiled isometric coordinates to Bevy position.
-/// 
+///
 /// This function will convert provided Tiled raw isometric position to a Bevy position, according to various maps settings.
-/// 
+///
 /// Example:
 /// ```rust,no_run
 /// let coords = from_isometric_coords_to_bevy(
