@@ -8,11 +8,12 @@ use bevy_ecs_tilemap::prelude::*;
 ///
 /// Example:
 /// ```rust,no_run
-/// fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
-///    commands.spawn(TiledMapBundle {
-///        tiled_map: asset_server.load("map.tmx"),
-///        ..default()
-///    });
+/// fn handle_respawn(
+///     mut commands: Commands,
+///     map_query: Query<(Entity, &Handle<TiledMap>)>,
+/// ) {
+///     let (entity, _) = map_query.single();
+///     commands.entity(entity).insert(RespawnTiledMap);
 /// }
 /// ```
 #[derive(Component)]
