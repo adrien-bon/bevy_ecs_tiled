@@ -18,7 +18,7 @@ Also, another way of helping is to contribute on crates we rely on, namely [`rs-
 
 If you submit a PR, please make sure that:
 
-- the CI is green
+- the CI is green (you can locally run the `./ci_check.sh` script)
 - you add proper in-code documentation
 - you update the `CHANGELOG.md` file with a description of your fix
 - if you add a new example, update the `examples/README.md` file with a description of your example and the `Cargo.toml` file with your example name (and any feature it may need)
