@@ -3,6 +3,7 @@
 use crate::prelude::*;
 use bevy::{app::App, ecs::bundle::Bundle};
 
+#[allow(clippy::needless_doctest_main)]
 pub trait TiledApp {
     /// Register a Tiled object.
     ///
