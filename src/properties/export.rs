@@ -554,7 +554,7 @@ fn type_to_field(t: &TypeRegistration) -> Result<(FieldType, Option<String>), Im
         "bevy_ecs::entity::Entity" | "core::option::Option<bevy_ecs::entity::Entity>" => (FieldType::Object, None),
         "alloc::borrow::Cow<str>" | "alloc::string::String" | "char" => (FieldType::String, None),
         
-        "bevy_color::color::Color" => (FieldType::String, None),
+        "bevy_color::color::Color" => (FieldType::Color, None),
         "std::path::PathBuf" => (FieldType::File, None),
         f if f.starts_with("bevy_asset::handle::Handle") => (FieldType::File, None),
         path => {
