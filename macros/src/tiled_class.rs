@@ -1,5 +1,5 @@
 /// Tiled custom type
-/// 
+///
 
 static TILED_RENAME_ATTR: &str = "tiled_rename";
 static TILED_SKIP_ATTR: &str = "tiled_skip";
