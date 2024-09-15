@@ -1,19 +1,23 @@
+//! This modules contains utilities to work with Tiled names.
 use bevy::utils::HashSet;
 
 /// A filter to specify names of Tiled objects.
 #[derive(Default, Clone)]
 pub enum ObjectNames {
+    /// Matches all names.
     #[default]
     All,
-    /// Names are case-insensitive and leading/trailing whitespace
-    /// will be trimmed.
+    /// Matches only provided names .
+    /// 
+    /// Names are case-insensitive and leading/trailing whitespace will be trimmed.
     Names(Vec<String>),
+    /// Does not match any name.
     None,
 }
 
 #[allow(dead_code)]
 #[derive(Clone)]
-pub enum ObjectNameFilter {
+pub(crate) enum ObjectNameFilter {
     All,
     Names(HashSet<String>),
     None,

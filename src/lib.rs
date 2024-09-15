@@ -21,6 +21,7 @@ pub mod utils;
 #[cfg(feature = "user_properties")]
 pub mod properties;
 
+/// `bevy_ecs_tiled` public exports.
 pub mod prelude {
     pub use crate::components::*;
     pub use crate::debug::*;

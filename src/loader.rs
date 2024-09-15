@@ -26,6 +26,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+//! This module handles the actual Tiled map loading.
+
 use std::io::{Cursor, Error as IoError, ErrorKind, Read};
 use std::path::Path;
 use std::sync::Arc;
@@ -47,6 +49,17 @@ use tiled::{
     ChunkData, FiniteTileLayer, InfiniteTileLayer, Layer, LayerType, ObjectLayer, Tile, TileLayer,
 };
 
+/// `bevy_ecs_tiled` main `Plugin`.
+/// 
+/// This `Plugin` should be added to your application to actually be able to load a Tiled map.
+/// 
+/// Example:
+/// ```rust,no_run
+/// fn main() {
+/// App::new()
+///     .add_plugins(TiledMapPlugin)
+/// }
+/// ```
 #[derive(Default)]
 pub struct TiledMapPlugin;
 
@@ -66,6 +79,9 @@ impl Plugin for TiledMapPlugin {
     }
 }
 
+/// Tiled map `Asset`.
+/// 
+/// `Asset` holding Tiled map informations.
 #[derive(TypePath, Asset)]
 pub struct TiledMap {
     pub map: tiled::Map,
@@ -107,8 +123,9 @@ impl<'a, 'b> tiled::ResourceReader for BytesResourceReader<'a, 'b> {
     }
 }
 
-pub struct TiledLoader;
+struct TiledLoader;
 
+/// [TiledMap] loading error.
 #[derive(Debug, thiserror::Error)]
 pub enum TiledAssetLoaderError {
     /// An [IO](std::io) Error
@@ -261,7 +278,7 @@ fn process_loaded_maps(
     {
         if let Some(load_state) = asset_server.get_recursive_dependency_load_state(map_handle) {
             if load_state != RecursiveDependencyLoadState::Loaded {
-                // If not fully loaded yet, insert the 'Respawn' marker so we will to load it at next frame
+                // If not fully loaded yet, insert the 'Respawn' marker so we will try to load it at next frame
                 commands.entity(map_entity).insert(RespawnTiledMap);
                 debug!("Map {:?} is not yet loaded...", map_handle.path());
                 continue;

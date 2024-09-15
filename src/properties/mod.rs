@@ -1,4 +1,4 @@
-//! This modules handles all things related to Tiled custom properties
+//! This module handles all things related to Tiled custom properties.
 //! 
 //! It is only available when the `user_properties` feature is enabled.
 //! 

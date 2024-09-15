@@ -1,6 +1,20 @@
+//! This modules contains utilities functions.
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 
+/// Convert from Tiled isometric coordinates to Bevy position.
+/// 
+/// This function will convert provided Tiled raw isometric position to a Bevy position, according to various maps settings.
+/// 
+/// Example:
+/// ```rust,no_run
+/// let coords = from_isometric_coords_to_bevy(
+///     IsoCoordSystem::Diamond,
+///     tiled_position,
+///     TilemapSize::new(0, 3),
+///     TilemapGridSize::new(16., 16.),
+/// );
+/// ```
 pub fn from_isometric_coords_to_bevy(
     iso_coords: IsoCoordSystem,
     tiled_position: Vec2,

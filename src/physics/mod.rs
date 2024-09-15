@@ -1,3 +1,9 @@
+//! This module handles all things related to physics.
+//! 
+//! It is only available when the `physics` feature is enabled.
+//! 
+//! See the [dedicated book section](https://adrien-bon.github.io/bevy_ecs_tiled/guides/physics.html) for more information.
+
 #[cfg(feature = "rapier")]
 pub mod rapier;
 
@@ -12,19 +18,39 @@ use tiled::{ObjectData, ObjectLayerData};
 
 use crate::prelude::*;
 
-/// This event is sent when a collider with custom physics backend is created
+/// This event is sent when a collider is created while we use [PhysicsBackend::Custom].
+/// 
+/// This event contains an entity which should be extended by the user.
+/// 
+/// Note that this empty collider is already attached to its parent (either a tile or an object) and has a `Name`.
+/// 
+/// Example:
+/// ```rust,no_run
+/// fn handle_colliders_creation_event(
+///     mut commands: Commands,
+///     mut ev_custom_collider_created: EventReader<CustomColliderCreationEvent>,
+/// ) {
+///     for ev in ev_custom_collider_created.read() {
+///         commands
+///             .entity(ev.collider_entity)
+///             .insert(MyCustomPhysicsComponent);
+///     }
+/// }
+/// ```
 #[derive(Event, Clone, Debug)]
 pub struct CustomColliderCreationEvent {
-    /// Collider entity
+    /// Collider entity to extend.
     pub collider_entity: Entity,
-    /// Tiled map type
+    /// Tiled map type.
     pub map_type: TilemapType,
     /// Tile size, expressed in pixels.
-    /// If None, it means collider is associated to an object.
-    /// If Some, it means collider is associated to a tile.
+    /// 
+    /// If `None`, it means collider is associated to an object.
+    /// If `Some`, it means collider is associated to a tile collision object.
     pub grid_size: Option<TilemapGridSize>,
-    /// Tiled object data. There can be several objects (hence, several events)
-    /// when adding colliders to a tile.
+    /// Tiled object data.
+    /// 
+    /// There can be several objects (hence, several events) when adding colliders to a tile.
     pub object_data: ObjectData,
 }
 
@@ -34,18 +60,41 @@ impl Command for CustomColliderCreationEvent {
     }
 }
 
-/// Physics backend to use
+/// Physics backend in use.
+/// 
+/// Determine which kind of physics colliders will be added.
+/// 
+/// Note that the default value for this settings depends upon which feature flags are enabled:
+/// 
+/// | Feature flag | Default `PhysicsBackend` |
+/// |--------------|--------------------------|
+/// | N/A          | `None`                   |
+/// | `avian`      | `Avian`                  |
+/// | `rapier`     | `Rapier`                 |
+/// | `avian` + `rapier` | `Avian`            |
 #[derive(Clone, Resource)]
 pub enum PhysicsBackend {
-    /// Rapier physics backend
+    /// Rapier physics backend.
+    /// 
+    /// The `rapier` feature must be enabled.
+    /// 
+    /// Uses the `bevy_rapier2d` crate to automatically add physics colliders.
     Rapier,
-    /// Avian physics backend
+    /// Avian physics backend.
+    /// 
+    /// The `avian` feature must be enabled.
+    /// 
+    /// Uses the `avian2d` crate to automatically add physics colliders.
     Avian,
-    /// No physics backend
+    /// No physics backend.
+    /// 
+    /// No collider will be created.
     None,
-    /// Custom physics backend,
-    /// [CustomColliderCreationEvent] will be triggered
-    /// when adding a new collider.
+    /// Custom physics backend.
+    /// 
+    /// [CustomColliderCreationEvent] will be triggered when adding a new collider.
+    /// 
+    /// It's up to the user to handle this event and actually extend provided `Entity` to insert its own physics `Component`s.
     Custom,
 }
 
@@ -85,7 +134,7 @@ impl PhysicsBackend {
     ///
     /// Collision layer names are case-insensitive and leading/trailing
     /// whitespace is stripped out.
-    pub fn insert_object_colliders(
+    pub(crate) fn insert_object_colliders(
         &self,
         commands: &mut Commands,
         object_entity: Entity,
@@ -157,7 +206,7 @@ impl PhysicsBackend {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub fn insert_tile_colliders(
+    pub(crate) fn insert_tile_colliders(
         &self,
         commands: &mut Commands,
         collision_object_names: &ObjectNameFilter,

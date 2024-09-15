@@ -1,13 +1,17 @@
+//! This module contains some tools to help you debug your application.
+//! 
 use crate::prelude::*;
 use bevy::{color::palettes::css::RED, prelude::*};
 
-/// Debug gizmos configuration
+/// Debug [Gizmos] configuration
+/// 
+/// Contains some settings to customize how the `arrow_2d` [Gizmos] will appear.
 #[derive(Resource, Clone)]
 pub struct TiledMapGizmosConfig {
-    /// Color of the arrow_2d gizmo
-    color: Color,
-    /// Length of the arrow_2d gizmo
-    arrow_length: Vec2,
+    /// Color of the `arrow_2d` [Gizmos]
+    pub color: Color,
+    /// Length of the `arrow_2d` [Gizmos]
+    pub arrow_length: Vec2,
 }
 
 impl Default for TiledMapGizmosConfig {
@@ -19,11 +23,22 @@ impl Default for TiledMapGizmosConfig {
     }
 }
 
-/// Debug configuration
+/// `bevy_ecs_tiled` debug `Plugin`
+/// 
+/// In case you want to debug your application, you should add this plugin:
+/// ```rust,no_run
+/// fn main() {
+/// App::new()
+///     .add_plugins(TiledMapDebugPlugin::default())
+/// }
+/// ```
+/// 
+/// This will display an `arrow_2d` [Gizmos] where your objects are.
+/// 
 #[derive(Default, Clone)]
 pub struct TiledMapDebugPlugin {
     /// Debug gizmos configuration
-    gizmos_config: TiledMapGizmosConfig,
+    pub gizmos_config: TiledMapGizmosConfig,
 }
 
 impl Plugin for TiledMapDebugPlugin {

@@ -5,6 +5,7 @@
 ### Documentation
 
 - Initialize `bevy_ecs_tiled` book (#15)
+- Update code documentation
 
 ## v0.3.9
 

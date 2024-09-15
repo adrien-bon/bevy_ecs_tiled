@@ -1,106 +1,150 @@
+//! This module contains all `Component`s definition.
+
 use crate::prelude::*;
 use bevy::{ecs::system::EntityCommands, prelude::*, utils::HashMap};
 use bevy_ecs_tilemap::prelude::*;
 
-/// Marker component for re-spawning the whole map
+/// Marker `Component` for re-spawning the whole map
+/// 
+/// Example:
+/// ```rust,no_run
+/// fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
+///    commands.spawn(TiledMapBundle {
+///        tiled_map: asset_server.load("map.tmx"),
+///        ..default()
+///    });
+/// }
+/// ```
 #[derive(Component)]
 pub struct RespawnTiledMap;
 
-/// Stores a list of tiled layers.
+/// `Component` storing the list of current layers.
 #[derive(Component, Default)]
 pub struct TiledLayersStorage {
     /// Hashmap containing the list of loaded layers.
     pub storage: HashMap<u32, Entity>,
 }
 
-/// Marker component for a Tiled map.
+/// Marker `Component` for a Tiled map.
 #[derive(Component)]
 pub struct TiledMapMarker;
 
-/// Marker component for a Tiled map layer.
+/// Marker `Component` for a Tiled map layer.
 #[derive(Component)]
 pub struct TiledMapLayer {
     // Store the map id so that we can delete layers for this map later.
-    // We don't want to store the handle as a component because the parent
+    // We don't want to store the handle as a `Component` because the parent
     // entity already has it and it complicates queries.
     pub map_handle_id: AssetId<TiledMap>,
 }
 
-/// Marker component for a Tiled map tile layer.
+/// Marker `Component` for a Tiled map tile layer.
 #[derive(Component)]
 pub struct TiledMapTileLayer;
 
-/// Marker component for a Tiled map tile layer for a given tileset.
+/// Marker `Component` for a Tiled map tile layer for a given tileset.
 #[derive(Component)]
 pub struct TiledMapTileLayerForTileset;
 
-/// Marker component for a Tiled map object layer.
+/// Marker `Component` for a Tiled map object layer.
 #[derive(Component)]
 pub struct TiledMapObjectLayer;
 
-/// Marker component for a Tiled map group layer.
+/// Marker `Component` for a Tiled map group layer.
 #[derive(Component)]
 pub struct TiledMapGroupLayer;
 
-/// Marker component for a Tiled map image layer.
+/// Marker `Component` for a Tiled map image layer.
 #[derive(Component)]
 pub struct TiledMapImageLayer;
 
-/// Marker component for a Tiled map tile.
+/// Marker `Component` for a Tiled map tile.
 #[derive(Component)]
 pub struct TiledMapTile;
 
-/// Marker component for a Tiled map object.
+/// Marker `Component` for a Tiled map object.
 #[derive(Component)]
 pub struct TiledMapObject;
 
-/// Controls position of the map in the world
+/// Controls position of the map in the world.
 #[derive(Default, Clone)]
 pub enum MapPositioning {
     #[default]
-    /// Raw position from Tiled: only use layer offset to position the map.
+    /// Do not tweak layers position, only use raw position from Tiled
     LayerOffset,
     /// Update layers position and mimics Bevy's coordinate system so that (0, 0) is at the center of the map.
     Centered,
 }
 
-/// This bundle holds all the configuration needed to load a map with `bevy_ecs_tiled` plugin.
-/// Only thing to do is to initialize this bundle then spawn it.
+/// `Bundle` holding all the configuration needed to load a map with `bevy_ecs_tiled` plugin.
+/// 
+/// Only thing to do is to initialize this `Bundle` with a valid `Handle<TiledMap>`then spawn it.
+/// 
+/// Example:
+/// ```rust,no_run
+/// fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
+///    commands.spawn(TiledMapBundle {
+///        tiled_map: asset_server.load("map.tmx"),
+///        ..default()
+///    });
+/// }
+/// ```
 #[derive(Default, Bundle)]
 pub struct TiledMapBundle {
     /// Handle to the .tmx file to load reprenseting the map.
-    /// It is the only field mandatory to actually spawn the map.
+    /// It is the only mandatory field to actually spawn the map.
     pub tiled_map: Handle<TiledMap>,
-    /// Hashmap holding all the layers of the map
-    /// Should be left as default when spawning the bundle
+    /// Hashmap holding all the layers of the map.
+    /// Must be left as default when spawning the bundle.
     pub storage: TiledLayersStorage,
-    /// Render settings from `bevy_ecs_tilemap`
+    /// Render settings from `bevy_ecs_tilemap`.
     pub render_settings: TilemapRenderSettings,
-    /// Settings from `bevy_ecs_tiled`
+    /// Settings from `bevy_ecs_tiled`.
     pub tiled_settings: TiledMapSettings,
 }
 
+/// Callback for extending physics colliders.
+/// 
+/// Provided `EntityCommands` can be used to add additionnal `Component`s to the collider.
+///
+/// Example:
+/// ```rust,no_run
+/// // Just add a marker `Component`
+/// settings = TiledMapSettings {
+///     collider_callback: |entity_commands| {
+///         entity_commands.insert(MyColliderMarker);
+///     },
+///     ..default()
+/// };
+/// ```
 pub type ColliderCallback = fn(&mut EntityCommands);
 
+/// `Component` holding Tiled related settings.
+/// 
+/// Controls various settings related to the way we handle the Tiled map.
 #[derive(Clone, Component)]
 pub struct TiledMapSettings {
-    /// Specify which object layers to add collision shapes for.
+    /// Specify which Tiled object layers to add colliders for using their name.
     ///
-    /// All shapes in these object layers will be added as collision shapes.
+    /// Colliders will be automatically added for all objects whose containing layer name matches this filter.
+    /// 
+    /// By default, we add colliders for all objects.
     pub collision_layer_names: ObjectNames,
-    /// Specify which tileset object names to add collision shapes for.
+    /// Specify which tiles collision object to add colliders for using their name.
+    /// 
+    /// Colliders will be automatically added for all tiles collision objects whose name matches this filter.
+    /// 
+    /// By default, we add colliders for all collision objects.
     pub collision_object_names: ObjectNames,
-    /// By default, we add a single collider to the shape: you can use
-    /// this callback to add additional components to the collider
+    /// Physics collider callback.
+    /// 
+    /// Using this callback, we can add extra `Component`s to colliders which were automatically spawned.
     pub collider_callback: ColliderCallback,
-    /// Specify which physics backend to use. This is necessary for adding
-    /// the appropriate colliders to Bevy based on the colliders within the
-    /// Tiled map.
+    /// Physics backend to use.
+    /// 
+    /// Specify which physics backend to use.
     pub physics_backend: PhysicsBackend,
-    /// Specify which position transformation offset should be applied.
-    ///
-    /// By default, the layer's offset will be used.
-    /// For Bevy's coordinate system use MapPositioning::Centered
+    /// Specify which position transformation offset should be applied to the map.
     pub map_positioning: MapPositioning,
 }
 
