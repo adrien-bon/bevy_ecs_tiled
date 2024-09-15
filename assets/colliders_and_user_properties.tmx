@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="20" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="3" nextobjectid="6">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="20" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="7" nextobjectid="13">
+ <editorsettings>
+  <export target="colliders_and_user_properties.export.tmx" format="tmx"/>
+ </editorsettings>
+ <properties>
+  <property name="test" type="file" value="../../../../Downloads/frame.png"/>
+ </properties>
  <tileset firstgid="1" source="Tileset1.tsx"/>
+ <tileset firstgid="8" source="Tileset2.tsx"/>
  <layer id="1" name="Tile Layer 1" width="20" height="20">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -8,7 +15,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,13,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -25,7 +32,20 @@
 4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,0,0,0,0,0
 </data>
  </layer>
+ <group id="6" name="Group Layer 2" offsetx="194.6" offsety="53.2315">
+  <group id="5" name="Group Layer 1" offsetx="-1.7453" offsety="66.3212">
+   <imagelayer id="4" name="Image Layer 1">
+    <image source="../../../../Downloads/frame.png" width="300" height="300"/>
+   </imagelayer>
+  </group>
+ </group>
  <objectgroup id="2" name="Object Layer 1">
+  <properties>
+   <property name="inherited_visibility" type="class" propertytype="bevy_render::view::visibility::InheritedVisibility"/>
+   <property name="test" type="file" value="../../../../Downloads/frame.png"/>
+   <property name="view_visibility" type="class" propertytype="bevy_render::view::visibility::ViewVisibility"/>
+   <property name="visibility" propertytype="bevy_render::view::visibility::Visibility" value="Inherited"/>
+  </properties>
   <object id="1" name="SquareCollider" type="ColliderComponent" x="332.579" y="494.603" width="36.6689" height="96.3624">
    <properties>
     <property name="DamagePerSecond" type="float" value="50"/>
@@ -39,19 +59,44 @@
   </object>
   <object id="4" name="PlayerSpawn" type="SpawnBundle" x="256.682" y="567.089">
    <properties>
-    <property name="SpawnInfos" type="class" propertytype="SpawnInfos">
-     <properties>
-      <property name="Type" propertytype="SpawnType" value="Player"/>
-     </properties>
-    </property>
+    <property name="SpawnInfos" value=""/>
    </properties>
    <point/>
   </object>
   <object id="5" name="EnemySpawn" type="SpawnBundle" x="40.9327" y="382.891" width="55.4297" height="57.1352">
    <properties>
-    <property name="SpawnInfos" type="class" propertytype="SpawnInfos">
+    <property name="SpawnInfos" value=""/>
+   </properties>
+   <ellipse/>
+  </object>
+ </objectgroup>
+ <objectgroup id="3" name="Object Layer 1">
+  <object id="7" name="SquareCollider" type="ColliderComponent" x="332.579" y="494.603" width="36.6689" height="96.3624">
+   <properties>
+    <property name="DamagePerSecond" type="float" value="50"/>
+   </properties>
+  </object>
+  <object id="8" name="RoundCollider" type="ColliderComponent" x="133.884" y="428.088" width="98.068" height="104.89">
+   <properties>
+    <property name="is_visible" type="bool" value="true"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="9" name="PlayerSpawn" type="SpawnBundle" x="256.682" y="567.089">
+   <properties>
+    <property name="SpawnInfos" value=""/>
+   </properties>
+   <point/>
+  </object>
+  <object id="10" name="EnemySpawn" type="SpawnBundle" x="40.9327" y="382.891" width="55.4297" height="57.1352">
+   <properties>
+    <property name="bundle" type="class" propertytype="user_properties_avian::SpawnBundle">
      <properties>
-      <property name="Type" propertytype="SpawnType" value="Enemy"/>
+      <property name="infos" type="class" propertytype="user_properties_avian::SpawnInfos">
+       <properties>
+        <property name="ty" propertytype="user_properties_avian::SpawnType" value="Player"/>
+       </properties>
+      </property>
      </properties>
     </property>
    </properties>

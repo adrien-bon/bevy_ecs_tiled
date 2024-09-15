@@ -28,8 +28,12 @@ use crate::prelude::*;
 /// ```
 #[derive(Event, Clone, Debug)]
 pub struct TiledObjectCreated {
-    /// Spawned object entity
-    pub entity: Entity,
+    /// Spawned object `Entity`
+    pub object: Entity,
+    /// Layer `Entity` the spawned object belongs to
+    pub layer: Entity,
+    /// Map `Entity` the spawned object belongs to
+    pub map: Entity,
     /// Tiled map type
     pub map_type: TilemapType,
     /// Tiled object data
@@ -46,7 +50,7 @@ impl TiledObjectCreated {
     pub fn spawn_collider(&self, mut commands: Commands, collider_callback: ColliderCallback) {
         self.physics_backend.insert_object_colliders(
             &mut commands,
-            self.entity,
+            self.object,
             &self.map_type,
             &self.object_data,
             collider_callback,

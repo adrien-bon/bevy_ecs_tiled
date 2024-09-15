@@ -4,6 +4,8 @@ use avian2d::prelude::*;
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
+use bevy::ecs::reflect::ReflectBundle;
+use bevy::ecs::reflect::ReflectComponent;
 
 mod helper;
 
@@ -21,15 +23,45 @@ fn main() {
         // We need to register the objects we created in Tiled.
         // Any property which is not registered will not be added to the object entity
         .register_tiled_custom_tile::<TileComponent>("TileComponent")
-        .register_tiled_object::<SpawnBundle>("SpawnBundle")
-        .register_tiled_object::<ColliderComponent>("ColliderComponent")
+        .register_type::<SpawnBundle>()
+        .register_type::<ColliderComponent>()
+        .register_type::<TileComponent>()
+        .register_type::<SpawnInfos>()
+        .register_type::<SpawnType>()
+        // .register_tiled_object::<SpawnBundle>("SpawnBundle")
+        // .register_tiled_object::<ColliderComponent>("ColliderComponent")
+        .observe(load_object_properties)
+        .observe(handle_event_2)
         .run();
+}
+
+fn load_object_properties(
+    trigger: Trigger<TiledObjectCreated>,
+    q_storage: Query<&TiledIdStorage>,
+    q_name: Query<Option<&Name>>,
+    mut commands: Commands,
+) {
+    let event = trigger.event();
+    let storage = q_storage.get(event.map)
+        .expect("map missing");
+    
+    // let mut commands = commands.entity(event.object);
+    
+    for &e in storage.objects.values() {
+        println!("{:?}", q_name.get(e));
+    }
+}
+
+
+
+fn handle_event_2(trigger: Trigger<TiledObjectCreated>) {
+    // println!("b");
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
 
-    let map_handle: Handle<TiledMap> = asset_server.load("colliders_and_user_properties.tmx");
+    let map_handle: Handle<TiledMap> = asset_server.load("colliders_and_user_properties.export.tmx");
     commands.spawn(TiledMapBundle {
         tiled_map: map_handle,
         tiled_settings: TiledMapSettings {
@@ -48,7 +80,20 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 // Only print the first tile to avoid flooding the console
-fn display_custom_tiles(q_tile: Query<(&TilePos, &TileComponent)>) {
+fn display_custom_tiles(
+    q_tile: Query<(&TilePos, &TileComponent)>,
+    q_map: Query<(&TiledIdStorage, Option<&Name>)>,
+    q_name: Query<&Name>,
+) {
+    // for (store, name) in q_map.iter() {
+    //     if let Some(name) = name {
+    //         println!("{}", name);
+    //     }
+    //     for (&id, &entity) in store.storage.iter() {
+    //         // println!("  {id}: {:?}", q_name.get(entity));
+    //     }
+    // }
+    
     for (position, tile_component) in q_tile.iter() {
         info_once!(
             "Found TileComponent [{:?} @ {:?}]",
@@ -74,26 +119,28 @@ fn display_objects(q_object: Query<(&Transform, Option<&SpawnInfos>, Option<&Col
 // in-depth explanation of how to declare them. Here we will only focus on the
 // way we can associate Rapier colliders to them.
 // The important part here is to add a 'tiled_observer' to our structs
-#[derive(TiledObject, Bundle, Default, Reflect, Debug)]
+#[derive(Bundle, Default, Reflect, Debug)]
+#[reflect(Bundle)]
 struct SpawnBundle {
     infos: SpawnInfos,
+    collider: ColliderComponent,
 }
 
-#[derive(TiledObject, Component, Default, Reflect, Debug)]
-#[tiled_observer(collider_component_observer)]
+#[derive(Component, Default, Reflect, Debug)]
+#[reflect(Component)]
 struct ColliderComponent {
-    #[tiled_rename = "DamagePerSecond"]
     damage_per_second: f32,
     is_visible: bool,
 }
 
 #[derive(TiledCustomTile, Component, Default, Debug, Reflect)]
-#[tiled_observer(tile_component_observer)]
+#[reflect(Component)]
 struct TileComponent {
     prefered_color: bevy::color::Color,
 }
 
 #[derive(TiledClass, Component, Default, Debug, Reflect)]
+#[reflect(Component)]
 struct SpawnInfos {
     #[tiled_rename = "Type"]
     ty: SpawnType,
@@ -112,6 +159,7 @@ enum SpawnType {
 // We can eventually provide a 'ColliderCallback' to
 // add more components to the collider
 fn collider_component_observer(trigger: Trigger<TiledObjectCreated>, commands: Commands) {
+    dbg!();
     trigger.event().spawn_collider(commands, |_| {});
 }
 
@@ -119,6 +167,7 @@ fn collider_component_observer(trigger: Trigger<TiledObjectCreated>, commands: C
 // associated collision objects you actually want
 // to spawn a collider
 fn tile_component_observer(trigger: Trigger<TiledCustomTileCreated>, commands: Commands) {
+    dbg!();
     trigger.event().spawn_collider(
         commands,
         // We will ignore collision objects not named 'collision'

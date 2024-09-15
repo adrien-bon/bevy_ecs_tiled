@@ -22,11 +22,11 @@ use bevy_ecs_tilemap::prelude::*;
 #[derive(Component)]
 pub struct RespawnTiledMap;
 
-/// `Component` storing the list of current layers.
+/// `Component` storing maps from Tiled ID to Bevy Entity.
 #[derive(Component, Default)]
-pub struct TiledLayersStorage {
-    /// Hashmap containing the list of loaded layers.
-    pub storage: HashMap<u32, Entity>,
+pub struct TiledIdStorage {
+    pub layers: HashMap<u32, Entity>,
+    pub objects: HashMap<u32, Entity>,
 }
 
 /// Marker `Component` for a Tiled map.
@@ -101,9 +101,9 @@ pub struct TiledMapBundle {
     /// Handle to the .tmx file to load reprenseting the map.
     /// It is the only mandatory field to actually spawn the map.
     pub tiled_map: Handle<TiledMap>,
-    /// Hashmap holding all the layers of the map.
+    /// Holds the maps to convert from Tiled ID to Bevy Entity.
     /// Must be left as default when spawning the bundle.
-    pub storage: TiledLayersStorage,
+    pub storage: TiledIdStorage,
     /// Render settings from `bevy_ecs_tilemap`.
     pub render_settings: TilemapRenderSettings,
     /// Settings from `bevy_ecs_tiled`.
