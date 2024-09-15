@@ -27,8 +27,11 @@ impl Default for TiledMapGizmosConfig {
 ///
 /// In case you want to debug your application, you should add this plugin:
 /// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
 /// App::new()
-///     .add_plugins(TiledMapDebugPlugin::default())
+///     .add_plugins(TiledMapDebugPlugin::default());
 /// ```
 ///
 /// This will display an `arrow_2d` [Gizmos] where your objects are.

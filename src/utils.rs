@@ -8,11 +8,16 @@ use bevy_ecs_tilemap::prelude::*;
 ///
 /// Example:
 /// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+/// use bevy_ecs_tilemap::prelude::*;
+///
+/// let tiled_position = Vec2::new(0., 12.);
 /// let coords = from_isometric_coords_to_bevy(
 ///     IsoCoordSystem::Diamond,
 ///     tiled_position,
-///     TilemapSize::new(0, 3),
-///     TilemapGridSize::new(16., 16.),
+///     &TilemapSize::new(0, 3),
+///     &TilemapGridSize::new(16., 16.),
 /// );
 /// ```
 pub fn from_isometric_coords_to_bevy(

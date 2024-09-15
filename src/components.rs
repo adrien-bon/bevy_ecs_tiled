@@ -8,6 +8,9 @@ use bevy_ecs_tilemap::prelude::*;
 ///
 /// Example:
 /// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
 /// fn handle_respawn(
 ///     mut commands: Commands,
 ///     map_query: Query<(Entity, &Handle<TiledMap>)>,
@@ -83,6 +86,9 @@ pub enum MapPositioning {
 ///
 /// Example:
 /// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
 /// fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 ///    commands.spawn(TiledMapBundle {
 ///        tiled_map: asset_server.load("map.tmx"),
@@ -110,8 +116,14 @@ pub struct TiledMapBundle {
 ///
 /// Example:
 /// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
 /// // Just add a marker `Component`
-/// settings = TiledMapSettings {
+/// #[derive(Component)]
+/// struct MyColliderMarker;
+///
+/// let settings = TiledMapSettings {
 ///     collider_callback: |entity_commands| {
 ///         entity_commands.insert(MyColliderMarker);
 ///     },

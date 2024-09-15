@@ -55,8 +55,11 @@ use tiled::{
 ///
 /// Example:
 /// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
 /// App::new()
-///     .add_plugins(TiledMapPlugin)
+///     .add_plugins(TiledMapPlugin);
 /// ```
 #[derive(Default)]
 pub struct TiledMapPlugin;

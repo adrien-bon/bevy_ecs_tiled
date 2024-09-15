@@ -29,6 +29,13 @@ use crate::prelude::*;
 ///
 /// Example:
 /// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
+/// // Just add a marker `Component`
+/// #[derive(Component)]
+/// struct MyCustomPhysicsComponent;
+///
 /// fn handle_colliders_creation_event(
 ///     mut commands: Commands,
 ///     mut ev_custom_collider_created: EventReader<CustomColliderCreationEvent>,
