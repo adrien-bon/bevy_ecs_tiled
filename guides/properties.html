@@ -82,7 +82,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="../FAQ.html">FAQ</a></li><li class="chapter-item expanded affix "><li class="part-title">Design and explanation</li><li class="chapter-item expanded "><a href="../design/why-tiled.html"><strong aria-hidden="true">1.</strong> Why using Tiled ?</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">2.</strong> Entities tree and component markers</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">3.</strong> Layers Z-ordering</div></li><li class="chapter-item expanded affix "><li class="part-title">How-To's</li><li class="chapter-item expanded "><a href="../guides/minimal.html"><strong aria-hidden="true">4.</strong> Minimal working example</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">5.</strong> Spawn / Despawn / Reload a map</div></li><li class="chapter-item expanded "><a href="../guides/physics.html"><strong aria-hidden="true">6.</strong> Use a physics backend</a></li><li class="chapter-item expanded "><a href="../guides/properties.html" class="active"><strong aria-hidden="true">7.</strong> Use Tiled custom properties</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">8.</strong> Animate tiles</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">9.</strong> Debug your project</div></li><li class="chapter-item expanded affix "><li class="part-title">Migration guides</li><li class="chapter-item expanded "><div><strong aria-hidden="true">10.</strong> From v0.3.X to v0.4.X</div></li><li class="chapter-item expanded affix "><li class="part-title">Miscellaneous</li><li class="chapter-item expanded "><a href="../misc/useful-links.html"><strong aria-hidden="true">11.</strong> Useful links</a></li><li class="chapter-item expanded "><a href="../misc/contributing.html"><strong aria-hidden="true">12.</strong> Contributing</a></li><li class="chapter-item expanded "><a href="../misc/api-reference.html"><strong aria-hidden="true">13.</strong> API reference</a></li></ol>            </div>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="../FAQ.html">FAQ</a></li><li class="chapter-item expanded affix "><li class="part-title">Design and explanation</li><li class="chapter-item expanded "><a href="../design/why-tiled.html"><strong aria-hidden="true">1.</strong> Why using Tiled ?</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">2.</strong> Entities tree and component markers</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">3.</strong> Layers Z-ordering</div></li><li class="chapter-item expanded affix "><li class="part-title">How-To's</li><li class="chapter-item expanded "><a href="../guides/minimal.html"><strong aria-hidden="true">4.</strong> Minimal working example</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">5.</strong> Spawn / Despawn / Reload a map</div></li><li class="chapter-item expanded "><a href="../guides/physics.html"><strong aria-hidden="true">6.</strong> Use a physics backend</a></li><li class="chapter-item expanded "><a href="../guides/properties.html" class="active"><strong aria-hidden="true">7.</strong> Use Tiled custom properties</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">8.</strong> Debug your project</div></li><li class="chapter-item expanded affix "><li class="part-title">Migration guides</li><li class="chapter-item expanded "><div><strong aria-hidden="true">9.</strong> From v0.3.X to v0.4.X</div></li><li class="chapter-item expanded affix "><li class="part-title">Miscellaneous</li><li class="chapter-item expanded "><a href="../misc/useful-links.html"><strong aria-hidden="true">10.</strong> Useful links</a></li><li class="chapter-item expanded "><a href="../misc/contributing.html"><strong aria-hidden="true">11.</strong> Contributing</a></li><li class="chapter-item expanded "><a href="../misc/api-reference.html"><strong aria-hidden="true">12.</strong> API reference</a></li></ol>            </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
@@ -144,7 +144,123 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="use-tiled-custom-properties"><a class="header" href="#use-tiled-custom-properties">Use Tiled custom properties</a></h1>
-<p>TODO</p>
+<p>In Tiled we can add &quot;custom properties&quot; on various items like layers, tiles, objects or maps.</p>
+<p>These custom properties can be either:</p>
+<ul>
+<li>a &quot;standard type&quot;, like a string, an integer, a float, a color, etc...</li>
+<li>a &quot;custom type&quot;, which is basically a structure with sub-properties that can either be a &quot;standard type&quot; or another &quot;custom type&quot;</li>
+</ul>
+<p>In <code>bevy_ecs_tiled</code> we support mapping a &quot;custom type&quot; to a Bevy component, for objects and tiles entities.</p>
+<p>Basically, it means that we can define some components directly in the Tiled map and use them with Bevy in your game logic.
+It's very useful!</p>
+<p>Using this mechanism, we could for instance:</p>
+<ul>
+<li>associate a &quot;movement cost&quot; to a given tile type</li>
+<li>create an object that represent our player or an ennemy</li>
+<li>add a generic &quot;trigger zone&quot; that could either be a &quot;damaging zone&quot; or a &quot;victory zone&quot;</li>
+<li>... whatever you need for your game!</li>
+</ul>
+<h2 id="create-a-custom-type"><a class="header" href="#create-a-custom-type">Create a custom type</a></h2>
+<p>First step is to actually create a custom type.</p>
+<p>To do so, in Tiled, navigate to View -&gt; Custom Types Editor:</p>
+<p><img src="images/properties_view-types.png" alt="view-custom-types" /></p>
+<p>From this panel, you will be able to define your own custom type (think of it as a struct) and describe which fields it has.
+For more information see the <a href="https://doc.mapeditor.org/en/stable/manual/custom-properties/#custom-types">official documentation</a>.</p>
+<p><img src="images/properties_custom-type.png" alt="view-custom-types" /></p>
+<p>For instance, in the example above, we created a <code>TileBundle</code> custom type which has a single <code>BiomeInfos</code> field.
+This <code>BiomeInfos</code> field is another custom type which has two fields: a boolean <code>BlockLineOfSight</code> and an enum <code>Type</code>.</p>
+<p>We support all types except :</p>
+<ul>
+<li>the &quot;enum as int&quot; type: you should use instead the &quot;enum as string&quot;</li>
+<li>the &quot;object&quot; type: you cannot (yet) reference another object</li>
+</ul>
+<h2 id="assign-custom-properties-to-an-object-or-a-to-a-tile"><a class="header" href="#assign-custom-properties-to-an-object-or-a-to-a-tile">Assign custom properties to an object or a to a tile</a></h2>
+<p>Please note that we do not support adding directly custom properties and you must use a custom type.</p>
+<p>First, you need to update the &quot;class&quot; property and set the custom type you want.</p>
+<ul>
+<li>For objects you can just select the object you want from the map. Only the selected object will have custom properties.</li>
+<li>For tiles, you need to edit the tileset then select the tile you want. All tiles of this kind will get custom properties.</li>
+</ul>
+<p><img src="images/properties_tile-properties.png" alt="view-custom-types" /></p>
+<p>Once the class is set, it will automatically add the custom type fields (with their default value) corresponding to this custom type to the &quot;custom properties&quot; tab.
+You can then edit the properties you want, as it fits your game.</p>
+<p>For instance, in the picture above, we declared our tile to be a <code>TileBundle</code>:</p>
+<ul>
+<li>we left <code>BiomeInfos.BlockLineOfSight</code> to its default value (which happens to be <code>false</code>)</li>
+<li>we set <code>BiomeInfos.Type</code> to be a <code>Forest</code></li>
+</ul>
+<h2 id="retrieve-custom-properties-and-map-them-to-a-bevy-component"><a class="header" href="#retrieve-custom-properties-and-map-them-to-a-bevy-component">Retrieve custom properties and map them to a Bevy component</a></h2>
+<p>To actually retrieve these custom properties in your game, you need to do three things:</p>
+<ul>
+<li>Enable the <code>user_properties</code> feature</li>
+<li>Define your custom type</li>
+<li>Register your custom type</li>
+</ul>
+<p>First, to enable the <code>user_properties</code> feature, you need to update your <code>Cargo.toml</code> file:</p>
+<pre><code class="language-toml">[dependencies]
+bevy_ecs_tiled = { version = &quot;XXX&quot;, features = [ &quot;user_properties&quot; ] }
+</code></pre>
+<p>Then, you can define your custom type:</p>
+<pre><pre class="playground"><code class="language-rust no_run">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// If declaring a custom type for an objet,
+// you should use instead the TiledObject derive
+#[derive(TiledCustomTile, Bundle, Default, Debug, Reflect)]
+struct TileBundle {
+    #[tiled_rename = &quot;BiomeInfos&quot;]
+    infos: BiomeInfos,
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>As well as other types it refers to:</p>
+<pre><pre class="playground"><code class="language-rust no_run">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(TiledClass, Component, Default, Debug, Reflect)]
+struct BiomeInfos {
+    #[tiled_rename = &quot;Type&quot;]
+    ty: BiomeType,
+    #[tiled_rename = &quot;BlockLineOfSight&quot;]
+    block_line_of_sight: bool,
+}
+
+#[derive(TiledEnum, Default, Reflect, Debug)]
+enum BiomeType {
+    #[default]
+    Unknown,
+    Plain,
+    Desert,
+    Forest,
+    Mountain,
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>Note that these custom types definitions should match what you have declared in Tiled custom types editor.</p>
+<p>Finally, you can register your custom type before starting the app:</p>
+<pre><pre class="playground"><code class="language-rust no_run">fn main() {
+    App::new()
+        // If registering an object, use register_tiled_object() instead
+        .register_tiled_custom_tile::&lt;TileBundle&gt;(&quot;TileBundle&quot;)
+        .run();
+}
+</code></pre></pre>
+<p>When loading a map which has tiles with the <code>TileBundle</code> custom type, corresponding components will be automatically inserted on the tile entity and have their value based upon the properties you set in Tiled.</p>
+<p><img src="images/properties_inspector.png" alt="view-custom-types" /></p>
+<p>Note that you only see the <code>BiomeInfos</code> type and not <code>TileBundle</code>.
+That's because <code>TileBundle</code> is a <code>Bundle</code>, which is actually a collection of <code>Component</code>s.</p>
+<h2 id="using-a-component-vs-a-bundle"><a class="header" href="#using-a-component-vs-a-bundle">Using a <code>Component</code> vs. a <code>Bundle</code></a></h2>
+<p>This may change in the future, but <code>bevy_ecs_tiled</code> currently allows you to either use a Bevy <code>Component</code> or a Bevy <code>Bundle</code> to represent your tiles and objects.</p>
+<p>It means that your custom type can either be:</p>
+<ul>
+<li>a set of &quot;standard type&quot; fields (ie. no nested custom type), in that case it should be a <code>Component</code>.</li>
+<li>a set of &quot;custom type&quot; fiels, in that case it should be a <code>Bundle</code> and additional <code>CustomClass</code> structs should be declared.</li>
+</ul>
+<p>Note that it's an &quot;all or nothing&quot; mode.
+If you have a nested custom type, your struct must be a <code>Bundle</code> and it cannot contains an additional &quot;standard type&quot;.</p>
+<h2 id="further-readings"><a class="header" href="#further-readings">Further readings</a></h2>
+<p>You can have a look at the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/properties/index.html"><code>properties</code> module API reference</a> or the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/user_properties.rs">dedicated example</a>.</p>
+<p>More specifically, <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/properties/prelude/index.html">which attributes can be used for derive macros</a> or <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/properties/events/index.html">the content of observer events</a>.</p>
 
                     </main>
 
