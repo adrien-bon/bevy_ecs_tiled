@@ -11,6 +11,9 @@ use crate::prelude::*;
 /// It should be handled using the observer function provided to this `tiled_observer` attribute.
 ///
 /// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
 /// #[derive(TiledObject, Component, Default)]
 /// #[tiled_observer(my_observer)]
 /// struct ObjectGraphics {
@@ -20,7 +23,7 @@ use crate::prelude::*;
 ///
 /// // Note this is a standard Bevy observer so it accepts any regular system parameters
 /// fn my_observer(trigger: Trigger<TiledObjectCreated>) {
-/// // do things here !
+///     // do things here !
 /// }
 /// ```
 #[derive(Event, Clone, Debug)]
@@ -57,6 +60,9 @@ impl TiledObjectCreated {
 /// It should be handled using the observer function provided to this `tiled_observer` attribute.
 ///
 /// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
 /// #[derive(TiledCustomTile, Component, Default)]
 /// #[tiled_observer(my_observer)]
 /// struct TileMovement {
@@ -66,7 +72,7 @@ impl TiledObjectCreated {
 ///
 /// // Note this is a standard Bevy observer so it accepts any regular system parameters
 /// fn my_observer(trigger: Trigger<TiledCustomTileCreated>) {
-/// // do things here !
+///     // do things here !
 /// }
 /// ```
 #[derive(Event, Clone, Debug)]

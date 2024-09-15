@@ -11,16 +11,20 @@ pub trait TiledApp {
     ///
     /// Example:
     /// ```rust,no_run
-    /// // `ObjectBundle` definition
-    /// #[derive(TiledObject, Bundle, Default)]
-    /// struct ObjectBundle {
-    ///     ...
+    /// use bevy::prelude::*;
+    /// use bevy_ecs_tiled::prelude::*;
+    ///
+    /// // `ObjectGraphics` definition
+    /// #[derive(TiledObject, Component, Default)]
+    /// struct ObjectGraphics {
+    ///     color: bevy::color::Color,
+    ///     is_visible: bool,
     /// }
     ///
     /// fn main() {
     ///     App::new()
-    ///     // Where 'ObjectBundleName' is the custom type name as it appears in Tiled
-    ///     .register_tiled_object::<ObjectBundle>("ObjectBundleName");
+    ///         // Where 'ObjectGraphicsInfos' is the custom type name as it appears in Tiled
+    ///         .register_tiled_object::<ObjectGraphics>("ObjectGraphicsInfos");
     /// }
     /// ```
     fn register_tiled_object<T: TiledObject + Bundle>(&mut self, ident: &str) -> &mut Self;
@@ -31,16 +35,20 @@ pub trait TiledApp {
     ///
     /// Example:
     /// ```rust,no_run
-    /// // `TileBundle` definition
-    /// #[derive(TiledCustomTile, Bundle, Default)]
-    /// struct TileBundle {
-    ///     ...
+    /// use bevy::prelude::*;
+    /// use bevy_ecs_tiled::prelude::*;
+    ///
+    /// // `TileMovement` definition
+    /// #[derive(TiledCustomTile, Component, Default)]
+    /// struct TileMovement {
+    ///     movement_cost: i32,
+    ///     has_road: bool,
     /// }
     ///
     /// fn main() {
     ///     App::new()
-    ///     // Where 'TileBundleName' is the custom type name as it appears in Tiled
-    ///     .register_tiled_custom_tile::<TileBundle>("TileBundleName");
+    ///         // Where 'TileMovementInfos' is the custom type name as it appears in Tiled
+    ///         .register_tiled_custom_tile::<TileMovement>("TileMovementInfos");
     /// }
     /// ```
     fn register_tiled_custom_tile<T: TiledCustomTile + Bundle>(&mut self, ident: &str)
