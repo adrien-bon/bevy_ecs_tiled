@@ -13,9 +13,9 @@
 
 - [Minimal working example](guides/minimal.md)
 - [Spawn / Despawn / Reload a map](guides/spawn_reload.md)
-- [Use a physics backend](guides/physics.md)
+- [Use physics](guides/physics.md)
 - [Use Tiled custom properties](guides/properties.md)
-- [Debug your project]()
+- [Debug your project](guides/debug.md)
 
 # Migration guides
 
