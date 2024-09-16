@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Contributing - bevy_ecs_tiled Documentation</title>
+        <title>Debug your project - bevy_ecs_tiled Documentation</title>
                 
 
         <!-- Custom HTML head -->
@@ -82,7 +82,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="../FAQ.html">FAQ</a></li><li class="chapter-item expanded affix "><li class="part-title">Design and explanation</li><li class="chapter-item expanded "><a href="../design/why-tiled.html"><strong aria-hidden="true">1.</strong> Why using Tiled ?</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">2.</strong> Entities tree and component markers</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">3.</strong> Layers Z-ordering</div></li><li class="chapter-item expanded affix "><li class="part-title">How-To's</li><li class="chapter-item expanded "><a href="../guides/minimal.html"><strong aria-hidden="true">4.</strong> Minimal working example</a></li><li class="chapter-item expanded "><a href="../guides/spawn_reload.html"><strong aria-hidden="true">5.</strong> Spawn / Despawn / Reload a map</a></li><li class="chapter-item expanded "><a href="../guides/physics.html"><strong aria-hidden="true">6.</strong> Use physics</a></li><li class="chapter-item expanded "><a href="../guides/properties.html"><strong aria-hidden="true">7.</strong> Use Tiled custom properties</a></li><li class="chapter-item expanded "><a href="../guides/debug.html"><strong aria-hidden="true">8.</strong> Debug your project</a></li><li class="chapter-item expanded affix "><li class="part-title">Migration guides</li><li class="chapter-item expanded "><div><strong aria-hidden="true">9.</strong> From v0.3.X to v0.4.X</div></li><li class="chapter-item expanded affix "><li class="part-title">Miscellaneous</li><li class="chapter-item expanded "><a href="../misc/useful-links.html"><strong aria-hidden="true">10.</strong> Useful links</a></li><li class="chapter-item expanded "><a href="../misc/contributing.html" class="active"><strong aria-hidden="true">11.</strong> Contributing</a></li><li class="chapter-item expanded "><a href="../misc/api-reference.html"><strong aria-hidden="true">12.</strong> API reference</a></li></ol>            </div>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="../FAQ.html">FAQ</a></li><li class="chapter-item expanded affix "><li class="part-title">Design and explanation</li><li class="chapter-item expanded "><a href="../design/why-tiled.html"><strong aria-hidden="true">1.</strong> Why using Tiled ?</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">2.</strong> Entities tree and component markers</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">3.</strong> Layers Z-ordering</div></li><li class="chapter-item expanded affix "><li class="part-title">How-To's</li><li class="chapter-item expanded "><a href="../guides/minimal.html"><strong aria-hidden="true">4.</strong> Minimal working example</a></li><li class="chapter-item expanded "><a href="../guides/spawn_reload.html"><strong aria-hidden="true">5.</strong> Spawn / Despawn / Reload a map</a></li><li class="chapter-item expanded "><a href="../guides/physics.html"><strong aria-hidden="true">6.</strong> Use physics</a></li><li class="chapter-item expanded "><a href="../guides/properties.html"><strong aria-hidden="true">7.</strong> Use Tiled custom properties</a></li><li class="chapter-item expanded "><a href="../guides/debug.html" class="active"><strong aria-hidden="true">8.</strong> Debug your project</a></li><li class="chapter-item expanded affix "><li class="part-title">Migration guides</li><li class="chapter-item expanded "><div><strong aria-hidden="true">9.</strong> From v0.3.X to v0.4.X</div></li><li class="chapter-item expanded affix "><li class="part-title">Miscellaneous</li><li class="chapter-item expanded "><a href="../misc/useful-links.html"><strong aria-hidden="true">10.</strong> Useful links</a></li><li class="chapter-item expanded "><a href="../misc/contributing.html"><strong aria-hidden="true">11.</strong> Contributing</a></li><li class="chapter-item expanded "><a href="../misc/api-reference.html"><strong aria-hidden="true">12.</strong> API reference</a></li></ol>            </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
@@ -143,38 +143,79 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="contributing"><a class="header" href="#contributing">Contributing</a></h1>
-<p>If you would like to contribute but you're unsure where to start, here is a short wishlist and some notes on how to get started.</p>
-<p>First, you can have a look at <a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues">GH issues</a>.
-More specifically, the ones that are:</p>
-<ul>
-<li><a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement">tagged with <code>enhancement</code> label</a></li>
-<li><a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues?q=is%3Aopen+is%3Aissue+label%3Alimitation">tagged with <code>limitation</code> label</a></li>
-</ul>
-<p>If you feel like you can tackle on of these, please, feel free to submit a PR!</p>
-<p>Helping other users, respond to issues, help review PRs or just openning new issues is also very helpful !</p>
-<p>Also, another way of helping is to contribute on crates we rely on, namely <a href="https://github.com/mapeditor/rs-tiled"><code>rs-tiled</code></a> and <a href="https://github.com/StarArawn/bevy_ecs_tilemap"><code>bevy_ecs_tilemap</code></a>, or anything else in the Bevy ecosystem.</p>
-<h2 id="contribution-guidelines"><a class="header" href="#contribution-guidelines">Contribution guidelines</a></h2>
-<p>If you submit a PR, please make sure that:</p>
-<ul>
-<li>the CI is green: you can locally run the <code>./ci_check.sh</code> script</li>
-<li>you add proper in-code documentation</li>
-<li>you update the <code>CHANGELOG.md</code> file with a description of your fix</li>
-<li>if you add a new example, update the <code>examples/README.md</code> file with a description of your example and the <code>Cargo.toml</code> file with your example name (and any feature it may need)</li>
-<li>if you add a new map, update the <code>assets/README.md</code> file with your map characteristics</li>
-<li>if you add a new asset, update the &quot;Assets credits&quot; section of the <code>README.md</code> file and make sure that you actually have the right to use it!</li>
-</ul>
-<p>Thanks in advance! :)</p>
+                        <h1 id="debug-your-project"><a class="header" href="#debug-your-project">Debug your project</a></h1>
+<h2 id="bevy-inspector-egui"><a class="header" href="#bevy-inspector-egui"><code>bevy-inspector-egui</code></a></h2>
+<p>This may be obvious but this plugin is a must have for debugging.</p>
+<p>Just add the required dependency in <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[dependencies]
+bevy-inspector-egui = &quot;0.25.2&quot;
+</code></pre>
+<p>Then add the <code>WorldInspectorPlugin</code> to your application:</p>
+<pre><pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
+
+fn main() {
+    App::new()
+        .add_plugins(WorldInspectorPlugin::new())
+        .run();
+}
+</code></pre></pre>
+<p>Now, you can browse componentns from all entities spawned in your game.</p>
+<p>More informations on the project <a href="https://github.com/jakobhellermann/bevy-inspector-egui">github page</a>.</p>
+<h2 id="tiledmapdebugplugin"><a class="header" href="#tiledmapdebugplugin"><code>TiledMapDebugPlugin</code></a></h2>
+<p><code>bevy_ecs_tiled</code> provides a debug plugin that displays a gizmos where Tiled object are spawned.</p>
+<p>To use it, you just have to add the plugin to your application:</p>
+<pre><pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn main() {
+    App::new()
+        .add_plugins(TiledMapDebugPlugin::default())
+        .run();
+}
+</code></pre></pre>
+<p>More informations in the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/index.html">API reference</a>.</p>
+<h2 id="physics"><a class="header" href="#physics">Physics</a></h2>
+<p>Both Avian and Rapier provide their own way of debugging.
+It can be very useful, especially when working with colliders.
+Note that physics debugging is enabled by default in all <code>bevy_ecs_tiled</code> examples using physics.</p>
+<p>To enable physics debugging in Avian, you need to simply add the corresponding plugin:</p>
+<pre><pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
+use avian2d::prelude::*;
+
+fn main() {
+    App::new()
+        // Add Avian regular plugin
+        .add_plugins(PhysicsPlugins::default().with_length_unit(100.0))
+        // Add Avian debug plugin
+        .add_plugins(PhysicsDebugPlugin::default())
+        .run();
+}
+</code></pre></pre>
+<p>For Rapier, you also need to enable a debug plugin:</p>
+<pre><pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
+use bevy_rapier2d::prelude::*;
+
+fn main() {
+    App::new()
+        // Add Rapier regular plugin
+        .add_plugins(RapierPhysicsPlugin::&lt;NoUserData&gt;::pixels_per_meter(100.0))
+        // Add Rapier debug plugin
+        .add_plugins(RapierDebugRenderPlugin::default())
+        .run();
+}
+</code></pre></pre>
+<p>But you also need to enable either the <code>debug-render-2d</code> feature on <code>bevy_rapier2d</code> crate or the <code>rapier_debug</code> feature on <code>bevy_ecs_tiled</code></p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                                                    <a rel="prev" href="../misc/useful-links.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                                    <a rel="prev" href="../guides/properties.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
                         
-                                                    <a rel="next" href="../misc/api-reference.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                                    <a rel="next" href="../misc/useful-links.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         
@@ -184,11 +225,11 @@ More specifically, the ones that are:</p>
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                                    <a rel="prev" href="../misc/useful-links.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                    <a rel="prev" href="../guides/properties.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
                 
-                                    <a rel="next" href="../misc/api-reference.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                    <a rel="next" href="../misc/useful-links.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
                             </nav>

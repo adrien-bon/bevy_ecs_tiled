@@ -83,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="FAQ.html">FAQ</a></li><li class="chapter-item expanded affix "><li class="part-title">Design and explanation</li><li class="chapter-item expanded "><a href="design/why-tiled.html"><strong aria-hidden="true">1.</strong> Why using Tiled ?</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">2.</strong> Entities tree and component markers</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">3.</strong> Layers Z-ordering</div></li><li class="chapter-item expanded affix "><li class="part-title">How-To's</li><li class="chapter-item expanded "><a href="guides/minimal.html"><strong aria-hidden="true">4.</strong> Minimal working example</a></li><li class="chapter-item expanded "><a href="guides/spawn_reload.html"><strong aria-hidden="true">5.</strong> Spawn / Despawn / Reload a map</a></li><li class="chapter-item expanded "><a href="guides/physics.html"><strong aria-hidden="true">6.</strong> Use a physics backend</a></li><li class="chapter-item expanded "><a href="guides/properties.html"><strong aria-hidden="true">7.</strong> Use Tiled custom properties</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">8.</strong> Debug your project</div></li><li class="chapter-item expanded affix "><li class="part-title">Migration guides</li><li class="chapter-item expanded "><div><strong aria-hidden="true">9.</strong> From v0.3.X to v0.4.X</div></li><li class="chapter-item expanded affix "><li class="part-title">Miscellaneous</li><li class="chapter-item expanded "><a href="misc/useful-links.html"><strong aria-hidden="true">10.</strong> Useful links</a></li><li class="chapter-item expanded "><a href="misc/contributing.html"><strong aria-hidden="true">11.</strong> Contributing</a></li><li class="chapter-item expanded "><a href="misc/api-reference.html"><strong aria-hidden="true">12.</strong> API reference</a></li></ol>            </div>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="FAQ.html">FAQ</a></li><li class="chapter-item expanded affix "><li class="part-title">Design and explanation</li><li class="chapter-item expanded "><a href="design/why-tiled.html"><strong aria-hidden="true">1.</strong> Why using Tiled ?</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">2.</strong> Entities tree and component markers</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">3.</strong> Layers Z-ordering</div></li><li class="chapter-item expanded affix "><li class="part-title">How-To's</li><li class="chapter-item expanded "><a href="guides/minimal.html"><strong aria-hidden="true">4.</strong> Minimal working example</a></li><li class="chapter-item expanded "><a href="guides/spawn_reload.html"><strong aria-hidden="true">5.</strong> Spawn / Despawn / Reload a map</a></li><li class="chapter-item expanded "><a href="guides/physics.html"><strong aria-hidden="true">6.</strong> Use physics</a></li><li class="chapter-item expanded "><a href="guides/properties.html"><strong aria-hidden="true">7.</strong> Use Tiled custom properties</a></li><li class="chapter-item expanded "><a href="guides/debug.html"><strong aria-hidden="true">8.</strong> Debug your project</a></li><li class="chapter-item expanded affix "><li class="part-title">Migration guides</li><li class="chapter-item expanded "><div><strong aria-hidden="true">9.</strong> From v0.3.X to v0.4.X</div></li><li class="chapter-item expanded affix "><li class="part-title">Miscellaneous</li><li class="chapter-item expanded "><a href="misc/useful-links.html"><strong aria-hidden="true">10.</strong> Useful links</a></li><li class="chapter-item expanded "><a href="misc/contributing.html"><strong aria-hidden="true">11.</strong> Contributing</a></li><li class="chapter-item expanded "><a href="misc/api-reference.html"><strong aria-hidden="true">12.</strong> API reference</a></li></ol>            </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
@@ -464,6 +464,69 @@ If you have a nested custom type, your struct must be a <code>Bundle</code> and 
 <h2 id="further-readings"><a class="header" href="#further-readings">Further readings</a></h2>
 <p>You can have a look at the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/properties/index.html"><code>properties</code> module API reference</a> or the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/user_properties.rs">dedicated example</a>.</p>
 <p>More specifically, <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/properties/prelude/index.html">which attributes can be used for derive macros</a> or <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/properties/events/index.html">the content of observer events</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="debug-your-project"><a class="header" href="#debug-your-project">Debug your project</a></h1>
+<h2 id="bevy-inspector-egui"><a class="header" href="#bevy-inspector-egui"><code>bevy-inspector-egui</code></a></h2>
+<p>This may be obvious but this plugin is a must have for debugging.</p>
+<p>Just add the required dependency in <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[dependencies]
+bevy-inspector-egui = &quot;0.25.2&quot;
+</code></pre>
+<p>Then add the <code>WorldInspectorPlugin</code> to your application:</p>
+<pre><pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
+
+fn main() {
+    App::new()
+        .add_plugins(WorldInspectorPlugin::new())
+        .run();
+}
+</code></pre></pre>
+<p>Now, you can browse componentns from all entities spawned in your game.</p>
+<p>More informations on the project <a href="https://github.com/jakobhellermann/bevy-inspector-egui">github page</a>.</p>
+<h2 id="tiledmapdebugplugin"><a class="header" href="#tiledmapdebugplugin"><code>TiledMapDebugPlugin</code></a></h2>
+<p><code>bevy_ecs_tiled</code> provides a debug plugin that displays a gizmos where Tiled object are spawned.</p>
+<p>To use it, you just have to add the plugin to your application:</p>
+<pre><pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn main() {
+    App::new()
+        .add_plugins(TiledMapDebugPlugin::default())
+        .run();
+}
+</code></pre></pre>
+<p>More informations in the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/index.html">API reference</a>.</p>
+<h2 id="physics"><a class="header" href="#physics">Physics</a></h2>
+<p>Both Avian and Rapier provide their own way of debugging.
+It can be very useful, especially when working with colliders.
+Note that physics debugging is enabled by default in all <code>bevy_ecs_tiled</code> examples using physics.</p>
+<p>To enable physics debugging in Avian, you need to simply add the corresponding plugin:</p>
+<pre><pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
+use avian2d::prelude::*;
+
+fn main() {
+    App::new()
+        // Add Avian regular plugin
+        .add_plugins(PhysicsPlugins::default().with_length_unit(100.0))
+        // Add Avian debug plugin
+        .add_plugins(PhysicsDebugPlugin::default())
+        .run();
+}
+</code></pre></pre>
+<p>For Rapier, you also need to enable a debug plugin:</p>
+<pre><pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
+use bevy_rapier2d::prelude::*;
+
+fn main() {
+    App::new()
+        // Add Rapier regular plugin
+        .add_plugins(RapierPhysicsPlugin::&lt;NoUserData&gt;::pixels_per_meter(100.0))
+        // Add Rapier debug plugin
+        .add_plugins(RapierDebugRenderPlugin::default())
+        .run();
+}
+</code></pre></pre>
+<p>But you also need to enable either the <code>debug-render-2d</code> feature on <code>bevy_rapier2d</code> crate or the <code>rapier_debug</code> feature on <code>bevy_ecs_tiled</code></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="useful-links"><a class="header" href="#useful-links">Useful links</a></h1>
 <p>Here is an unordered list of useful resources that may help when working on a 2D tile-base game.</p>
 <p>Feel free to suggest any other link!</p>
