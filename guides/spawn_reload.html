@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Why using Tiled ? - bevy_ecs_tiled Documentation</title>
+        <title>Spawn / Despawn / Reload a map - bevy_ecs_tiled Documentation</title>
                 
 
         <!-- Custom HTML head -->
@@ -82,7 +82,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="../FAQ.html">FAQ</a></li><li class="chapter-item expanded affix "><li class="part-title">Design and explanation</li><li class="chapter-item expanded "><a href="../design/why-tiled.html" class="active"><strong aria-hidden="true">1.</strong> Why using Tiled ?</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">2.</strong> Entities tree and component markers</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">3.</strong> Layers Z-ordering</div></li><li class="chapter-item expanded affix "><li class="part-title">How-To's</li><li class="chapter-item expanded "><a href="../guides/minimal.html"><strong aria-hidden="true">4.</strong> Minimal working example</a></li><li class="chapter-item expanded "><a href="../guides/spawn_reload.html"><strong aria-hidden="true">5.</strong> Spawn / Despawn / Reload a map</a></li><li class="chapter-item expanded "><a href="../guides/physics.html"><strong aria-hidden="true">6.</strong> Use a physics backend</a></li><li class="chapter-item expanded "><a href="../guides/properties.html"><strong aria-hidden="true">7.</strong> Use Tiled custom properties</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">8.</strong> Debug your project</div></li><li class="chapter-item expanded affix "><li class="part-title">Migration guides</li><li class="chapter-item expanded "><div><strong aria-hidden="true">9.</strong> From v0.3.X to v0.4.X</div></li><li class="chapter-item expanded affix "><li class="part-title">Miscellaneous</li><li class="chapter-item expanded "><a href="../misc/useful-links.html"><strong aria-hidden="true">10.</strong> Useful links</a></li><li class="chapter-item expanded "><a href="../misc/contributing.html"><strong aria-hidden="true">11.</strong> Contributing</a></li><li class="chapter-item expanded "><a href="../misc/api-reference.html"><strong aria-hidden="true">12.</strong> API reference</a></li></ol>            </div>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="../FAQ.html">FAQ</a></li><li class="chapter-item expanded affix "><li class="part-title">Design and explanation</li><li class="chapter-item expanded "><a href="../design/why-tiled.html"><strong aria-hidden="true">1.</strong> Why using Tiled ?</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">2.</strong> Entities tree and component markers</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">3.</strong> Layers Z-ordering</div></li><li class="chapter-item expanded affix "><li class="part-title">How-To's</li><li class="chapter-item expanded "><a href="../guides/minimal.html"><strong aria-hidden="true">4.</strong> Minimal working example</a></li><li class="chapter-item expanded "><a href="../guides/spawn_reload.html" class="active"><strong aria-hidden="true">5.</strong> Spawn / Despawn / Reload a map</a></li><li class="chapter-item expanded "><a href="../guides/physics.html"><strong aria-hidden="true">6.</strong> Use a physics backend</a></li><li class="chapter-item expanded "><a href="../guides/properties.html"><strong aria-hidden="true">7.</strong> Use Tiled custom properties</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">8.</strong> Debug your project</div></li><li class="chapter-item expanded affix "><li class="part-title">Migration guides</li><li class="chapter-item expanded "><div><strong aria-hidden="true">9.</strong> From v0.3.X to v0.4.X</div></li><li class="chapter-item expanded affix "><li class="part-title">Miscellaneous</li><li class="chapter-item expanded "><a href="../misc/useful-links.html"><strong aria-hidden="true">10.</strong> Useful links</a></li><li class="chapter-item expanded "><a href="../misc/contributing.html"><strong aria-hidden="true">11.</strong> Contributing</a></li><li class="chapter-item expanded "><a href="../misc/api-reference.html"><strong aria-hidden="true">12.</strong> API reference</a></li></ol>            </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
@@ -143,33 +143,101 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="why-using-tiled-"><a class="header" href="#why-using-tiled-">Why using Tiled ?</a></h1>
-<p><a href="https://www.mapeditor.org/">Tiled</a> may feel a bit outdated in terms of &quot;look and feel&quot;, especially when compared with more modern map editor tools like <a href="https://ldtk.io/">LDTK</a>.
-However it has <strong>a lot</strong> of features which make it very interesting.</p>
-<p>If we compare with <a href="https://ldtk.io/">LDTK</a>, they both have a set of powerful features like:</p>
+                        <h1 id="spawn--despawn--reload-a-map"><a class="header" href="#spawn--despawn--reload-a-map">Spawn / Despawn / Reload a map</a></h1>
+<p>These aspects are also covered in the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/reload.rs">dedicated example</a>.</p>
+<h2 id="spawn-a-map"><a class="header" href="#spawn-a-map">Spawn a map</a></h2>
+<p>Spawning a map is done in two steps:</p>
 <ul>
-<li>auto-tiling</li>
-<li>adding gameplay informations to map tiles and objects</li>
-<li>working with worlds</li>
+<li>first, load a map asset / a map file using the Bevy <code>AssetServer</code></li>
+<li>then, spawn a <code>TiledMapBundle</code> containing a reference to this map asset</li>
 </ul>
-<p>But <a href="https://www.mapeditor.org/">Tiled</a> also have a set of unique features:</p>
-<ul>
-<li>support for both isometric and hexagonal maps</li>
-<li>native support for animated tiled</li>
-</ul>
-<p>Since I specifically wanted to work with hexagonal maps the choice was obvious for me!</p>
-<p>However, if it's not your case and you just want to use orthogonal map, you could give a shot at using <a href="https://ldtk.io/">LDTK</a> instead, especially using the <a href="https://github.com/Trouv/bevy_ecs_ldtk"><code>bevy_ecs_ldtk</code> crate</a>.
-Or stay with <a href="https://www.mapeditor.org/">Tiled</a>, it also works :)</p>
+<pre><pre class="playground"><code class="language-rust no_run">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn spawn_map(
+    mut commands: Commands,
+    asset_server: Res&lt;AssetServer&gt;
+) {
+    // First, load the map
+    let map_handle: Handle&lt;TiledMap&gt; = asset_server.load(&quot;map.tmx&quot;);
+
+    // Then, spawn it, using default settings
+    commands.spawn(TiledMapBundle {
+        tiled_map: map_handle,
+        ..default()
+    });
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>Note that you can perform the initial map loading beforehand (for instance, during your game startup) and  that there is no restriction on the number of maps loaded or spawned at the same time.</p>
+<h2 id="despawn-a-map"><a class="header" href="#despawn-a-map">Despawn a map</a></h2>
+<p>If you want to despawn a map, the easiest is to actually remove its top-level entity:</p>
+<pre><pre class="playground"><code class="language-rust no_run">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn despawn_map(
+    mut commands: Commands,
+    maps_query: Query&lt;Entity, With&lt;TiledMapMarker&gt;&gt;,
+) {
+    // Iterate over entities with a TiledMapMarker component
+    for map in q_maps.iter() {
+        // Despawn these entities, as well as their child entities
+        commands.entity(map).despawn_recursive();
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>All child entities, like layers and tiles, will automatically be despawned.</p>
+<h2 id="reload-a-map"><a class="header" href="#reload-a-map">Reload a map</a></h2>
+<p>If you want to reload a map, you can of course despawn it then spawn it again.
+It's tedious, but it works.</p>
+<p>However, there is an easier way.
+Instead, you can insert the <code>RespawnTiledMap</code> component:</p>
+<pre><pre class="playground"><code class="language-rust no_run">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn respawn_map(
+    mut commands: Commands,
+    maps_query: Query&lt;Entity, With&lt;TiledMapMarker&gt;&gt;,
+) {
+    if let Ok(entity) =  maps_query.get_single() {
+        commands.entity(entity).insert(RespawnTiledMap);
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>This will reload the exact same map but using new entities.
+It means that if you updated some components (for instance, a tile color or an object position) they will be back as they were when you first loaded the map.
+It's useful to implement a level respawn for instance.</p>
+<p>Another use case is to load a new map over an existing one.
+An easy way to do that is to just spawn the <code>TiledMapBundle</code> over an existing map.</p>
+<pre><pre class="playground"><code class="language-rust no_run">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn handle_reload(
+    mut commands: Commands,
+    asset_server: Res&lt;AssetServer&gt;,
+    maps_query: Query&lt;Entity, With&lt;TiledMapMarker&gt;&gt;,
+) {
+    if let Ok(entity) = maps_query.get_single() {
+        commands.entity(entity).insert(TiledMapBundle {
+            tiled_map: Handle&lt;TiledMap&gt; = asset_server.load(&quot;other_map.tmx&quot;),
+            ..default()
+        });
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                                                    <a rel="prev" href="../FAQ.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                                    <a rel="prev" href="../guides/minimal.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
                         
-                                                    <a rel="next" href="../guides/minimal.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                                    <a rel="next" href="../guides/physics.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         
@@ -179,11 +247,11 @@ Or stay with <a href="https://www.mapeditor.org/">Tiled</a>, it also works :)</p
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                                    <a rel="prev" href="../FAQ.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                    <a rel="prev" href="../guides/minimal.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
                 
-                                    <a rel="next" href="../guides/minimal.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                    <a rel="next" href="../guides/physics.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
                             </nav>

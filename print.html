@@ -83,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="FAQ.html">FAQ</a></li><li class="chapter-item expanded affix "><li class="part-title">Design and explanation</li><li class="chapter-item expanded "><a href="design/why-tiled.html"><strong aria-hidden="true">1.</strong> Why using Tiled ?</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">2.</strong> Entities tree and component markers</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">3.</strong> Layers Z-ordering</div></li><li class="chapter-item expanded affix "><li class="part-title">How-To's</li><li class="chapter-item expanded "><a href="guides/minimal.html"><strong aria-hidden="true">4.</strong> Minimal working example</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">5.</strong> Spawn / Despawn / Reload a map</div></li><li class="chapter-item expanded "><a href="guides/physics.html"><strong aria-hidden="true">6.</strong> Use a physics backend</a></li><li class="chapter-item expanded "><a href="guides/properties.html"><strong aria-hidden="true">7.</strong> Use Tiled custom properties</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">8.</strong> Debug your project</div></li><li class="chapter-item expanded affix "><li class="part-title">Migration guides</li><li class="chapter-item expanded "><div><strong aria-hidden="true">9.</strong> From v0.3.X to v0.4.X</div></li><li class="chapter-item expanded affix "><li class="part-title">Miscellaneous</li><li class="chapter-item expanded "><a href="misc/useful-links.html"><strong aria-hidden="true">10.</strong> Useful links</a></li><li class="chapter-item expanded "><a href="misc/contributing.html"><strong aria-hidden="true">11.</strong> Contributing</a></li><li class="chapter-item expanded "><a href="misc/api-reference.html"><strong aria-hidden="true">12.</strong> API reference</a></li></ol>            </div>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="FAQ.html">FAQ</a></li><li class="chapter-item expanded affix "><li class="part-title">Design and explanation</li><li class="chapter-item expanded "><a href="design/why-tiled.html"><strong aria-hidden="true">1.</strong> Why using Tiled ?</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">2.</strong> Entities tree and component markers</div></li><li class="chapter-item expanded "><div><strong aria-hidden="true">3.</strong> Layers Z-ordering</div></li><li class="chapter-item expanded affix "><li class="part-title">How-To's</li><li class="chapter-item expanded "><a href="guides/minimal.html"><strong aria-hidden="true">4.</strong> Minimal working example</a></li><li class="chapter-item expanded "><a href="guides/spawn_reload.html"><strong aria-hidden="true">5.</strong> Spawn / Despawn / Reload a map</a></li><li class="chapter-item expanded "><a href="guides/physics.html"><strong aria-hidden="true">6.</strong> Use a physics backend</a></li><li class="chapter-item expanded "><a href="guides/properties.html"><strong aria-hidden="true">7.</strong> Use Tiled custom properties</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">8.</strong> Debug your project</div></li><li class="chapter-item expanded affix "><li class="part-title">Migration guides</li><li class="chapter-item expanded "><div><strong aria-hidden="true">9.</strong> From v0.3.X to v0.4.X</div></li><li class="chapter-item expanded affix "><li class="part-title">Miscellaneous</li><li class="chapter-item expanded "><a href="misc/useful-links.html"><strong aria-hidden="true">10.</strong> Useful links</a></li><li class="chapter-item expanded "><a href="misc/contributing.html"><strong aria-hidden="true">11.</strong> Contributing</a></li><li class="chapter-item expanded "><a href="misc/api-reference.html"><strong aria-hidden="true">12.</strong> API reference</a></li></ol>            </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
@@ -259,6 +259,91 @@ fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
 </code></pre></pre>
 <p>Please note that you should have the <code>map.tmx</code> file in your local <code>assets/</code> folder (as well as required dependencies, for instance associated tilesets).</p>
 <p>See the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/README.md">examples</a> for more advanced use cases.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="spawn--despawn--reload-a-map"><a class="header" href="#spawn--despawn--reload-a-map">Spawn / Despawn / Reload a map</a></h1>
+<p>These aspects are also covered in the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/reload.rs">dedicated example</a>.</p>
+<h2 id="spawn-a-map"><a class="header" href="#spawn-a-map">Spawn a map</a></h2>
+<p>Spawning a map is done in two steps:</p>
+<ul>
+<li>first, load a map asset / a map file using the Bevy <code>AssetServer</code></li>
+<li>then, spawn a <code>TiledMapBundle</code> containing a reference to this map asset</li>
+</ul>
+<pre><pre class="playground"><code class="language-rust no_run">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn spawn_map(
+    mut commands: Commands,
+    asset_server: Res&lt;AssetServer&gt;
+) {
+    // First, load the map
+    let map_handle: Handle&lt;TiledMap&gt; = asset_server.load(&quot;map.tmx&quot;);
+
+    // Then, spawn it, using default settings
+    commands.spawn(TiledMapBundle {
+        tiled_map: map_handle,
+        ..default()
+    });
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>Note that you can perform the initial map loading beforehand (for instance, during your game startup) and  that there is no restriction on the number of maps loaded or spawned at the same time.</p>
+<h2 id="despawn-a-map"><a class="header" href="#despawn-a-map">Despawn a map</a></h2>
+<p>If you want to despawn a map, the easiest is to actually remove its top-level entity:</p>
+<pre><pre class="playground"><code class="language-rust no_run">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn despawn_map(
+    mut commands: Commands,
+    maps_query: Query&lt;Entity, With&lt;TiledMapMarker&gt;&gt;,
+) {
+    // Iterate over entities with a TiledMapMarker component
+    for map in q_maps.iter() {
+        // Despawn these entities, as well as their child entities
+        commands.entity(map).despawn_recursive();
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>All child entities, like layers and tiles, will automatically be despawned.</p>
+<h2 id="reload-a-map"><a class="header" href="#reload-a-map">Reload a map</a></h2>
+<p>If you want to reload a map, you can of course despawn it then spawn it again.
+It's tedious, but it works.</p>
+<p>However, there is an easier way.
+Instead, you can insert the <code>RespawnTiledMap</code> component:</p>
+<pre><pre class="playground"><code class="language-rust no_run">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn respawn_map(
+    mut commands: Commands,
+    maps_query: Query&lt;Entity, With&lt;TiledMapMarker&gt;&gt;,
+) {
+    if let Ok(entity) =  maps_query.get_single() {
+        commands.entity(entity).insert(RespawnTiledMap);
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>This will reload the exact same map but using new entities.
+It means that if you updated some components (for instance, a tile color or an object position) they will be back as they were when you first loaded the map.
+It's useful to implement a level respawn for instance.</p>
+<p>Another use case is to load a new map over an existing one.
+An easy way to do that is to just spawn the <code>TiledMapBundle</code> over an existing map.</p>
+<pre><pre class="playground"><code class="language-rust no_run">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn handle_reload(
+    mut commands: Commands,
+    asset_server: Res&lt;AssetServer&gt;,
+    maps_query: Query&lt;Entity, With&lt;TiledMapMarker&gt;&gt;,
+) {
+    if let Ok(entity) = maps_query.get_single() {
+        commands.entity(entity).insert(TiledMapBundle {
+            tiled_map: Handle&lt;TiledMap&gt; = asset_server.load(&quot;other_map.tmx&quot;),
+            ..default()
+        });
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="use-a-physics-backend"><a class="header" href="#use-a-physics-backend">Use a physics backend</a></h1>
 <p>TODO</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="use-tiled-custom-properties"><a class="header" href="#use-tiled-custom-properties">Use Tiled custom properties</a></h1>
