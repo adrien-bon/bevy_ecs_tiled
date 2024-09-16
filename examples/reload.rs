@@ -70,16 +70,19 @@ fn handle_reload(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    maps_query: Query<(Entity, &Handle<TiledMap>)>,
+    maps_query: Query<Entity, With<TiledMapMarker>>,
     mut next_state: ResMut<NextState<MapState>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyK) {
         let map_handle: Handle<TiledMap> = asset_server.load("infinite.tmx");
-        let (entity, _) = maps_query.single();
-        commands.entity(entity).insert(TiledMapBundle {
-            tiled_map: map_handle,
-            ..Default::default()
-        });
+        if let Ok(entity) = maps_query.get_single() {
+            commands.entity(entity).insert(TiledMapBundle {
+                tiled_map: map_handle,
+                ..Default::default()
+            });
+        } else {
+            warn!("Cannot reload: no map loaded ?");
+        }
 
         next_state.set(MapState::Loaded);
     }
@@ -89,7 +92,7 @@ fn handle_unload(
     mut commands: Commands,
     mut maps: ResMut<Assets<TiledMap>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    maps_query: Query<(Entity, &Handle<TiledMap>)>,
+    maps_query: Query<Entity, With<TiledMapMarker>>,
     mut next_state: ResMut<NextState<MapState>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyU) {
@@ -106,14 +109,14 @@ fn handle_unload(
         // Actually remove the entities, so that we can re-add later.
         // If we don't do this, the entity still exists and the map will not be
         // reloaded properly.
-        for map in maps_query.iter() {
-            commands.entity(map.0).despawn_recursive();
+        for entity in maps_query.iter() {
+            commands.entity(entity).despawn_recursive();
         }
         next_state.set(MapState::Unloaded);
     } else if keyboard_input.just_pressed(KeyCode::KeyI) {
         // Just remove the entities directly. This will also unload the map.
-        for map in maps_query.iter() {
-            commands.entity(map.0).despawn_recursive();
+        for entity in maps_query.iter() {
+            commands.entity(entity).despawn_recursive();
         }
         next_state.set(MapState::Unloaded);
     }
@@ -122,11 +125,14 @@ fn handle_unload(
 fn handle_respawn(
     mut commands: Commands,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    maps_query: Query<(Entity, &Handle<TiledMap>)>,
+    maps_query: Query<Entity, With<TiledMapMarker>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyR) {
-        let (entity, _) = maps_query.single();
-        commands.entity(entity).insert(RespawnTiledMap);
+        if let Ok(entity) = maps_query.get_single() {
+            commands.entity(entity).insert(RespawnTiledMap);
+        } else {
+            warn!("Cannot respawn: no map loaded ?");
+        }
     }
 }
 

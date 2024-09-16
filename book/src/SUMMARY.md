@@ -12,7 +12,7 @@
 # How-To's
 
 - [Minimal working example](guides/minimal.md)
-- [Spawn / Despawn / Reload a map]()
+- [Spawn / Despawn / Reload a map](guides/spawn_reload.md)
 - [Use a physics backend](guides/physics.md)
 - [Use Tiled custom properties](guides/properties.md)
 - [Debug your project]()
