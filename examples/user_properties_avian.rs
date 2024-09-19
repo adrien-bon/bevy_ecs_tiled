@@ -61,7 +61,7 @@ fn handle_event_2(trigger: Trigger<TiledObjectCreated>) {
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
 
-    let map_handle: Handle<TiledMap> = asset_server.load("colliders_and_user_properties.export.tmx");
+    let map_handle: Handle<TiledMap> = asset_server.load("colliders_and_user_properties.tmx");
     commands.spawn(TiledMapBundle {
         tiled_map: map_handle,
         tiled_settings: TiledMapSettings {
