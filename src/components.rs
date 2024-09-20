@@ -3,6 +3,7 @@
 use crate::prelude::*;
 use bevy::{ecs::system::EntityCommands, prelude::*, utils::HashMap};
 use bevy_ecs_tilemap::prelude::*;
+use tiled::TileId;
 
 /// Marker `Component` for re-spawning the whole map
 ///
@@ -27,6 +28,7 @@ pub struct RespawnTiledMap;
 pub struct TiledIdStorage {
     pub layers: HashMap<u32, Entity>,
     pub objects: HashMap<u32, Entity>,
+    pub tiles: HashMap<Entity, (String, TileId)>,
 }
 
 /// Marker `Component` for a Tiled map.

@@ -40,6 +40,7 @@ use crate::properties::{
     command::PropertiesCommandExt,
 };
 
+use bevy::utils::Entry;
 use bevy::{
     asset::{
         io::Reader, AssetLoader, AssetPath, AsyncReadExt, LoadContext, RecursiveDependencyLoadState,
@@ -52,7 +53,7 @@ use bevy::reflect::{TypeRegistry, TypeRegistryArc};
 use crate::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use tiled::{
-    ChunkData, FiniteTileLayer, InfiniteTileLayer, Layer, LayerType, ObjectLayer, Tile, TileLayer,
+    ChunkData, FiniteTileLayer, InfiniteTileLayer, Layer, LayerType, ObjectLayer, Tile, TileId, TileLayer
 };
 
 /// `bevy_ecs_tiled` main `Plugin`.
@@ -484,6 +485,7 @@ fn load_map(
                     &grid_size,
                     render_settings,
                     tiled_settings,
+                    &mut layer_storage.tiles,
                 );
             }
             LayerType::Objects(object_layer) => {
@@ -541,7 +543,17 @@ fn load_map(
         
         for (id, &entity) in layer_storage.layers.iter() {
             commands.entity(entity)
-                .insert_properties(props.layers.remove(dbg!(id)).unwrap());
+                .insert_properties(props.layers.remove(id).unwrap());
+        }
+
+        for (&entity, id) in layer_storage.tiles.iter() {
+            if let Some(p) =
+                props.tiles
+                    .get(&id.0)
+                    .and_then(|e| { e.get(&id.1) }) {
+                commands.entity(entity)
+                .insert_properties(p.clone());
+            }
         }
     }
 }
@@ -558,6 +570,7 @@ fn load_tiles_layer(
     grid_size: &TilemapGridSize,
     render_settings: &TilemapRenderSettings,
     tiled_settings: &TiledMapSettings,
+    entity_map: &mut HashMap<Entity, (String, TileId)>,
 ) {
     // The TilemapBundle requires that all tile images come exclusively from a single
     // tiled texture or from a Vec of independent per-tile images. Furthermore, all of
@@ -608,6 +621,7 @@ fn load_tiles_layer(
                 tileset_index,
                 tilemap_texture,
                 tiled_settings,
+                entity_map,
             ),
             tiled::TileLayer::Infinite(layer_data) => {
                 let (storage, new_map_size, origin) = load_infinite_tiles_layer(
@@ -620,6 +634,7 @@ fn load_tiles_layer(
                     tileset_index,
                     tilemap_texture,
                     tiled_settings,
+                    entity_map,
                 );
                 map_size = new_map_size;
                 // log::info!("Infinite layer origin: {:?}", origin);
@@ -664,6 +679,7 @@ fn load_finite_tiles_layer(
     tileset_index: usize,
     tilemap_texture: &TilemapTexture,
     tiled_settings: &TiledMapSettings,
+    entity_map: &mut HashMap<Entity, (String, TileId)>,
 ) -> TileStorage {
     let mut tile_storage = TileStorage::empty(*map_size);
     for x in 0..map_size.x {
@@ -727,10 +743,12 @@ fn load_finite_tiles_layer(
                 commands,
                 tile_entity,
                 &tile,
+                layer_tile.id(),
                 tiled_settings,
                 _map_type,
                 map_size,
                 grid_size,
+                entity_map,
             );
 
             tile_storage.set(&tile_pos, tile_entity);
@@ -751,6 +769,7 @@ fn load_infinite_tiles_layer(
     tileset_index: usize,
     tilemap_texture: &TilemapTexture,
     tiled_settings: &TiledMapSettings,
+    entity_map: &mut HashMap<Entity, (String, TileId)>,
 ) -> (TileStorage, TilemapSize, (f32, f32)) {
     // Determine top left coordinate so we can offset the map.
     let (topleft_x, topleft_y) = infinite_layer
@@ -858,10 +877,12 @@ fn load_infinite_tiles_layer(
                     commands,
                     tile_entity,
                     &tile,
+                    layer_tile.id(),
                     tiled_settings,
                     _map_type,
                     &map_size,
                     grid_size,
+                    entity_map,
                 );
 
                 tile_storage.set(&tile_pos, tile_entity);
@@ -1014,10 +1035,12 @@ fn handle_special_tile(
     commands: &mut Commands,
     tile_entity: Entity,
     tile: &Tile,
+    tile_id: TileId,
     _tiled_settings: &TiledMapSettings,
     _map_type: &TilemapType,
     _map_size: &TilemapSize,
     _grid_size: &TilemapGridSize,
+    entity_map: &mut HashMap<Entity, (String, TileId)>,
 ) {
     // Handle animated tiles
     if let Some(animated_tile) = get_animated_tile(tile) {
@@ -1025,16 +1048,21 @@ fn handle_special_tile(
     }
 
     // Handle custom tiles (with user properties)
+    if ! tile.properties.is_empty() {
+        entity_map.insert(tile_entity, (tile.tileset().name.clone(), tile_id));
+    }
+
+
     #[cfg(feature = "user_properties")]
     {
-        commands.trigger(TiledCustomTileCreated {
-            entity: tile_entity,
-            map_type: *_map_type,
-            tile_data: tile.deref().clone(),
-            map_size: *_map_size,
-            grid_size: *_grid_size,
-            physics_backend: _tiled_settings.physics_backend.clone(),
-        });
+        // commands.trigger(TiledCustomTileCreated {
+        //     entity: tile_entity,
+        //     map_type: *_map_type,
+        //     tile_data: tile.deref().clone(),
+        //     map_size: *_map_size,
+        //     grid_size: *_grid_size,
+        //     physics_backend: _tiled_settings.physics_backend.clone(),
+        // });
     }
 
     // Handle tiles with collision
