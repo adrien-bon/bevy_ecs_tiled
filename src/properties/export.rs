@@ -260,7 +260,7 @@ impl TypeImportRegistry {
             id: self.next_id(),
             name: info.type_path().to_string(),
             type_data: TypeData::Class(Class {
-                use_as: vec![UseAs::Property],
+                use_as: UseAs::all_supported(),
                 color: "#000000".to_string(),
                 draw_fill: true,
                 members: info.iter()
@@ -291,7 +291,7 @@ impl TypeImportRegistry {
             id: self.next_id(),
             name: info.type_path().to_string(),
             type_data: TypeData::Class(Class {
-                use_as: vec![UseAs::Property],
+                use_as: UseAs::all_supported(),
                 color: "#000000".to_string(),
                 draw_fill: true,
                 members: (0..info.capacity())
@@ -316,7 +316,7 @@ impl TypeImportRegistry {
             id: self.next_id(),
             name: info.type_path().to_string(),
             type_data: TypeData::Class(Class {
-                use_as: vec![UseAs::Property],
+                use_as: UseAs::all_supported(),
                 color: "#000000".to_string(),
                 draw_fill: true,
                 members: info.iter()
@@ -345,7 +345,7 @@ impl TypeImportRegistry {
             id: self.next_id(),
             name: info.type_path().to_string(),
             type_data: TypeData::Class(Class {
-                use_as: vec![UseAs::Property],
+                use_as: UseAs::all_supported(),
                 color: "#000000".to_string(),
                 draw_fill: true,
                 members: info.iter()
@@ -592,7 +592,7 @@ pub fn unit_import(id: u32, name: String) -> TypeImport {
         id,
         name,
         type_data: TypeData::Class(Class {
-            use_as: vec![UseAs::Property],
+            use_as: UseAs::all_supported(),
             color: UNIT_COLOR.to_string(),
             draw_fill: true,
             members: vec![],
