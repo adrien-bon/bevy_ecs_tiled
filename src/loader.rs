@@ -546,13 +546,12 @@ fn load_map(
                 .insert_properties(props.layers.remove(id).unwrap());
         }
 
-        for (&entity, id) in layer_storage.tiles.iter() {
-            if let Some(p) =
-                props.tiles
-                    .get(&id.0)
-                    .and_then(|e| { e.get(&id.1) }) {
+        for (id, entities) in layer_storage.tiles.iter() {
+            let Some(p) = props.tiles.get(&id.0)
+                .and_then(|e| { e.get(&id.1) }) else { continue; };
+            for &entity in entities {
                 commands.entity(entity)
-                .insert_properties(p.clone());
+                    .insert_properties(p.clone());
             }
         }
     }
@@ -570,7 +569,7 @@ fn load_tiles_layer(
     grid_size: &TilemapGridSize,
     render_settings: &TilemapRenderSettings,
     tiled_settings: &TiledMapSettings,
-    entity_map: &mut HashMap<Entity, (String, TileId)>,
+    entity_map: &mut HashMap<(String, TileId), Vec<Entity>>,
 ) {
     // The TilemapBundle requires that all tile images come exclusively from a single
     // tiled texture or from a Vec of independent per-tile images. Furthermore, all of
@@ -679,7 +678,7 @@ fn load_finite_tiles_layer(
     tileset_index: usize,
     tilemap_texture: &TilemapTexture,
     tiled_settings: &TiledMapSettings,
-    entity_map: &mut HashMap<Entity, (String, TileId)>,
+    entity_map: &mut HashMap<(String, TileId), Vec<Entity>>,
 ) -> TileStorage {
     let mut tile_storage = TileStorage::empty(*map_size);
     for x in 0..map_size.x {
@@ -769,7 +768,7 @@ fn load_infinite_tiles_layer(
     tileset_index: usize,
     tilemap_texture: &TilemapTexture,
     tiled_settings: &TiledMapSettings,
-    entity_map: &mut HashMap<Entity, (String, TileId)>,
+    entity_map: &mut HashMap<(String, TileId), Vec<Entity>>,
 ) -> (TileStorage, TilemapSize, (f32, f32)) {
     // Determine top left coordinate so we can offset the map.
     let (topleft_x, topleft_y) = infinite_layer
@@ -1040,7 +1039,7 @@ fn handle_special_tile(
     _map_type: &TilemapType,
     _map_size: &TilemapSize,
     _grid_size: &TilemapGridSize,
-    entity_map: &mut HashMap<Entity, (String, TileId)>,
+    entity_map: &mut HashMap<(String, TileId), Vec<Entity>>,
 ) {
     // Handle animated tiles
     if let Some(animated_tile) = get_animated_tile(tile) {
@@ -1049,9 +1048,15 @@ fn handle_special_tile(
 
     // Handle custom tiles (with user properties)
     if ! tile.properties.is_empty() {
-        entity_map.insert(tile_entity, (tile.tileset().name.clone(), tile_id));
+        let key = (tile.tileset().name.clone(), tile_id);
+        entity_map.entry(key)
+            .and_modify(|entities| {
+                entities.push(tile_entity);
+            })
+            .or_insert(
+                vec!(tile_entity)
+            );
     }
-
 
     #[cfg(feature = "user_properties")]
     {
