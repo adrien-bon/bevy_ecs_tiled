@@ -40,7 +40,6 @@ use crate::properties::{
     command::PropertiesCommandExt,
 };
 
-use bevy::utils::Entry;
 use bevy::{
     asset::{
         io::Reader, AssetLoader, AssetPath, AsyncReadExt, LoadContext, RecursiveDependencyLoadState,
@@ -48,7 +47,7 @@ use bevy::{
     prelude::*,
     utils::HashMap,
 };
-use bevy::reflect::{TypeRegistry, TypeRegistryArc};
+use bevy::reflect::TypeRegistryArc;
 
 use crate::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
@@ -73,15 +72,12 @@ pub struct TiledMapPlugin;
 
 impl Plugin for TiledMapPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        #[cfg(feature = "user_properties")]
-        {
-            app.init_non_send_resource::<TiledObjectRegistry>();
-            app.init_non_send_resource::<TiledCustomTileRegistry>();
-            app.add_systems(Startup, export::export_types);
-        }
         app.init_asset::<TiledMap>()
             .init_asset_loader::<TiledLoader>()
             .add_systems(Update, (handle_map_events, process_loaded_maps));
+
+        #[cfg(feature = "user_properties")]
+        app.add_systems(Startup, export::export_types);
 
         #[cfg(feature = "physics")]
         app.add_event::<CustomColliderCreationEvent>();
@@ -966,36 +962,6 @@ fn load_objects_layer(
                 );
             }
         }
-
-        #[cfg(feature = "user_properties")]
-        {
-            // if let Some(phantom) = objects_registry.get(&object_data.user_type) {
-            //     phantom.initialize(
-            //         commands,
-            //         &TiledObjectCreated {
-            //             entity: _object_entity,
-            //             object_data: object_data.deref().clone(),
-            //             map_size: *map_size,
-            //         },
-            //     );
-            // } else {
-            //     log::warn!(
-            //         "Skipping unregistered object (name='{}' type='{}')",
-            //         object_data.name,
-            //         object_data.user_type
-            //     );
-            // }
-
-            // commands.trigger(
-            //     TiledObjectCreated {
-            //         object: _object_entity,
-            //         layer: layer_entity,
-            //         map: map_entity,
-            //         object_data: object_data.deref().clone(),
-            //         map_size: *map_size,
-            //     }
-            // );
-        }
     }
 }
 
@@ -1056,18 +1022,6 @@ fn handle_special_tile(
             .or_insert(
                 vec!(tile_entity)
             );
-    }
-
-    #[cfg(feature = "user_properties")]
-    {
-        // commands.trigger(TiledCustomTileCreated {
-        //     entity: tile_entity,
-        //     map_type: *_map_type,
-        //     tile_data: tile.deref().clone(),
-        //     map_size: *_map_size,
-        //     grid_size: *_grid_size,
-        //     physics_backend: _tiled_settings.physics_backend.clone(),
-        // });
     }
 
     // Handle tiles with collision
