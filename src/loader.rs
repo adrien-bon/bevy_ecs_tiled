@@ -29,16 +29,12 @@
 //! This module handles the actual Tiled map loading.
 
 use std::io::{Cursor, Error as IoError, ErrorKind, Read};
+use std::ops::Deref;
 use std::path::Path;
 use std::sync::Arc;
 
 #[cfg(feature = "user_properties")]
-use std::ops::Deref;
-#[cfg(feature = "user_properties")]
-use crate::properties::{
-    load::DeserializedMapProperties,
-    command::PropertiesCommandExt,
-};
+use crate::properties::{command::PropertiesCommandExt, load::DeserializedMapProperties};
 
 use bevy::{
     asset::{
@@ -47,12 +43,15 @@ use bevy::{
     prelude::*,
     utils::HashMap,
 };
+
+#[cfg(feature = "user_properties")]
 use bevy::reflect::TypeRegistryArc;
 
 use crate::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use tiled::{
-    ChunkData, FiniteTileLayer, InfiniteTileLayer, Layer, LayerType, ObjectLayer, Tile, TileId, TileLayer
+    ChunkData, FiniteTileLayer, InfiniteTileLayer, Layer, LayerType, ObjectLayer, Tile, TileId,
+    TileLayer,
 };
 
 /// `bevy_ecs_tiled` main `Plugin`.
@@ -92,7 +91,7 @@ pub struct TiledMap {
     pub map: tiled::Map,
 
     pub tilemap_textures: HashMap<usize, TilemapTexture>,
-    
+
     #[cfg(feature = "user_properties")]
     pub properties: DeserializedMapProperties,
 
@@ -137,10 +136,10 @@ pub struct TiledLoader {
 }
 
 impl FromWorld for TiledLoader {
-    fn from_world(world: &mut World) -> Self {
+    fn from_world(_world: &mut World) -> Self {
         Self {
             #[cfg(feature = "user_properties")]
-            registry: world.resource::<AppTypeRegistry>().0.clone()
+            registry: _world.resource::<AppTypeRegistry>().0.clone(),
         }
     }
 }
@@ -221,12 +220,14 @@ impl AssetLoader for TiledLoader {
 
             tilemap_textures.insert(tileset_index, tilemap_texture);
         }
-        
-        #[cfg(feature = "user_properties")]
-        let properties = DeserializedMapProperties::load(&map, self.registry.read().deref(), load_context);
 
+        #[cfg(feature = "user_properties")]
+        let properties =
+            DeserializedMapProperties::load(&map, self.registry.read().deref(), load_context);
+
+        #[cfg(feature = "user_properties")]
         dbg!(&properties);
-        
+
         let asset_map = TiledMap {
             map,
             tilemap_textures,
@@ -467,7 +468,7 @@ fn load_map(
                     &mut layer_storage.tiles,
                     &mut special_tile_events,
                 )
-            },
+            }
             LayerType::Objects(object_layer) => {
                 commands
                     .entity(layer_entity)
@@ -487,7 +488,7 @@ fn load_map(
                     &mut object_events,
                 );
                 map_size
-            },
+            }
             LayerType::Group(_group_layer) => {
                 commands
                     .entity(layer_entity)
@@ -495,7 +496,7 @@ fn load_map(
                     .insert(TiledMapGroupLayer);
                 // TODO: not implemented yet.
                 map_size
-            },
+            }
             LayerType::Image(_image_layer) => {
                 commands
                     .entity(layer_entity)
@@ -503,12 +504,10 @@ fn load_map(
                     .insert(TiledMapImageLayer);
                 // TODO: not implemented yet.
                 map_size
-            },
+            }
         };
 
-        layer_storage
-            .layers
-            .insert(layer.id(), layer_entity);
+        layer_storage.layers.insert(layer.id(), layer_entity);
 
         layer_events.push(TiledLayerCreated {
             layer: layer_entity,
@@ -518,43 +517,42 @@ fn load_map(
             grid_size,
         })
     }
-    
+
     #[cfg(feature = "user_properties")]
     {
         let mut props = tiled_map.properties.clone().hydrate(&layer_storage.objects);
-        
-        commands.entity(map_entity)
-            .insert_properties(props.map);
-        
+
+        commands.entity(map_entity).insert_properties(props.map);
+
         for (id, &entity) in layer_storage.objects.iter() {
-            commands.entity(entity)
+            commands
+                .entity(entity)
                 .insert_properties(props.objects.remove(id).unwrap());
         }
-        
+
         for (id, &entity) in layer_storage.layers.iter() {
-            commands.entity(entity)
+            commands
+                .entity(entity)
                 .insert_properties(props.layers.remove(id).unwrap());
         }
 
         for (id, entities) in layer_storage.tiles.iter() {
-            let Some(p) = props.tiles.get(&id.0)
-                .and_then(|e| { e.get(&id.1) }) else { continue; };
+            let Some(p) = props.tiles.get(&id.0).and_then(|e| e.get(&id.1)) else {
+                continue;
+            };
             for &entity in entities {
-                commands.entity(entity)
-                    .insert_properties(p.clone());
+                commands.entity(entity).insert_properties(p.clone());
             }
         }
     }
 
     // Send events
-    commands.trigger(
-        TiledMapCreated {
-            map: map_entity,
-            map_type,
-            map_size,
-            grid_size,
-        }
-    );
+    commands.trigger(TiledMapCreated {
+        map: map_entity,
+        map_type,
+        map_size,
+        grid_size,
+    });
     for e in layer_events {
         commands.trigger(e);
     }
@@ -564,7 +562,6 @@ fn load_map(
     for e in special_tile_events {
         commands.trigger(e);
     }
-
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1063,20 +1060,19 @@ fn handle_special_tile(
     }
 
     // Handle custom tiles (with user properties)
-    if ! tile.properties.is_empty() {
+    if !tile.properties.is_empty() {
         let key = (tile.tileset().name.clone(), tile_id);
-        entity_map.entry(key)
+        entity_map
+            .entry(key)
             .and_modify(|entities| {
                 entities.push(tile_entity);
             })
-            .or_insert(
-                vec!(tile_entity)
-            );
+            .or_insert(vec![tile_entity]);
         is_special_tile = true;
     }
 
     // Handle tiles with collision
-    if let Some(collision) = tile.collision.as_ref() {
+    if let Some(_collision) = tile.collision.as_ref() {
         #[cfg(feature = "physics")]
         {
             let physics_backend = &_tiled_settings.physics_backend;
@@ -1086,7 +1082,7 @@ fn handle_special_tile(
                 tile_entity,
                 map_type,
                 grid_size,
-                collision,
+                _collision,
                 _tiled_settings.collider_callback,
             );
         }

@@ -1,4 +1,4 @@
-//! Events related to Tiled custom properties
+//! Events related to Tiled map loading
 
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
@@ -56,7 +56,12 @@ pub struct TiledObjectCreated {
 #[cfg(feature = "physics")]
 impl TiledObjectCreated {
     /// Automatically spawn physics colliders associated to this object
-    pub fn spawn_collider(&self, mut commands: Commands, physics_backend: PhysicsBackend, collider_callback: ColliderCallback) {
+    pub fn spawn_collider(
+        &self,
+        mut commands: Commands,
+        physics_backend: PhysicsBackend,
+        collider_callback: ColliderCallback,
+    ) {
         physics_backend.insert_object_colliders(
             &mut commands,
             self.object,
@@ -68,7 +73,7 @@ impl TiledObjectCreated {
 }
 
 /// Event sent when a Tiled special tile has finished loading
-/// 
+///
 /// Special tile means it either contains custom properties or physics colliders.
 #[derive(Event, Clone, Debug)]
 pub struct TiledSpecialTileCreated {
@@ -113,4 +118,3 @@ impl TiledSpecialTileCreated {
         }
     }
 }
-

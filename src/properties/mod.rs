@@ -4,10 +4,10 @@
 //!
 //! See the [associated example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/user_properties.rs) or the [dedicated book section](https://adrien-bon.github.io/bevy_ecs_tiled/guides/properties.html) for more information.
 
+pub mod command;
+pub mod export;
 pub mod import;
 pub mod load;
-pub mod export;
-pub mod command;
 
 /// Re-exports, notably derive macros
 pub mod prelude {

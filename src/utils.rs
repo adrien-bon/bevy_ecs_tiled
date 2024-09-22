@@ -4,9 +4,7 @@ use bevy_ecs_tilemap::prelude::*;
 use tiled::Map;
 
 /// Convert from Tiled map orientation to bevy_ecs_tilemap map type
-pub fn get_map_type(
-    map: &Map,
-) -> TilemapType {
+pub fn get_map_type(map: &Map) -> TilemapType {
     match map.orientation {
         tiled::Orientation::Hexagonal => match map.stagger_axis {
             tiled::StaggerAxis::X if map.stagger_index == tiled::StaggerIndex::Even => {

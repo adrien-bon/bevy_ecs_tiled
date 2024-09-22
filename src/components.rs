@@ -3,7 +3,7 @@
 use crate::prelude::*;
 use bevy::{ecs::system::EntityCommands, prelude::*, utils::HashMap};
 use bevy_ecs_tilemap::prelude::*;
-use tiled::{Layer, TileId};
+use tiled::TileId;
 
 /// Marker `Component` for re-spawning the whole map
 ///
