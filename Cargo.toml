@@ -132,3 +132,6 @@ name = "multiple_tilesets"
 [[example]]
 name = "custom_physics"
 required-features = ["physics"]
+
+[[example]]
+name = "map_events"

@@ -86,3 +86,15 @@ pub enum UseAs {
     WangSet,
     Project,
 }
+
+impl UseAs {
+    pub fn all_supported() -> Vec<UseAs> {
+        vec!(
+            UseAs::Property,
+            UseAs::Map,
+            UseAs::Layer,
+            UseAs::Object,
+            UseAs::Tile,
+        )
+    }
+}

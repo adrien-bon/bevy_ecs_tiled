@@ -82,7 +82,7 @@ impl Command for CustomColliderCreationEvent {
 /// | `avian`      | `Avian`                  |
 /// | `rapier`     | `Rapier`                 |
 /// | `avian` + `rapier` | `Avian`            |
-#[derive(Clone, Resource)]
+#[derive(Clone, Copy)]
 pub enum PhysicsBackend {
     /// Rapier physics backend.
     ///

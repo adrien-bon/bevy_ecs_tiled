@@ -1,6 +1,48 @@
 //! This modules contains utilities functions.
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
+use tiled::Map;
+
+/// Convert from Tiled map orientation to bevy_ecs_tilemap map type
+pub fn get_map_type(map: &Map) -> TilemapType {
+    match map.orientation {
+        tiled::Orientation::Hexagonal => match map.stagger_axis {
+            tiled::StaggerAxis::X if map.stagger_index == tiled::StaggerIndex::Even => {
+                TilemapType::Hexagon(HexCoordSystem::ColumnOdd)
+            }
+            tiled::StaggerAxis::X if map.stagger_index == tiled::StaggerIndex::Odd => {
+                TilemapType::Hexagon(HexCoordSystem::ColumnEven)
+            }
+            tiled::StaggerAxis::Y if map.stagger_index == tiled::StaggerIndex::Even => {
+                TilemapType::Hexagon(HexCoordSystem::RowOdd)
+            }
+            tiled::StaggerAxis::Y if map.stagger_index == tiled::StaggerIndex::Odd => {
+                TilemapType::Hexagon(HexCoordSystem::RowEven)
+            }
+            _ => unreachable!(),
+        },
+        tiled::Orientation::Isometric => TilemapType::Isometric(IsoCoordSystem::Diamond),
+        tiled::Orientation::Staggered => {
+            warn!("Isometric (Staggered) map is not supported");
+            TilemapType::Isometric(IsoCoordSystem::Staggered)
+        }
+        tiled::Orientation::Orthogonal => TilemapType::Square,
+    }
+}
+
+pub fn get_map_size(map: &Map) -> TilemapSize {
+    TilemapSize {
+        x: map.width,
+        y: map.height,
+    }
+}
+
+pub fn get_grid_size(map: &Map) -> TilemapGridSize {
+    TilemapGridSize {
+        x: map.tile_width as f32,
+        y: map.tile_width as f32,
+    }
+}
 
 /// Convert from Tiled isometric coordinates to Bevy position.
 ///

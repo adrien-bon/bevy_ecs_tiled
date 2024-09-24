@@ -22,7 +22,7 @@ fn main() {
         .add_systems(Update, display_objects)
         // We need to register the objects we created in Tiled.
         // Any property which is not registered will not be added to the object entity
-        .register_tiled_custom_tile::<TileComponent>("TileComponent")
+        // .register_tiled_custom_tile::<TileComponent>("TileComponent")
         .register_type::<SpawnBundle>()
         .register_type::<ColliderComponent>()
         .register_type::<TileComponent>()

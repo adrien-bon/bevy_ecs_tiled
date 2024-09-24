@@ -76,6 +76,7 @@
       <property name="texture" type="file" value="tiles/simple hex flat top/cave.png"/>
      </properties>
     </property>
+    <property name="obj" type="object" value="0"/>
     <property name="test_position" type="class" propertytype="avian2d::position::Position">
      <properties>
       <property name="0" type="class" propertytype="glam::Vec2">
