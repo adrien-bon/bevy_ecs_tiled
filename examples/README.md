@@ -48,3 +48,4 @@ For instance, on an "AZERTY" keyboard, you must use `A` instead of `Q` and `Z` i
 | `delayed_spawn` | None | This example will delay map spawn from asset loading to demonstrate both are decoupled. |
 | `multiple_tilesets` | None | This example shows a finite orthogonal map with multiple external tilesets. |
 | `custom_physics` | `physics` | This example shows how to use a custom physics backend. |
+| `map_events` | None | This example shows how to use map loading events. |

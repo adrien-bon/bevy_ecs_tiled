@@ -30,6 +30,20 @@ pub fn get_map_type(map: &Map) -> TilemapType {
     }
 }
 
+pub fn get_map_size(map: &Map) -> TilemapSize {
+    TilemapSize {
+        x: map.width,
+        y: map.height,
+    }
+}
+
+pub fn get_grid_size(map: &Map) -> TilemapGridSize {
+    TilemapGridSize {
+        x: map.tile_width as f32,
+        y: map.tile_width as f32,
+    }
+}
+
 /// Convert from Tiled isometric coordinates to Bevy position.
 ///
 /// This function will convert provided Tiled raw isometric position to a Bevy position, according to various maps settings.

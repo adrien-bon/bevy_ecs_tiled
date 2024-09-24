@@ -17,10 +17,6 @@ fn main() {
         .add_systems(Update, display_objects)
         .register_type::<BiomeInfos>()
         .register_type::<SpawnInfos>()
-        .observe(map_created)
-        // .observe(layer_created)
-        // .observe(object_created)
-        // .observe(tile_created)
         .run();
 }
 
@@ -31,15 +27,6 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         tiled_map: map_handle,
         ..Default::default()
     });
-}
-
-fn map_created(
-    trigger: Trigger<TiledMapCreated>,
-    q_map: Query<&Name, With<TiledMapMarker>>,
-) {
-    if let Ok(name) = q_map.get(trigger.event().map) {
-        info!("Received TiledMapCreated event for map '{}'", name);
-    }
 }
 
 // Only print the first tiles to avoid flooding the console

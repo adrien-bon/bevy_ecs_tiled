@@ -29,6 +29,7 @@
 //! This module handles the actual Tiled map loading.
 
 use std::io::{Cursor, Error as IoError, ErrorKind, Read};
+#[cfg(feature = "user_properties")]
 use std::ops::Deref;
 use std::path::Path;
 use std::sync::Arc;
@@ -398,16 +399,8 @@ fn load_map(
         .insert(TiledMapMarker);
 
     let map_type = get_map_type(&tiled_map.map);
-
-    let map_size = TilemapSize {
-        x: tiled_map.map.width,
-        y: tiled_map.map.height,
-    };
-
-    let grid_size = TilemapGridSize {
-        x: tiled_map.map.tile_width as f32,
-        y: tiled_map.map.tile_height as f32,
-    };
+    let map_size = get_map_size(&tiled_map.map);
+    let grid_size = get_grid_size(&tiled_map.map);
 
     let mut layer_events: Vec<TiledLayerCreated> = Vec::new();
     let mut object_events: Vec<TiledObjectCreated> = Vec::new();
@@ -419,7 +412,7 @@ fn load_map(
     let mut offset_z = tiled_map.map.layers().len() as f32 * (-100.0);
 
     // Once materials have been created/added we need to then create the layers.
-    for layer in tiled_map.map.layers() {
+    for (layer_id, layer) in tiled_map.map.layers().enumerate() {
         // Spawn layer entity and attach it to the map entity
         let layer_entity = commands
             .spawn((
@@ -447,7 +440,7 @@ fn load_map(
             ..default()
         });
 
-        let new_map_size = match layer.layer_type() {
+        match layer.layer_type() {
             LayerType::Tiles(tile_layer) => {
                 commands
                     .entity(layer_entity)
@@ -455,7 +448,8 @@ fn load_map(
                     .insert(TiledMapTileLayer);
                 load_tiles_layer(
                     commands,
-                    map_entity,
+                    map_handle,
+                    layer_id,
                     layer_entity,
                     layer,
                     tile_layer,
@@ -467,7 +461,7 @@ fn load_map(
                     tiled_settings,
                     &mut layer_storage.tiles,
                     &mut special_tile_events,
-                )
+                );
             }
             LayerType::Objects(object_layer) => {
                 commands
@@ -476,7 +470,8 @@ fn load_map(
                     .insert(TiledMapObjectLayer);
                 load_objects_layer(
                     commands,
-                    map_entity,
+                    map_handle,
+                    layer_id,
                     layer_entity,
                     layer,
                     object_layer,
@@ -487,7 +482,6 @@ fn load_map(
                     &mut layer_storage.objects,
                     &mut object_events,
                 );
-                map_size
             }
             LayerType::Group(_group_layer) => {
                 commands
@@ -495,7 +489,6 @@ fn load_map(
                     .insert(Name::new(format!("TiledMapGroupLayer({})", layer.name)))
                     .insert(TiledMapGroupLayer);
                 // TODO: not implemented yet.
-                map_size
             }
             LayerType::Image(_image_layer) => {
                 commands
@@ -503,18 +496,14 @@ fn load_map(
                     .insert(Name::new(format!("TiledMapImageLayer({})", layer.name)))
                     .insert(TiledMapImageLayer);
                 // TODO: not implemented yet.
-                map_size
             }
         };
 
         layer_storage.layers.insert(layer.id(), layer_entity);
-
         layer_events.push(TiledLayerCreated {
-            layer: layer_entity,
-            map: map_entity,
-            map_type,
-            map_size: new_map_size,
-            grid_size,
+            entity: layer_entity,
+            map_handle: map_handle.clone(),
+            layer_id,
         })
     }
 
@@ -548,10 +537,8 @@ fn load_map(
 
     // Send events
     commands.trigger(TiledMapCreated {
-        map: map_entity,
-        map_type,
-        map_size,
-        grid_size,
+        entity: map_entity,
+        map_handle: map_handle.clone(),
     });
     for e in layer_events {
         commands.trigger(e);
@@ -567,7 +554,8 @@ fn load_map(
 #[allow(clippy::too_many_arguments)]
 fn load_tiles_layer(
     commands: &mut Commands,
-    map_entity: Entity,
+    map_handle: &Handle<TiledMap>,
+    layer_id: usize,
     layer_entity: Entity,
     layer: Layer,
     tile_layer: TileLayer,
@@ -620,8 +608,8 @@ fn load_tiles_layer(
         let tile_storage = match tile_layer {
             tiled::TileLayer::Finite(layer_data) => load_finite_tiles_layer(
                 commands,
-                map_entity,
-                layer_entity,
+                map_handle,
+                layer_id,
                 layer_for_tileset_entity,
                 tiled_map,
                 map_type,
@@ -637,8 +625,8 @@ fn load_tiles_layer(
             tiled::TileLayer::Infinite(layer_data) => {
                 let (storage, new_map_size, origin) = load_infinite_tiles_layer(
                     commands,
-                    map_entity,
-                    layer_entity,
+                    map_handle,
+                    layer_id,
                     layer_for_tileset_entity,
                     tiled_map,
                     map_type,
@@ -685,8 +673,8 @@ fn load_tiles_layer(
 #[allow(clippy::too_many_arguments)]
 fn load_finite_tiles_layer(
     commands: &mut Commands,
-    map_entity: Entity,
-    layer_entity: Entity,
+    map_handle: &Handle<TiledMap>,
+    layer_id: usize,
     layer_for_tileset_entity: Entity,
     tiled_map: &TiledMap,
     map_type: &TilemapType,
@@ -759,14 +747,15 @@ fn load_finite_tiles_layer(
 
             handle_special_tile(
                 commands,
+                map_handle,
+                layer_id,
                 tile_entity,
-                map_entity,
-                layer_entity,
                 &tile,
                 layer_tile.id(),
+                mapped_x,
+                mapped_y,
                 tiled_settings,
                 map_type,
-                map_size,
                 grid_size,
                 entity_map,
                 event_list,
@@ -782,11 +771,11 @@ fn load_finite_tiles_layer(
 #[allow(clippy::too_many_arguments, unused)]
 fn load_infinite_tiles_layer(
     commands: &mut Commands,
-    map_entity: Entity,
-    layer_entity: Entity,
+    map_handle: &Handle<TiledMap>,
+    layer_id: usize,
     layer_for_tileset_entity: Entity,
     tiled_map: &TiledMap,
-    _map_type: &TilemapType,
+    map_type: &TilemapType,
     grid_size: &TilemapGridSize,
     infinite_layer: &InfiniteTileLayer,
     tileset_index: usize,
@@ -899,14 +888,15 @@ fn load_infinite_tiles_layer(
                     .id();
                 handle_special_tile(
                     commands,
+                    map_handle,
+                    layer_id,
                     tile_entity,
-                    map_entity,
-                    layer_entity,
                     &tile,
                     layer_tile.id(),
+                    tile_x,
+                    tile_y,
                     tiled_settings,
-                    _map_type,
-                    &map_size,
+                    map_type,
                     grid_size,
                     entity_map,
                     event_list,
@@ -920,25 +910,26 @@ fn load_infinite_tiles_layer(
     (tile_storage, map_size, origin)
 }
 
-#[allow(clippy::too_many_arguments, unused)]
+#[allow(clippy::too_many_arguments)]
 fn load_objects_layer(
     commands: &mut Commands,
-    map_entity: Entity,
+    map_handle: &Handle<TiledMap>,
+    layer_id: usize,
     layer_entity: Entity,
-    layer: Layer,
+    _layer: Layer,
     object_layer: ObjectLayer,
     map_type: &TilemapType,
     map_size: &TilemapSize,
     grid_size: &TilemapGridSize,
-    tiled_settings: &TiledMapSettings,
+    _tiled_settings: &TiledMapSettings,
     entity_map: &mut HashMap<u32, Entity>,
     event_list: &mut Vec<TiledObjectCreated>,
 ) {
     #[cfg(feature = "physics")]
     let collision_layer_names =
-        crate::prelude::ObjectNameFilter::from(&tiled_settings.collision_layer_names);
+        crate::prelude::ObjectNameFilter::from(&_tiled_settings.collision_layer_names);
 
-    for object_data in object_layer.objects() {
+    for (object_id, object_data) in object_layer.objects().enumerate() {
         let object_position = match map_type {
             TilemapType::Hexagon(HexCoordSystem::ColumnOdd) => Vec2::new(
                 object_data.x + grid_size.x / 4.,
@@ -981,26 +972,22 @@ fn load_objects_layer(
 
         entity_map.insert(object_data.id(), object_entity);
         event_list.push(TiledObjectCreated {
-            object: object_entity,
-            object_data: object_data.deref().clone(),
-            layer: layer_entity,
-            map: map_entity,
-            map_type: *map_type,
-            map_size: *map_size,
-            grid_size: *grid_size,
+            entity: object_entity,
+            map_handle: map_handle.clone(),
+            layer_id,
+            object_id,
         });
-
-        let physics_backend = &tiled_settings.physics_backend;
 
         #[cfg(feature = "physics")]
         {
-            if collision_layer_names.contains(&layer.name.trim().to_lowercase()) {
+            let physics_backend = &_tiled_settings.physics_backend;
+            if collision_layer_names.contains(&_layer.name.trim().to_lowercase()) {
                 physics_backend.insert_object_colliders(
                     commands,
                     object_entity,
                     map_type,
                     &object_data,
-                    tiled_settings.collider_callback,
+                    _tiled_settings.collider_callback,
                 );
             }
         }
@@ -1040,15 +1027,16 @@ fn get_animated_tile(tile: &Tile) -> Option<AnimatedTile> {
 #[allow(clippy::too_many_arguments)]
 fn handle_special_tile(
     commands: &mut Commands,
+    map_handle: &Handle<TiledMap>,
+    layer_id: usize,
     tile_entity: Entity,
-    map_entity: Entity,
-    layer_entity: Entity,
     tile: &Tile,
     tile_id: TileId,
+    x: i32,
+    y: i32,
     _tiled_settings: &TiledMapSettings,
-    map_type: &TilemapType,
-    map_size: &TilemapSize,
-    grid_size: &TilemapGridSize,
+    _map_type: &TilemapType,
+    _grid_size: &TilemapGridSize,
     entity_map: &mut HashMap<(String, TileId), Vec<Entity>>,
     event_list: &mut Vec<TiledSpecialTileCreated>,
 ) {
@@ -1080,8 +1068,8 @@ fn handle_special_tile(
                 commands,
                 &ObjectNameFilter::from(&_tiled_settings.collision_object_names),
                 tile_entity,
-                map_type,
-                grid_size,
+                _map_type,
+                _grid_size,
                 _collision,
                 _tiled_settings.collider_callback,
             );
@@ -1091,13 +1079,11 @@ fn handle_special_tile(
 
     if is_special_tile {
         event_list.push(TiledSpecialTileCreated {
-            tile: tile_entity,
-            tile_data: tile.deref().clone(),
-            layer: layer_entity,
-            map: map_entity,
-            map_type: *map_type,
-            map_size: *map_size,
-            grid_size: *grid_size,
+            entity: tile_entity,
+            map_handle: map_handle.clone(),
+            layer_id,
+            x,
+            y,
         });
     }
 }
