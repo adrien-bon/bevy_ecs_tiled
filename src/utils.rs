@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use tiled::Map;
 
-/// Convert from Tiled map orientation to bevy_ecs_tilemap map type
+/// Convert from a [tiled::Map] [tiled::Orientation] to [bevy_ecs_tilemap::TilemapType]
 pub fn get_map_type(map: &Map) -> TilemapType {
     match map.orientation {
         tiled::Orientation::Hexagonal => match map.stagger_axis {
@@ -40,7 +40,43 @@ pub fn get_map_size(map: &Map) -> TilemapSize {
 pub fn get_grid_size(map: &Map) -> TilemapGridSize {
     TilemapGridSize {
         x: map.tile_width as f32,
-        y: map.tile_width as f32,
+        y: map.tile_height as f32,
+    }
+}
+
+pub fn from_tiled_coords_to_bevy(
+    tiled_position: Vec2,
+    map_type: &TilemapType,
+    map_size: &TilemapSize,
+    grid_size: &TilemapGridSize,
+) -> Vec2 {
+    match map_type {
+        TilemapType::Hexagon(HexCoordSystem::ColumnOdd) => Vec2::new(
+            tiled_position.x + grid_size.x / 4.,
+            (map_size.y as f32 + 0.5) * grid_size.y - tiled_position.y,
+        ),
+        TilemapType::Hexagon(HexCoordSystem::ColumnEven) => Vec2::new(
+            tiled_position.x + grid_size.x / 4.,
+            (map_size.y as f32 + 0.) * grid_size.y - tiled_position.y,
+        ),
+        TilemapType::Hexagon(HexCoordSystem::RowOdd) => Vec2::new(
+            tiled_position.x,
+            map_size.y as f32 * grid_size.y * 0.75 + grid_size.y / 4. - tiled_position.y,
+        ),
+        TilemapType::Hexagon(HexCoordSystem::RowEven) => Vec2::new(
+            tiled_position.x - grid_size.x / 2.,
+            map_size.y as f32 * grid_size.y * 0.75 + grid_size.y / 4. - tiled_position.y,
+        ),
+        TilemapType::Isometric(coords_system) => from_isometric_coords_to_bevy(
+            tiled_position,
+            coords_system,
+            map_size,
+            grid_size,
+        ),
+        _ => Vec2::new(
+            tiled_position.x,
+            map_size.y as f32 * grid_size.y - tiled_position.y,
+        ),
     }
 }
 
@@ -63,8 +99,8 @@ pub fn get_grid_size(map: &Map) -> TilemapGridSize {
 /// );
 /// ```
 pub fn from_isometric_coords_to_bevy(
-    iso_coords: IsoCoordSystem,
     tiled_position: Vec2,
+    iso_coords: &IsoCoordSystem,
     map_size: &TilemapSize,
     grid_size: &TilemapGridSize,
 ) -> Vec2 {

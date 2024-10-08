@@ -1,14 +1,11 @@
-﻿use std::marker::PhantomData;
-use std::path::PathBuf;
-use bevy::asset::{Handle, LoadContext};
+﻿use std::path::PathBuf;
+use bevy::asset::LoadContext;
 use bevy::ecs::reflect::ReflectBundle;
-use bevy::prelude::{Color, Commands, Entity, FromReflect, ReflectComponent, ReflectResource};
+use bevy::prelude::{Color, Entity, FromReflect, ReflectComponent, ReflectResource};
 use bevy::reflect::{DynamicArray, DynamicEnum, DynamicStruct, DynamicTuple, DynamicTupleStruct, DynamicVariant, Reflect, ReflectKind, ReflectMut, TypeInfo, TypePath, TypeRegistration, VariantInfo};
 use bevy::reflect::TypeRegistry;
-use bevy::scene::DynamicEntity;
 use bevy::utils::HashMap;
-use tiled::{Layer, LayerType, PropertyValue, TileId};
-use crate::loader::TiledMap;
+use tiled::{LayerType, PropertyValue, TileId};
 
 
 

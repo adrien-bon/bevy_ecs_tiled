@@ -156,21 +156,7 @@ fn test_nested_tuple_struct() {
     // dbg!(deserializer.deserialize(test_value));
 }
 
-pub fn export_types(
-    reg: Res<AppTypeRegistry>,
-) {
-    // todo: use a config
-    
-    let mut path = env::current_dir().unwrap();
-    path.push("tiled_type_export.json");
-    
-    let file = File::create(path).unwrap();
-    let writer = BufWriter::new(file);
-    
-    let registry = TypeImportRegistry::from_registry(reg.0.read().deref());
-    
-    serde_json::to_writer(writer, &registry.to_vec()).unwrap();
-}
+
 
 #[derive(Debug, Default, Clone)]
 pub struct TypeImportRegistry {
