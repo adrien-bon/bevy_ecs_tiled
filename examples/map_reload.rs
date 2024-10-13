@@ -8,10 +8,14 @@ mod helper;
 
 fn main() {
     App::new()
+        // Bevy default plugins
         .add_plugins(DefaultPlugins)
-        .add_plugins(TilemapPlugin)
-        .add_plugins(TiledMapPlugin)
+        // Examples helper plugin (does not matter for this example)
         .add_plugins(helper::HelperPlugin)
+        // bevy_ecs_tilemap and bevy_ecs_tiled main plugins
+        .add_plugins(TilemapPlugin)
+        .add_plugins(TiledMapPlugin::default())
+        // Add our systems and run the app!
         .init_state::<MapState>()
         .add_systems(Startup, startup)
         .add_systems(
@@ -35,11 +39,7 @@ fn startup(
         "U = Unload map by removing asset\nI = Unload map by despawning entity\nL = Load finite map\nK = Replace loaded map component without unloading\nR = Reload map using the RespawnTiledMap component",
     ));
 
-    let map_handle: Handle<TiledMap> = asset_server.load("finite.tmx");
-    commands.spawn(TiledMapBundle {
-        tiled_map: map_handle,
-        ..Default::default()
-    });
+    commands.spawn(TiledMapHandle(asset_server.load("finite.tmx")));
     next_state.set(MapState::Loaded);
 }
 
@@ -57,11 +57,7 @@ fn handle_load(
     mut next_state: ResMut<NextState<MapState>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyL) {
-        let map_handle: Handle<TiledMap> = asset_server.load("finite.tmx");
-        commands.spawn(TiledMapBundle {
-            tiled_map: map_handle,
-            ..Default::default()
-        });
+        commands.spawn(TiledMapHandle(asset_server.load("finite.tmx")));
         next_state.set(MapState::Loaded);
     }
 }
@@ -74,12 +70,9 @@ fn handle_reload(
     mut next_state: ResMut<NextState<MapState>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyK) {
-        let map_handle: Handle<TiledMap> = asset_server.load("infinite.tmx");
         if let Ok(entity) = maps_query.get_single() {
-            commands.entity(entity).insert(TiledMapBundle {
-                tiled_map: map_handle,
-                ..Default::default()
-            });
+            commands.entity(entity)
+                .insert(TiledMapHandle(asset_server.load("infinite.tmx")));
         } else {
             warn!("Cannot reload: no map loaded ?");
         }

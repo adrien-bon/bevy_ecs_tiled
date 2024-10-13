@@ -8,25 +8,26 @@ mod helper;
 
 fn main() {
     App::new()
+        // Bevy default plugins
         .add_plugins(DefaultPlugins)
-        .add_plugins(TilemapPlugin)
-        .add_plugins(TiledMapPlugin)
+        // Examples helper plugin (does not matter for this example)
         .add_plugins(helper::HelperPlugin)
-        .add_systems(Startup, startup)
+        // bevy_ecs_tilemap and bevy_ecs_tiled main plugins
+        .add_plugins(TilemapPlugin)
+        .add_plugins(TiledMapPlugin::default())
+        // Add observers for map loading events
         .observe(map_created)
         .observe(layer_created)
         .observe(object_created)
         .observe(special_tile_created)
+        // Add our systems and run the app!
+        .add_systems(Startup, startup)
         .run();
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
-    let map_handle: Handle<TiledMap> = asset_server.load("finite.tmx");
-    commands.spawn(TiledMapBundle {
-        tiled_map: map_handle,
-        ..Default::default()
-    });
+    commands.spawn(TiledMapHandle(asset_server.load("finite.tmx")));
 }
 
 fn map_created(
@@ -35,7 +36,7 @@ fn map_created(
     map_asset: Res<Assets<TiledMap>>,
 ) {
     // We can either access the map components
-    if let Ok(name) = q_map.get(trigger.event().entity) {
+    if let Ok(name) = q_map.get(trigger.event().map) {
         info!("Received TiledMapCreated event for map '{}'", name);    
     }
 
@@ -50,7 +51,7 @@ fn layer_created(
     map_asset: Res<Assets<TiledMap>>,
 ) {
     // We can either access the layer components
-    if let Ok(name) = q_layer.get(trigger.event().entity) {
+    if let Ok(name) = q_layer.get(trigger.event().layer) {
         info!("Received TiledLayerCreated event for layer '{}'", name);    
     }
 
@@ -66,7 +67,7 @@ fn object_created(
     map_asset: Res<Assets<TiledMap>>,
 ) {
     // We can either access the object components
-    if let Ok(name) = q_object.get(trigger.event().entity) {
+    if let Ok(name) = q_object.get(trigger.event().object) {
         info!("Received TiledObjectCreated event for object '{}'", name);    
     }
 
@@ -83,7 +84,7 @@ fn special_tile_created(
     map_asset: Res<Assets<TiledMap>>,
 ) {
     // We can either access the tile components
-    if let Ok(name) = q_tile.get(trigger.event().entity) {
+    if let Ok(name) = q_tile.get(trigger.event().tile) {
         info!("Received TiledSpecialTileCreated event for tile '{}'", name);    
     }
 
