@@ -3,7 +3,16 @@
  <grid orientation="orthogonal" width="1" height="1"/>
  <tile id="0" type="TileComponent">
   <properties>
-   <property name="test" type="object" value="0"/>
+   <property name="spawn" type="class" propertytype="user_properties_avian::SpawnBundle">
+    <properties>
+     <property name="collider" type="class" propertytype="user_properties_avian::ColliderComponent">
+      <properties>
+       <property name="damage_per_second" type="float" value="12"/>
+      </properties>
+     </property>
+    </properties>
+   </property>
+   <property name="test" type="class" propertytype="avian2d::position::Position"/>
   </properties>
   <image source="tiles/tile0.png" width="32" height="32"/>
   <objectgroup draworder="index" id="2">
@@ -13,6 +22,16 @@
  <tile id="1" type="TileComponent">
   <properties>
    <property name="prefered_color" type="color" value="#ff0000de"/>
+   <property name="spawn" type="class" propertytype="user_properties_avian::SpawnBundle">
+    <properties>
+     <property name="collider" type="class" propertytype="user_properties_avian::ColliderComponent">
+      <properties>
+       <property name="damage_per_second" type="float" value="12"/>
+      </properties>
+     </property>
+    </properties>
+   </property>
+   <property name="test" type="class" propertytype="avian2d::position::Position"/>
   </properties>
   <image source="tiles/tile1.png" width="32" height="32"/>
   <objectgroup draworder="index" id="2">
@@ -22,6 +41,25 @@
  <tile id="2" type="TileComponent">
   <properties>
    <property name="prefered_color" type="color" value="#ff0000de"/>
+   <property name="spawn" type="class" propertytype="user_properties_avian::SpawnBundle">
+    <properties>
+     <property name="collider" type="class" propertytype="user_properties_avian::ColliderComponent">
+      <properties>
+       <property name="damage_per_second" type="float" value="12"/>
+      </properties>
+     </property>
+    </properties>
+   </property>
+   <property name="test" type="class" propertytype="avian2d::position::Position">
+    <properties>
+     <property name="0" type="class" propertytype="glam::Vec2">
+      <properties>
+       <property name="x" type="float" value="58"/>
+       <property name="y" type="float" value="66"/>
+      </properties>
+     </property>
+    </properties>
+   </property>
   </properties>
   <image source="tiles/tile2.png" width="32" height="32"/>
   <objectgroup draworder="index" id="2">
@@ -33,6 +71,25 @@
  <tile id="3" type="TileComponent">
   <properties>
    <property name="prefered_color" type="color" value="#ffff0307"/>
+   <property name="spawn" type="class" propertytype="user_properties_avian::SpawnBundle">
+    <properties>
+     <property name="collider" type="class" propertytype="user_properties_avian::ColliderComponent">
+      <properties>
+       <property name="damage_per_second" type="float" value="12"/>
+      </properties>
+     </property>
+    </properties>
+   </property>
+   <property name="test" type="class" propertytype="avian2d::position::Position">
+    <properties>
+     <property name="0" type="class" propertytype="glam::Vec2">
+      <properties>
+       <property name="x" type="float" value="41"/>
+       <property name="y" type="float" value="45"/>
+      </properties>
+     </property>
+    </properties>
+   </property>
   </properties>
   <image source="tiles/tile3.png" width="32" height="32"/>
   <objectgroup draworder="index" id="2">
@@ -42,6 +99,25 @@
  <tile id="4" type="TileComponent">
   <properties>
    <property name="prefered_color" type="color" value="#ffff0307"/>
+   <property name="spawn" type="class" propertytype="user_properties_avian::SpawnBundle">
+    <properties>
+     <property name="collider" type="class" propertytype="user_properties_avian::ColliderComponent">
+      <properties>
+       <property name="damage_per_second" type="float" value="12"/>
+      </properties>
+     </property>
+    </properties>
+   </property>
+   <property name="test" type="class" propertytype="avian2d::position::Position">
+    <properties>
+     <property name="0" type="class" propertytype="glam::Vec2">
+      <properties>
+       <property name="x" type="float" value="47"/>
+       <property name="y" type="float" value="21"/>
+      </properties>
+     </property>
+    </properties>
+   </property>
   </properties>
   <image source="tiles/tile4.png" width="32" height="32"/>
   <objectgroup draworder="index" id="2">
@@ -53,6 +129,16 @@
  <tile id="5" type="TileComponent">
   <properties>
    <property name="prefered_color" type="color" value="#ff0fff23"/>
+   <property name="spawn" type="class" propertytype="user_properties_avian::SpawnBundle">
+    <properties>
+     <property name="collider" type="class" propertytype="user_properties_avian::ColliderComponent">
+      <properties>
+       <property name="damage_per_second" type="float" value="12"/>
+      </properties>
+     </property>
+    </properties>
+   </property>
+   <property name="test" type="class" propertytype="avian2d::position::Position"/>
   </properties>
   <image source="tiles/tile5.png" width="32" height="32"/>
   <objectgroup draworder="index" id="2">
@@ -62,6 +148,16 @@
  <tile id="6" type="TileComponent">
   <properties>
    <property name="prefered_color" type="color" value="#ff0fff23"/>
+   <property name="spawn" type="class" propertytype="user_properties_avian::SpawnBundle">
+    <properties>
+     <property name="collider" type="class" propertytype="user_properties_avian::ColliderComponent">
+      <properties>
+       <property name="damage_per_second" type="float" value="12"/>
+      </properties>
+     </property>
+    </properties>
+   </property>
+   <property name="test" type="class" propertytype="avian2d::position::Position"/>
   </properties>
   <image source="tiles/tile6.png" width="32" height="32"/>
   <objectgroup draworder="index" id="2">
