@@ -2,10 +2,9 @@
 //!
 //! ## API reference
 //!
-//! As the name implies, this API reference documentation purpose is to describe the API provided by `bevy_ecs_tiled`.
-//! A good entry-point would be the [TiledMapBundle](components::TiledMapBundle) component which is the `Component` used to spawn a map.
+//! As the name implies, this API reference purpose is to describe the API provided by `bevy_ecs_tiled`.
 //!
-//! For a more use-cases oriented documentation please have a look to the [`bevy_ecs_tiled` book](https://adrien-bon.github.io/bevy_ecs_tiled/).
+//! For a more use-cases oriented documentation please have a look to the [`bevy_ecs_tiled` book](https://adrien-bon.github.io/bevy_ecs_tiled/) and notably the [FAQ](https://adrien-bon.github.io/bevy_ecs_tiled/FAQ.html) that will hopefully answer most of your questions.
 //!
 //! ## Getting started
 //!
@@ -44,13 +43,17 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 use bevy_ecs_tilemap::prelude::*;
 use std::{env, path::PathBuf};
 
-/// Handle to the .tmx file to load representing the map.
+/// Wrapper around the [Handle] to the `.tmx` file representing the map.
 #[derive(Component)]
 pub struct TiledMapHandle(pub Handle<TiledMap>);
 
+/// [TiledMapPlugin] [Plugin] global configuration.
 #[allow(dead_code)]
 #[derive(Resource, Clone)]
 pub struct TiledMapPluginConfig {
+    /// Path to the Tiled types export file.
+    /// 
+    /// If [None], will not export Tiled types at startup.
     pub tiled_types_export_file: Option<PathBuf>,
 }
 
@@ -66,7 +69,7 @@ impl Default for TiledMapPluginConfig {
 
 /// `bevy_ecs_tiled` main `Plugin`.
 ///
-/// This `Plugin` should be added to your application to actually be able to load a Tiled map.
+/// This [Plugin] should be added to your application to actually be able to load a Tiled map.
 ///
 /// Example:
 /// ```rust,no_run

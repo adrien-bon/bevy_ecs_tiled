@@ -1,3 +1,5 @@
+//! This module contains all [Asset]s definition.
+
 use std::io::{Cursor, Error as IoError, ErrorKind, Read};
 #[cfg(feature = "user_properties")]
 use std::ops::Deref;

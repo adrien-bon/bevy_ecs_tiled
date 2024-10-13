@@ -26,7 +26,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // ... then spawn it !
     let mut map_entity = commands.spawn(TiledMapHandle(map_handle));
 
-    // You can eventually add some extra settings to your map (but it's not needed)
+    // You can eventually add some extra settings to your map
     map_entity.insert((
         TiledMapSettings {
             layer_positioning: LayerPositioning::Centered,

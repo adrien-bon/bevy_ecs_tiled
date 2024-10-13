@@ -1,9 +1,9 @@
-//! This modules contains utilities functions.
+//! This module contains utilities functions.
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use tiled::Map;
 
-/// Convert from a [tiled::Map] [tiled::Orientation] to [bevy_ecs_tilemap::TilemapType]
+/// Convert a [tiled::Map]'s [tiled::Orientation] to a [TilemapType]
 pub fn get_map_type(map: &Map) -> TilemapType {
     match map.orientation {
         tiled::Orientation::Hexagonal => match map.stagger_axis {
@@ -30,6 +30,7 @@ pub fn get_map_type(map: &Map) -> TilemapType {
     }
 }
 
+/// Convert a [tiled::Map]'s size to a [TilemapSize]
 pub fn get_map_size(map: &Map) -> TilemapSize {
     TilemapSize {
         x: map.width,
@@ -37,6 +38,7 @@ pub fn get_map_size(map: &Map) -> TilemapSize {
     }
 }
 
+/// Convert a [tiled::Map]'s grid size to a [TilemapGridSize]
 pub fn get_grid_size(map: &Map) -> TilemapGridSize {
     TilemapGridSize {
         x: map.tile_width as f32,
@@ -44,6 +46,24 @@ pub fn get_grid_size(map: &Map) -> TilemapGridSize {
     }
 }
 
+/// Convert from Tiled coordinates to a Bevy position.
+///
+/// This function will convert provided Tiled raw position to a Bevy position, according to various maps settings.
+///
+/// Example:
+/// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+/// use bevy_ecs_tilemap::prelude::*;
+///
+/// let tiled_position = Vec2::new(0., 12.);
+/// let bevy_position = from_tiled_coords_to_bevy(
+///     tiled_position,
+///     &TilemapType::Square,
+///     &TilemapSize::new(0, 3),
+///     &TilemapGridSize::new(16., 16.),
+/// );
+/// ```
 pub fn from_tiled_coords_to_bevy(
     tiled_position: Vec2,
     map_type: &TilemapType,
@@ -77,7 +97,7 @@ pub fn from_tiled_coords_to_bevy(
     }
 }
 
-/// Convert from Tiled isometric coordinates to Bevy position.
+/// Convert from Tiled isometric coordinates to a Bevy position.
 ///
 /// This function will convert provided Tiled raw isometric position to a Bevy position, according to various maps settings.
 ///
@@ -88,9 +108,9 @@ pub fn from_tiled_coords_to_bevy(
 /// use bevy_ecs_tilemap::prelude::*;
 ///
 /// let tiled_position = Vec2::new(0., 12.);
-/// let coords = from_isometric_coords_to_bevy(
-///     IsoCoordSystem::Diamond,
+/// let bevy_position = from_isometric_coords_to_bevy(
 ///     tiled_position,
+///     &IsoCoordSystem::Diamond,
 ///     &TilemapSize::new(0, 3),
 ///     &TilemapGridSize::new(16., 16.),
 /// );

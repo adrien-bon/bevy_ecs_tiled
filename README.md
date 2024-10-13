@@ -36,9 +36,11 @@ Each tile or object is represented by a Bevy entity:
 
 This crate is documented in three places:
 
-- The [`bevy_ecs_tiled` book](https://adrien-bon.github.io/bevy_ecs_tiled/) with design explanation and how-to guides.
+- The [`bevy_ecs_tiled` book](https://adrien-bon.github.io/bevy_ecs_tiled/) with design explanations, how-to guides and migrations guides.
 - The [API reference](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/)
 - The [examples folders](./examples/README.md), for concrete use cases.
+
+There is notably a [FAQ](https://adrien-bon.github.io/bevy_ecs_tiled/FAQ.html) that will hopefully answer most of your questions.
 
 Good reading!
 
@@ -49,7 +51,7 @@ Add dependencies to your `Cargo.toml` file:
 ```toml
 [dependencies]
 bevy = "0.14"
-bevy_ecs_tiled = "0.3"
+bevy_ecs_tiled = "0.4"
 bevy_ecs_tilemap = "0.14"
 ```
 
@@ -67,7 +69,7 @@ fn main() {
         // Add bevy_ecs_tilemap plugin
         .add_plugins(TilemapPlugin)
         // Add bevy_ecs_tiled plugin
-        .add_plugins(TiledMapPlugin)
+        .add_plugins(TiledMapPlugin::default())
         // Add our startup function to the schedule and run the app
         .add_systems(Startup, startup)
         .run();
@@ -77,22 +79,25 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Spawn a 2D camera
     commands.spawn(Camera2dBundle::default());
 
-    // Ensure any tile / tileset paths are relative to assets/
+    // Load the map: ensure any tile / tileset paths are relative to assets/ folder
     let map_handle: Handle<TiledMap> = asset_server.load("map.tmx");
-    commands.spawn(TiledMapBundle {
-        tiled_map: map_handle,
-        ..Default::default()
-    });
+
+    // Spawn the map with default options
+    commands.spawn(TiledMapHandle(map_handle));
 }
 ```
 
-Please note that you should have the `map.tmx` file in your local `assets/` folder (as well as required dependencies, for instance associated tilesets).
+Please note that you should have the `map.tmx` file in your local `assets/` folder, as well as required dependencies (for instance, associated tilesets).
+
+You can customize various settings about how to load the map by inserting the [`TiledMapSettings`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/components/struct.TiledMapSettings.html) component on the map entity.
+
+Also, you can browse the [examples](https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/README.md) for more advanced use cases.
 
 ## Bevy Compatibility
 
 |bevy|bevy_ecs_tilemap|bevy_ecs_tiled|
 |---|---|---|
-|0.14|0.14|0.3|
+|0.14|0.14|0.3 - 0.4|
 |0.13|main@e4f3cc6|branch 0.2|
 |0.12|0.12|0.1|
 

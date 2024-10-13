@@ -162,7 +162,7 @@ fn collider_from_tile<
     );
     if let Some(collision) = &collider_source.tile(map).unwrap().collision {
         for object_data in collision.object_data().iter() {
-            if object_filters.contains(&object_data.name.trim().to_lowercase()) {
+            if object_filters.contains(&object_data.name) {
                 if let Some(collider_entity) = collider::spawn_collider::<T>(
                     &settings.backend,
                     &mut commands,

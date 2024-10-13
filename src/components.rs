@@ -7,17 +7,20 @@ use tiled::TileId;
 /// [Component] holding Tiled related settings.
 ///
 /// Controls various settings related to the way we handle the Tiled map.
+/// Must be added to the [Entity] holding the map.
 #[derive(Component, Copy, Clone, Default)]
 pub struct TiledMapSettings {
     /// Specify which layer positioning strategy should be applied to the map.
     pub layer_positioning: LayerPositioning,
-    /// Initial map transform.
+    /// Initial map [Transform].
     pub map_initial_transform: Transform,
-    /// Initial map visibility.
+    /// Initial map [Visibility].
     pub map_initial_visibility: Visibility,
 }
 
 /// Controls layers positioning strategy.
+/// 
+/// Based upon this setting, you can determine where your layers (ie. your map) will be rendered.
 #[derive(Default, Copy, Clone)]
 pub enum LayerPositioning {
     #[default]
@@ -27,7 +30,9 @@ pub enum LayerPositioning {
     Centered,
 }
 
-/// Marker [Component] for re-spawning the whole map.
+/// Marker [Component] to trigger a map respawn.
+/// 
+/// Must be added to the [Entity] holding the map.
 ///
 /// Example:
 /// ```rust,no_run
@@ -46,6 +51,8 @@ pub enum LayerPositioning {
 pub struct RespawnTiledMap;
 
 /// [Component] storing maps to navigate from Tiled ID to Bevy [Entity].
+/// 
+/// Should not be manually inserted but can be accessed from the map [Entity].
 #[derive(Component, Default)]
 pub struct TiledIdStorage {
     /// Map of layers entities, using their Tiled ID as key
