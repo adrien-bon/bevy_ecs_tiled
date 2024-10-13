@@ -1,13 +1,10 @@
 ﻿use std::path::PathBuf;
 use bevy::asset::LoadContext;
 use bevy::ecs::reflect::ReflectBundle;
-use bevy::prelude::{Color, Entity, FromReflect, ReflectComponent, ReflectResource};
-use bevy::reflect::{DynamicArray, DynamicEnum, DynamicStruct, DynamicTuple, DynamicTupleStruct, DynamicVariant, Reflect, ReflectKind, ReflectMut, TypeInfo, TypePath, TypeRegistration, VariantInfo};
-use bevy::reflect::TypeRegistry;
+use bevy::prelude::*;
+use bevy::reflect::{DynamicArray, DynamicEnum, DynamicStruct, DynamicTuple, DynamicTupleStruct, DynamicVariant, Reflect, ReflectMut, TypeInfo, TypeRegistration, VariantInfo, TypeRegistry};
 use bevy::utils::HashMap;
 use tiled::{LayerType, PropertyValue, TileId};
-
-
 
 #[derive(Debug, Clone)]
 pub struct DeserializedMapProperties<const HYDRATED: bool = false> {
@@ -111,13 +108,13 @@ impl DeserializedProperties {
                 continue;
             };
             
-            let is_component;
+            let _is_component;
             
             if reg.data::<ReflectComponent>().is_some() ||
                 reg.data::<ReflectBundle>().is_some() {
-                is_component = true;
+                _is_component = true;
             } else if reg.data::<ReflectResource>().is_some() {
-                is_component = false;
+                _is_component = false;
             } else {
                 bevy::log::warn!("error deserializing property: type `{property_type}` is not registered as a Component, Bundle, or Resource");
                 continue;
@@ -227,7 +224,7 @@ impl DeserializedProperties {
 
                 for field in info.iter() {
                     let Some(pv) = properties.remove(&field.index().to_string()) else {
-                        return Err(format!("missing property on `{}`: `{}`", info.type_path(), field.index().to_string()));
+                        return Err(format!("missing property on `{}`: `{}`", info.type_path(), field.index()));
                     };
 
                     let Some(reg) = registry.get(field.type_id()) else {
@@ -247,7 +244,7 @@ impl DeserializedProperties {
 
                 for field in info.iter() {
                     let Some(pv) = properties.remove(&field.index().to_string()) else {
-                        return Err(format!("missing property on `{}`: `{}`", info.type_path(), field.index().to_string()));
+                        return Err(format!("missing property on `{}`: `{}`", info.type_path(), field.index()));
                     };
 
                     let Some(reg) = registry.get(field.type_id()) else {
@@ -270,7 +267,7 @@ impl DeserializedProperties {
 
                 for i in 0..array.capacity() {
                     let Some(pv) = properties.remove(&format!("[{}]", i)) else {
-                        return Err(format!("missing property on `{}`: `{}`", info.type_path(), format!("[{}]", i)));
+                        return Err(format!("missing property on `{}`: `{}`", info.type_path(), i));
                     };
 
                     let value = Self::deserialize_property(pv, reg, registry, load_cx)?;

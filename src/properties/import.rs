@@ -1,5 +1,4 @@
 ﻿use serde::{Serialize, Deserialize};
-///
 
 #[test]
 fn deserialize() {

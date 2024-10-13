@@ -1,17 +1,11 @@
-﻿use bevy::prelude::{AppTypeRegistry, ReflectComponent, Res};
-use bevy::prelude::ReflectDefault;
-use std::collections::hash_map::Entry;
-use std::env;
-use std::fs::File;
-use std::io::BufWriter;
-use std::ops::Deref;
-use bevy::core::Name;
-use bevy::prelude::{Component, World};
-use bevy::reflect::{ArrayInfo, EnumInfo, GetTypeRegistration, Reflect, StructInfo, TupleInfo, TupleStructInfo, TypeInfo, TypeRegistration, TypeRegistry, UnitVariantInfo, VariantInfo};
+﻿use bevy::prelude::*;
 use bevy::utils::hashbrown::HashMap;
-use serde_json::{json, Value};
+use std::collections::hash_map::Entry;
+//use std::ops::Deref;
+use bevy::reflect::{ArrayInfo, EnumInfo, GetTypeRegistration, Reflect, StructInfo, TupleInfo, TupleStructInfo, TypeInfo, TypeRegistration, TypeRegistry, UnitVariantInfo, VariantInfo};
+use serde_json::Value;
 use thiserror::Error;
-use tiled::{Layer, Properties, PropertyValue};
+use tiled::PropertyValue;
 use crate::properties::import::{Class, Enum, FieldType, Member, StorageType, TypeData, TypeImport, UseAs};
 
 #[derive(Reflect)]
@@ -23,8 +17,7 @@ pub enum TestData {
 
 #[test]
 fn test_serialize_handle() {
-    let mut world = World::new();
-
+    let mut _world = World::new();
 }
 
 #[test]
@@ -33,8 +26,8 @@ fn load() {
 
     let mut world = World::new();
 
-    let object_entity_map = map.layers()
-        .filter_map(Layer::as_object_layer)
+    let _object_entity_map = map.layers()
+        .filter_map(tiled::Layer::as_object_layer)
         .flat_map(|x| x.objects())
         .map(|o| {
 
@@ -103,7 +96,7 @@ fn test_nested_tuple_struct() {
     registry.register::<TestStruct>();
     registry.register::<TestVariant>();
 
-    let mut imports = TypeImportRegistry::from_registry(&registry);
+    let imports = TypeImportRegistry::from_registry(&registry);
 
     println!("{}", serde_json::to_string(&imports.to_vec()).unwrap());
 
@@ -353,7 +346,7 @@ impl TypeImportRegistry {
         Ok(vec![root])
     }
 
-    fn generate_enum_import(&mut self, info: &EnumInfo, registry: &TypeRegistry) -> ImportConversionResult {
+    fn generate_enum_import(&mut self, info: &EnumInfo, _registry: &TypeRegistry) -> ImportConversionResult {
         let simple = info.iter()
             .all(|s| matches!(s, VariantInfo::Unit(_)));
 
@@ -374,14 +367,13 @@ impl TypeImportRegistry {
         }
     }
 
-
-    pub fn generate_default(&self, type_path: &str) -> Result<PropertyValue, ()> {
-
-
+    #[allow(clippy::result_unit_err)]
+    pub fn generate_default(&self, _type_path: &str) -> Result<PropertyValue, ()> {
         todo!()
     }
 }
 
+#[allow(dead_code)]
 fn insert_value(a: &mut PropertyValue, b: PropertyValue) {
     use PropertyValue as PV;
     match (a, b) {
@@ -423,7 +415,7 @@ fn insert_value(a: &mut PropertyValue, b: PropertyValue) {
 fn test_insert_value() {
     let mut a = PropertyValue::ClassValue {
         property_type: "[f32; 3]".to_string(),
-        properties: Properties::from([
+        properties: tiled::Properties::from([
             ("[0]".to_string(), PropertyValue::IntValue(0)),
             ("[1]".to_string(), PropertyValue::IntValue(0)),
             ("[2]".to_string(), PropertyValue::IntValue(0)),
@@ -432,24 +424,25 @@ fn test_insert_value() {
 
     let b = PropertyValue::ClassValue {
         property_type: "[f32; 3]".to_string(),
-        properties: Properties::from([
+        properties: tiled::Properties::from([
             ("[1]".to_string(), PropertyValue::IntValue(1)),
         ]),
     };
 
     let expected = PropertyValue::ClassValue {
         property_type: "[f32; 3]".to_string(),
-        properties: Properties::from([
+        properties: tiled::Properties::from([
             ("[0]".to_string(), PropertyValue::IntValue(0)),
             ("[1]".to_string(), PropertyValue::IntValue(1)),
             ("[2]".to_string(), PropertyValue::IntValue(0)),
         ]),
     };
 
-    let actual = insert_value(&mut a, b);
+    insert_value(&mut a, b);
     assert_eq!(a, expected);
 }
 
+#[allow(dead_code)]
 fn insert_json_value(property: &mut PropertyValue, json: serde_json::Value) {
     use PropertyValue as PV;
     match (property, json) {
@@ -476,28 +469,28 @@ fn insert_json_value(property: &mut PropertyValue, json: serde_json::Value) {
 fn test_insert_json_value() {
     let mut a = PropertyValue::ClassValue {
         property_type: "[f32; 3]".to_string(),
-        properties: Properties::from([
+        properties: tiled::Properties::from([
             ("[0]".to_string(), PropertyValue::IntValue(0)),
             ("[1]".to_string(), PropertyValue::IntValue(0)),
             ("[2]".to_string(), PropertyValue::IntValue(0)),
         ]),
     };
 
-    let b = json!({
+    let b = serde_json::json!({
         "[1]": 1,
         "[2]": 2
     });
 
     let expected = PropertyValue::ClassValue {
         property_type: "[f32; 3]".to_string(),
-        properties: Properties::from([
+        properties: tiled::Properties::from([
             ("[0]".to_string(), PropertyValue::IntValue(0)),
             ("[1]".to_string(), PropertyValue::IntValue(1)),
             ("[2]".to_string(), PropertyValue::IntValue(2)),
         ]),
     };
 
-    let actual = insert_json_value(&mut a, b);
+    insert_json_value(&mut a, b);
     assert_eq!(a, expected);
 }
 
@@ -557,6 +550,7 @@ fn type_to_field(t: &TypeRegistration) -> Result<(FieldType, Option<String>), Im
     })
 }
 
+#[allow(dead_code)]
 fn unit_variant_to_import(info: &UnitVariantInfo, id: u32) -> TypeImport {
     unit_import(id, info.name().to_string())
 }
