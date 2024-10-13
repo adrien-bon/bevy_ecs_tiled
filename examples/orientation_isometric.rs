@@ -47,13 +47,13 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         &asset_server,
         "isometric_diamond_map.tmx",
         "A finite diamond isometric map",
-        default_callback
+        default_callback,
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
         "isometric_staggered_map.tmx",
         "A finite staggered isometric map",
-        default_callback
+        default_callback,
     ));
     commands.insert_resource(mgr);
 }

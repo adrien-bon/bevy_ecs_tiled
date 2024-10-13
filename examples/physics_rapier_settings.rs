@@ -41,7 +41,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..default()
             });
             c.insert(TiledPhysicsSettings::<TiledPhysicsRapierBackend>::default());
-        }
+        },
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
@@ -53,7 +53,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..default()
             });
             c.insert(TiledPhysicsSettings::<TiledPhysicsRapierBackend>::default());
-        }
+        },
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
@@ -66,10 +66,10 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             });
             c.insert(TiledPhysicsSettings::<TiledPhysicsRapierBackend> {
                 objects_layer_filter: ObjectNames::None,
-                tiles_objects_filter: ObjectNames::Names(vec!("collision".to_string())),
+                tiles_objects_filter: ObjectNames::Names(vec!["collision".to_string()]),
                 ..default()
             });
-        }
+        },
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
@@ -85,7 +85,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 tiles_objects_filter: ObjectNames::None,
                 ..default()
             });
-        }
+        },
     ));
     commands.insert_resource(mgr);
 }

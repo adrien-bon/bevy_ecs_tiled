@@ -34,21 +34,26 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 // It means on event per object and one event per tile with collision object (even if tile has multiple collision objects)
 fn handle_physics_events(trigger: Trigger<TiledColliderCreated>) {
     match trigger.event().collider_source {
-        TiledColliderSource::Object { layer_id, object_id } => {
-            info!("Created {} collider(s) for object (layer={}, ID={})",
+        TiledColliderSource::Object {
+            layer_id,
+            object_id,
+        } => {
+            info!(
+                "Created {} collider(s) for object (layer={}, ID={})",
                 trigger.event().colliders_entities_list.len(),
                 layer_id,
                 object_id
             );
-        },
+        }
         TiledColliderSource::Tile { layer_id, x, y } => {
-            info!("Created {} collider(s) for tile (layer={}, x={}, y={})",
+            info!(
+                "Created {} collider(s) for tile (layer={}, x={}, y={})",
                 trigger.event().colliders_entities_list.len(),
                 layer_id,
                 x,
                 y
             );
-        },
+        }
     }
 }
 
@@ -72,9 +77,7 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
         object_data: &ObjectData,
     ) -> Option<(Vec2, Entity)> {
         let pos = match &object_data.shape {
-            tiled::ObjectShape::Rect { width, height } => {
-                Vec2::new(width / 2., -height / 2.)
-            }
+            tiled::ObjectShape::Rect { width, height } => Vec2::new(width / 2., -height / 2.),
             tiled::ObjectShape::Ellipse { width, height } => Vec2::new(width / 2., -height / 2.),
             tiled::ObjectShape::Polyline { points: _ } => Vec2::ZERO,
             tiled::ObjectShape::Polygon { points: _ } => Vec2::ZERO,
@@ -87,4 +90,3 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
         Some((pos, entity))
     }
 }
-

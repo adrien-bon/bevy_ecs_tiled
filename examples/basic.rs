@@ -32,6 +32,6 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             layer_positioning: LayerPositioning::Centered,
             ..default()
         },
-        TilemapRenderSettings::default()
+        TilemapRenderSettings::default(),
     ));
 }

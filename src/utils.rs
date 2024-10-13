@@ -67,12 +67,9 @@ pub fn from_tiled_coords_to_bevy(
             tiled_position.x - grid_size.x / 2.,
             map_size.y as f32 * grid_size.y * 0.75 + grid_size.y / 4. - tiled_position.y,
         ),
-        TilemapType::Isometric(coords_system) => from_isometric_coords_to_bevy(
-            tiled_position,
-            coords_system,
-            map_size,
-            grid_size,
-        ),
+        TilemapType::Isometric(coords_system) => {
+            from_isometric_coords_to_bevy(tiled_position, coords_system, map_size, grid_size)
+        }
         _ => Vec2::new(
             tiled_position.x,
             map_size.y as f32 * grid_size.y - tiled_position.y,

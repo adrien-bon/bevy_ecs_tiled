@@ -31,14 +31,12 @@
 #[cfg(feature = "user_properties")]
 use crate::properties::command::PropertiesCommandExt;
 
-use bevy::{
-    prelude::*,
-    utils::HashMap,
-};
 use crate::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 use bevy_ecs_tilemap::prelude::*;
 use tiled::{
-    ChunkData, FiniteTileLayer, InfiniteTileLayer, Layer, LayerType, ObjectLayer, Tile, TileId, TileLayer
+    ChunkData, FiniteTileLayer, InfiniteTileLayer, Layer, LayerType, ObjectLayer, Tile, TileId,
+    TileLayer,
 };
 
 pub(super) fn load_map(
@@ -165,7 +163,10 @@ pub(super) fn load_map(
 
     #[cfg(feature = "user_properties")]
     {
-        let mut props = tiled_map.properties.clone().hydrate(&tiled_id_storage.objects);
+        let mut props = tiled_map
+            .properties
+            .clone()
+            .hydrate(&tiled_id_storage.objects);
 
         commands.entity(map_entity).insert_properties(props.map);
 
@@ -566,13 +567,11 @@ fn load_objects_layer(
             .id();
 
         entity_map.insert(object_data.id(), object_entity);
-        event_list.push(
-            TiledObjectCreated::from_layer(
-                layer_infos,
-                object_entity,
-                object_id
-            )
-        );
+        event_list.push(TiledObjectCreated::from_layer(
+            layer_infos,
+            object_entity,
+            object_id,
+        ));
     }
 }
 
@@ -644,14 +643,12 @@ fn handle_special_tile(
     }
 
     if is_special_tile {
-        event_list.push(
-            TiledSpecialTileCreated::from_layer(
-                layer_infos,
-                layer_for_tileset_entity,
-                tile_entity,
-                x,
-                y,
-            )
-        );
+        event_list.push(TiledSpecialTileCreated::from_layer(
+            layer_infos,
+            layer_for_tileset_entity,
+            tile_entity,
+            x,
+            y,
+        ));
     }
 }

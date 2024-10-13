@@ -1,7 +1,10 @@
 //! This example shows how to use a custom physics backend.
 
 use bevy::{
-    color::palettes::css::{PURPLE, RED}, ecs::component::StorageType, prelude::*, sprite::MaterialMesh2dBundle
+    color::palettes::css::{PURPLE, RED},
+    ecs::component::StorageType,
+    prelude::*,
+    sprite::MaterialMesh2dBundle,
 };
 use bevy_ecs_tiled::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
@@ -44,9 +47,7 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
         object_data: &ObjectData,
     ) -> Option<(Vec2, Entity)> {
         let pos = match &object_data.shape {
-            tiled::ObjectShape::Rect { width, height } => {
-                Vec2::new(width / 2., -height / 2.)
-            }
+            tiled::ObjectShape::Rect { width, height } => Vec2::new(width / 2., -height / 2.),
             tiled::ObjectShape::Ellipse { width, height } => Vec2::new(width / 2., -height / 2.),
             tiled::ObjectShape::Polyline { points: _ } => Vec2::ZERO,
             tiled::ObjectShape::Polygon { points: _ } => Vec2::ZERO,
@@ -56,8 +57,15 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
         };
 
         let color = match collider_source {
-            TiledColliderSource::Object { layer_id: _, object_id: _ } => Color::from(PURPLE),
-            TiledColliderSource::Tile { layer_id: _, x: _, y: _ } => Color::from(RED),
+            TiledColliderSource::Object {
+                layer_id: _,
+                object_id: _,
+            } => Color::from(PURPLE),
+            TiledColliderSource::Tile {
+                layer_id: _,
+                x: _,
+                y: _,
+            } => Color::from(RED),
         };
 
         let entity = commands.spawn(MyCustomPhysicsComponent(color)).id();
@@ -72,21 +80,21 @@ struct MyCustomPhysicsComponent(pub Color);
 impl Component for MyCustomPhysicsComponent {
     const STORAGE_TYPE: StorageType = StorageType::Table;
     fn register_component_hooks(hooks: &mut bevy::ecs::component::ComponentHooks) {
-        hooks.on_add(|mut world, entity, _|{
+        hooks.on_add(|mut world, entity, _| {
             let color = world.get::<MyCustomPhysicsComponent>(entity).unwrap().0;
-            let mesh = world.resource_mut::<Assets<Mesh>>().add(Rectangle::from_length(10.));
+            let mesh = world
+                .resource_mut::<Assets<Mesh>>()
+                .add(Rectangle::from_length(10.));
             let material = world.resource_mut::<Assets<ColorMaterial>>().add(color);
-            world.commands()
+            world
+                .commands()
                 .entity(entity)
-                .insert(
-                    MaterialMesh2dBundle {
-                        mesh: mesh.into(),
-                        transform: Transform::default(),
-                        material,
-                        ..default()
-                    }
-                );
-            
+                .insert(MaterialMesh2dBundle {
+                    mesh: mesh.into(),
+                    transform: Transform::default(),
+                    material,
+                    ..default()
+                });
         });
     }
 }

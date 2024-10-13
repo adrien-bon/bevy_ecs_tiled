@@ -71,7 +71,8 @@ fn handle_reload(
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyK) {
         if let Ok(entity) = maps_query.get_single() {
-            commands.entity(entity)
+            commands
+                .entity(entity)
                 .insert(TiledMapHandle(asset_server.load("infinite.tmx")));
         } else {
             warn!("Cannot reload: no map loaded ?");

@@ -9,7 +9,6 @@ use bevy_ecs_tilemap::prelude::*;
 mod helper;
 
 fn main() {
-
     // Use a custom file path to export registered types in Tiled format
     let mut path = env::current_dir().unwrap();
     path.push("examples");
@@ -25,7 +24,7 @@ fn main() {
         .add_plugins(TiledMapPlugin(TiledMapPluginConfig {
             // Note: if you set this setting to `None`
             // properties will still be translated
-            tiled_types_export_file: Some(path)
+            tiled_types_export_file: Some(path),
         }))
         // We need to register all the types we want to use
         .register_type::<BiomeInfos>()
@@ -39,7 +38,9 @@ fn main() {
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
-    commands.spawn(TiledMapHandle(asset_server.load("hex_map_pointy_top_odd.tmx")));
+    commands.spawn(TiledMapHandle(
+        asset_server.load("hex_map_pointy_top_odd.tmx"),
+    ));
 }
 
 // You just have to define your Components and make sure they are properly registered and reflected.

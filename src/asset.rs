@@ -11,9 +11,7 @@ use bevy::reflect::TypeRegistryArc;
 use crate::properties::load::DeserializedMapProperties;
 
 use bevy::{
-    asset::{
-        io::Reader, AssetLoader, AssetPath, AsyncReadExt, LoadContext,
-    },
+    asset::{io::Reader, AssetLoader, AssetPath, AsyncReadExt, LoadContext},
     prelude::*,
     utils::HashMap,
 };
@@ -102,9 +100,9 @@ impl AssetLoader for TiledLoader {
     ) -> Result<Self::Asset, Self::Error> {
         let mut bytes = Vec::new();
         reader.read_to_end(&mut bytes).await?;
-        
+
         log::info!("Start loading map '{}'", load_context.path().display());
-        
+
         let map_path = load_context.path().to_path_buf();
         let map = {
             // Allow the loader to also load tileset images.

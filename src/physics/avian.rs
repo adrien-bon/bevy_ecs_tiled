@@ -46,7 +46,7 @@ impl super::TiledPhysicsBackend for TiledPhysicsAvianBackend {
                         return None;
                     }
                 };
-    
+
                 (Vector::ZERO, shape)
             }
             _ => {

@@ -1,8 +1,8 @@
 //! Events related to Tiled map loading
 
+use crate::prelude::*;
 use bevy::prelude::*;
 use tiled::{Layer, LayerTile, Map, Object};
-use crate::prelude::*;
 
 /// Event sent when a Tiled map has finished loading
 #[derive(Event, Clone, Debug)]
@@ -88,7 +88,11 @@ impl<'a> TiledObjectCreated {
 
     /// Retrieve the [Object] associated to this [TiledObjectCreated] event.
     pub fn object(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Object<'a> {
-        self.layer(map_asset).as_object_layer().unwrap().get_object(self.object_id).unwrap()
+        self.layer(map_asset)
+            .as_object_layer()
+            .unwrap()
+            .get_object(self.object_id)
+            .unwrap()
     }
 }
 
@@ -112,11 +116,17 @@ pub struct TiledSpecialTileCreated {
     /// Tile X position in the layer
     pub x: i32,
     /// Tile Y position in the layer
-    pub y: i32
+    pub y: i32,
 }
 
 impl TiledSpecialTileCreated {
-    pub fn from_layer(layer: &TiledLayerCreated, layer_for_tileset: Entity, tile: Entity, x: i32, y: i32) -> Self {
+    pub fn from_layer(
+        layer: &TiledLayerCreated,
+        layer_for_tileset: Entity,
+        tile: Entity,
+        x: i32,
+        y: i32,
+    ) -> Self {
         Self {
             map: layer.map,
             layer: layer.layer,
@@ -143,6 +153,10 @@ impl<'a> TiledSpecialTileCreated {
 
     /// Retrieve the [LayerTile] associated to this [TiledSpecialTileCreated] event.
     pub fn tile(&self, map_asset: &'a Res<Assets<TiledMap>>) -> LayerTile<'a> {
-        self.layer(map_asset).as_tile_layer().unwrap().get_tile(self.x, self.y).unwrap()
+        self.layer(map_asset)
+            .as_tile_layer()
+            .unwrap()
+            .get_tile(self.x, self.y)
+            .unwrap()
     }
 }

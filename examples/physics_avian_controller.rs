@@ -31,7 +31,9 @@ fn main() {
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
-    commands.spawn(TiledMapHandle(asset_server.load("multiple_layers_with_colliders.tmx")));
+    commands.spawn(TiledMapHandle(
+        asset_server.load("multiple_layers_with_colliders.tmx"),
+    ));
 
     // Spawn a simple player-controlled object
     helper::avian::spawn_player(&mut commands, 10., Vec2::new(100., 100.));
@@ -49,7 +51,9 @@ impl TiledPhysicsBackend for MyCustomAvianPhysicsBackend {
         collider_source: &TiledColliderSource,
         object_data: &ObjectData,
     ) -> Option<(Vec2, Entity)> {
-        let collider = self.0.spawn_collider(commands, map, collider_source, object_data);
+        let collider = self
+            .0
+            .spawn_collider(commands, map, collider_source, object_data);
         if let Some((_, entity)) = collider {
             commands.entity(entity).insert(RigidBody::Static);
         }

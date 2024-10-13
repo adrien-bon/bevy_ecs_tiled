@@ -37,7 +37,7 @@ fn map_created(
 ) {
     // We can either access the map components
     if let Ok(name) = q_map.get(trigger.event().map) {
-        info!("Received TiledMapCreated event for map '{}'", name);    
+        info!("Received TiledMapCreated event for map '{}'", name);
     }
 
     // Or directly the underneath Tiled Map structure
@@ -52,7 +52,7 @@ fn layer_created(
 ) {
     // We can either access the layer components
     if let Ok(name) = q_layer.get(trigger.event().layer) {
-        info!("Received TiledLayerCreated event for layer '{}'", name);    
+        info!("Received TiledLayerCreated event for layer '{}'", name);
     }
 
     // Or directly the underneath Map or Layer structures
@@ -68,7 +68,7 @@ fn object_created(
 ) {
     // We can either access the object components
     if let Ok(name) = q_object.get(trigger.event().object) {
-        info!("Received TiledObjectCreated event for object '{}'", name);    
+        info!("Received TiledObjectCreated event for object '{}'", name);
     }
 
     // Or directly the underneath Map, Layer or Object structures
@@ -85,7 +85,7 @@ fn special_tile_created(
 ) {
     // We can either access the tile components
     if let Ok(name) = q_tile.get(trigger.event().tile) {
-        info!("Received TiledSpecialTileCreated event for tile '{}'", name);    
+        info!("Received TiledSpecialTileCreated event for tile '{}'", name);
     }
 
     // Or directly the underneath Map and Layer structures

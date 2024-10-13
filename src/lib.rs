@@ -25,6 +25,8 @@ pub mod properties;
 
 /// `bevy_ecs_tiled` public exports.
 pub mod prelude {
+    pub use super::TiledMapHandle;
+    pub use super::TiledMapPlugin;
     pub use crate::asset::*;
     pub use crate::components::*;
     pub use crate::debug::*;
@@ -35,17 +37,12 @@ pub mod prelude {
     #[cfg(feature = "user_properties")]
     pub use crate::properties::prelude::*;
     pub use crate::utils::*;
-    pub use super::TiledMapPlugin;
-    pub use super::TiledMapHandle;
 }
 
-use std::{env, path::PathBuf};
-use bevy::{
-    asset::RecursiveDependencyLoadState,
-    prelude::*
-};
-use bevy_ecs_tilemap::prelude::*;
 use crate::prelude::*;
+use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
+use bevy_ecs_tilemap::prelude::*;
+use std::{env, path::PathBuf};
 
 /// Handle to the .tmx file to load representing the map.
 #[derive(Component)]
@@ -95,10 +92,7 @@ impl Plugin for TiledMapPlugin {
 }
 
 #[cfg(feature = "user_properties")]
-fn export_types(
-    reg: Res<AppTypeRegistry>,
-    config: Res<TiledMapPluginConfig>,
-) {
+fn export_types(reg: Res<AppTypeRegistry>, config: Res<TiledMapPluginConfig>) {
     use std::{fs::File, io::BufWriter, ops::Deref};
     if let Some(path) = &config.tiled_types_export_file {
         info!("Export Tiled types to '{:?}'", path);
@@ -134,12 +128,18 @@ fn process_loaded_maps(
             if load_state != RecursiveDependencyLoadState::Loaded {
                 // If not fully loaded yet, insert the 'Respawn' marker so we will try to load it at next frame
                 commands.entity(map_entity).insert(RespawnTiledMap);
-                debug!("Map '{}' is not fully loaded yet...", map_handle.0.path().unwrap());
+                debug!(
+                    "Map '{}' is not fully loaded yet...",
+                    map_handle.0.path().unwrap()
+                );
                 continue;
             }
 
             if let Some(tiled_map) = maps.get(&map_handle.0) {
-                info!("Map '{}' has finished loading, spawn it", map_handle.0.path().unwrap());
+                info!(
+                    "Map '{}' has finished loading, spawn it",
+                    map_handle.0.path().unwrap()
+                );
 
                 if let Some(mut tiled_id_storage) = tiled_id_storage {
                     debug!("Found already spawned layers, remove them");
@@ -150,17 +150,21 @@ fn process_loaded_maps(
                 let render_settings = match render_settings {
                     Some(a) => a,
                     _ => {
-                        commands.entity(map_entity).insert(TilemapRenderSettings::default());
+                        commands
+                            .entity(map_entity)
+                            .insert(TilemapRenderSettings::default());
                         &TilemapRenderSettings::default()
-                    },
+                    }
                 };
 
                 let tiled_settings = match tiled_settings {
                     Some(a) => a,
                     _ => {
-                        commands.entity(map_entity).insert(TiledMapSettings::default());
+                        commands
+                            .entity(map_entity)
+                            .insert(TiledMapSettings::default());
                         &TiledMapSettings::default()
-                    },
+                    }
                 };
 
                 debug!("Spawn map layers");
@@ -175,7 +179,8 @@ fn process_loaded_maps(
                 );
 
                 // Update ID storage and remove the respawn marker
-                commands.entity(map_entity)
+                commands
+                    .entity(map_entity)
                     .insert(tiled_id_storage)
                     .remove::<RespawnTiledMap>();
             }

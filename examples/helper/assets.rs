@@ -73,12 +73,16 @@ impl AssetsManager {
         // or just update the map handle if already spawned
         if let Some(entity) = self.map_entity {
             let mut entity_commands = commands.entity(entity);
-            entity_commands.insert(TiledMapHandle(self.map_assets[self.map_index].asset.to_owned()));
+            entity_commands.insert(TiledMapHandle(
+                self.map_assets[self.map_index].asset.to_owned(),
+            ));
             entity_commands.remove::<TiledMapSettings>();
             entity_commands.remove::<TilemapRenderSettings>();
             (self.map_assets[self.map_index].callback)(&mut entity_commands);
         } else {
-            let mut entity_commands = commands.spawn(TiledMapHandle(self.map_assets[self.map_index].asset.to_owned()));
+            let mut entity_commands = commands.spawn(TiledMapHandle(
+                self.map_assets[self.map_index].asset.to_owned(),
+            ));
             (self.map_assets[self.map_index].callback)(&mut entity_commands);
             self.map_entity = Some(entity_commands.id());
         }

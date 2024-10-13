@@ -29,7 +29,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         &asset_server,
         "finite.tmx",
         "A map using default settings",
-        |_| {}
+        |_| {},
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
@@ -40,7 +40,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 layer_positioning: LayerPositioning::Centered,
                 ..default()
             });
-        }
+        },
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
@@ -51,7 +51,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 layer_positioning: LayerPositioning::TiledOffset,
                 ..default()
             });
-        }
+        },
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
@@ -62,7 +62,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 map_initial_transform: Transform::from_rotation(Quat::from_rotation_z(45.)),
                 ..default()
             });
-        }
+        },
     ));
     commands.insert_resource(mgr);
 }

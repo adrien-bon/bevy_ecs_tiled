@@ -38,25 +38,25 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         &asset_server,
         "finite.tmx",
         "A finite orthogonal map with a single external tileset",
-        default_callback
+        default_callback,
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
         "finite_embedded.tmx",
         "A finite orthogonal map with a single embedded tileset",
-        default_callback
+        default_callback,
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
         "infinite.tmx",
         "An infinite orthogonal map with a single external tileset",
-        default_callback
+        default_callback,
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
         "infinite_embedded.tmx",
         "An infinite orthogonal map with a single embedded tileset",
-        default_callback
+        default_callback,
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
@@ -65,7 +65,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         // from both tilesets
         "multiple_tilesets.tmx",
         "A finite orthogonal map with multiple external tilesets",
-        default_callback
+        default_callback,
     ));
     commands.insert_resource(mgr);
 }

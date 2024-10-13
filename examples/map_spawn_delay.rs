@@ -45,8 +45,6 @@ fn spawn_map(mut commands: Commands, mut spawner: ResMut<MapSpawner>, time: Res<
     spawner.timer.tick(time.delta());
     if spawner.timer.just_finished() {
         info!("Timer finished, spawn the map !");
-        commands.spawn(
-            TiledMapHandle(spawner.map_handle.clone()),
-        );
+        commands.spawn(TiledMapHandle(spawner.map_handle.clone()));
     }
 }

@@ -12,20 +12,20 @@ pub mod rapier;
 #[cfg(feature = "avian")]
 pub mod avian;
 
-use bevy::prelude::*;
-use tiled::{Map, ObjectData};
 use crate::prelude::*;
+use bevy::prelude::*;
 use prelude::*;
+use tiled::{Map, ObjectData};
 
 /// `bevy_ecs_tiled` public exports.
 pub mod prelude {
-    pub use super::collider::*;
     #[cfg(feature = "avian")]
     pub use super::avian::*;
+    pub use super::collider::*;
     #[cfg(feature = "rapier")]
     pub use super::rapier::*;
-    pub use super::TiledPhysicsPlugin;
     pub use super::TiledPhysicsBackend;
+    pub use super::TiledPhysicsPlugin;
     pub use super::TiledPhysicsSettings;
 }
 
@@ -73,7 +73,9 @@ pub struct TiledPhysicsPlugin<T: TiledPhysicsBackend + Default + std::marker::Sy
     backend: std::marker::PhantomData<T>,
 }
 
-impl<T: TiledPhysicsBackend + Default + 'static + std::marker::Sync + std::marker::Send> Plugin for TiledPhysicsPlugin<T> {
+impl<T: TiledPhysicsBackend + Default + 'static + std::marker::Sync + std::marker::Send> Plugin
+    for TiledPhysicsPlugin<T>
+{
     fn build(&self, app: &mut bevy::prelude::App) {
         app.observe(default_physics_settings::<T>);
         app.observe(collider_from_object::<T>);
@@ -81,20 +83,24 @@ impl<T: TiledPhysicsBackend + Default + 'static + std::marker::Sync + std::marke
     }
 }
 
-fn default_physics_settings<T: TiledPhysicsBackend + Default + 'static + std::marker::Sync + std::marker::Send>(
+fn default_physics_settings<
+    T: TiledPhysicsBackend + Default + 'static + std::marker::Sync + std::marker::Send,
+>(
     trigger: Trigger<TiledObjectCreated>,
     mut commands: Commands,
     q_settings: Query<&TiledPhysicsSettings<T>, With<TiledMapMarker>>,
 ) {
     let map_entity = trigger.event().map;
     if q_settings.get(map_entity).is_err() {
-        commands.entity(map_entity).insert(
-            TiledPhysicsSettings::<T>::default()
-        );
+        commands
+            .entity(map_entity)
+            .insert(TiledPhysicsSettings::<T>::default());
     }
 }
 
-fn collider_from_object<T: TiledPhysicsBackend + Default + 'static + std::marker::Sync + std::marker::Send>(
+fn collider_from_object<
+    T: TiledPhysicsBackend + Default + 'static + std::marker::Sync + std::marker::Send,
+>(
     trigger: Trigger<TiledObjectCreated>,
     mut commands: Commands,
     map_asset: Res<Assets<TiledMap>>,
@@ -107,7 +113,8 @@ fn collider_from_object<T: TiledPhysicsBackend + Default + 'static + std::marker
 
     if ObjectNameFilter::from(&settings.objects_layer_filter).contains(&layer.name) {
         let map = trigger.event().map(&map_asset);
-        let collider_source = TiledColliderSource::new_object(trigger.event().layer_id, trigger.event().object_id);
+        let collider_source =
+            TiledColliderSource::new_object(trigger.event().layer_id, trigger.event().object_id);
         if let Some(collider_entity) = collider::spawn_collider::<T>(
             &settings.backend,
             &mut commands,
@@ -118,7 +125,7 @@ fn collider_from_object<T: TiledPhysicsBackend + Default + 'static + std::marker
             Vec2::ZERO,
         ) {
             commands.trigger(TiledColliderCreated {
-                colliders_entities_list: vec!(collider_entity),
+                colliders_entities_list: vec![collider_entity],
                 map_handle: trigger.event().map_handle.clone(),
                 collider_source,
                 collider_source_entity: trigger.event().object,
@@ -127,7 +134,9 @@ fn collider_from_object<T: TiledPhysicsBackend + Default + 'static + std::marker
     }
 }
 
-fn collider_from_tile<T: TiledPhysicsBackend + Default + 'static + std::marker::Sync + std::marker::Send>(
+fn collider_from_tile<
+    T: TiledPhysicsBackend + Default + 'static + std::marker::Sync + std::marker::Send,
+>(
     trigger: Trigger<TiledSpecialTileCreated>,
     mut commands: Commands,
     map_asset: Res<Assets<TiledMap>>,
@@ -146,7 +155,11 @@ fn collider_from_tile<T: TiledPhysicsBackend + Default + 'static + std::marker::
     let object_filters = &ObjectNameFilter::from(&settings.tiles_objects_filter);
     let map = trigger.event().map(&map_asset);
     let mut colliders_entities_list = Vec::new();
-    let collider_source = TiledColliderSource::new_tile(trigger.event().layer_id, trigger.event().x, trigger.event().y);
+    let collider_source = TiledColliderSource::new_tile(
+        trigger.event().layer_id,
+        trigger.event().x,
+        trigger.event().y,
+    );
     if let Some(collision) = &collider_source.tile(map).unwrap().collision {
         for object_data in collision.object_data().iter() {
             if object_filters.contains(&object_data.name.trim().to_lowercase()) {
