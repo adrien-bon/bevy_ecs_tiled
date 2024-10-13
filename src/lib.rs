@@ -13,6 +13,7 @@
 
 pub mod components;
 pub mod debug;
+pub mod events;
 pub mod loader;
 pub mod names;
 pub mod physics;
@@ -25,6 +26,7 @@ pub mod properties;
 pub mod prelude {
     pub use crate::components::*;
     pub use crate::debug::*;
+    pub use crate::events::*;
     pub use crate::loader::*;
     pub use crate::names::*;
     pub use crate::physics::*;
