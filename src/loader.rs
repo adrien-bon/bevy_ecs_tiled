@@ -664,7 +664,54 @@ fn load_finite_tiles_layer(
                 _ => unreachable!()
             };
 
+            // TODO: need hexsidelength to resolve it
+            let hexsidelength = 32.;
             let tile_pos = TilePos { x, y };
+            let (x, y) = match _map_type {
+                TilemapType::Square => (
+                    tile_pos.x as f32 * grid_size.x,
+                    tile_pos.y as f32 * grid_size.y,
+                ),
+                TilemapType::Hexagon(hex_coord_system) => match hex_coord_system {
+                    HexCoordSystem::RowEven => (
+                        tile_pos.x as f32 * grid_size.x
+                            - (1 + (tile_pos.y % 2)) as f32 * grid_size.x / 2.,
+                        tile_pos.y as f32 * grid_size.y
+                            - (tile_pos.y-1) as f32 * ((grid_size.y - hexsidelength) / 2. ) - hexsidelength,
+                    ),
+                    HexCoordSystem::RowOdd => (
+                        tile_pos.x as f32 * grid_size.x
+                            - (1 - (tile_pos.y % 2)) as f32 * grid_size.x / 2.,
+                        tile_pos.y as f32 * grid_size.y
+                            - (tile_pos.y-1) as f32 * ((grid_size.y - hexsidelength) / 2. ) - hexsidelength,
+                    ),
+                    HexCoordSystem::ColumnEven => (
+                        tile_pos.x as f32 * grid_size.x
+                        - (tile_pos.x) as f32 * ((grid_size.x - hexsidelength) / 2. ) - hexsidelength,
+                        tile_pos.y as f32 * grid_size.y - grid_size.y/2. + if (tile_pos.x % 2) == 0 {
+                            (grid_size.y - grid_size.x/2.) / 2.
+                        } else {
+                            - (grid_size.y - grid_size.x/2.) / 2.
+                        },
+                    ),
+                    HexCoordSystem::ColumnOdd => (
+                        tile_pos.x as f32 * grid_size.x
+                        - (tile_pos.x) as f32 * ((grid_size.x - hexsidelength) / 2. ) - hexsidelength,
+                        tile_pos.y as f32 * grid_size.y + if (tile_pos.x % 2) != 0 {
+                            (grid_size.y - grid_size.x/2.) / 2.
+                        } else {
+                            - (grid_size.y - grid_size.x/2.) / 2.
+                        },
+                    ),
+                    HexCoordSystem::Row => todo!(), // TODO: Do not know how to test it
+                    HexCoordSystem::Column => todo!(),
+                },
+                TilemapType::Isometric(iso_coord_system) =>  (
+                    tile_pos.x as f32 * grid_size.x,
+                    tile_pos.y as f32 * grid_size.y,// TODO: Not fixd in this commit
+                ),
+            };
+
             let tile_entity = commands
                 .spawn(TileBundle {
                     position: tile_pos,
@@ -678,9 +725,7 @@ fn load_finite_tiles_layer(
                     ..Default::default()
                 })
                 .insert(SpatialBundle::from_transform(Transform::from_xyz(
-                    tile_pos.x as f32 * grid_size.x,
-                    tile_pos.y as f32 * grid_size.y,
-                    0.0,
+                    x, y, 0.0,
                 )))
                 .set_parent(layer_entity)
                 .insert(Name::new(format!(
