@@ -29,23 +29,17 @@ For instance, on an "AZERTY" keyboard, you must use `A` instead of `Q` and `Z` i
 
 | Name | Required features | Description |
 |------|-------------------|-------------|
-| `finite` | None | This example shows a finite orthogonal map with an external tileset. |
-| `finite_embedded` | None | This example shows a finite orthogonal map with an embedded tileset. |
-| `infinite` | None | This example shows an infinite orthogonal map with an external tileset. |
-| `infinite_embedded` | None | This example shows an infinite orthogonal map with an embedded tileset. |
-| `reload` | None | This example demonstrates how to load and unload maps. |
-| `finite_rapier` | `rapier_debug` | This example shows a finite orthogonal map with an external tileset and Rapier physics. |
-| `infinite_rapier` | `rapier_debug` | This example shows an infinite orthogonal map with an external tileset and Rapier physics. |
-| `hex_map` | None | This example cycle through all four kinds of hexagonal maps and display debug informations about Tiled objects. |
-| `controller_rapier` | `rapier_debug` | This example shows a simple player-controlled object using Rapier physics. You can move the object using arrow keys. |
-| `user_properties` | `user_properties` | This example shows how to map custom tiles and objects properties from Tiled to Bevy Components. |
-| `user_properties_rapier` | `user_properties`, `rapier_debug` | This example shows how to map custom tiles / objects properties from Tiled to Bevy Components and manually spawn Rapier colliders from them. |
-| `isometric_map`| None | This example cycle through two kinds of isometric maps and display debug informations about Tiled objects. |
-| `finite_avian` | `avian` | This example shows a finite orthogonal map with an external tileset and Avian2D physics. |
-| `infinite_avian` | `avian` | This example shows an infinite orthogonal map with an external tileset and Avian2D physics. |
-| `controller_avian` | `avian` | This example shows a simple player-controlled object using Avian2D physics. You can move the object using arrow keys. |
-| `user_properties_avian` | `user_properties`, `avian` | This example shows how to map custom tiles / objects properties from Tiled to Bevy Components and manually spawn Avian colliders from them. |
-| `delayed_spawn` | None | This example will delay map spawn from asset loading to demonstrate both are decoupled. |
-| `multiple_tilesets` | None | This example shows a finite orthogonal map with multiple external tilesets. |
-| `custom_physics` | `physics` | This example shows how to use a custom physics backend. |
+| `basic` | None | This example shows the basic usage of the plugin. |
 | `map_events` | None | This example shows how to use map loading events. |
+| `map_reload` | None | This example demonstrates how to load and unload maps. |
+| `map_settings` | None | This example cycles through different map settings that can be applied. |
+| `map_spawn_delay` | None | This example will delay map spawn from asset loading to demonstrate both are decoupled. |
+| `orientation_orthogonal` | None | This example cycles through different kinds of orthogonal maps. |
+| `orientation_isometric` | None | This example cycles through different kinds of isometric maps. |
+| `orientation_hexagonal` | None | This example cycles through different kinds of hexagonal maps. |
+| `physics_custom` | `physics` | This example shows how to use a custom physics backend. |
+| `physics_events` | `physics` | This example shows how to use physics events. |
+| `physics_avian_settings` | `avian` | This example shows how to use Avian2D physics backend. |
+| `physics_avian_controller` | `avian` | This example shows a simple player-controlled object using Avian2D physics. You can move the object using arrow keys. |
+| `infinite_rapier` | `rapier_debug` | This example shows how to use Rapier physics backend. |
+| `physics_rapier_controller` | `rapier_debug` | This example shows a simple player-controlled object using Rapier physics. You can move the object using arrow keys. |

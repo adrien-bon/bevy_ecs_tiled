@@ -1,5 +1,4 @@
-﻿use serde::{Serialize, Deserialize};
-///
+use serde::{Deserialize, Serialize};
 
 #[test]
 fn deserialize() {
@@ -89,12 +88,12 @@ pub enum UseAs {
 
 impl UseAs {
     pub fn all_supported() -> Vec<UseAs> {
-        vec!(
+        vec![
             UseAs::Property,
             UseAs::Map,
             UseAs::Layer,
             UseAs::Object,
             UseAs::Tile,
-        )
+        ]
     }
 }
