@@ -48,14 +48,11 @@ impl TiledPhysicsBackend for MyCustomRapierPhysicsBackend {
         commands: &mut Commands,
         map: &Map,
         collider_source: &TiledColliderSource,
-        object_data: &ObjectData,
-    ) -> Option<(Vec2, Entity)> {
-        let collider = self
-            .0
-            .spawn_collider(commands, map, collider_source, object_data);
-        if let Some((_, entity)) = collider {
+    ) -> Option<TiledColliderSpawnInfos> {
+        let collider = self.0.spawn_collider(commands, map, collider_source);
+        if let Some(c) = &collider {
             commands
-                .entity(entity)
+                .entity(c.entity)
                 .insert(RigidBody::KinematicPositionBased);
         }
         collider

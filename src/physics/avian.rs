@@ -1,6 +1,6 @@
 use avian2d::{math::Vector, prelude::*};
 use bevy::prelude::*;
-use tiled::{Map, ObjectData};
+use tiled::Map;
 
 use crate::prelude::*;
 
@@ -11,10 +11,32 @@ impl super::TiledPhysicsBackend for TiledPhysicsAvianBackend {
     fn spawn_collider(
         &self,
         commands: &mut Commands,
-        _map: &Map,
-        _collider_source: &TiledColliderSource,
-        object_data: &ObjectData,
-    ) -> Option<(Vec2, Entity)> {
+        map: &Map,
+        collider_source: &TiledColliderSource,
+    ) -> Option<TiledColliderSpawnInfos> {
+        // TODO: use this function once I figure out how to prevent cloning ObjectData
+        // let object_data = collider_source.object_data(map)?;
+
+        let tile = collider_source.tile(map);
+        let object = collider_source.object(map);
+
+        let object_data = (match collider_source {
+            TiledColliderSource::Tile {
+                layer_id: _,
+                x: _,
+                y: _,
+                object_id,
+            } => tile
+                .as_ref()
+                .and_then(|tile| tile.collision.as_ref())
+                .map(|collision| collision.object_data())
+                .and_then(|objects| objects.get(*object_id)),
+            TiledColliderSource::Object {
+                layer_id: _,
+                object_id: _,
+            } => object.as_deref(),
+        })?;
+
         let (pos, collider) = match &object_data.shape {
             tiled::ObjectShape::Rect { width, height } => {
                 // The origin is the top-left corner of the rectangle when not rotated.
@@ -53,6 +75,11 @@ impl super::TiledPhysicsBackend for TiledPhysicsAvianBackend {
                 return None;
             }
         };
-        Some((pos, commands.spawn(collider).id()))
+        Some(TiledColliderSpawnInfos {
+            name: format!("Avian[{}]", object_data.name),
+            entity: commands.spawn(collider).id(),
+            position: pos,
+            rotation: -object_data.rotation,
+        })
     }
 }

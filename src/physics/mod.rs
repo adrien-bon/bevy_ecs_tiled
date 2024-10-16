@@ -15,7 +15,7 @@ pub mod avian;
 use crate::prelude::*;
 use bevy::prelude::*;
 use prelude::*;
-use tiled::{Map, ObjectData};
+use tiled::Map;
 
 /// `bevy_ecs_tiled` public exports.
 pub mod prelude {
@@ -35,12 +35,11 @@ pub trait TiledPhysicsBackend {
         commands: &mut Commands,
         map: &Map,
         collider_source: &TiledColliderSource,
-        object_data: &ObjectData,
-    ) -> Option<(Vec2, Entity)>;
+    ) -> Option<TiledColliderSpawnInfos>;
 }
 
 /// Controls physics related settings
-#[derive(Clone, Component)]
+#[derive(Clone, Component, Default)]
 pub struct TiledPhysicsSettings<T: TiledPhysicsBackend + Default> {
     /// Specify which Tiled object layers to add colliders for using their name.
     ///
@@ -48,6 +47,8 @@ pub struct TiledPhysicsSettings<T: TiledPhysicsBackend + Default> {
     ///
     /// By default, we add colliders for all objects.
     pub objects_layer_filter: ObjectNames,
+    pub objects_filter: ObjectNames,
+    pub tiles_layer_filter: ObjectNames,
     /// Specify which tiles collision object to add colliders for using their name.
     ///
     /// Colliders will be automatically added for all tiles collision objects whose name matches this filter.
@@ -56,16 +57,6 @@ pub struct TiledPhysicsSettings<T: TiledPhysicsBackend + Default> {
     pub tiles_objects_filter: ObjectNames,
     /// Physics backend to use.
     pub backend: T,
-}
-
-impl<T: TiledPhysicsBackend + Default> Default for TiledPhysicsSettings<T> {
-    fn default() -> Self {
-        Self {
-            objects_layer_filter: ObjectNames::All,
-            tiles_objects_filter: ObjectNames::All,
-            backend: T::default(),
-        }
-    }
 }
 
 #[derive(Default)]
@@ -107,30 +98,23 @@ fn collider_from_object<
     q_settings: Query<&TiledPhysicsSettings<T>, With<TiledMapMarker>>,
 ) {
     let layer = trigger.event().layer(&map_asset);
+    let object = trigger.event().object(&map_asset);
     let Ok(settings) = q_settings.get(trigger.event().map) else {
         return;
     };
 
-    if ObjectNameFilter::from(&settings.objects_layer_filter).contains(&layer.name) {
-        let map = trigger.event().map(&map_asset);
-        let collider_source =
-            TiledColliderSource::new_object(trigger.event().layer_id, trigger.event().object_id);
-        if let Some(collider_entity) = collider::spawn_collider::<T>(
+    if ObjectNameFilter::from(&settings.objects_layer_filter).contains(&layer.name)
+        && ObjectNameFilter::from(&settings.objects_filter).contains(&object.name)
+    {
+        collider::spawn_collider::<T>(
             &settings.backend,
             &mut commands,
-            map,
-            &collider_source,
-            &collider_source.object(map).unwrap(),
+            &map_asset,
+            &trigger.event().map_handle,
+            &TiledColliderSource::new_object(trigger.event().layer_id, trigger.event().object_id),
             trigger.event().object,
             Vec2::ZERO,
-        ) {
-            commands.trigger(TiledColliderCreated {
-                colliders_entities_list: vec![collider_entity],
-                map_handle: trigger.event().map_handle.clone(),
-                collider_source,
-                collider_source_entity: trigger.event().object,
-            });
-        }
+        );
     }
 }
 
@@ -152,38 +136,45 @@ fn collider_from_tile<
         return;
     };
 
-    let object_filters = &ObjectNameFilter::from(&settings.tiles_objects_filter);
     let map = trigger.event().map(&map_asset);
-    let mut colliders_entities_list = Vec::new();
-    let collider_source = TiledColliderSource::new_tile(
-        trigger.event().layer_id,
-        trigger.event().x,
-        trigger.event().y,
-    );
-    if let Some(collision) = &collider_source.tile(map).unwrap().collision {
-        for object_data in collision.object_data().iter() {
-            if object_filters.contains(&object_data.name) {
-                if let Some(collider_entity) = collider::spawn_collider::<T>(
+    let layer = trigger.event().layer(&map_asset);
+    if settings.tiles_objects_filter == ObjectNames::None
+        || !ObjectNameFilter::from(&settings.tiles_layer_filter).contains(&layer.name)
+    {
+        return;
+    }
+
+    let objects_filter = &ObjectNameFilter::from(&settings.tiles_objects_filter);
+
+    if let Some(collision) = trigger
+        .event()
+        .layer(&map_asset)
+        .as_tile_layer()
+        .and_then(|tile_layer| tile_layer.get_tile(trigger.event().x, trigger.event().y))
+        .and_then(|layer_tile| layer_tile.get_tile())
+        .as_ref()
+        .and_then(|tile| tile.collision.as_ref())
+    {
+        for (object_id, object_data) in collision.object_data().iter().enumerate() {
+            if objects_filter.contains(&object_data.name) {
+                collider::spawn_collider::<T>(
                     &settings.backend,
                     &mut commands,
-                    map,
-                    &collider_source,
-                    object_data,
+                    &map_asset,
+                    &trigger.event().map_handle,
+                    &TiledColliderSource::new_tile(
+                        trigger.event().layer_id,
+                        trigger.event().x,
+                        trigger.event().y,
+                        object_id,
+                    ),
                     trigger.event().tile,
                     Vec2 {
                         x: object_data.x - map.tile_width as f32 / 2.,
                         y: (map.tile_height as f32 - object_data.y) - map.tile_height as f32 / 2.,
                     },
-                ) {
-                    colliders_entities_list.push(collider_entity);
-                }
+                );
             }
         }
-        commands.trigger(TiledColliderCreated {
-            colliders_entities_list,
-            map_handle: trigger.event().map_handle.clone(),
-            collider_source,
-            collider_source_entity: trigger.event().tile,
-        });
     }
 }

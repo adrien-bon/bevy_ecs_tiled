@@ -1,5 +1,5 @@
 //! Events related to Tiled map loading
-//! 
+//!
 //! These events will be fired after the whole map has loaded.
 //! More informations in the [dedicated example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/map_events.rs)
 

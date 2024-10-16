@@ -52,7 +52,7 @@ pub struct TiledMapHandle(pub Handle<TiledMap>);
 #[derive(Resource, Clone)]
 pub struct TiledMapPluginConfig {
     /// Path to the Tiled types export file.
-    /// 
+    ///
     /// If [None], will not export Tiled types at startup.
     pub tiled_types_export_file: Option<PathBuf>,
 }

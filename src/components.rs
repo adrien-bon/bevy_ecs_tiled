@@ -19,7 +19,7 @@ pub struct TiledMapSettings {
 }
 
 /// Controls layers positioning strategy.
-/// 
+///
 /// Based upon this setting, you can determine where your layers (ie. your map) will be rendered.
 #[derive(Default, Copy, Clone)]
 pub enum LayerPositioning {
@@ -31,7 +31,7 @@ pub enum LayerPositioning {
 }
 
 /// Marker [Component] to trigger a map respawn.
-/// 
+///
 /// Must be added to the [Entity] holding the map.
 ///
 /// Example:
@@ -51,7 +51,7 @@ pub enum LayerPositioning {
 pub struct RespawnTiledMap;
 
 /// [Component] storing maps to navigate from Tiled ID to Bevy [Entity].
-/// 
+///
 /// Should not be manually inserted but can be accessed from the map [Entity].
 #[derive(Component, Default)]
 pub struct TiledIdStorage {
