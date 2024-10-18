@@ -1,4 +1,4 @@
-use crate::prelude::load::DeserializedProperties;
+use super::load::DeserializedProperties;
 use bevy::ecs::reflect::ReflectBundle;
 use bevy::ecs::system::EntityCommands;
 use bevy::ecs::world::Command;

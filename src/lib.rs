@@ -33,8 +33,6 @@ pub mod prelude {
     pub use crate::names::*;
     #[cfg(feature = "physics")]
     pub use crate::physics::prelude::*;
-    #[cfg(feature = "user_properties")]
-    pub use crate::properties::prelude::*;
     pub use crate::utils::*;
 }
 
@@ -101,7 +99,7 @@ fn export_types(reg: Res<AppTypeRegistry>, config: Res<TiledMapPluginConfig>) {
         info!("Export Tiled types to '{:?}'", path);
         let file = File::create(path).unwrap();
         let writer = BufWriter::new(file);
-        let registry = export::TypeImportRegistry::from_registry(reg.0.read().deref());
+        let registry = properties::export::TypeImportRegistry::from_registry(reg.0.read().deref());
         serde_json::to_writer(writer, &registry.to_vec()).unwrap();
     }
 }
