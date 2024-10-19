@@ -3,6 +3,10 @@ use crate::prelude::*;
 use bevy::prelude::*;
 use tiled::{Layer, Map, Object, Tile};
 
+/// Marker component for colliders
+#[derive(Component)]
+pub struct TiledColliderMarker;
+
 /// Describe the type of the [TiledColliderSource].
 #[derive(Copy, Clone, Debug)]
 pub enum TiledColliderSourceType {
@@ -197,6 +201,7 @@ pub(super) fn spawn_collider<T: super::TiledPhysicsBackend>(
             ));
             commands
                 .entity(collider.entity)
+                .insert(TiledColliderMarker)
                 .insert(TransformBundle::from_transform(transform))
                 .insert(Name::new(format!("Collider: {}", collider.name)))
                 .set_parent(collider_source.entity);

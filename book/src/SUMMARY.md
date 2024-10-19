@@ -6,15 +6,16 @@
 # Design and explanation
 
 - [Why using Tiled ?](design/why-tiled.md)
-- [Entities tree and marker components]()
-- [Layers Z-ordering]()
+- [Entities tree and marker components](design/entities_tree.md)
+- [Layers Z-ordering](design/z_order.md)
+- [Map loading events](design/map_events.md)
+- [Coordinates conversion between Tiled and Bevy]()
 
 # How-To's
 
 - [Minimal working example](guides/minimal.md)
 - [Spawn / Despawn / Reload a map](guides/spawn_reload.md)
-- [Use map loading events](guides/map_events.md)
-- [Use physics](guides/physics.md)
+- [Add physics colliders](guides/physics.md)
 - [Use Tiled custom properties](guides/properties.md)
 - [Debug your project](guides/debug.md)
 

@@ -83,8 +83,9 @@ pub struct TiledPhysicsSettings<T: TiledPhysicsBackend + Default> {
 /// use bevy::prelude::*;
 /// use bevy_ecs_tiled::prelude::*;
 ///
+/// // Using Avian backend for demonstrationg purpose, note that we also support TiledPhysicsRapierBackend
 /// App::new()
-///     .add_plugins(TiledPhysicsPlugin::<MyCustomPhysicsBackend>::default())
+///     .add_plugins(TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default());
 /// ```
 #[derive(Default)]
 pub struct TiledPhysicsPlugin<T: TiledPhysicsBackend + Default + std::marker::Sync>(

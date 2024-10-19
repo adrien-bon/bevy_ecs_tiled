@@ -88,7 +88,7 @@ pub(super) fn load_map(
             .id();
 
         // Increment Z offset
-        offset_z += 100.;
+        offset_z += tiled_settings.layer_z_offset;
 
         // Apply layer offset and MapPositioning setting
         let offset_transform = Transform::from_xyz(layer.offset_x, -layer.offset_y, offset_z);
