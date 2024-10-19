@@ -1,94 +1,112 @@
-use bevy::{ecs::system::EntityCommands, prelude::*};
-use bevy_ecs_tilemap::prelude::*;
+//! Rapier physics backend.
+//!
+//! Only available when the `rapier` feature is enabled.
+
+use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
-use tiled::ObjectData;
+use tiled::Map;
 
 use crate::prelude::*;
 
-/// Insert shapes as physics colliders.
-pub(crate) fn insert_rapier_colliders_from_shapes<'a>(
-    commands: &'a mut Commands,
-    parent_entity: Entity,
-    _map_type: &TilemapType,
-    grid_size: Option<&TilemapGridSize>,
-    object_data: &ObjectData,
-) -> Option<EntityCommands<'a>> {
-    let rot = object_data.rotation;
-    let (pos, collider) = match &object_data.shape {
-        tiled::ObjectShape::Rect { width, height } => {
-            // The origin is the top-left corner of the rectangle when not rotated.
-            let shape = Collider::cuboid(width / 2., height / 2.);
-            let pos = Vect::new(width / 2., -height / 2.);
-            (pos, shape)
-        }
-        tiled::ObjectShape::Ellipse { width, height } => {
-            let shape = if width > height {
-                Collider::capsule(
-                    Vec2::new((-width + height) / 2., 0.),
-                    Vec2::new((width - height) / 2., 0.),
-                    height / 2.,
-                )
-            } else {
-                Collider::capsule(
-                    Vec2::new(0., (-height + width) / 2.),
-                    Vec2::new(0., (height - width) / 2.),
-                    width / 2.,
-                )
-            };
+/// The actual Rapier physics backend to use when instanciating the physics plugin.
+///
+/// Example:
+/// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
+/// App::new()
+///     .add_plugins(TiledPhysicsPlugin::<TiledPhysicsRapierBackend>::default())
+/// ```
+#[derive(Default)]
+pub struct TiledPhysicsRapierBackend;
 
-            let pos = Vect::new(width / 2., -height / 2.);
-            (pos, shape)
-        }
-        tiled::ObjectShape::Polyline { points } => {
-            let shape = Collider::polyline(
-                points.iter().map(|(x, y)| Vect::new(*x, -*y)).collect(),
-                None,
-            );
-            (Vect::ZERO, shape)
-        }
-        tiled::ObjectShape::Polygon { points } => {
-            let shape = match Collider::convex_hull(
-                &points
-                    .iter()
-                    .map(|(x, y)| Vect::new(*x, -*y))
-                    .collect::<Vec<_>>(),
-            ) {
-                Some(x) => x,
-                None => {
-                    return None;
-                }
-            };
+impl super::TiledPhysicsBackend for TiledPhysicsRapierBackend {
+    fn spawn_collider(
+        &self,
+        commands: &mut Commands,
+        map: &Map,
+        collider_source: &TiledColliderSource,
+    ) -> Option<TiledColliderSpawnInfos> {
+        // TODO: use this function once I figure out how to prevent cloning ObjectData
+        // let object_data = collider_source.object_data(map)?;
 
-            (Vect::ZERO, shape)
-        }
-        _ => {
-            return None;
-        }
-    };
+        let tile = collider_source.tile(map);
+        let object = collider_source.object(map);
 
-    let mut translation = Vec3::default();
-    // If we have a grid_size, it means we are adding colliders for a tile:
-    // we need to take into account object position, which are relative to the tile
-    // If we don't have a grid_size, it means we are adding colliders for a standalone object
-    // we need to ignore object position, since our parent should already have the correct position
-    if let Some(grid_size) = grid_size {
-        translation = Vec3::new(
-            object_data.x - grid_size.x / 2.,
-            (grid_size.y - object_data.y) - grid_size.y / 2.,
-            0.,
-        );
+        let object_data = (match collider_source.ty {
+            TiledColliderSourceType::Tile {
+                layer_id: _,
+                x: _,
+                y: _,
+                object_id,
+            } => tile
+                .as_ref()
+                .and_then(|tile| tile.collision.as_ref())
+                .map(|collision| collision.object_data())
+                .and_then(|objects| objects.get(object_id)),
+            TiledColliderSourceType::Object {
+                layer_id: _,
+                object_id: _,
+            } => object.as_deref(),
+        })?;
+
+        let (pos, collider) = match &object_data.shape {
+            tiled::ObjectShape::Rect { width, height } => {
+                // The origin is the top-left corner of the rectangle when not rotated.
+                let shape = Collider::cuboid(width / 2., height / 2.);
+                let pos = Vect::new(width / 2., -height / 2.);
+                (pos, shape)
+            }
+            tiled::ObjectShape::Ellipse { width, height } => {
+                let shape = if width > height {
+                    Collider::capsule(
+                        Vec2::new((-width + height) / 2., 0.),
+                        Vec2::new((width - height) / 2., 0.),
+                        height / 2.,
+                    )
+                } else {
+                    Collider::capsule(
+                        Vec2::new(0., (-height + width) / 2.),
+                        Vec2::new(0., (height - width) / 2.),
+                        width / 2.,
+                    )
+                };
+
+                let pos = Vect::new(width / 2., -height / 2.);
+                (pos, shape)
+            }
+            tiled::ObjectShape::Polyline { points } => {
+                let shape = Collider::polyline(
+                    points.iter().map(|(x, y)| Vect::new(*x, -*y)).collect(),
+                    None,
+                );
+                (Vect::ZERO, shape)
+            }
+            tiled::ObjectShape::Polygon { points } => {
+                let shape = match Collider::convex_hull(
+                    &points
+                        .iter()
+                        .map(|(x, y)| Vect::new(*x, -*y))
+                        .collect::<Vec<_>>(),
+                ) {
+                    Some(x) => x,
+                    None => {
+                        return None;
+                    }
+                };
+
+                (Vect::ZERO, shape)
+            }
+            _ => {
+                return None;
+            }
+        };
+        Some(TiledColliderSpawnInfos {
+            name: format!("Rapier[{}]", object_data.name),
+            entity: commands.spawn(collider).id(),
+            position: pos,
+            rotation: -object_data.rotation,
+        })
     }
-
-    let transform = Transform {
-        translation,
-        rotation: Quat::from_rotation_z(f32::to_radians(-rot)),
-        ..default()
-    } * Transform::from_translation(Vec3::new(pos.x, pos.y, 0.));
-
-    let mut entity_commands = commands.spawn(collider);
-    entity_commands
-        .insert(TransformBundle::from_transform(transform))
-        .insert(Name::new(format!("Collider({})", object_data.name)))
-        .set_parent(parent_entity);
-    Some(entity_commands)
 }

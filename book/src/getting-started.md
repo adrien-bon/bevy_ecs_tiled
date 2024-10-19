@@ -4,7 +4,7 @@ Add dependencies to your `Cargo.toml` file:
 ```toml
 [dependencies]
 bevy = "0.14"
-bevy_ecs_tiled = "0.3"
+bevy_ecs_tiled = "0.4"
 bevy_ecs_tilemap = "0.14"
 ```
 
@@ -22,7 +22,7 @@ fn main() {
         // Add bevy_ecs_tilemap plugin
         .add_plugins(TilemapPlugin)
         // Add bevy_ecs_tiled plugin
-        .add_plugins(TiledMapPlugin)
+        .add_plugins(TiledMapPlugin::default())
         // Add our startup function to the schedule and run the app
         .add_systems(Startup, startup)
         .run();
@@ -36,13 +36,12 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let map_handle: Handle<TiledMap> = asset_server.load("map.tmx");
 
     // Spawn the map with default options
-    commands.spawn(TiledMapBundle {
-        tiled_map: map_handle,
-        ..Default::default()
-    });
+    commands.spawn(TiledMapHandle(map_handle));
 }
 ```
 
-Please note that you should have the `map.tmx` file in your local `assets/` folder (as well as required dependencies, for instance associated tilesets).
+Please note that you should have the `map.tmx` file in your local `assets/` folder, as well as required dependencies (for instance, associated tilesets).
 
-See the [examples](https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/README.md) for more advanced use cases.
+You can customize various settings about how to load the map by inserting the [`TiledMapSettings`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/components/struct.TiledMapSettings.html) component on the map entity.
+
+Also, you can browse the [examples](https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/README.md) for more advanced use cases.

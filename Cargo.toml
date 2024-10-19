@@ -32,7 +32,7 @@ avian = ["dep:avian2d", "physics"]
 wasm = ["bevy_rapier2d/wasm-bindgen", "tiled/wasm"]
 
 # User Properties
-user_properties = ["dep:bevy_ecs_tiled_macros", "dep:serde", "dep:serde_json"]
+user_properties = ["dep:serde", "dep:serde_json"]
 
 [dependencies]
 bevy = { version = "0.14", default-features = false, features = ["bevy_render", "bevy_gizmos", "png"] }
@@ -45,7 +45,6 @@ tiled = "0.12.1"
 # Optional dependencies, enabled via features.
 bevy_rapier2d = { version = "0.27.0", optional = true }
 avian2d = { version = "0.1.2", optional = true }
-bevy_ecs_tiled_macros = { version = "0.1.0", optional = true, path = "macros" }
 serde = { version = "1.0.210", optional = true }
 serde_json = { version = "1.0.127", optional = true }
 
@@ -57,81 +56,63 @@ tiled = { version = "0.12.1", features = ["wasm"] }
 
 # docs.rs-specific configuration
 [package.metadata.docs.rs]
-features = ["user_properties","physics"]
+features = ["user_properties","physics","avian","rapier"]
 
 [dev-dependencies]
 bevy = "0.14.2"
-bevy-inspector-egui = "0.25.2"
+bevy-inspector-egui = "0.26.0"
 bevy_rapier2d = { version = "0.27.0", features = ["debug-render-2d"] }
 avian2d = "0.1.2"
 log = "0.4.22"
 
 [[example]]
-name = "finite"
-
-[[example]]
-name = "finite_embedded"
-
-[[example]]
-name = "infinite"
-
-[[example]]
-name = "infinite_embedded"
-
-[[example]]
-name = "reload"
-
-[[example]]
-name = "finite_rapier"
-required-features = ["rapier_debug"]
-
-[[example]]
-name = "infinite_rapier"
-required-features = ["rapier_debug"]
-
-[[example]]
-name = "finite_avian"
-required-features = ["avian"]
-
-[[example]]
-name = "infinite_avian"
-required-features = ["avian"]
-
-[[example]]
-name = "hex_map"
-
-[[example]]
-name = "controller_rapier"
-required-features = ["rapier_debug"]
-
-[[example]]
-name = "controller_avian"
-required-features = ["avian"]
-
-[[example]]
-name = "user_properties"
-required-features = ["user_properties"]
-
-[[example]]
-name = "user_properties_rapier"
-required-features = ["user_properties", "rapier_debug"]
-
-[[example]]
-name = "user_properties_avian"
-required-features = ["user_properties", "avian"]
-
-[[example]]
-name = "isometric_map"
-
-[[example]]
-name = "delayed_spawn"
-
-[[example]]
-name = "multiple_tilesets"
-
-[[example]]
-name = "custom_physics"
-required-features = ["physics"]
+name = "basic"
 
 [[example]]
 name = "map_events"
+
+[[example]]
+name = "map_reload"
+
+[[example]]
+name = "map_settings"
+
+[[example]]
+name = "map_spawn_delay"
+
+[[example]]
+name = "orientation_orthogonal"
+
+[[example]]
+name = "orientation_isometric"
+
+[[example]]
+name = "orientation_hexagonal"
+
+[[example]]
+name = "physics_custom"
+required-features = ["physics"]
+
+[[example]]
+name = "physics_events"
+required-features = ["physics"]
+
+[[example]]
+name = "physics_rapier_settings"
+required-features = ["rapier_debug"]
+
+[[example]]
+name = "physics_rapier_controller"
+required-features = ["rapier_debug"]
+
+[[example]]
+name = "physics_avian_settings"
+required-features = ["avian"]
+
+[[example]]
+name = "physics_avian_controller"
+required-features = ["avian"]
+
+[[example]]
+name = "properties_basic"
+required-features = ["user_properties"]

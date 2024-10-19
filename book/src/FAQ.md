@@ -27,10 +27,16 @@ Yes, see the [dedicated guide](guides/physics.md).
 
 We currently support both [Avian](https://github.com/Jondolf/avian) and [Rapier](https://github.com/dimforge/bevy_rapier) physics backend.
 
-
 ## Is it possible to use Tiled "custom properties" ?
 
 Yes, see the [dedicated guide](guides/properties.md).
+
+## I'm using an isometric map and it seems all messed up!
+
+Make sure you are actually using a "diamond" map and not a "staggered" one (which are not supported).
+
+Also, for isometric maps, you may want to tweak the `TilemapRenderSettings` Component from `bevy_ecs_tilemap`.
+More information in the [isometric maps example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/orientation_isometric.rs#L34)
 
 ## I found a bug! What should I do ?
 

@@ -1,29 +1,28 @@
-use bevy::prelude::*;
+use bevy::{ecs::system::EntityCommands, prelude::*};
 use bevy_ecs_tiled::prelude::*;
-use bevy_ecs_tilemap::prelude::*;
+use bevy_ecs_tilemap::map::TilemapRenderSettings;
+
+pub type MapInfosCallback = fn(&mut EntityCommands);
 
 pub struct MapInfos {
     asset: Handle<TiledMap>,
     path: String,
     description: String,
-    render_settings: TilemapRenderSettings,
-    tiled_settings: TiledMapSettings,
+    callback: MapInfosCallback,
 }
 
 impl MapInfos {
     pub fn new(
         asset_server: &Res<AssetServer>,
-        render_settings: TilemapRenderSettings,
-        tiled_settings: TiledMapSettings,
         path: &str,
         description: &str,
+        callback: MapInfosCallback,
     ) -> Self {
         Self {
             asset: asset_server.load(path.to_owned()),
             path: path.to_owned(),
             description: description.to_owned(),
-            render_settings,
-            tiled_settings,
+            callback,
         }
     }
 }
@@ -73,20 +72,19 @@ impl AssetsManager {
         // Handle map update: spawn the map if it does not exist yet
         // or just update the map handle if already spawned
         if let Some(entity) = self.map_entity {
-            commands
-                .entity(entity)
-                .insert(self.map_assets[self.map_index].asset.to_owned());
+            let mut entity_commands = commands.entity(entity);
+            entity_commands.insert(TiledMapHandle(
+                self.map_assets[self.map_index].asset.to_owned(),
+            ));
+            entity_commands.remove::<TiledMapSettings>();
+            entity_commands.remove::<TilemapRenderSettings>();
+            (self.map_assets[self.map_index].callback)(&mut entity_commands);
         } else {
-            self.map_entity = Some(
-                commands
-                    .spawn(TiledMapBundle {
-                        tiled_map: self.map_assets[self.map_index].asset.to_owned(),
-                        render_settings: self.map_assets[self.map_index].render_settings,
-                        tiled_settings: self.map_assets[self.map_index].tiled_settings.clone(),
-                        ..Default::default()
-                    })
-                    .id(),
-            );
+            let mut entity_commands = commands.spawn(TiledMapHandle(
+                self.map_assets[self.map_index].asset.to_owned(),
+            ));
+            (self.map_assets[self.map_index].callback)(&mut entity_commands);
+            self.map_entity = Some(entity_commands.id());
         }
 
         // Update the map index

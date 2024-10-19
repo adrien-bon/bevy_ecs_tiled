@@ -1,11 +1,38 @@
-//! This module contains all `Component`s definition.
+//! This module contains all [Component]s definition.
 
 use crate::prelude::*;
-use bevy::{ecs::system::EntityCommands, prelude::*, utils::HashMap};
-use bevy_ecs_tilemap::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 use tiled::TileId;
 
-/// Marker `Component` for re-spawning the whole map
+/// [Component] holding Tiled related settings.
+///
+/// Controls various settings related to the way we handle the Tiled map.
+/// Must be added to the [Entity] holding the map.
+#[derive(Component, Copy, Clone, Default)]
+pub struct TiledMapSettings {
+    /// Specify which layer positioning strategy should be applied to the map.
+    pub layer_positioning: LayerPositioning,
+    /// Initial map [Transform].
+    pub map_initial_transform: Transform,
+    /// Initial map [Visibility].
+    pub map_initial_visibility: Visibility,
+}
+
+/// Controls layers positioning strategy.
+///
+/// Based upon this setting, you can determine where your layers (ie. your map) will be rendered.
+#[derive(Default, Copy, Clone)]
+pub enum LayerPositioning {
+    #[default]
+    /// Do not tweak layers position and keep original Tiled coordinate system so that Bevy (0, 0) is at the bottom-left of the map.
+    TiledOffset,
+    /// Update layers position and mimic Bevy's coordinate system so that Bevy (0, 0) is at the center of the map.
+    Centered,
+}
+
+/// Marker [Component] to trigger a map respawn.
+///
+/// Must be added to the [Entity] holding the map.
 ///
 /// Example:
 /// ```rust,no_run
@@ -14,7 +41,7 @@ use tiled::TileId;
 ///
 /// fn handle_respawn(
 ///     mut commands: Commands,
-///     map_query: Query<(Entity, &Handle<TiledMap>)>,
+///     map_query: Query<(Entity, &TiledMapHandle)>,
 /// ) {
 ///     let (entity, _) = map_query.single();
 ///     commands.entity(entity).insert(RespawnTiledMap);
@@ -23,7 +50,9 @@ use tiled::TileId;
 #[derive(Component)]
 pub struct RespawnTiledMap;
 
-/// `Component` storing maps from Tiled ID to Bevy Entity.
+/// [Component] storing maps to navigate from Tiled ID to Bevy [Entity].
+///
+/// Should not be manually inserted but can be accessed from the map [Entity].
 #[derive(Component, Default)]
 pub struct TiledIdStorage {
     /// Map of layers entities, using their Tiled ID as key
@@ -32,151 +61,48 @@ pub struct TiledIdStorage {
     pub objects: HashMap<u32, Entity>,
     /// Map of tiles entities, using the name of the tileset
     /// they belongs to + the tile ID in this tileset as key.
-    /// Note that we can have multiple instance of the same
-    /// Tile in the map.
+    /// Note that we can have multiple entities (several instances)
+    /// of the same tile.
     pub tiles: HashMap<(String, TileId), Vec<Entity>>,
 }
 
-/// Marker `Component` for a Tiled map.
+/// Marker [Component] for a Tiled map.
 #[derive(Component)]
 pub struct TiledMapMarker;
 
-/// Marker `Component` for a Tiled map layer.
+/// Marker [Component] for a Tiled map layer.
 #[derive(Component)]
 pub struct TiledMapLayer {
     // Store the map id so that we can delete layers for this map later.
-    // We don't want to store the handle as a `Component` because the parent
+    // We don't want to store the handle as a [Component] because the parent
     // entity already has it and it complicates queries.
     pub map_handle_id: AssetId<TiledMap>,
 }
 
-/// Marker `Component` for a Tiled map tile layer.
+/// Marker [Component] for a Tiled map tile layer.
 #[derive(Component)]
 pub struct TiledMapTileLayer;
 
-/// Marker `Component` for a Tiled map tile layer for a given tileset.
+/// Marker [Component] for a Tiled map tile layer for a given tileset.
 #[derive(Component)]
 pub struct TiledMapTileLayerForTileset;
 
-/// Marker `Component` for a Tiled map object layer.
+/// Marker [Component] for a Tiled map object layer.
 #[derive(Component)]
 pub struct TiledMapObjectLayer;
 
-/// Marker `Component` for a Tiled map group layer.
+/// Marker [Component] for a Tiled map group layer.
 #[derive(Component)]
 pub struct TiledMapGroupLayer;
 
-/// Marker `Component` for a Tiled map image layer.
+/// Marker [Component] for a Tiled map image layer.
 #[derive(Component)]
 pub struct TiledMapImageLayer;
 
-/// Marker `Component` for a Tiled map tile.
+/// Marker [Component] for a Tiled map tile.
 #[derive(Component)]
 pub struct TiledMapTile;
 
-/// Marker `Component` for a Tiled map object.
+/// Marker [Component] for a Tiled map object.
 #[derive(Component)]
 pub struct TiledMapObject;
-
-/// Controls position of the map in the world.
-#[derive(Default, Clone)]
-pub enum MapPositioning {
-    #[default]
-    /// Do not tweak layers position, only use raw position from Tiled
-    LayerOffset,
-    /// Update layers position and mimics Bevy's coordinate system so that (0, 0) is at the center of the map.
-    Centered,
-}
-
-/// `Bundle` holding all the configuration needed to load a map with `bevy_ecs_tiled` plugin.
-///
-/// Only thing to do is to initialize this `Bundle` with a valid `Handle<TiledMap>`then spawn it.
-///
-/// Example:
-/// ```rust,no_run
-/// use bevy::prelude::*;
-/// use bevy_ecs_tiled::prelude::*;
-///
-/// fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
-///    commands.spawn(TiledMapBundle {
-///        tiled_map: asset_server.load("map.tmx"),
-///        ..default()
-///    });
-/// }
-/// ```
-#[derive(Default, Bundle)]
-pub struct TiledMapBundle {
-    /// Handle to the .tmx file to load reprenseting the map.
-    /// It is the only mandatory field to actually spawn the map.
-    pub tiled_map: Handle<TiledMap>,
-    /// Holds the maps to convert from Tiled ID to Bevy Entity.
-    /// Must be left as default when spawning the bundle.
-    pub storage: TiledIdStorage,
-    /// Render settings from `bevy_ecs_tilemap`.
-    pub render_settings: TilemapRenderSettings,
-    /// Settings from `bevy_ecs_tiled`.
-    pub tiled_settings: TiledMapSettings,
-}
-
-/// Callback for extending physics colliders.
-///
-/// Provided `EntityCommands` can be used to add additionnal `Component`s to the collider.
-///
-/// Example:
-/// ```rust,no_run
-/// use bevy::prelude::*;
-/// use bevy_ecs_tiled::prelude::*;
-///
-/// // Just add a marker `Component`
-/// #[derive(Component)]
-/// struct MyColliderMarker;
-///
-/// let settings = TiledMapSettings {
-///     collider_callback: |entity_commands| {
-///         entity_commands.insert(MyColliderMarker);
-///     },
-///     ..default()
-/// };
-/// ```
-pub type ColliderCallback = fn(&mut EntityCommands);
-
-/// `Component` holding Tiled related settings.
-///
-/// Controls various settings related to the way we handle the Tiled map.
-#[derive(Clone, Component)]
-pub struct TiledMapSettings {
-    /// Specify which Tiled object layers to add colliders for using their name.
-    ///
-    /// Colliders will be automatically added for all objects whose containing layer name matches this filter.
-    ///
-    /// By default, we add colliders for all objects.
-    pub collision_layer_names: ObjectNames,
-    /// Specify which tiles collision object to add colliders for using their name.
-    ///
-    /// Colliders will be automatically added for all tiles collision objects whose name matches this filter.
-    ///
-    /// By default, we add colliders for all collision objects.
-    pub collision_object_names: ObjectNames,
-    /// Physics collider callback.
-    ///
-    /// Using this callback, we can add extra `Component`s to colliders which were automatically spawned.
-    pub collider_callback: ColliderCallback,
-    /// Physics backend to use.
-    ///
-    /// Specify which physics backend to use.
-    pub physics_backend: PhysicsBackend,
-    /// Specify which position transformation offset should be applied to the map.
-    pub map_positioning: MapPositioning,
-}
-
-impl Default for TiledMapSettings {
-    fn default() -> Self {
-        Self {
-            collider_callback: |_| {},
-            collision_layer_names: ObjectNames::default(),
-            collision_object_names: ObjectNames::default(),
-            map_positioning: MapPositioning::default(),
-            physics_backend: PhysicsBackend::default(),
-        }
-    }
-}
