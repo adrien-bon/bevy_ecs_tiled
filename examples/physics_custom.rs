@@ -51,8 +51,8 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
         let tile = collider_source.tile(map);
         let object = collider_source.object(map);
 
-        let object_data = (match collider_source {
-            TiledColliderSource::Tile {
+        let object_data = (match collider_source.ty {
+            TiledColliderSourceType::Tile {
                 layer_id: _,
                 x: _,
                 y: _,
@@ -61,8 +61,8 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
                 .as_ref()
                 .and_then(|tile| tile.collision.as_ref())
                 .map(|collision| collision.object_data())
-                .and_then(|objects| objects.get(*object_id)),
-            TiledColliderSource::Object {
+                .and_then(|objects| objects.get(object_id)),
+            TiledColliderSourceType::Object {
                 layer_id: _,
                 object_id: _,
             } => object.as_deref(),
@@ -78,12 +78,12 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
             }
         };
 
-        let color = match collider_source {
-            TiledColliderSource::Object {
+        let color = match collider_source.ty {
+            TiledColliderSourceType::Object {
                 layer_id: _,
                 object_id: _,
             } => Color::from(PURPLE),
-            TiledColliderSource::Tile {
+            TiledColliderSourceType::Tile {
                 layer_id: _,
                 x: _,
                 y: _,

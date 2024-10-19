@@ -33,8 +33,8 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 // Here we can handle our physics events: we will receive one event per `TiledColliderSource`
 // It means on event per object and one event per tile with collision object (even if tile has multiple collision objects)
 fn handle_physics_events(trigger: Trigger<TiledColliderCreated>) {
-    match trigger.event().collider_source {
-        TiledColliderSource::Object {
+    match trigger.event().collider_source.ty {
+        TiledColliderSourceType::Object {
             layer_id,
             object_id,
         } => {
@@ -45,7 +45,7 @@ fn handle_physics_events(trigger: Trigger<TiledColliderCreated>) {
                 trigger.event(),
             );
         }
-        TiledColliderSource::Tile {
+        TiledColliderSourceType::Tile {
             layer_id,
             x,
             y,
@@ -87,8 +87,8 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
         let tile = collider_source.tile(map);
         let object = collider_source.object(map);
 
-        let object_data = (match collider_source {
-            TiledColliderSource::Tile {
+        let object_data = (match collider_source.ty {
+            TiledColliderSourceType::Tile {
                 layer_id: _,
                 x: _,
                 y: _,
@@ -97,8 +97,8 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
                 .as_ref()
                 .and_then(|tile| tile.collision.as_ref())
                 .map(|collision| collision.object_data())
-                .and_then(|objects| objects.get(*object_id)),
-            TiledColliderSource::Object {
+                .and_then(|objects| objects.get(object_id)),
+            TiledColliderSourceType::Object {
                 layer_id: _,
                 object_id: _,
             } => object.as_deref(),

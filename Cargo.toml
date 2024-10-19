@@ -56,7 +56,7 @@ tiled = { version = "0.12.1", features = ["wasm"] }
 
 # docs.rs-specific configuration
 [package.metadata.docs.rs]
-features = ["user_properties","physics"]
+features = ["user_properties","physics","avian","rapier"]
 
 [dev-dependencies]
 bevy = "0.14.2"

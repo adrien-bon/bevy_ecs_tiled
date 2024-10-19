@@ -17,7 +17,7 @@ use bevy::prelude::*;
 use prelude::*;
 use tiled::Map;
 
-/// `bevy_ecs_tiled` public exports.
+/// `bevy_ecs_tiled` physics public exports.
 pub mod prelude {
     #[cfg(feature = "avian")]
     pub use super::avian::*;
@@ -29,7 +29,16 @@ pub mod prelude {
     pub use super::TiledPhysicsSettings;
 }
 
+/// Physics backend public trait.
+///
+/// A custom physics backend should implement this trait.
 pub trait TiledPhysicsBackend {
+    /// Function responsible for spawning a physics collider
+    ///
+    /// This function should spawn an [Entity] representing a single physics
+    /// collider and return informations about it.
+    /// In case the provided [TiledColliderSource] is not supported, it should
+    /// not spawn anything and return `None`.
     fn spawn_collider(
         &self,
         commands: &mut Commands,
@@ -38,31 +47,49 @@ pub trait TiledPhysicsBackend {
     ) -> Option<TiledColliderSpawnInfos>;
 }
 
-/// Controls physics related settings
+/// Physics related settings.
 #[derive(Clone, Component, Default)]
 pub struct TiledPhysicsSettings<T: TiledPhysicsBackend + Default> {
-    /// Specify which Tiled object layers to add colliders for using their name.
+    /// Specify which Tiled object to add colliders for using their layer name.
     ///
     /// Colliders will be automatically added for all objects whose containing layer name matches this filter.
-    ///
     /// By default, we add colliders for all objects.
     pub objects_layer_filter: ObjectNames,
+    /// Specify which Tiled object to add colliders for using their name.
+    ///
+    /// Colliders will be automatically added for all objects whose name matches this filter.
+    /// By default, we add colliders for all objects.
     pub objects_filter: ObjectNames,
+    /// Specify which tiles collision object to add colliders for using their layer name.
+    ///
+    /// Colliders will be automatically added for all tiles collision objects whose layer name matches this filter.
+    /// By default, we add colliders for all collision objects.
     pub tiles_layer_filter: ObjectNames,
     /// Specify which tiles collision object to add colliders for using their name.
     ///
     /// Colliders will be automatically added for all tiles collision objects whose name matches this filter.
-    ///
     /// By default, we add colliders for all collision objects.
     pub tiles_objects_filter: ObjectNames,
-    /// Physics backend to use.
+    /// Physics backend to use for adding colliders.
     pub backend: T,
 }
 
+/// Physics plugin.
+///
+/// Must be added to your app in order to automatically spawn physics colliders using the provided [TiledPhysicsBackend].
+///
+/// Example:
+/// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
+/// App::new()
+///     .add_plugins(TiledPhysicsPlugin::<MyCustomPhysicsBackend>::default())
+/// ```
 #[derive(Default)]
-pub struct TiledPhysicsPlugin<T: TiledPhysicsBackend + Default + std::marker::Sync> {
-    backend: std::marker::PhantomData<T>,
-}
+pub struct TiledPhysicsPlugin<T: TiledPhysicsBackend + Default + std::marker::Sync>(
+    std::marker::PhantomData<T>,
+);
 
 impl<T: TiledPhysicsBackend + Default + 'static + std::marker::Sync + std::marker::Send> Plugin
     for TiledPhysicsPlugin<T>
@@ -111,8 +138,13 @@ fn collider_from_object<
             &mut commands,
             &map_asset,
             &trigger.event().map_handle,
-            &TiledColliderSource::new_object(trigger.event().layer_id, trigger.event().object_id),
-            trigger.event().object,
+            &TiledColliderSource {
+                entity: trigger.event().object,
+                ty: TiledColliderSourceType::new_object(
+                    trigger.event().layer_id,
+                    trigger.event().object_id,
+                ),
+            },
             Vec2::ZERO,
         );
     }
@@ -162,13 +194,15 @@ fn collider_from_tile<
                     &mut commands,
                     &map_asset,
                     &trigger.event().map_handle,
-                    &TiledColliderSource::new_tile(
-                        trigger.event().layer_id,
-                        trigger.event().x,
-                        trigger.event().y,
-                        object_id,
-                    ),
-                    trigger.event().tile,
+                    &TiledColliderSource {
+                        entity: trigger.event().tile,
+                        ty: TiledColliderSourceType::new_tile(
+                            trigger.event().layer_id,
+                            trigger.event().x,
+                            trigger.event().y,
+                            object_id,
+                        ),
+                    },
                     Vec2 {
                         x: object_data.x - map.tile_width as f32 / 2.,
                         y: (map.tile_height as f32 - object_data.y) - map.tile_height as f32 / 2.,
