@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
-use tiled::{Map, ObjectData};
+use tiled::Map;
 
 mod helper;
 

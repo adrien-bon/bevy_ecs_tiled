@@ -16,7 +16,7 @@ use crate::prelude::*;
 /// use bevy_ecs_tiled::prelude::*;
 ///
 /// App::new()
-///     .add_plugins(TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default())
+///     .add_plugins(TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default());
 /// ```
 #[derive(Default)]
 pub struct TiledPhysicsAvianBackend;

@@ -8,14 +8,25 @@ use tiled::TileId;
 ///
 /// Controls various settings related to the way we handle the Tiled map.
 /// Must be added to the [Entity] holding the map.
-#[derive(Component, Copy, Clone, Default)]
+#[derive(Component, Copy, Clone)]
 pub struct TiledMapSettings {
     /// Specify which layer positioning strategy should be applied to the map.
     pub layer_positioning: LayerPositioning,
+    /// Z-offset between two consecutives layers.
+    pub layer_z_offset: f32,
     /// Initial map [Transform].
     pub map_initial_transform: Transform,
     /// Initial map [Visibility].
     pub map_initial_visibility: Visibility,
+}
+
+impl Default for TiledMapSettings {
+    fn default() -> Self {
+        Self {
+            layer_z_offset: 100.,
+            ..default()
+        }
+    }
 }
 
 /// Controls layers positioning strategy.
