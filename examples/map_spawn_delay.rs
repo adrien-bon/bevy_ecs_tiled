@@ -10,10 +10,14 @@ mod helper;
 
 fn main() {
     App::new()
+        // Bevy default plugins
         .add_plugins(DefaultPlugins)
-        .add_plugins(TilemapPlugin)
-        .add_plugins(TiledMapPlugin)
+        // Examples helper plugin (does not matter for this example)
         .add_plugins(helper::HelperPlugin)
+        // bevy_ecs_tilemap and bevy_ecs_tiled main plugins
+        .add_plugins(TilemapPlugin)
+        .add_plugins(TiledMapPlugin::default())
+        // Add our systems and run the app!
         .add_systems(Startup, startup)
         .add_systems(Update, spawn_map)
         .run();
@@ -41,9 +45,6 @@ fn spawn_map(mut commands: Commands, mut spawner: ResMut<MapSpawner>, time: Res<
     spawner.timer.tick(time.delta());
     if spawner.timer.just_finished() {
         info!("Timer finished, spawn the map !");
-        commands.spawn(TiledMapBundle {
-            tiled_map: spawner.map_handle.clone(),
-            ..Default::default()
-        });
+        commands.spawn(TiledMapHandle(spawner.map_handle.clone()));
     }
 }

@@ -1,10 +1,10 @@
-﻿use std::ops::Deref;
+use super::load::DeserializedProperties;
 use bevy::ecs::reflect::ReflectBundle;
 use bevy::ecs::system::EntityCommands;
 use bevy::ecs::world::Command;
 use bevy::prelude::{AppTypeRegistry, Entity, ReflectComponent, ReflectResource, World};
 use bevy::reflect::{Reflect, TypeRegistry};
-use crate::prelude::load::DeserializedProperties;
+use std::ops::Deref;
 
 pub trait PropertiesCommandExt {
     fn insert_properties(&mut self, properties: DeserializedProperties) -> &mut Self;
@@ -13,11 +13,8 @@ pub trait PropertiesCommandExt {
 impl PropertiesCommandExt for EntityCommands<'_> {
     fn insert_properties(&mut self, properties: DeserializedProperties) -> &mut Self {
         let entity = self.id();
-        self.commands().add(InsertProperties {
-            entity,
-            properties,
-        });
-        
+        self.commands().add(InsertProperties { entity, properties });
+
         self
     }
 }
@@ -30,7 +27,7 @@ pub struct InsertProperties {
 impl Command for InsertProperties {
     fn apply(self, world: &mut World) {
         let binding = world.get_resource::<AppTypeRegistry>().unwrap().clone();
-        
+
         for property in self.properties.properties {
             insert_reflect(world, self.entity, binding.0.read().deref(), property);
         }
@@ -60,7 +57,7 @@ fn insert_reflect(
     let Some(mut entity) = world.get_entity_mut(entity) else {
         panic!("error[B0003]: Could not insert a reflected property (of type {type_path}) for entity {entity:?} because it doesn't exist in this World. See: https://bevyengine.org/learn/errors/#b0003");
     };
-    
+
     if let Some(reflect_component) = type_registration.data::<ReflectComponent>() {
         reflect_component.insert(&mut entity, &*property, type_registry);
     } else if let Some(reflect_bundle) = type_registration.data::<ReflectBundle>() {

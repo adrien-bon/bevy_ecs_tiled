@@ -1,13 +1,13 @@
 # Spawn / Despawn / Reload a map
 
-These aspects are also covered in the [dedicated example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/reload.rs).
+These aspects are also covered in the [dedicated example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/map_reload.rs).
 
 ## Spawn a map
 
 Spawning a map is done in two steps:
 
 - first, load a map asset / a map file using the Bevy `AssetServer`
-- then, spawn a `TiledMapBundle` containing a reference to this map asset
+- then, spawn a `TiledMapHandle` containing a reference to this map asset
 
 ```rust,no_run
 fn spawn_map(
@@ -18,10 +18,7 @@ fn spawn_map(
     let map_handle: Handle<TiledMap> = asset_server.load("map.tmx");
 
     // Then, spawn it, using default settings
-    commands.spawn(TiledMapBundle {
-        tiled_map: map_handle,
-        ..default()
-    });
+    commands.spawn(TiledMapHandle(map_handle));
 }
 ```
 
@@ -70,7 +67,7 @@ It means that if you updated some components (for instance, a tile color or an o
 It's useful to implement a level respawn for instance.
 
 Another use case is to load a new map over an existing one.
-An easy way to do that is to just spawn the `TiledMapBundle` over an existing map.
+An easy way to do that is to just spawn a new `TiledMapHandle` over an existing map.
 
 ```rust,no_run
 fn handle_reload(
@@ -79,10 +76,10 @@ fn handle_reload(
     maps_query: Query<Entity, With<TiledMapMarker>>,
 ) {
     if let Ok(entity) = maps_query.get_single() {
-        commands.entity(entity).insert(TiledMapBundle {
-            tiled_map: Handle<TiledMap> = asset_server.load("other_map.tmx"),
-            ..default()
-        });
+        commands.entity(entity)
+            .insert(
+                TiledMapHandle(asset_server.load("other_map.tmx"))
+            );
     }
 }
 ```

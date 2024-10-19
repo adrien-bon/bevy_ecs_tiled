@@ -24,7 +24,7 @@ fn main() {
 }
 ```
 
-Now, you can browse componentns from all entities spawned in your game.
+Now, you can browse components from all entities spawned in your game.
 
 More informations on the project [github page](https://github.com/jakobhellermann/bevy-inspector-egui).
 
@@ -69,7 +69,7 @@ fn main() {
 }
 ```
 
-For Rapier, you also need to enable a debug plugin:
+For Rapier, you need to enable a debug plugin:
 
 ```rust,no_run
 use bevy::prelude::*;
@@ -85,4 +85,4 @@ fn main() {
 }
 ```
 
-But you also need to enable either the `debug-render-2d` feature on `bevy_rapier2d` crate or the `rapier_debug` feature on `bevy_ecs_tiled`
+And you also need to enable either the `debug-render-2d` feature on `bevy_rapier2d` crate or the `rapier_debug` feature on `bevy_ecs_tiled`

@@ -8,8 +8,3 @@ pub mod command;
 pub mod export;
 pub mod import;
 pub mod load;
-
-/// Re-exports, notably derive macros
-pub mod prelude {
-    pub use crate::properties::*;
-}
