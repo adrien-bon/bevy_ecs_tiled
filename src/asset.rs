@@ -30,7 +30,7 @@ pub struct TiledMap {
     pub tilemap_textures: HashMap<usize, TilemapTexture>,
 
     #[cfg(feature = "user_properties")]
-    pub properties: DeserializedMapProperties,
+    pub(crate) properties: DeserializedMapProperties,
 
     // The offset into the tileset_images for each tile id within each tileset.
     #[cfg(not(feature = "atlas"))]

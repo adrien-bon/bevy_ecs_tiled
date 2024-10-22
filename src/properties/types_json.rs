@@ -1,16 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-#[test]
-fn deserialize() {
-    let file = std::fs::File::open("propertytypes2.json").unwrap();
-    let reader = std::io::BufReader::new(file);
-    let x: Vec<TypeImport> = serde_json::from_reader(reader).unwrap();
-    let s = serde_json::to_string(&x).unwrap();
-    assert_eq!(x, serde_json::from_str::<Vec<_>>(&s).unwrap());
-}
-
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
-pub struct TypeImport {
+pub(crate) struct TypeExport {
     pub id: u32,
     pub name: String,
     #[serde(flatten)]
@@ -19,14 +10,14 @@ pub struct TypeImport {
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub enum TypeData {
+pub(crate) enum TypeData {
     Enum(Enum),
     Class(Class),
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Class {
+pub(crate) struct Class {
     pub use_as: Vec<UseAs>,
     pub color: String,
     pub draw_fill: bool,
@@ -35,7 +26,7 @@ pub struct Class {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Member {
+pub(crate) struct Member {
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub property_type: Option<String>,
@@ -46,7 +37,7 @@ pub struct Member {
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Enum {
+pub(crate) struct Enum {
     pub storage_type: StorageType,
     pub values: Vec<String>,
     pub values_as_flags: bool,
@@ -54,14 +45,14 @@ pub struct Enum {
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum StorageType {
+pub(crate) enum StorageType {
     String,
     Int,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum FieldType {
+pub(crate) enum FieldType {
     Bool,
     Color,
     Float,
@@ -74,7 +65,7 @@ pub enum FieldType {
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum UseAs {
+pub(crate) enum UseAs {
     Property,
     Map,
     Layer,
@@ -95,5 +86,19 @@ impl UseAs {
             UseAs::Object,
             UseAs::Tile,
         ]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const TEST_STRING: &str = "";
+
+    #[test]
+    fn deserialize() {
+        let x: Vec<TypeExport> = serde_json::from_str(TEST_STRING).unwrap();
+        let s = serde_json::to_string(&x).unwrap();
+        assert_eq!(x, serde_json::from_str::<Vec<_>>(&s).unwrap());
     }
 }

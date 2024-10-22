@@ -10,20 +10,20 @@ use std::path::PathBuf;
 use tiled::{LayerType, PropertyValue, TileId};
 
 #[derive(Debug, Clone)]
-pub struct DeserializedMapProperties<const HYDRATED: bool = false> {
-    pub map: DeserializedProperties,
-    pub layers: HashMap<u32, DeserializedProperties>,
-    pub tiles: HashMap<String, HashMap<TileId, DeserializedProperties>>,
-    pub objects: HashMap<u32, DeserializedProperties>,
+pub(crate) struct DeserializedMapProperties<const HYDRATED: bool = false> {
+    pub(crate) map: DeserializedProperties,
+    pub(crate) layers: HashMap<u32, DeserializedProperties>,
+    pub(crate) tiles: HashMap<String, HashMap<TileId, DeserializedProperties>>,
+    pub(crate) objects: HashMap<u32, DeserializedProperties>,
 }
 
 impl DeserializedMapProperties<false> {
-    pub fn load(
+    pub(crate) fn load(
         map: &tiled::Map,
         registry: &TypeRegistry,
         load_context: &mut LoadContext<'_>,
     ) -> Self {
-        let map_props = DeserializedProperties::load(&map.properties, registry, load_context);
+        let map_props = DeserializedProperties::load(&map.properties, registry, load_context, true);
 
         let mut objects = HashMap::new();
         let mut layers = HashMap::new();
@@ -31,7 +31,7 @@ impl DeserializedMapProperties<false> {
         while let Some(layer) = to_process.pop() {
             layers.insert(
                 layer.id(),
-                DeserializedProperties::load(&layer.properties, registry, load_context),
+                DeserializedProperties::load(&layer.properties, registry, load_context, false),
             );
             match layer.layer_type() {
                 LayerType::Objects(object) => {
@@ -42,6 +42,7 @@ impl DeserializedMapProperties<false> {
                                 &object.properties,
                                 registry,
                                 load_context,
+                                false,
                             ),
                         );
                     }
@@ -63,7 +64,12 @@ impl DeserializedMapProperties<false> {
                         .map(|(id, t)| {
                             (
                                 id,
-                                DeserializedProperties::load(&t.properties, registry, load_context),
+                                DeserializedProperties::load(
+                                    &t.properties,
+                                    registry,
+                                    load_context,
+                                    false,
+                                ),
                             )
                         })
                         .collect(),
@@ -79,7 +85,10 @@ impl DeserializedMapProperties<false> {
         }
     }
 
-    pub fn hydrate(mut self, entity_map: &HashMap<u32, Entity>) -> DeserializedMapProperties<true> {
+    pub(crate) fn hydrate(
+        mut self,
+        entity_map: &HashMap<u32, Entity>,
+    ) -> DeserializedMapProperties<true> {
         self.map.hydrate(entity_map);
         for (_, layer) in self.layers.iter_mut() {
             layer.hydrate(entity_map);
@@ -104,8 +113,8 @@ impl DeserializedMapProperties<false> {
 
 /// Properties for an entity deserialized from a [`Properties`](tiled::Properties)
 #[derive(Debug)]
-pub struct DeserializedProperties {
-    pub properties: Vec<Box<dyn Reflect>>,
+pub(crate) struct DeserializedProperties {
+    pub(crate) properties: Vec<Box<dyn Reflect>>,
 }
 
 impl Clone for DeserializedProperties {
@@ -117,10 +126,11 @@ impl Clone for DeserializedProperties {
 }
 
 impl DeserializedProperties {
-    pub fn load(
+    fn load(
         properties: &tiled::Properties,
         registry: &TypeRegistry,
         load_cx: &mut LoadContext<'_>,
+        resources_allowed: bool,
     ) -> Self {
         let mut props: Vec<Box<dyn Reflect>> = Vec::new();
 
@@ -146,15 +156,18 @@ impl DeserializedProperties {
                 continue;
             };
 
-            let _is_component;
-
-            if reg.data::<ReflectComponent>().is_some() || reg.data::<ReflectBundle>().is_some() {
-                _is_component = true;
-            } else if reg.data::<ReflectResource>().is_some() {
-                _is_component = false;
-            } else {
-                bevy::log::warn!("error deserializing property: type `{property_type}` is not registered as a Component, Bundle, or Resource");
-                continue;
+            if reg.data::<ReflectComponent>().is_none() && reg.data::<ReflectBundle>().is_none() {
+                if reg.data::<ReflectResource>().is_some() {
+                    if !resources_allowed {
+                        bevy::log::warn!(
+                            "error deserializing property: Resources are not allowed here"
+                        );
+                        continue;
+                    }
+                } else {
+                    bevy::log::warn!("error deserializing property: type `{property_type}` is not registered as a Component, Bundle, or Resource");
+                    continue;
+                }
             }
 
             match Self::deserialize_property(property, reg, registry, load_cx) {
@@ -170,7 +183,7 @@ impl DeserializedProperties {
         Self { properties: props }
     }
 
-    pub fn deserialize_property(
+    fn deserialize_property(
         property: PropertyValue,
         registration: &TypeRegistration,
         registry: &TypeRegistry,
@@ -246,20 +259,23 @@ impl DeserializedProperties {
                 out.set_represented_type(Some(registration.type_info()));
 
                 for field in info.iter() {
-                    let Some(pv) = properties.remove(field.name()) else {
+                    let value;
+                    if let Some(pv) = properties.remove(field.name()) {
+                        let Some(reg) = registry.get(field.type_id()) else {
+                            return Err(format!("type `{}` is not registered", field.type_path()));
+                        };
+                        value = Self::deserialize_property(pv, reg, registry, load_cx)?;
+                    } else if let Some(default_value) =
+                        default_value_from_type_path(registry, field.type_path())
+                    {
+                        value = default_value;
+                    } else {
                         return Err(format!(
                             "missing property on `{}`: `{}`",
                             info.type_path(),
                             field.name()
                         ));
-                    };
-
-                    let Some(reg) = registry.get(field.type_id()) else {
-                        return Err(format!("type `{}` is not registered", field.type_path()));
-                    };
-
-                    let value = Self::deserialize_property(pv, reg, registry, load_cx)?;
-
+                    }
                     out.insert_boxed(field.name(), value);
                 }
 
@@ -270,19 +286,23 @@ impl DeserializedProperties {
                 out.set_represented_type(Some(registration.type_info()));
 
                 for field in info.iter() {
-                    let Some(pv) = properties.remove(&field.index().to_string()) else {
+                    let value;
+                    if let Some(pv) = properties.remove(&field.index().to_string()) {
+                        let Some(reg) = registry.get(field.type_id()) else {
+                            return Err(format!("type `{}` is not registered", field.type_path()));
+                        };
+                        value = Self::deserialize_property(pv, reg, registry, load_cx)?;
+                    } else if let Some(default_value) =
+                        default_value_from_type_path(registry, field.type_path())
+                    {
+                        value = default_value;
+                    } else {
                         return Err(format!(
                             "missing property on `{}`: `{}`",
                             info.type_path(),
                             field.index()
                         ));
-                    };
-
-                    let Some(reg) = registry.get(field.type_id()) else {
-                        return Err(format!("type `{}` is not registered", field.type_path()));
-                    };
-
-                    let value = Self::deserialize_property(pv, reg, registry, load_cx)?;
+                    }
 
                     out.insert_boxed(value);
                 }
@@ -294,19 +314,23 @@ impl DeserializedProperties {
                 out.set_represented_type(Some(registration.type_info()));
 
                 for field in info.iter() {
-                    let Some(pv) = properties.remove(&field.index().to_string()) else {
+                    let value;
+                    if let Some(pv) = properties.remove(&field.index().to_string()) {
+                        let Some(reg) = registry.get(field.type_id()) else {
+                            return Err(format!("type `{}` is not registered", field.type_path()));
+                        };
+                        value = Self::deserialize_property(pv, reg, registry, load_cx)?;
+                    } else if let Some(default_value) =
+                        default_value_from_type_path(registry, field.type_path())
+                    {
+                        value = default_value;
+                    } else {
                         return Err(format!(
                             "missing property on `{}`: `{}`",
                             info.type_path(),
                             field.index()
                         ));
-                    };
-
-                    let Some(reg) = registry.get(field.type_id()) else {
-                        return Err(format!("type `{}` is not registered", field.type_path()));
-                    };
-
-                    let value = Self::deserialize_property(pv, reg, registry, load_cx)?;
+                    }
 
                     out.insert_boxed(value);
                 }
@@ -356,11 +380,17 @@ impl DeserializedProperties {
         }
     }
 
-    pub fn hydrate(&mut self, obj_entity_map: &HashMap<u32, Entity>) {
+    pub(crate) fn hydrate(&mut self, obj_entity_map: &HashMap<u32, Entity>) {
         for resource in self.properties.iter_mut() {
             hydrate(resource.as_mut(), obj_entity_map);
         }
     }
+}
+
+fn default_value_from_type_path(registry: &TypeRegistry, path: &str) -> Option<Box<dyn Reflect>> {
+    registry
+        .get_with_type_path(path)
+        .and_then(|reg| reg.data::<ReflectDefault>().map(|v| v.default()))
 }
 
 fn object_ref(
@@ -387,11 +417,6 @@ fn object_ref(
     } else {
         None
     }
-}
-
-#[test]
-fn clone_s() {
-    println!("{}", Color::type_path());
 }
 
 fn hydrate(object: &mut dyn Reflect, obj_entity_map: &HashMap<u32, Entity>) {
@@ -432,7 +457,6 @@ fn hydrate(object: &mut dyn Reflect, obj_entity_map: &HashMap<u32, Entity>) {
             }
         }
         ReflectMut::Map(s) => {
-            // todo:
             for i in 0..s.len() {
                 let (k, v) = s.get_at_mut(i).unwrap();
                 if object_ref(k, obj_entity_map).is_some() {

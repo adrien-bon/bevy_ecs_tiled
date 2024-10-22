@@ -6,7 +6,7 @@ use bevy::prelude::{AppTypeRegistry, Entity, ReflectComponent, ReflectResource, 
 use bevy::reflect::{Reflect, TypeRegistry};
 use std::ops::Deref;
 
-pub trait PropertiesCommandExt {
+pub(crate) trait PropertiesCommandExt {
     fn insert_properties(&mut self, properties: DeserializedProperties) -> &mut Self;
 }
 
@@ -19,9 +19,9 @@ impl PropertiesCommandExt for EntityCommands<'_> {
     }
 }
 
-pub struct InsertProperties {
-    pub entity: Entity,
-    pub properties: DeserializedProperties,
+pub(crate) struct InsertProperties {
+    pub(crate) entity: Entity,
+    pub(crate) properties: DeserializedProperties,
 }
 
 impl Command for InsertProperties {

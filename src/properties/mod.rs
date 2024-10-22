@@ -4,7 +4,7 @@
 //!
 //! See the [associated example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/user_properties.rs) or the [dedicated book section](https://adrien-bon.github.io/bevy_ecs_tiled/guides/properties.html) for more information.
 
-pub mod command;
-pub mod export;
-pub mod import;
-pub mod load;
+pub(crate) mod command;
+pub(crate) mod export;
+pub(crate) mod load;
+pub(crate) mod types_json;

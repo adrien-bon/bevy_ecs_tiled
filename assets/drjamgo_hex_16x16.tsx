@@ -3,69 +3,136 @@
  <image source="tiles/drjamgo_hex_16x16.png" width="64" height="80"/>
  <tile id="0">
   <properties>
-   <property name="BiomeInfos" type="class" propertytype="user_properties::BiomeInfos">
+   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
     <properties>
-     <property name="ty" propertytype="user_properties::BiomeType" value="Plain"/>
+     <property name="ty" propertytype="properties_basic::BiomeType" value="Plain"/>
     </properties>
    </property>
   </properties>
  </tile>
  <tile id="1">
   <properties>
-   <property name="BiomeInfos" type="class" propertytype="user_properties::BiomeInfos">
+   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
     <properties>
-     <property name="ty" propertytype="user_properties::BiomeType" value="Forest"/>
+     <property name="ty" propertytype="properties_basic::BiomeType" value="Forest"/>
     </properties>
    </property>
   </properties>
  </tile>
  <tile id="2">
   <properties>
-   <property name="BiomeInfos" type="class" propertytype="user_properties::BiomeInfos">
+   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
     <properties>
      <property name="block_line_of_sight" type="bool" value="true"/>
-     <property name="ty" propertytype="user_properties::BiomeType" value="Mountain"/>
+     <property name="ty" propertytype="properties_basic::BiomeType" value="Mountain"/>
     </properties>
    </property>
   </properties>
  </tile>
  <tile id="3">
   <properties>
-   <property name="BiomeInfos" type="class" propertytype="user_properties::BiomeInfos">
+   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
     <properties>
-     <property name="ty" propertytype="user_properties::BiomeType" value="Water"/>
+     <property name="ty" propertytype="properties_basic::BiomeType" value="Water"/>
+    </properties>
+   </property>
+  </properties>
+ </tile>
+ <tile id="4">
+  <properties>
+   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
+    <properties>
+     <property name="ty" propertytype="properties_basic::BiomeType" value="Plain"/>
     </properties>
    </property>
   </properties>
  </tile>
  <tile id="5">
   <properties>
-   <property name="BiomeInfos" type="class" propertytype="user_properties::BiomeInfos">
+   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
     <properties>
-     <property name="ty" propertytype="user_properties::BiomeType" value="Desert"/>
+     <property name="ty" propertytype="properties_basic::BiomeType" value="Desert"/>
     </properties>
    </property>
   </properties>
  </tile>
  <tile id="6">
   <properties>
-   <property name="BiomeInfos" type="class" propertytype="user_properties::BiomeInfos">
+   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
     <properties>
-     <property name="ty" propertytype="user_properties::BiomeType" value="Water"/>
+     <property name="ty" propertytype="properties_basic::BiomeType" value="Water"/>
     </properties>
    </property>
   </properties>
  </tile>
  <tile id="7">
   <properties>
-   <property name="BiomeInfos" type="class" propertytype="user_properties::BiomeInfos">
+   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
     <properties>
-     <property name="ty" propertytype="user_properties::BiomeType" value="Water"/>
+     <property name="ty" propertytype="properties_basic::BiomeType" value="Water"/>
     </properties>
    </property>
   </properties>
  </tile>
+ <tile id="8">
+  <properties>
+   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
+  </properties>
+ </tile>
+ <tile id="9">
+  <properties>
+   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
+  </properties>
+ </tile>
+ <tile id="10">
+  <properties>
+   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
+  </properties>
+ </tile>
+ <tile id="11">
+  <properties>
+   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
+  </properties>
+ </tile>
+ <tile id="12">
+  <properties>
+   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
+  </properties>
+ </tile>
+ <tile id="13">
+  <properties>
+   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
+  </properties>
+ </tile>
+ <tile id="14">
+  <properties>
+   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
+  </properties>
+ </tile>
+ <tile id="15">
+  <properties>
+   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
+  </properties>
+ </tile>
+ <tile id="16">
+  <properties>
+   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
+  </properties>
+ </tile>
+ <tile id="17">
+  <properties>
+   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
+  </properties>
+ </tile>
+ <tile id="18">
+  <properties>
+   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
+  </properties>
+ </tile>
  <tile id="19">
+  <properties>
+   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
+  </properties>
   <objectgroup draworder="index" id="2">
    <object id="1" x="2" y="2.54545" width="12" height="10.5455"/>
   </objectgroup>
