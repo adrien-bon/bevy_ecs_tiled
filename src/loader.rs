@@ -674,7 +674,6 @@ fn load_finite_tiles_layer(
             if let Some(hexsidelength) = tiled_map.map.hex_side_length {
                 let hexsidelength = hexsidelength as f32;
                 match _map_type {
-                    TilemapType::Square => {} // Do nothing
                     TilemapType::Hexagon(hex_coord_system) => match hex_coord_system {
                         HexCoordSystem::RowEven => {
                             // Y Odd
@@ -705,8 +704,18 @@ fn load_finite_tiles_layer(
                         HexCoordSystem::Row => todo!(), // TODO: Do not know how to test it
                         HexCoordSystem::Column => todo!(),
                     },
-                    TilemapType::Isometric(_iso_coord_system) => {} // TODO: Not fixd in this commit
+                    _ => {}, // Do nothing
                 };
+            } else {
+                if let TilemapType::Isometric(iso_coord_system) = _map_type {
+                    match iso_coord_system {
+                        IsoCoordSystem::Diamond => {
+                            x = tile_pos.x as f32 * (grid_size.x/2.) + tile_pos.y as f32 * (grid_size.x/2.);
+                            y = tile_pos.y as f32 * (grid_size.y/2.) - tile_pos.x as f32 * (grid_size.y/2.);
+                        },
+                        IsoCoordSystem::Staggered => todo!("Not supported!"),
+                    }
+                }
             }
 
             let tile_entity = commands

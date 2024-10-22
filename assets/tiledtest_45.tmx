@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.8" tiledversion="1.11.0" orientation="isometric" renderorder="right-down" width="4" height="4" tilewidth="64" tileheight="32" infinite="0" nextlayerid="2" nextobjectid="1">
+ <tileset firstgid="1" source="tiledtest64x32.tsx"/>
+ <layer id="1" name="圖塊層 1" width="4" height="4">
+  <data encoding="csv">
+1,1,1,1,
+1,2,2,1,
+1,2,2,1,
+1,1,1,1
+</data>
+ </layer>
+</map>
