@@ -28,18 +28,18 @@
  <objectgroup id="3" name="Object Layer ">
   <object id="1" name="Player spawn" x="98.0258" y="124.343" width="11.1064" height="7.24328">
    <properties>
-    <property name="SpawnInfos" type="class" propertytype="user_properties::SpawnInfos">
+    <property name="SpawnInfos" type="class" propertytype="properties_basic::SpawnInfos">
      <properties>
-      <property name="ty" propertytype="user_properties::SpawnType" value="Player"/>
+      <property name="ty" propertytype="properties_basic::SpawnType" value="Player"/>
      </properties>
     </property>
    </properties>
   </object>
   <object id="4" name="Enemy spawn" x="180.358" y="147.522" width="9.89915" height="9.65771">
    <properties>
-    <property name="SpawnInfos" type="class" propertytype="user_properties::SpawnInfos">
+    <property name="SpawnInfos" type="class" propertytype="properties_basic::SpawnInfos">
      <properties>
-      <property name="ty" propertytype="user_properties::SpawnType" value="Enemy"/>
+      <property name="ty" propertytype="properties_basic::SpawnType" value="Enemy"/>
      </properties>
     </property>
    </properties>

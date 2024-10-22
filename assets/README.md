@@ -2,7 +2,6 @@
 
 | Map file | Tileset(s) | Asset(s) | Map type | Objects in map ? |
 |----------|------------|----------|----------|------------------|
-| `colliders_and_user_properties.tmx` | `Tileset1.tsx` | Images collection in `tiles/` | Finite orthogonal | Yes |
 | `finite_embedded.tmx` | N/A (embedded in map) | Images collection in `tiles/` | Finite orthogonal | No |
 | `finite.tmx` | `Tileset1.tsx` | Images collection in `tiles/` | Finite orthogonal | No |
 | `hex_map_flat_top_even.tmx` | `simple hex flat top.tsx` | Images collection in `tiles/simple hex flat top/` | Finite hexagonal flat top (even index) | Yes |

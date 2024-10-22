@@ -14,7 +14,8 @@ target/
 .vscode
 .DS_Store
 .idea
-/assets/*.tiled-session
+*.tiled-session
+*.tiled-project
 
 # Ignore local .devcontainer configuration
 .devcontainer

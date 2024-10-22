@@ -47,20 +47,21 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 // They will be exported in the Tiled .json file so they can be loaded then used inside Tiled.
 
 #[derive(Component, Default, Debug, Reflect)]
-#[reflect(Component)]
+#[reflect(Component, Default)]
 struct BiomeInfos {
     ty: BiomeType,
     block_line_of_sight: bool,
 }
 
 #[derive(Component, Default, Debug, Reflect)]
-#[reflect(Component)]
+#[reflect(Component, Default)]
 struct SpawnInfos {
     ty: SpawnType,
 }
 
 // We can also define custom enums
 #[derive(Default, Reflect, Debug)]
+#[reflect(Default)]
 enum BiomeType {
     #[default]
     Unknown,
@@ -72,6 +73,7 @@ enum BiomeType {
 }
 
 #[derive(Default, Reflect, Debug)]
+#[reflect(Default)]
 enum SpawnType {
     #[default]
     Unknown,
