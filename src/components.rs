@@ -23,8 +23,10 @@ pub struct TiledMapSettings {
 impl Default for TiledMapSettings {
     fn default() -> Self {
         Self {
+            layer_positioning: LayerPositioning::default(),
             layer_z_offset: 100.,
-            ..default()
+            map_initial_transform: Transform::default(),
+            map_initial_visibility: Visibility::Inherited,
         }
     }
 }
