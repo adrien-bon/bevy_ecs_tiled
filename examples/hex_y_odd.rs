@@ -1,9 +1,9 @@
 //! This example cycle through all four kinds of hexagonal maps and display debug informations about Tiled objects.
 
+use avian2d::prelude::*;
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
-use avian2d::prelude::*;
 
 mod helper;
 

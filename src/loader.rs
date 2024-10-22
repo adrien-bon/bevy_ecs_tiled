@@ -682,9 +682,6 @@ fn load_finite_tiles_layer(
                                 - (tile_pos.y % 2) as f32 * grid_size.x / 2.;
                             y = tile_pos.y as f32
                                 * (grid_size.y - (grid_size.y - hexsidelength) / 2.);
-                            if map_size.y % 2 != 0 {
-                                
-                            }
                         }
                         HexCoordSystem::RowOdd => {
                             // Y Even
