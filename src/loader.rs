@@ -743,24 +743,6 @@ fn load_finite_tiles_layer(
                 .insert(TiledMapTile)
                 .id();
 
-            #[cfg(feature = "debug_render")]
-            {
-                commands
-                    .spawn(Text2dBundle {
-                        text: Text::from_section(
-                            format!("{0}, {1}", tile_pos.x, tile_pos.y),
-                            TextStyle {
-                                color: Color::srgb(0.25, 0.75, 0.25),
-                                font_size: 12.0,
-                                ..default()
-                            },
-                        ),
-                        transform: Transform::from_xyz(0., 0., 100.), // Set it to top
-                        ..default()
-                    })
-                    .set_parent(tile_entity);
-            }
-
             handle_special_tile(
                 commands,
                 tile_entity,

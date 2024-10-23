@@ -34,9 +34,6 @@ wasm = ["bevy_rapier2d/wasm-bindgen", "tiled/wasm"]
 # User Properties
 user_properties = ["dep:bevy_ecs_tiled_macros"]
 
-# Debug
-debug_render = []
-
 [dependencies]
 bevy = { version = "0.14.2", default-features = false, features = ["bevy_render", "bevy_gizmos", "png"] }
 bevy_ecs_tilemap = "0.14.0"
