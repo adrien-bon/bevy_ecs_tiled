@@ -58,7 +58,6 @@ fn draw_debug_arrow(
     for transform in q_objects.iter() {
         let pos = Vec2::new(transform.translation().x, transform.translation().y);
         gizmos.arrow_2d(pos + config.arrow_length, pos, config.color);
-        
     }
 }
 
