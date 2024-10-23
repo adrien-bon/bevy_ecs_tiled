@@ -58,10 +58,13 @@ fn draw_debug_arrow(
     for transform in q_objects.iter() {
         let pos = Vec2::new(transform.translation().x, transform.translation().y);
         gizmos.arrow_2d(pos + config.arrow_length, pos, config.color);
+        
     }
 }
 
-fn draw_debug_pos(mut commands: Commands, q_pos: Query<(Entity, &TilePos)>) {
+#[derive(Component)]
+struct DebugPos;
+fn draw_debug_pos(mut commands: Commands, q_pos: Query<(Entity, &TilePos), Without<DebugPos>>) {
     for (e, tile_pos) in q_pos.iter() {
         commands
             .spawn(Text2dBundle {
@@ -77,5 +80,6 @@ fn draw_debug_pos(mut commands: Commands, q_pos: Query<(Entity, &TilePos)>) {
                 ..default()
             })
             .set_parent(e);
+        commands.entity(e).insert(DebugPos);
     }
 }
