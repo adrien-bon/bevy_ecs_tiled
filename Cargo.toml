@@ -40,7 +40,7 @@ bevy_ecs_tilemap = "0.14.0"
 futures-lite = "2.3.0"
 log = "0.4.22"
 thiserror = "1.0.63"
-tiled = "0.12.1"
+tiled = { git = "https://github.com/mapeditor/rs-tiled.git", rev = "31783f07d421b5d3130d81d63d1b2081d8c0021f" }
 
 # Optional dependencies, enabled via features.
 bevy_rapier2d = { version = "0.27.0", optional = true }
@@ -51,7 +51,7 @@ bevy_ecs_tiled_macros = { version = "0.1.0", optional = true, path = "macros" }
 bevy_rapier2d = { version = "0.27.0", features = [
     "wasm-bindgen",
 ], optional = true }
-tiled = { version = "0.12.1", features = ["wasm"] }
+tiled = { git = "https://github.com/mapeditor/rs-tiled.git", rev = "31783f07d421b5d3130d81d63d1b2081d8c0021f", features = ["wasm"] }
 
 # docs.rs-specific configuration
 [package.metadata.docs.rs]
@@ -130,10 +130,3 @@ name = "multiple_tilesets"
 [[example]]
 name = "custom_physics"
 required-features = ["physics"]
-
-[[example]]
-name = "hex_y_odd"
-required-features = ["avian"]
-
-[patch.crates-io]
-tiled = { git = "https://github.com/mapeditor/rs-tiled.git", branch = "next" }

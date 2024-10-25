@@ -1,15 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.10" tiledversion="1.10.2" name="drjamgo_hex_16x16" tilewidth="16" tileheight="16" tilecount="20" columns="4">
+<tileset version="1.10" tiledversion="1.11.0" name="drjamgo_hex_16x16" tilewidth="16" tileheight="16" tilecount="20" columns="4">
  <image source="tiles/drjamgo_hex_16x16.png" width="64" height="80"/>
  <tile id="2" type="TileBundle">
   <properties>
-   <property name="BiomeInfos" type="class" propertytype="BiomeInfos">
-    <properties>
-     <property name="BlockLineOfSight" type="bool" value="true"/>
-     <property name="Type" propertytype="BiomeType" value="Mountain"/>
-    </properties>
-   </property>
+   <property name="BiomeInfos" type="class"/>
   </properties>
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="3.15789" y="3.52941" width="9.47368" height="8.35913"/>
+  </objectgroup>
+ </tile>
+ <tile id="10">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="5.387" y="4.27245" width="7.43034" height="7.80186">
+    <ellipse/>
+   </object>
+  </objectgroup>
  </tile>
  <tile id="19" type="TileComponent">
   <properties>

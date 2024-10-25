@@ -673,8 +673,8 @@ fn load_finite_tiles_layer(
             // So this fix only happened when map contain this value.
             if let Some(hexsidelength) = tiled_map.map.hex_side_length {
                 let hexsidelength = hexsidelength as f32;
-                match _map_type {
-                    TilemapType::Hexagon(hex_coord_system) => match hex_coord_system {
+                if let TilemapType::Hexagon(hex_coord_system) = _map_type {
+                    match hex_coord_system {
                         HexCoordSystem::RowEven => {
                             // Y Odd
                             x = tile_pos.x as f32 * grid_size.x
@@ -701,21 +701,19 @@ fn load_finite_tiles_layer(
                             y = tile_pos.y as f32 * grid_size.y
                                 + (tile_pos.x % 2) as f32 * (grid_size.y / 2.);
                         }
-                        HexCoordSystem::Row => todo!(), // TODO: Do not know how to test it
-                        HexCoordSystem::Column => todo!(),
-                    },
-                    _ => {} // Do nothing
-                };
-            } else {
-                if let TilemapType::Isometric(iso_coord_system) = _map_type {
-                    match iso_coord_system {
-                        IsoCoordSystem::Diamond => {
-                            x = tile_pos.x as f32 * (grid_size.x / 2.)
-                                + tile_pos.y as f32 * (grid_size.x / 2.);
-                            y = tile_pos.y as f32 * (grid_size.y / 2.)
-                                - tile_pos.x as f32 * (grid_size.y / 2.);
-                        }
-                        IsoCoordSystem::Staggered => todo!("Not supported!"),
+                        _ => {} // Do nothing
+                    }
+                }
+            } else if let TilemapType::Isometric(iso_coord_system) = _map_type {
+                match iso_coord_system {
+                    IsoCoordSystem::Diamond => {
+                        x = tile_pos.x as f32 * (grid_size.x / 2.)
+                            + tile_pos.y as f32 * (grid_size.x / 2.);
+                        y = tile_pos.y as f32 * (grid_size.y / 2.)
+                            - tile_pos.x as f32 * (grid_size.y / 2.);
+                    }
+                    IsoCoordSystem::Staggered => {
+                        warn!("Isometric (Staggered) map is not supported");
                     }
                 }
             }

@@ -6,17 +6,32 @@ use bevy_ecs_tilemap::prelude::*;
 
 mod helper;
 
+#[cfg(feature = "avian")]
+use avian2d::prelude::*;
+
+#[cfg(feature = "rapier")]
+use bevy_rapier2d::prelude::*;
+
 fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins)
+    let mut app = App::new();
+    app.add_plugins(DefaultPlugins)
         .add_plugins(TilemapPlugin)
         .add_plugins(TiledMapPlugin)
         // Enable debug informations about Tiled objects
         .add_plugins(TiledMapDebugPlugin::default())
         .add_plugins(helper::HelperPlugin)
         .add_systems(Startup, startup)
-        .add_systems(Update, switch_map)
-        .run();
+        .add_systems(Update, switch_map);
+
+    #[cfg(feature = "avian")]
+    app.add_plugins(PhysicsPlugins::default().with_length_unit(100.0))
+        .add_plugins(PhysicsDebugPlugin::default());
+
+    #[cfg(feature = "rapier")]
+    app.add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
+        .add_plugins(RapierDebugRenderPlugin::default());
+
+    app.run();
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
