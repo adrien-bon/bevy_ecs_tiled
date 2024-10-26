@@ -372,11 +372,6 @@ fn load_finite_tiles_layer(
                     },
                     ..Default::default()
                 })
-                .insert(SpatialBundle::from_transform(Transform::from_xyz(
-                    tile_pos.x as f32 * grid_size.x,
-                    tile_pos.y as f32 * grid_size.y,
-                    0.0,
-                )))
                 .set_parent(layer_for_tileset_entity)
                 .insert(Name::new(format!(
                     "TiledMapTile({},{})",
@@ -394,6 +389,10 @@ fn load_finite_tiles_layer(
                 layer_tile.id(),
                 mapped_x,
                 mapped_y,
+                Vec2::new(
+                    tile_pos.x as f32 * grid_size.x,
+                    tile_pos.y as f32 * grid_size.y,
+                ),
                 entity_map,
                 event_list,
             );
@@ -507,11 +506,6 @@ fn load_infinite_tiles_layer(
                         },
                         ..Default::default()
                     })
-                    .insert(SpatialBundle::from_transform(Transform::from_xyz(
-                        tile_pos.x as f32 * grid_size.x,
-                        tile_pos.y as f32 * grid_size.y,
-                        0.0,
-                    )))
                     .set_parent(layer_for_tileset_entity)
                     .insert(Name::new(format!("Tile({},{})", tile_pos.x, tile_pos.y)))
                     .insert(TiledMapTile)
@@ -525,6 +519,10 @@ fn load_infinite_tiles_layer(
                     layer_tile.id(),
                     chunk_pos.0 * ChunkData::WIDTH as i32 + x as i32,
                     chunk_pos.1 * ChunkData::HEIGHT as i32 + y as i32,
+                    Vec2::new(
+                        tile_pos.x as f32 * grid_size.x,
+                        tile_pos.y as f32 * grid_size.y,
+                    ),
                     entity_map,
                     event_list,
                 );
@@ -615,6 +613,7 @@ fn handle_special_tile(
     tile_id: TileId,
     x: i32,
     y: i32,
+    position: Vec2,
     entity_map: &mut HashMap<(String, TileId), Vec<Entity>>,
     event_list: &mut Vec<TiledSpecialTileCreated>,
 ) {
@@ -649,6 +648,7 @@ fn handle_special_tile(
             tile_entity,
             x,
             y,
+            position,
         ));
     }
 }
