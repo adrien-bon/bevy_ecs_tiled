@@ -188,6 +188,16 @@ fn collider_from_tile<
         .as_ref()
         .and_then(|tile| tile.collision.as_ref())
     {
+        // We need to add a Transform to our tile so Transform from the map and layers
+        // will be propagated down to the collider(s)
+        commands
+            .entity(trigger.event().tile)
+            .insert(TransformBundle::from_transform(Transform::from_xyz(
+                trigger.event().position.x,
+                trigger.event().position.y,
+                0.0,
+            )));
+
         for (object_id, object_data) in collision.object_data().iter().enumerate() {
             if objects_filter.contains(&object_data.name) {
                 collider::spawn_collider::<T>(

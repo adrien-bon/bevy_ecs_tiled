@@ -120,6 +120,8 @@ pub struct TiledSpecialTileCreated {
     pub x: i32,
     /// Tile Y position in the layer
     pub y: i32,
+    /// Tile absolute position in Bevy space
+    pub position: Vec2,
 }
 
 impl TiledSpecialTileCreated {
@@ -129,6 +131,7 @@ impl TiledSpecialTileCreated {
         tile: Entity,
         x: i32,
         y: i32,
+        position: Vec2,
     ) -> Self {
         Self {
             map: layer.map,
@@ -139,6 +142,7 @@ impl TiledSpecialTileCreated {
             tile,
             x,
             y,
+            position,
         }
     }
 }
