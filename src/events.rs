@@ -5,6 +5,7 @@
 
 use crate::prelude::*;
 use bevy::prelude::*;
+use bevy_ecs_tilemap::prelude::*;
 use tiled::{Layer, LayerTile, Map, Object};
 
 /// Event sent when a Tiled map has finished loading
@@ -97,6 +98,18 @@ impl<'a> TiledObjectCreated {
             .get_object(self.object_id)
             .unwrap()
     }
+
+    /// Retrieve object world position (origin = top left).
+    pub fn world_position(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Vec2 {
+        let map = self.map(map_asset);
+        let object_data = self.object(map_asset);
+        from_tiled_coords_to_bevy(
+            Vec2::new(object_data.x, object_data.y),
+            &get_map_type(map),
+            &get_map_size(map),
+            &get_grid_size(map),
+        )
+    }
 }
 
 /// Event sent when a Tiled special tile has finished loading
@@ -116,12 +129,10 @@ pub struct TiledSpecialTileCreated {
     pub map_handle: Handle<TiledMap>,
     /// Layer ID
     pub layer_id: usize,
-    /// Tile X position in the layer
-    pub x: i32,
-    /// Tile Y position in the layer
-    pub y: i32,
-    /// Tile absolute position in Bevy space
-    pub position: Vec2,
+    /// Tile index for Tiled referential
+    pub tiled_index: IVec2,
+    /// Tile index for bevy_ecs_tilemap referential
+    pub tilemap_index: TilePos,
 }
 
 impl TiledSpecialTileCreated {
@@ -129,9 +140,8 @@ impl TiledSpecialTileCreated {
         layer: &TiledLayerCreated,
         layer_for_tileset: Entity,
         tile: Entity,
-        x: i32,
-        y: i32,
-        position: Vec2,
+        tiled_index: IVec2,
+        tilemap_index: TilePos,
     ) -> Self {
         Self {
             map: layer.map,
@@ -140,9 +150,8 @@ impl TiledSpecialTileCreated {
             map_handle: layer.map_handle.clone(),
             layer_for_tileset,
             tile,
-            x,
-            y,
-            position,
+            tiled_index,
+            tilemap_index,
         }
     }
 }
@@ -163,7 +172,14 @@ impl<'a> TiledSpecialTileCreated {
         self.layer(map_asset)
             .as_tile_layer()
             .unwrap()
-            .get_tile(self.x, self.y)
+            .get_tile(self.tiled_index.x, self.tiled_index.y)
             .unwrap()
+    }
+
+    /// Retrieve tile world position (origin = tile center).
+    pub fn world_position(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Vec2 {
+        let map = self.map(map_asset);
+        self.tilemap_index
+            .center_in_world(&get_grid_size(map), &get_map_type(map))
     }
 }

@@ -325,7 +325,6 @@ fn load_finite_tiles_layer(
     entity_map: &mut HashMap<(String, TileId), Vec<Entity>>,
     event_list: &mut Vec<TiledSpecialTileCreated>,
 ) -> TileStorage {
-    let grid_size = get_grid_size(&tiled_map.map);
     let map_size = get_map_size(&tiled_map.map);
     let mut tile_storage = TileStorage::empty(map_size);
     for x in 0..map_size.x {
@@ -382,17 +381,15 @@ fn load_finite_tiles_layer(
 
             handle_special_tile(
                 commands,
-                layer_infos,
-                layer_for_tileset_entity,
-                tile_entity,
+                TiledSpecialTileCreated::from_layer(
+                    layer_infos,
+                    layer_for_tileset_entity,
+                    tile_entity,
+                    IVec2::new(mapped_x, mapped_y),
+                    tile_pos,
+                ),
                 &tile,
                 layer_tile.id(),
-                mapped_x,
-                mapped_y,
-                Vec2::new(
-                    tile_pos.x as f32 * grid_size.x,
-                    tile_pos.y as f32 * grid_size.y,
-                ),
                 entity_map,
                 event_list,
             );
@@ -406,7 +403,7 @@ fn load_finite_tiles_layer(
 #[allow(clippy::too_many_arguments)]
 fn load_infinite_tiles_layer(
     commands: &mut Commands,
-    tiled_map: &TiledMap,
+    _tiled_map: &TiledMap,
     layer_infos: &TiledLayerCreated,
     layer_for_tileset_entity: Entity,
     infinite_layer: &InfiniteTileLayer,
@@ -415,8 +412,6 @@ fn load_infinite_tiles_layer(
     entity_map: &mut HashMap<(String, TileId), Vec<Entity>>,
     event_list: &mut Vec<TiledSpecialTileCreated>,
 ) -> (TileStorage, TilemapSize, (f32, f32)) {
-    let grid_size = get_grid_size(&tiled_map.map);
-
     // Determine top left coordinate so we can offset the map.
     let (topleft_x, topleft_y) = infinite_layer
         .chunks()
@@ -484,7 +479,7 @@ fn load_infinite_tiles_layer(
                     TilemapTexture::Single(_) => layer_tile.id(),
                     #[cfg(not(feature = "atlas"))]
                     TilemapTexture::Vector(_) =>
-                        *tiled_map.tile_image_offsets.get(&(tileset_index, layer_tile.id()))
+                        *_tiled_map.tile_image_offsets.get(&(tileset_index, layer_tile.id()))
                             .expect("The offset into to image vector should have been saved during the initial load."),
                     #[cfg(not(feature = "atlas"))]
                     _ => unreachable!()
@@ -512,17 +507,18 @@ fn load_infinite_tiles_layer(
                     .id();
                 handle_special_tile(
                     commands,
-                    layer_infos,
-                    layer_for_tileset_entity,
-                    tile_entity,
+                    TiledSpecialTileCreated::from_layer(
+                        layer_infos,
+                        layer_for_tileset_entity,
+                        tile_entity,
+                        IVec2::new(
+                            chunk_pos.0 * ChunkData::WIDTH as i32 + x as i32,
+                            chunk_pos.1 * ChunkData::HEIGHT as i32 + y as i32,
+                        ),
+                        tile_pos,
+                    ),
                     &tile,
                     layer_tile.id(),
-                    chunk_pos.0 * ChunkData::WIDTH as i32 + x as i32,
-                    chunk_pos.1 * ChunkData::HEIGHT as i32 + y as i32,
-                    Vec2::new(
-                        tile_pos.x as f32 * grid_size.x,
-                        tile_pos.y as f32 * grid_size.y,
-                    ),
                     entity_map,
                     event_list,
                 );
@@ -603,17 +599,11 @@ fn get_animated_tile(tile: &Tile) -> Option<AnimatedTile> {
     })
 }
 
-#[allow(clippy::too_many_arguments)]
 fn handle_special_tile(
     commands: &mut Commands,
-    layer_infos: &TiledLayerCreated,
-    layer_for_tileset_entity: Entity,
-    tile_entity: Entity,
+    tile_infos: TiledSpecialTileCreated,
     tile: &Tile,
     tile_id: TileId,
-    x: i32,
-    y: i32,
-    position: Vec2,
     entity_map: &mut HashMap<(String, TileId), Vec<Entity>>,
     event_list: &mut Vec<TiledSpecialTileCreated>,
 ) {
@@ -621,7 +611,7 @@ fn handle_special_tile(
 
     // Handle animated tiles
     if let Some(animated_tile) = get_animated_tile(tile) {
-        commands.entity(tile_entity).insert(animated_tile);
+        commands.entity(tile_infos.tile).insert(animated_tile);
     }
 
     // Handle custom tiles (with user properties)
@@ -630,9 +620,9 @@ fn handle_special_tile(
         entity_map
             .entry(key)
             .and_modify(|entities| {
-                entities.push(tile_entity);
+                entities.push(tile_infos.tile);
             })
-            .or_insert(vec![tile_entity]);
+            .or_insert(vec![tile_infos.tile]);
         is_special_tile = true;
     }
 
@@ -642,13 +632,6 @@ fn handle_special_tile(
     }
 
     if is_special_tile {
-        event_list.push(TiledSpecialTileCreated::from_layer(
-            layer_infos,
-            layer_for_tileset_entity,
-            tile_entity,
-            x,
-            y,
-            position,
-        ));
+        event_list.push(tile_infos);
     }
 }

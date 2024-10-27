@@ -183,18 +183,21 @@ fn collider_from_tile<
         .event()
         .layer(&map_asset)
         .as_tile_layer()
-        .and_then(|tile_layer| tile_layer.get_tile(trigger.event().x, trigger.event().y))
+        .and_then(|tile_layer| {
+            tile_layer.get_tile(trigger.event().tiled_index.x, trigger.event().tiled_index.y)
+        })
         .and_then(|layer_tile| layer_tile.get_tile())
         .as_ref()
         .and_then(|tile| tile.collision.as_ref())
     {
         // We need to add a Transform to our tile so Transform from the map and layers
         // will be propagated down to the collider(s)
+        let world_position = trigger.event().world_position(&map_asset);
         commands
             .entity(trigger.event().tile)
             .insert(TransformBundle::from_transform(Transform::from_xyz(
-                trigger.event().position.x,
-                trigger.event().position.y,
+                world_position.x,
+                world_position.y,
                 0.0,
             )));
 
@@ -209,8 +212,8 @@ fn collider_from_tile<
                         entity: trigger.event().tile,
                         ty: TiledColliderSourceType::new_tile(
                             trigger.event().layer_id,
-                            trigger.event().x,
-                            trigger.event().y,
+                            trigger.event().tiled_index.x,
+                            trigger.event().tiled_index.y,
                             object_id,
                         ),
                     },

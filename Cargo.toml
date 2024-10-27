@@ -102,6 +102,10 @@ name = "physics_rapier_settings"
 required-features = ["rapier_debug"]
 
 [[example]]
+name = "physics_rapier_orientation"
+required-features = ["rapier_debug"]
+
+[[example]]
 name = "physics_rapier_controller"
 required-features = ["rapier_debug"]
 
@@ -111,6 +115,10 @@ required-features = ["avian"]
 
 [[example]]
 name = "physics_avian_controller"
+required-features = ["avian"]
+
+[[example]]
+name = "physics_avian_orientation"
 required-features = ["avian"]
 
 [[example]]
