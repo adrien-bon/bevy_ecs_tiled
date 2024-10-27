@@ -93,12 +93,24 @@ impl UseAs {
 mod tests {
     use super::*;
 
-    const TEST_STRING: &str = "";
-
     #[test]
-    fn deserialize() {
-        let x: Vec<TypeExport> = serde_json::from_str(TEST_STRING).unwrap();
-        let s = serde_json::to_string(&x).unwrap();
-        assert_eq!(x, serde_json::from_str::<Vec<_>>(&s).unwrap());
+    fn serialize() {
+        let test = TypeExport {
+            id: 0,
+            name: "test".to_string(),
+            type_data: TypeData::Enum(Enum {
+                storage_type: StorageType::String,
+                values: vec![
+                    "first".to_string(),
+                    "second".to_string(),
+                    "third".to_string(),
+                ],
+                values_as_flags: false,
+            }),
+        };
+
+        let json_string = serde_json::to_string(&test).unwrap();
+        let value: TypeExport = serde_json::from_str(&json_string).unwrap();
+        assert_eq!(value, test);
     }
 }
