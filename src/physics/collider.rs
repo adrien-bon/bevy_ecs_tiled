@@ -23,9 +23,9 @@ pub enum TiledColliderSourceType {
     Tile {
         /// ID of the layer containing the [Tile].
         layer_id: usize,
-        /// X position of the [Tile].
+        /// X position of the [Tile] in Tiled referential.
         x: i32,
-        /// Y position of the [Tile].
+        /// Y position of the [Tile] in Tiled referential.
         y: i32,
         /// ID of the collider [Object] for this [Tile].
         ///

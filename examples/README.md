@@ -41,5 +41,7 @@ For instance, on an "AZERTY" keyboard, you must use `A` instead of `Q` and `Z` i
 | `physics_events` | `physics` | This example shows how to use physics events. |
 | `physics_avian_settings` | `avian` | This example shows how to use Avian2D physics backend. |
 | `physics_avian_controller` | `avian` | This example shows a simple player-controlled object using Avian2D physics. You can move the object using arrow keys. |
-| `infinite_rapier` | `rapier_debug` | This example shows how to use Rapier physics backend. |
+| `physics_avian_orientation` | `avian` | This example shows Avian2D physics backend with various map orientation. |
+| `physics_rapier_settings` | `rapier_debug` | This example shows how to use Rapier physics backend. |
 | `physics_rapier_controller` | `rapier_debug` | This example shows a simple player-controlled object using Rapier physics. You can move the object using arrow keys. |
+| `physics_rapier_orientation` | `rapier_debug` | This example shows Rapier physics backend with various map orientation. |

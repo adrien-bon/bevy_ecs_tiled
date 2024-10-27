@@ -18,6 +18,9 @@
     </properties>
    </property>
   </properties>
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="2.18182" y="2.36364" width="12.7273" height="9"/>
+  </objectgroup>
  </tile>
  <tile id="2">
   <properties>
@@ -28,6 +31,11 @@
     </properties>
    </property>
   </properties>
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="3" y="3.54545" width="10.2727" height="9.72727">
+    <ellipse/>
+   </object>
+  </objectgroup>
  </tile>
  <tile id="3">
   <properties>
