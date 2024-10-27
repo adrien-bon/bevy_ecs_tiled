@@ -717,6 +717,6 @@ mod tests {
             b: true,
         };
         let json = value_to_json(&t);
-        log::info!("DBG = {json}");
+        println!("{}", serde_json::to_string(&json).unwrap());
     }
 }
