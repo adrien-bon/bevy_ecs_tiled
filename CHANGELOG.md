@@ -2,6 +2,33 @@
 
 ## [unreleased]
 
+**BREAKING CHANGES**
+This version brings breaking changes.
+A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/v0_4.html) is available to help adapt to these.
+
+### Features
+
+- Add map loading events to give user access to Tiled internal data structure.
+- Add various settings to control where we spawn the map.
+
+### Changed
+
+- Rework how user properties are loaded from Tiled. Don't use macros anymore and instead rely upon `bevy_reflect`.
+- Take advantage of map loading events and move everything related to physics in a dedicated plugin.
+- Rework how we manage physics backends with the perspective to provide more advanced ones in the future.
+- Do not insert a `Transform` on every tiles anymore, only do it for tiles with a collider which actually need it (which is likely to improve performances).
+- Get ride of `TiledMapBundle` and add a dedicated component to hold the `Handle<TiledMap>`.
+- Rename `MapPositioning` to `LayerPositioning`.
+
+### Documentation
+
+- Finalize API reference documentation: all public API are now documented.
+- Add various guides and explanations to the book.
+
+### Bugfixes
+
+- Fix tiles colliders position for hexagonal maps (#40)
+
 ## v0.3.11
 
 ### Bugfixes
