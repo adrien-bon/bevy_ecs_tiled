@@ -325,6 +325,10 @@ fn value_to_json(value: &dyn Reflect) -> serde_json::Value {
         ("alloc::borrow::Cow<str>", _, ReflectRef::Value(v)) => {
             serde_json::json!(*v.downcast_ref::<Cow<str>>().unwrap())
         }
+        ("bevy_color::color::Color", _, _) => {
+            let c = value.downcast_ref::<Color>().unwrap();
+            serde_json::json!(format!("#{:08x}", c.to_linear().as_u32()))
+        }
         (_, TypeInfo::Enum(info), ReflectRef::Enum(v)) => {
             if info.iter().all(|v| matches!(v, VariantInfo::Unit(_))) {
                 serde_json::json!(v.variant_name())
