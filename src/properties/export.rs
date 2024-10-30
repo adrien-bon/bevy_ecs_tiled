@@ -723,4 +723,95 @@ mod tests {
         let json = value_to_json(&t);
         println!("{}", serde_json::to_string(&json).unwrap());
     }
+
+    #[test]
+    fn generate_with_entity() {
+        #[derive(Component, Reflect)]
+        #[reflect(Component)]
+        struct ComponentA(Entity);
+
+        let mut registry = TypeRegistry::new();
+        registry.register::<ComponentA>();
+
+        let imports = TypeExportRegistry::from_registry(&registry);
+
+        assert_eq!(
+            imports.types.get(ComponentA::type_path()),
+            Some(&TypeExport {
+                id: 1,
+                name: ComponentA::type_path().to_string(),
+                type_data: TypeData::Class(Class {
+                    use_as: UseAs::all_supported(),
+                    color: "#000000".to_string(),
+                    draw_fill: true,
+                    members: vec![Member {
+                        name: "0".to_string(),
+                        property_type: None,
+                        type_field: FieldType::Object,
+                        value: Default::default(),
+                    }],
+                }),
+            })
+        );
+    }
+
+    #[test]
+    fn generate_with_entity_option() {
+        #[derive(Component, Reflect)]
+        #[reflect(Component)]
+        struct ComponentA(Option<Entity>);
+
+        let mut registry = TypeRegistry::new();
+        registry.register::<ComponentA>();
+
+        let imports = TypeExportRegistry::from_registry(&registry);
+
+        assert_eq!(
+            imports.types.get(ComponentA::type_path()),
+            Some(&TypeExport {
+                id: 1,
+                name: ComponentA::type_path().to_string(),
+                type_data: TypeData::Class(Class {
+                    use_as: UseAs::all_supported(),
+                    color: "#000000".to_string(),
+                    draw_fill: true,
+                    members: vec![Member {
+                        name: "0".to_string(),
+                        property_type: None,
+                        type_field: FieldType::Object,
+                        value: Default::default(),
+                    }],
+                }),
+            })
+        );
+    }
+
+    #[test]
+    fn generate_simple_enum() {
+        #[derive(Component, Reflect)]
+        #[reflect(Component)]
+        enum EnumComponent {
+            VarA,
+            VarB,
+            VarC,
+        }
+
+        let mut registry = TypeRegistry::new();
+        registry.register::<EnumComponent>();
+
+        let imports = TypeExportRegistry::from_registry(&registry);
+
+        assert_eq!(
+            imports.types.get(EnumComponent::type_path()),
+            Some(&TypeExport {
+                id: 1,
+                name: EnumComponent::type_path().to_string(),
+                type_data: TypeData::Enum(Enum {
+                    storage_type: StorageType::String,
+                    values: vec!["VarA".to_string(), "VarB".to_string(), "VarC".to_string(),],
+                    values_as_flags: false,
+                }),
+            })
+        );
+    }
 }
