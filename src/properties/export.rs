@@ -573,85 +573,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_nested_tuple_struct() {
-        #[derive(Reflect, Default, Debug, Component)]
-        #[reflect(Default, Component)]
-        struct TestOuter(TestInner);
-
-        #[derive(Reflect, Default, Debug)]
-        struct TestInner(i32, [f32; 3]);
-
-        #[derive(Reflect, Default)]
-        struct TestStruct {
-            a: i32,
-            b: String,
-        }
-
-        #[derive(Reflect)]
-        enum TestVariant {
-            Apples,
-            Bananas,
-            Oranges,
-        }
-
-        let mut registry = TypeRegistry::new();
-        registry.register::<TestOuter>();
-        registry.register::<TestInner>();
-        registry.register::<TestStruct>();
-        registry.register::<TestVariant>();
-
-        let exports = TypeExportRegistry::from_registry(&registry);
-
-        println!("{}", serde_json::to_string(&exports.to_vec()).unwrap());
-
-        // let test_value = json!({
-        //     "bevy_tiled_reflect::reflect::TestOuter"
-        // });
-
-        // let test_input = TestOuter(TestInner(12, [1., 2.0, 3.0]));
-        //
-        // let deserializer = ReflectDeserializer::new(&registry);
-        // let serializer = ReflectSerializer::new(&test_input, &registry);
-        // let mut inner = DynamicTupleStruct::default();
-        // inner.set_represented_type(Some(TestInner::type_info()));
-        // inner.insert(12);
-        // inner.insert([1f32, 2.0, 3.0]);
-        // // inner.set
-        // let mut outer = DynamicTupleStruct::default();
-        // outer.set_represented_type(Some(TestOuter::type_info()));
-        // // outer.insert(inner);
-        // dbg!(test_input.as_reflect());
-        // // println!("{}", ron::to_string(&serializer).unwrap());
-        // dbg!(&outer);
-        // dbg!(TestOuter::from_reflect(&outer));
-        //
-        //
-        //
-        //
-        //
-        // let mut x= registry.get(TestOuter::type_info().type_id()).unwrap()
-        //     .data::<ReflectComponent>().unwrap();
-        //
-        // let mut world = World::new();
-        // let mut ent = world.spawn_empty();
-        // x.insert(&mut ent, outer.as_reflect(), &registry);
-        // let i = ent.id();
-        // dbg!(world.entity(i).get::<TestOuter>());
-        // dbg!(world);
-
-        //
-        // let reg = registry.get(TestOuter::type_info().type_id()).unwrap();
-        // // reg.data::<Deserializ>
-        // // reg.
-        //
-        // dbg!(&x);
-        // x.apply(&outer);
-        // dbg!(&x);
-
-        // dbg!(deserializer.deserialize(test_value));
-    }
-
-    #[test]
     fn test_insert_value() {
         let mut a = PropertyValue::ClassValue {
             property_type: "[f32; 3]".to_string(),
@@ -710,21 +631,6 @@ mod tests {
     }
 
     #[test]
-    fn test_value_to_json() {
-        #[derive(Reflect, Default)]
-        struct Testing {
-            s: String,
-            b: bool,
-        }
-        let t = Testing {
-            s: "this is a test".to_string(),
-            b: true,
-        };
-        let json = value_to_json(&t);
-        println!("{}", serde_json::to_string(&json).unwrap());
-    }
-
-    #[test]
     fn generate_with_entity() {
         #[derive(Component, Reflect)]
         #[reflect(Component)]
@@ -742,7 +648,7 @@ mod tests {
                 name: ComponentA::type_path().to_string(),
                 type_data: TypeData::Class(Class {
                     use_as: UseAs::all_supported(),
-                    color: "#000000".to_string(),
+                    color: DEFAULT_COLOR.to_string(),
                     draw_fill: true,
                     members: vec![Member {
                         name: "0".to_string(),
@@ -773,7 +679,7 @@ mod tests {
                 name: ComponentA::type_path().to_string(),
                 type_data: TypeData::Class(Class {
                     use_as: UseAs::all_supported(),
-                    color: "#000000".to_string(),
+                    color: DEFAULT_COLOR.to_string(),
                     draw_fill: true,
                     members: vec![Member {
                         name: "0".to_string(),
@@ -811,6 +717,146 @@ mod tests {
                     values: vec!["VarA".to_string(), "VarB".to_string(), "VarC".to_string(),],
                     values_as_flags: false,
                 }),
+            })
+        );
+    }
+
+    #[test]
+    fn generate_nested_struct_with_default() {
+        #[derive(Reflect, Default)]
+        #[reflect(Default)]
+        enum TestEnum {
+            VarA,
+            #[default]
+            VarB,
+            VarC,
+        }
+
+        #[derive(Reflect)]
+        #[reflect(Default)]
+        struct InnerStruct {
+            another_float: f64,
+            another_integer: u16,
+            another_enum: TestEnum,
+        }
+        impl Default for InnerStruct {
+            fn default() -> Self {
+                Self {
+                    another_float: 123.456,
+                    another_integer: 42,
+                    another_enum: TestEnum::VarC,
+                }
+            }
+        }
+
+        #[derive(Component, Reflect, Default)]
+        #[reflect(Component, Default)]
+        struct StructComponent {
+            a_float: f32,
+            an_enum: TestEnum,
+            a_struct: InnerStruct,
+            an_integer: i32,
+        }
+
+        let mut registry = TypeRegistry::new();
+        registry.register::<TestEnum>();
+        registry.register::<InnerStruct>();
+        registry.register::<StructComponent>();
+
+        let imports = TypeExportRegistry::from_registry(&registry);
+
+        assert_eq!(
+            imports.types.get(StructComponent::type_path()),
+            Some(&TypeExport {
+                id: 1,
+                name: StructComponent::type_path().to_string(),
+                type_data: TypeData::Class(Class {
+                    use_as: UseAs::all_supported(),
+                    color: DEFAULT_COLOR.to_string(),
+                    draw_fill: true,
+                    members: vec![
+                        Member {
+                            name: "a_float".to_string(),
+                            property_type: None,
+                            type_field: FieldType::Float,
+                            value: serde_json::json!(0.0),
+                        },
+                        Member {
+                            name: "an_enum".to_string(),
+                            property_type: Some(TestEnum::type_path().to_string()),
+                            type_field: FieldType::String,
+                            value: serde_json::json!("VarB"),
+                        },
+                        Member {
+                            name: "a_struct".to_string(),
+                            property_type: Some(InnerStruct::type_path().to_string()),
+                            type_field: FieldType::Class,
+                            value: serde_json::json!({
+                                "another_enum": "VarC",
+                                "another_float": 123.456,
+                                "another_integer": 42
+                            })
+                        },
+                        Member {
+                            name: "an_integer".to_string(),
+                            property_type: None,
+                            type_field: FieldType::Int,
+                            value: serde_json::json!(0),
+                        }
+                    ],
+                }),
+            })
+        );
+    }
+
+    #[test]
+    fn generate_nested_tuple_struct() {
+        #[derive(Reflect, Default, Debug, Component)]
+        #[reflect(Default, Component)]
+        struct TestOuter(TestInner);
+
+        #[derive(Reflect, Default, Debug)]
+        struct TestInner(i32, [f32; 3]);
+
+        #[derive(Reflect, Default)]
+        struct TestStruct {
+            a: i32,
+            b: String,
+        }
+
+        #[derive(Reflect)]
+        enum TestVariant {
+            Apples,
+            Bananas,
+            Oranges,
+        }
+
+        let mut registry = TypeRegistry::new();
+        registry.register::<TestOuter>();
+        registry.register::<TestInner>();
+        registry.register::<TestStruct>();
+        registry.register::<TestVariant>();
+
+        let imports = TypeExportRegistry::from_registry(&registry);
+        assert_eq!(
+            imports.types.get(TestOuter::type_path()),
+            Some(&TypeExport {
+                id: 1,
+                name: TestOuter::type_path().to_string(),
+                type_data: TypeData::Class(Class {
+                    use_as: UseAs::all_supported(),
+                    color: DEFAULT_COLOR.to_string(),
+                    draw_fill: true,
+                    members: vec![Member {
+                        name: "0".to_string(),
+                        property_type: Some(TestInner::type_path().to_string()),
+                        type_field: FieldType::Class,
+                        value: serde_json::json!({
+                            "0": 0,
+                            "1": serde_json::Value::default(),
+                        })
+                    }]
+                })
             })
         );
     }
