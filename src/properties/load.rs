@@ -170,7 +170,7 @@ impl DeserializedProperties {
                 }
             }
 
-            match Self::deserialize_property(property, reg, registry, load_cx) {
+            match Self::deserialize_property(property, reg, registry, &mut Some(load_cx)) {
                 Ok(prop) => {
                     props.push(prop);
                 }
@@ -187,7 +187,7 @@ impl DeserializedProperties {
         property: PropertyValue,
         registration: &TypeRegistration,
         registry: &TypeRegistry,
-        load_cx: &mut LoadContext<'_>,
+        load_cx: &mut Option<&mut LoadContext<'_>>,
     ) -> Result<Box<dyn Reflect>, String> {
         // I wonder if it's possible to call FromStr for String?
         // or ToString/Display?
@@ -224,7 +224,11 @@ impl DeserializedProperties {
             ("char", PV::StringValue(s), _) => Ok(Box::new(s.chars().next().unwrap())),
             ("std::path::PathBuf", PV::FileValue(s), _) => Ok(Box::new(PathBuf::from(s))),
             (a, PV::FileValue(s), _) if a.starts_with("bevy_asset::handle::Handle") => {
-                Ok(Box::new(load_cx.loader().untyped().load(s)))
+                if let Some(cx) = load_cx.as_mut() {
+                    Ok(Box::new(cx.loader().untyped().load(s)))
+                } else {
+                    Err("No LoadContext provided: cannot load Handle<T>".to_string())
+                }
             }
             ("bevy_ecs::entity::Entity", PV::ObjectValue(o), _) => {
                 if o == 0 {
@@ -467,5 +471,154 @@ fn hydrate(object: &mut dyn Reflect, obj_entity_map: &HashMap<u32, Entity>) {
         }
         // we don't care about any of the other values
         ReflectMut::Value(_) => {}
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn print_all_properties() {
+        let map = tiled::Loader::new()
+            .load_tmx_map("assets/hex_map_pointy_top_odd.tmx")
+            .unwrap();
+        println!("Found map: {:?}", map.properties);
+        for layer in map.layers() {
+            println!("Found layer: '{}' = {:?}", layer.name, layer.properties);
+            if let Some(objects_layer) = layer.as_object_layer() {
+                for object in objects_layer.objects() {
+                    println!("Found object: '{}' = {:?}", object.name, object.properties);
+                }
+            }
+            if let Some(tiles_layer) = layer.as_tile_layer() {
+                for x in 0..map.height {
+                    for y in 0..map.width {
+                        if let Some(tile) = tiles_layer.get_tile(x as i32, y as i32) {
+                            if let Some(t) = tile.get_tile() {
+                                println!(
+                                    "Found tile: {}({},{})' = {:?}",
+                                    layer.name, x, y, t.properties
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn deserialize_simple_enum() {
+        #[derive(Reflect, PartialEq, Debug)]
+        enum EnumComponent {
+            VarA,
+            VarB,
+            VarC,
+        }
+
+        let mut registry = TypeRegistry::new();
+        registry.register::<EnumComponent>();
+
+        let raw_value = EnumComponent::VarB;
+        let tiled_value = PropertyValue::StringValue("VarB".to_string());
+
+        let res = DeserializedProperties::deserialize_property(
+            tiled_value,
+            registry
+                .get_with_type_path(EnumComponent::type_path())
+                .unwrap(),
+            &registry,
+            &mut None,
+        )
+        .unwrap();
+        assert!(res.represents::<EnumComponent>());
+
+        let v: Result<EnumComponent, _> = FromReflect::take_from_reflect(res);
+        assert_eq!(v.unwrap(), raw_value);
+    }
+
+    #[test]
+    fn deserialize_nested_struct() {
+        #[derive(Reflect, Default, PartialEq, Debug)]
+        #[reflect(Default)]
+        enum TestEnum {
+            VarA,
+            #[default]
+            VarB,
+            VarC,
+        }
+
+        #[derive(Reflect, PartialEq, Debug)]
+        #[reflect(Default)]
+        struct InnerStruct {
+            another_float: f64,
+            another_integer: u16,
+            another_enum: TestEnum,
+        }
+        impl Default for InnerStruct {
+            fn default() -> Self {
+                Self {
+                    another_float: 0.,
+                    another_integer: 42,
+                    another_enum: TestEnum::VarC,
+                }
+            }
+        }
+
+        #[derive(Component, Reflect, Default, PartialEq, Debug)]
+        #[reflect(Component, Default)]
+        struct StructComponent {
+            a_float: f32,
+            an_enum: TestEnum,
+            a_struct: InnerStruct,
+            an_integer: i32,
+        }
+
+        let mut registry = TypeRegistry::new();
+        registry.register::<TestEnum>();
+        registry.register::<InnerStruct>();
+        registry.register::<StructComponent>();
+
+        let raw_value = StructComponent::default();
+        let tiled_value = PropertyValue::ClassValue {
+            property_type: StructComponent::type_path().to_string(),
+            properties: std::collections::HashMap::from([
+                ("a_float".to_string(), PropertyValue::FloatValue(0.)),
+                (
+                    "an_enum".to_string(),
+                    PropertyValue::StringValue("VarB".to_string()),
+                ),
+                (
+                    "a_struct".to_string(),
+                    PropertyValue::ClassValue {
+                        property_type: InnerStruct::type_path().to_string(),
+                        properties: std::collections::HashMap::from([
+                            ("another_float".to_string(), PropertyValue::FloatValue(0.)),
+                            ("another_integer".to_string(), PropertyValue::IntValue(42)),
+                            (
+                                "another_enum".to_string(),
+                                PropertyValue::StringValue("VarC".to_string()),
+                            ),
+                        ]),
+                    },
+                ),
+                ("an_integer".to_string(), PropertyValue::IntValue(0)),
+            ]),
+        };
+
+        let res = DeserializedProperties::deserialize_property(
+            tiled_value,
+            registry
+                .get_with_type_path(StructComponent::type_path())
+                .unwrap(),
+            &registry,
+            &mut None,
+        )
+        .unwrap();
+        assert!(res.represents::<StructComponent>());
+
+        let v: Result<StructComponent, _> = FromReflect::take_from_reflect(res);
+        assert_eq!(v.unwrap(), raw_value);
     }
 }
