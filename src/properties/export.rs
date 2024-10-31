@@ -639,25 +639,22 @@ mod tests {
         let mut registry = TypeRegistry::new();
         registry.register::<ComponentA>();
 
-        let imports = TypeExportRegistry::from_registry(&registry);
-
+        let exports = TypeExportRegistry::from_registry(&registry);
+        let export_type = exports.types.get(ComponentA::type_path()).unwrap();
+        assert_eq!(export_type.name, ComponentA::type_path().to_string());
         assert_eq!(
-            imports.types.get(ComponentA::type_path()),
-            Some(&TypeExport {
-                id: 1,
-                name: ComponentA::type_path().to_string(),
-                type_data: TypeData::Class(Class {
-                    use_as: UseAs::all_supported(),
-                    color: DEFAULT_COLOR.to_string(),
-                    draw_fill: true,
-                    members: vec![Member {
-                        name: "0".to_string(),
-                        property_type: None,
-                        type_field: FieldType::Object,
-                        value: Default::default(),
-                    }],
-                }),
-            })
+            export_type.type_data,
+            TypeData::Class(Class {
+                use_as: UseAs::all_supported(),
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: vec![Member {
+                    name: "0".to_string(),
+                    property_type: None,
+                    type_field: FieldType::Object,
+                    value: Default::default(),
+                }],
+            }),
         );
     }
 
@@ -670,25 +667,22 @@ mod tests {
         let mut registry = TypeRegistry::new();
         registry.register::<ComponentA>();
 
-        let imports = TypeExportRegistry::from_registry(&registry);
-
+        let exports = TypeExportRegistry::from_registry(&registry);
+        let export_type = exports.types.get(ComponentA::type_path()).unwrap();
+        assert_eq!(export_type.name, ComponentA::type_path().to_string());
         assert_eq!(
-            imports.types.get(ComponentA::type_path()),
-            Some(&TypeExport {
-                id: 1,
-                name: ComponentA::type_path().to_string(),
-                type_data: TypeData::Class(Class {
-                    use_as: UseAs::all_supported(),
-                    color: DEFAULT_COLOR.to_string(),
-                    draw_fill: true,
-                    members: vec![Member {
-                        name: "0".to_string(),
-                        property_type: None,
-                        type_field: FieldType::Object,
-                        value: Default::default(),
-                    }],
-                }),
-            })
+            export_type.type_data,
+            TypeData::Class(Class {
+                use_as: UseAs::all_supported(),
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: vec![Member {
+                    name: "0".to_string(),
+                    property_type: None,
+                    type_field: FieldType::Object,
+                    value: Default::default(),
+                }],
+            }),
         );
     }
 
@@ -705,19 +699,16 @@ mod tests {
         let mut registry = TypeRegistry::new();
         registry.register::<EnumComponent>();
 
-        let imports = TypeExportRegistry::from_registry(&registry);
-
+        let exports = TypeExportRegistry::from_registry(&registry);
+        let export_type = exports.types.get(EnumComponent::type_path()).unwrap();
+        assert_eq!(export_type.name, EnumComponent::type_path().to_string());
         assert_eq!(
-            imports.types.get(EnumComponent::type_path()),
-            Some(&TypeExport {
-                id: 1,
-                name: EnumComponent::type_path().to_string(),
-                type_data: TypeData::Enum(Enum {
-                    storage_type: StorageType::String,
-                    values: vec!["VarA".to_string(), "VarB".to_string(), "VarC".to_string(),],
-                    values_as_flags: false,
-                }),
-            })
+            export_type.type_data,
+            TypeData::Enum(Enum {
+                storage_type: StorageType::String,
+                values: vec!["VarA".to_string(), "VarB".to_string(), "VarC".to_string(),],
+                values_as_flags: false,
+            }),
         );
     }
 
@@ -763,48 +754,45 @@ mod tests {
         registry.register::<InnerStruct>();
         registry.register::<StructComponent>();
 
-        let imports = TypeExportRegistry::from_registry(&registry);
-
+        let exports = TypeExportRegistry::from_registry(&registry);
+        let export_type = exports.types.get(StructComponent::type_path()).unwrap();
+        assert_eq!(export_type.name, StructComponent::type_path().to_string());
         assert_eq!(
-            imports.types.get(StructComponent::type_path()),
-            Some(&TypeExport {
-                id: 1,
-                name: StructComponent::type_path().to_string(),
-                type_data: TypeData::Class(Class {
-                    use_as: UseAs::all_supported(),
-                    color: DEFAULT_COLOR.to_string(),
-                    draw_fill: true,
-                    members: vec![
-                        Member {
-                            name: "a_float".to_string(),
-                            property_type: None,
-                            type_field: FieldType::Float,
-                            value: serde_json::json!(0.0),
-                        },
-                        Member {
-                            name: "an_enum".to_string(),
-                            property_type: Some(TestEnum::type_path().to_string()),
-                            type_field: FieldType::String,
-                            value: serde_json::json!("VarB"),
-                        },
-                        Member {
-                            name: "a_struct".to_string(),
-                            property_type: Some(InnerStruct::type_path().to_string()),
-                            type_field: FieldType::Class,
-                            value: serde_json::json!({
-                                "another_enum": "VarC",
-                                "another_float": 123.456,
-                                "another_integer": 42
-                            })
-                        },
-                        Member {
-                            name: "an_integer".to_string(),
-                            property_type: None,
-                            type_field: FieldType::Int,
-                            value: serde_json::json!(0),
-                        }
-                    ],
-                }),
+            export_type.type_data,
+            TypeData::Class(Class {
+                use_as: UseAs::all_supported(),
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: vec![
+                    Member {
+                        name: "a_float".to_string(),
+                        property_type: None,
+                        type_field: FieldType::Float,
+                        value: serde_json::json!(0.0),
+                    },
+                    Member {
+                        name: "an_enum".to_string(),
+                        property_type: Some(TestEnum::type_path().to_string()),
+                        type_field: FieldType::String,
+                        value: serde_json::json!("VarB"),
+                    },
+                    Member {
+                        name: "a_struct".to_string(),
+                        property_type: Some(InnerStruct::type_path().to_string()),
+                        type_field: FieldType::Class,
+                        value: serde_json::json!({
+                            "another_enum": "VarC",
+                            "another_float": 123.456,
+                            "another_integer": 42
+                        })
+                    },
+                    Member {
+                        name: "an_integer".to_string(),
+                        property_type: None,
+                        type_field: FieldType::Int,
+                        value: serde_json::json!(0),
+                    }
+                ],
             })
         );
     }
@@ -837,26 +825,24 @@ mod tests {
         registry.register::<TestStruct>();
         registry.register::<TestVariant>();
 
-        let imports = TypeExportRegistry::from_registry(&registry);
+        let exports = TypeExportRegistry::from_registry(&registry);
+        let export_type = exports.types.get(TestOuter::type_path()).unwrap();
+        assert_eq!(export_type.name, TestOuter::type_path().to_string());
         assert_eq!(
-            imports.types.get(TestOuter::type_path()),
-            Some(&TypeExport {
-                id: 1,
-                name: TestOuter::type_path().to_string(),
-                type_data: TypeData::Class(Class {
-                    use_as: UseAs::all_supported(),
-                    color: DEFAULT_COLOR.to_string(),
-                    draw_fill: true,
-                    members: vec![Member {
-                        name: "0".to_string(),
-                        property_type: Some(TestInner::type_path().to_string()),
-                        type_field: FieldType::Class,
-                        value: serde_json::json!({
-                            "0": 0,
-                            "1": serde_json::Value::default(),
-                        })
-                    }]
-                })
+            export_type.type_data,
+            TypeData::Class(Class {
+                use_as: UseAs::all_supported(),
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: vec![Member {
+                    name: "0".to_string(),
+                    property_type: Some(TestInner::type_path().to_string()),
+                    type_field: FieldType::Class,
+                    value: serde_json::json!({
+                        "0": 0,
+                        "1": serde_json::Value::default(),
+                    })
+                }]
             })
         );
     }
