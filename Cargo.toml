@@ -15,18 +15,28 @@ keywords = ["bevy", "tiled", "tilemap", "game", "2d"]
 exclude = ["assets/*", "res/*"]
 
 [features]
-default = ["render"]
+default = ["render", "png"]
+
+# Expose image formats from bevy
+png = ["bevy/png"]
+bmp = ["bevy/bmp"]
+jpeg = ["bevy/jpeg"]
+#gif = ["bevy/gif"]
 
 # Expose features of the bevy_ecs_tilemap crate.
 atlas = ["bevy_ecs_tilemap/atlas"]
 render = ["bevy_ecs_tilemap/render"]
 serde = ["bevy_ecs_tilemap/serde"]
 
+# Debug
+debug = ["bevy/bevy_gizmos"]
+
 # Physics
 physics = []
 rapier = ["bevy_rapier2d", "physics"]
-rapier_debug = ["rapier", "bevy_rapier2d/debug-render-2d"]
+rapier_debug = ["rapier", "bevy_rapier2d/debug-render-2d", "debug"]
 avian = ["dep:avian2d", "physics"]
+avian_debug = ["avian", "debug"]
 
 # WASM
 wasm = ["bevy_rapier2d/wasm-bindgen", "tiled/wasm"]
@@ -35,35 +45,29 @@ wasm = ["bevy_rapier2d/wasm-bindgen", "tiled/wasm"]
 user_properties = ["dep:serde", "dep:serde_json"]
 
 [dependencies]
-bevy = { version = "0.14", default-features = false, features = ["bevy_render", "bevy_gizmos", "png"] }
-bevy_ecs_tilemap = "0.14"
-futures-lite = "2.3.0"
-log = "0.4.22"
-thiserror = "1.0.63"
-tiled = "0.12.1"
+# Main dependencies
+bevy = { version = "0.14", default-features = false }
+bevy_ecs_tilemap = { version = "0.14", default-features = false }
+tiled = "0.12"
+
+# Utilities
+futures-lite = "2.4"
+log = "0.4"
+thiserror = "1.0"
 
 # Optional dependencies, enabled via features.
-bevy_rapier2d = { version = "0.27.0", optional = true }
-avian2d = { version = "0.1.2", optional = true }
-serde = { version = "1.0.210", optional = true }
-serde_json = { version = "1.0.127", optional = true }
-
-[target.'cfg(target_family = "wasm")'.dependencies]
-bevy_rapier2d = { version = "0.27.0", features = [
-    "wasm-bindgen",
-], optional = true }
-tiled = { version = "0.12.1", features = ["wasm"] }
+bevy_rapier2d = { version = "0.27", optional = true }
+avian2d = { version = "0.1", optional = true }
+serde = { version = "1.0", optional = true, features = ["derive"] }
+serde_json = { version = "1.0", optional = true }
 
 # docs.rs-specific configuration
 [package.metadata.docs.rs]
-features = ["user_properties","physics","avian","rapier"]
+features = ["debug","user_properties","physics","avian","rapier"]
 
 [dev-dependencies]
-bevy = "0.14.2"
-bevy-inspector-egui = "0.26.0"
-bevy_rapier2d = { version = "0.27.0", features = ["debug-render-2d"] }
-avian2d = "0.1.2"
-log = "0.4.22"
+bevy = "0.14"
+bevy-inspector-egui = "0.26"
 
 [[example]]
 name = "basic"
@@ -82,12 +86,15 @@ name = "map_spawn_delay"
 
 [[example]]
 name = "orientation_orthogonal"
+required-features = ["debug"]
 
 [[example]]
 name = "orientation_isometric"
+required-features = ["debug"]
 
 [[example]]
 name = "orientation_hexagonal"
+required-features = ["debug"]
 
 [[example]]
 name = "physics_custom"
@@ -111,15 +118,15 @@ required-features = ["rapier_debug"]
 
 [[example]]
 name = "physics_avian_settings"
-required-features = ["avian"]
+required-features = ["avian_debug"]
 
 [[example]]
 name = "physics_avian_controller"
-required-features = ["avian"]
+required-features = ["avian_debug"]
 
 [[example]]
 name = "physics_avian_orientation"
-required-features = ["avian"]
+required-features = ["avian_debug"]
 
 [[example]]
 name = "properties_basic"

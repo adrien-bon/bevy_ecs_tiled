@@ -32,7 +32,7 @@ More informations on the project [github page](https://github.com/jakobhellerman
 
 `bevy_ecs_tiled` provides a debug plugin that displays a gizmos where Tiled object are spawned.
 
-To use it, you just have to add the plugin to your application:
+To use it, you just have to enable the `debug` feature and add the plugin to your application:
 
 ```rust,no_run
 use bevy::prelude::*;

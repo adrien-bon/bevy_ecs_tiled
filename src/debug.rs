@@ -1,5 +1,7 @@
 //! This module contains some tools to help you debug your application.
 //!
+//! You need to enable the `debug` feature to use it.
+//!
 use crate::prelude::*;
 use bevy::{color::palettes::css::RED, prelude::*};
 

@@ -12,12 +12,16 @@
 
 pub mod asset;
 pub mod components;
-pub mod debug;
 pub mod events;
 pub mod loader;
 pub mod names;
-pub mod physics;
 pub mod utils;
+
+#[cfg(feature = "debug")]
+pub mod debug;
+
+#[cfg(feature = "physics")]
+pub mod physics;
 
 #[cfg(feature = "user_properties")]
 pub mod properties;
@@ -28,6 +32,7 @@ pub mod prelude {
     pub use super::TiledMapPlugin;
     pub use crate::asset::*;
     pub use crate::components::*;
+    #[cfg(feature = "debug")]
     pub use crate::debug::*;
     pub use crate::events::*;
     pub use crate::names::*;
