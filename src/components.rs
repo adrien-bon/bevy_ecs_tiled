@@ -14,10 +14,6 @@ pub struct TiledMapSettings {
     pub layer_positioning: LayerPositioning,
     /// Z-offset between two consecutives layers.
     pub layer_z_offset: f32,
-    /// Initial map [Transform].
-    pub map_initial_transform: Transform,
-    /// Initial map [Visibility].
-    pub map_initial_visibility: Visibility,
 }
 
 impl Default for TiledMapSettings {
@@ -25,8 +21,6 @@ impl Default for TiledMapSettings {
         Self {
             layer_positioning: LayerPositioning::default(),
             layer_z_offset: 100.,
-            map_initial_transform: Transform::default(),
-            map_initial_visibility: Visibility::Inherited,
         }
     }
 }
@@ -85,6 +79,7 @@ pub struct TiledMapMarker;
 
 /// Marker [Component] for a Tiled map layer.
 #[derive(Component)]
+#[require(Visibility, Transform)]
 pub struct TiledMapLayer {
     // Store the map id so that we can delete layers for this map later.
     // We don't want to store the handle as a [Component] because the parent
@@ -98,6 +93,7 @@ pub struct TiledMapTileLayer;
 
 /// Marker [Component] for a Tiled map tile layer for a given tileset.
 #[derive(Component)]
+#[require(Visibility, Transform)]
 pub struct TiledMapTileLayerForTileset;
 
 /// Marker [Component] for a Tiled map object layer.

@@ -16,17 +16,17 @@ fn main() {
         .add_plugins(TilemapPlugin)
         .add_plugins(TiledMapPlugin::default())
         // Add observers for map loading events
-        .observe(map_created)
-        .observe(layer_created)
-        .observe(object_created)
-        .observe(special_tile_created)
+        .add_observer(map_created)
+        .add_observer(layer_created)
+        .add_observer(object_created)
+        .add_observer(special_tile_created)
         // Add our systems and run the app!
         .add_systems(Startup, startup)
         .run();
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2d);
     commands.spawn(TiledMapHandle(asset_server.load("finite.tmx")));
 }
 

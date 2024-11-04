@@ -54,12 +54,7 @@ pub(super) fn load_map(
             "TiledMap({} x {})",
             tiled_map.map.width, tiled_map.map.height
         )))
-        .insert(TiledMapMarker)
-        .insert(SpatialBundle {
-            transform: tiled_settings.map_initial_transform,
-            visibility: tiled_settings.map_initial_visibility,
-            ..SpatialBundle::INHERITED_IDENTITY
-        });
+        .insert(TiledMapMarker);
 
     let map_type = get_map_type(&tiled_map.map);
     let map_size = get_map_size(&tiled_map.map);
@@ -78,12 +73,9 @@ pub(super) fn load_map(
     for (layer_id, layer) in tiled_map.map.layers().enumerate() {
         // Spawn layer entity and attach it to the map entity
         let layer_entity = commands
-            .spawn((
-                TiledMapLayer {
-                    map_handle_id: map_handle.id(),
-                },
-                TransformBundle::from_transform(Transform::from_xyz(0., 0., 0.)),
-            ))
+            .spawn(TiledMapLayer {
+                map_handle_id: map_handle.id(),
+            })
             .set_parent(map_entity)
             .id();
 
@@ -92,16 +84,15 @@ pub(super) fn load_map(
 
         // Apply layer offset and MapPositioning setting
         let offset_transform = Transform::from_xyz(layer.offset_x, -layer.offset_y, offset_z);
-        commands.entity(layer_entity).insert(SpatialBundle {
-            transform: match &tiled_settings.layer_positioning {
+        commands
+            .entity(layer_entity)
+            .insert(match &tiled_settings.layer_positioning {
                 LayerPositioning::TiledOffset => offset_transform,
                 LayerPositioning::Centered => {
                     get_tilemap_center_transform(&map_size, &grid_size, &map_type, 0.)
                         * offset_transform
                 }
-            },
-            ..default()
-        });
+            });
 
         let layer_infos = TiledLayerCreated {
             map: map_entity,
@@ -112,10 +103,10 @@ pub(super) fn load_map(
 
         match layer.layer_type() {
             LayerType::Tiles(tile_layer) => {
-                commands
-                    .entity(layer_entity)
-                    .insert(Name::new(format!("TiledMapTileLayer({})", layer.name)))
-                    .insert(TiledMapTileLayer);
+                commands.entity(layer_entity).insert((
+                    Name::new(format!("TiledMapTileLayer({})", layer.name)),
+                    TiledMapTileLayer,
+                ));
                 load_tiles_layer(
                     commands,
                     tiled_map,
@@ -128,10 +119,10 @@ pub(super) fn load_map(
                 );
             }
             LayerType::Objects(object_layer) => {
-                commands
-                    .entity(layer_entity)
-                    .insert(Name::new(format!("TiledMapObjectLayer({})", layer.name)))
-                    .insert(TiledMapObjectLayer);
+                commands.entity(layer_entity).insert((
+                    Name::new(format!("TiledMapObjectLayer({})", layer.name)),
+                    TiledMapObjectLayer,
+                ));
                 load_objects_layer(
                     commands,
                     tiled_map,
@@ -142,18 +133,18 @@ pub(super) fn load_map(
                 );
             }
             LayerType::Group(_group_layer) => {
-                commands
-                    .entity(layer_entity)
-                    .insert(Name::new(format!("TiledMapGroupLayer({})", layer.name)))
-                    .insert(TiledMapGroupLayer);
-                // TODO: not implemented yet.
+                commands.entity(layer_entity).insert((
+                    Name::new(format!("TiledMapGroupLayer({})", layer.name)),
+                    TiledMapGroupLayer,
+                ));
+                warn!("Group layers are not yet implemented");
             }
             LayerType::Image(_image_layer) => {
-                commands
-                    .entity(layer_entity)
-                    .insert(Name::new(format!("TiledMapImageLayer({})", layer.name)))
-                    .insert(TiledMapImageLayer);
-                // TODO: not implemented yet.
+                commands.entity(layer_entity).insert((
+                    Name::new(format!("TiledMapImageLayer({})", layer.name)),
+                    TiledMapImageLayer,
+                ));
+                warn!("Image layers are not yet implemented");
             }
         };
 
@@ -543,11 +534,11 @@ fn load_objects_layer(
             &grid_size,
         );
         let object_entity = commands
-            .spawn(SpatialBundle::from_transform(Transform::from_xyz(
+            .spawn(Transform::from_xyz(
                 object_position.x,
                 object_position.y,
                 0.,
-            )))
+            ))
             .insert(Name::new(format!("Object({})", object_data.name)))
             .insert(TiledMapObject)
             .set_parent(layer_infos.layer)

@@ -22,7 +22,7 @@ fn main() {
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2d);
 
     let mut mgr = helper::assets::AssetsManager::new(&mut commands);
     mgr.add_map(helper::assets::MapInfos::new(
@@ -56,12 +56,19 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
         "finite.tmx",
-        "A map using an initial transform (rotation = 45°)",
+        "A map using an initial Transform (rotation = 45°)",
         |c| {
-            c.insert(TiledMapSettings {
-                map_initial_transform: Transform::from_rotation(Quat::from_rotation_z(45.)),
-                ..default()
-            });
+            // You can directly insert a Transform to the entity holding the map
+            c.insert(Transform::from_rotation(Quat::from_rotation_z(45.)));
+        },
+    ));
+    mgr.add_map(helper::assets::MapInfos::new(
+        &asset_server,
+        "finite.tmx",
+        "A map using an initial Visibility (hidden)",
+        |c| {
+            // You can directly insert a Visibility to the entity holding the map
+            c.insert(Visibility::Hidden);
         },
     ));
     commands.insert_resource(mgr);

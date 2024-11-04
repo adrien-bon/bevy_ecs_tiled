@@ -3,7 +3,7 @@ use bevy::ecs::reflect::ReflectBundle;
 use bevy::ecs::system::EntityCommands;
 use bevy::ecs::world::Command;
 use bevy::prelude::{AppTypeRegistry, Entity, ReflectComponent, ReflectResource, World};
-use bevy::reflect::{Reflect, TypeRegistry};
+use bevy::reflect::{PartialReflect, TypeRegistry};
 use std::ops::Deref;
 
 pub(crate) trait PropertiesCommandExt {
@@ -13,7 +13,8 @@ pub(crate) trait PropertiesCommandExt {
 impl PropertiesCommandExt for EntityCommands<'_> {
     fn insert_properties(&mut self, properties: DeserializedProperties) -> &mut Self {
         let entity = self.id();
-        self.commands().add(InsertProperties { entity, properties });
+        self.commands()
+            .queue(InsertProperties { entity, properties });
 
         self
     }
@@ -39,7 +40,7 @@ fn insert_reflect(
     world: &mut World,
     entity: Entity,
     type_registry: &TypeRegistry,
-    property: Box<dyn Reflect>,
+    property: Box<dyn PartialReflect>,
 ) {
     let type_info = property
         .get_represented_type_info()
@@ -54,7 +55,7 @@ fn insert_reflect(
         return;
     }
 
-    let Some(mut entity) = world.get_entity_mut(entity) else {
+    let Ok(mut entity) = world.get_entity_mut(entity) else {
         panic!("error[B0003]: Could not insert a reflected property (of type {type_path}) for entity {entity:?} because it doesn't exist in this World. See: https://bevyengine.org/learn/errors/#b0003");
     };
 

@@ -1,6 +1,5 @@
 use bevy::{ecs::system::EntityCommands, prelude::*};
 use bevy_ecs_tiled::prelude::*;
-use bevy_ecs_tilemap::map::TilemapRenderSettings;
 
 pub type MapInfosCallback = fn(&mut EntityCommands);
 
@@ -42,9 +41,7 @@ impl AssetsManager {
         Self {
             map_assets: Vec::new(),
             map_entity: None,
-            text_entity: commands
-                .spawn(TextBundle::from(AssetsManager::BASE_TEXT))
-                .id(),
+            text_entity: commands.spawn(Text::from(AssetsManager::BASE_TEXT)).id(),
             map_index: 0,
         }
     }
@@ -60,32 +57,24 @@ impl AssetsManager {
         );
 
         // Update displayed text
-        commands
-            .entity(self.text_entity)
-            .insert(TextBundle::from(format!(
-                "{}\nmap name = {}\n{}",
-                AssetsManager::BASE_TEXT,
-                self.map_assets[self.map_index].path,
-                self.map_assets[self.map_index].description
-            )));
+        commands.entity(self.text_entity).insert(Text::from(format!(
+            "{}\nmap name = {}\n{}",
+            AssetsManager::BASE_TEXT,
+            self.map_assets[self.map_index].path,
+            self.map_assets[self.map_index].description
+        )));
 
-        // Handle map update: spawn the map if it does not exist yet
-        // or just update the map handle if already spawned
+        // Handle map update: despawn the map if it already exists
         if let Some(entity) = self.map_entity {
-            let mut entity_commands = commands.entity(entity);
-            entity_commands.insert(TiledMapHandle(
-                self.map_assets[self.map_index].asset.to_owned(),
-            ));
-            entity_commands.remove::<TiledMapSettings>();
-            entity_commands.remove::<TilemapRenderSettings>();
-            (self.map_assets[self.map_index].callback)(&mut entity_commands);
-        } else {
-            let mut entity_commands = commands.spawn(TiledMapHandle(
-                self.map_assets[self.map_index].asset.to_owned(),
-            ));
-            (self.map_assets[self.map_index].callback)(&mut entity_commands);
-            self.map_entity = Some(entity_commands.id());
+            commands.entity(entity).despawn_recursive();
         }
+
+        // Then spawn the new map
+        let mut entity_commands = commands.spawn(TiledMapHandle(
+            self.map_assets[self.map_index].asset.to_owned(),
+        ));
+        (self.map_assets[self.map_index].callback)(&mut entity_commands);
+        self.map_entity = Some(entity_commands.id());
 
         // Update the map index
         self.map_index += 1;

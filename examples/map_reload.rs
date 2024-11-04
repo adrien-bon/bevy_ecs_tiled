@@ -34,8 +34,8 @@ fn startup(
     asset_server: Res<AssetServer>,
     mut next_state: ResMut<NextState<MapState>>,
 ) {
-    commands.spawn(Camera2dBundle::default());
-    commands.spawn(TextBundle::from(
+    commands.spawn(Camera2d);
+    commands.spawn(Text::from(
         "U = Unload map by removing asset\nI = Unload map by despawning entity\nL = Load finite map\nK = Replace loaded map component without unloading\nR = Reload map using the RespawnTiledMap component",
     ));
 

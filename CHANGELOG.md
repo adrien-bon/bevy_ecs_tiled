@@ -2,6 +2,18 @@
 
 ## [unreleased]
 
+**BREAKING CHANGES**
+This version brings breaking changes.
+A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_5.html) is available to help adapt to these.
+
+### Features
+
+- Update to Bevy 0.15
+
+### Changed
+
+- Remove `map_initial_transform` and `map_initial_visibility` from `TiledMapSettings`, use required components instead
+
 ## v0.4.2
 
 ### Changed

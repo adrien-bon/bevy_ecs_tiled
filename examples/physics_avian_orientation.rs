@@ -28,7 +28,7 @@ fn main() {
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2d);
 
     let default_callback: helper::assets::MapInfosCallback = |c| {
         c.insert(TiledMapSettings {
