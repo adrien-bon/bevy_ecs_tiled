@@ -65,6 +65,13 @@ serde_json = { version = "1.0", optional = true }
 [package.metadata.docs.rs]
 features = ["debug","user_properties","physics","avian","rapier"]
 
+# cargo-all-features configuration
+[package.metadata.cargo-all-features]
+# only check 3 features at once
+max_combination_size = 3
+# do not check bevy images features since we don't directly use them
+denylist = ["png", "bmp", "jpeg"]
+
 [dev-dependencies]
 bevy = "0.14"
 bevy-inspector-egui = "0.26"
