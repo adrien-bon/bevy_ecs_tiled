@@ -215,7 +215,7 @@ fn load_tiles_layer(
     layer_infos: &TiledLayerCreated,
     layer: Layer,
     tile_layer: TileLayer,
-    render_settings: &TilemapRenderSettings,
+    _render_settings: &TilemapRenderSettings,
     entity_map: &mut HashMap<(String, TileId), Vec<Entity>>,
     event_list: &mut Vec<TiledSpecialTileCreated>,
 ) {
@@ -230,22 +230,10 @@ fn load_tiles_layer(
             continue;
         };
 
-        let map_type = get_map_type(&tiled_map.map);
         let grid_size = get_grid_size(&tiled_map.map);
-        let mut map_size = get_map_size(&tiled_map.map);
-
-        let tile_size = TilemapTileSize {
-            x: tileset.tile_width as f32,
-            y: tileset.tile_height as f32,
-        };
-
-        let tile_spacing = TilemapSpacing {
-            x: tileset.spacing as f32,
-            y: tileset.spacing as f32,
-        };
-
-        let mut offset_x = 0.;
-        let mut offset_y = 0.;
+        let mut _map_size = get_map_size(&tiled_map.map);
+        let mut _offset_x = 0.;
+        let mut _offset_y = 0.;
 
         let layer_for_tileset_entity = commands
             .spawn((
@@ -258,7 +246,7 @@ fn load_tiles_layer(
             .set_parent(layer_infos.layer)
             .id();
 
-        let tile_storage = match tile_layer {
+        let _tile_storage = match tile_layer {
             tiled::TileLayer::Finite(layer_data) => load_finite_tiles_layer(
                 commands,
                 tiled_map,
@@ -282,32 +270,37 @@ fn load_tiles_layer(
                     entity_map,
                     event_list,
                 );
-                map_size = new_map_size;
+                _map_size = new_map_size;
                 // log::info!("Infinite layer origin: {:?}", origin);
-                offset_x += origin.0 * grid_size.x;
-                offset_y -= origin.1 * grid_size.y;
+                _offset_x += origin.0 * grid_size.x;
+                _offset_y -= origin.1 * grid_size.y;
                 storage
             }
         };
 
-        let offset_transform = Transform::from_xyz(
-            offset_x + grid_size.x / 2.,
-            -offset_y + grid_size.y / 2.,
-            0.,
-        );
-
+        #[cfg(feature = "render")]
         commands
             .entity(layer_for_tileset_entity)
             .insert(TilemapBundle {
                 grid_size,
-                size: map_size,
-                storage: tile_storage,
+                size: _map_size,
+                storage: _tile_storage,
                 texture: tilemap_texture.clone(),
-                tile_size,
-                spacing: tile_spacing,
-                transform: offset_transform,
-                map_type,
-                render_settings: *render_settings,
+                tile_size: TilemapTileSize {
+                    x: tileset.tile_width as f32,
+                    y: tileset.tile_height as f32,
+                },
+                spacing: TilemapSpacing {
+                    x: tileset.spacing as f32,
+                    y: tileset.spacing as f32,
+                },
+                transform: Transform::from_xyz(
+                    _offset_x + grid_size.x / 2.,
+                    -_offset_y + grid_size.y / 2.,
+                    0.,
+                ),
+                map_type: get_map_type(&tiled_map.map),
+                render_settings: *_render_settings,
                 ..Default::default()
             });
     }
