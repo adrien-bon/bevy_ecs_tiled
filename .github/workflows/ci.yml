@@ -115,7 +115,7 @@ jobs:
         uses: Leafwing-Studios/cargo-cache@v2
 
       - name: Install cargo-all-features
-        run: cargo install cargo-all-features
+        run: cargo install --force cargo-all-features
 
       - name: Check project
         run: cargo check-all-features
