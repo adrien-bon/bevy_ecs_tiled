@@ -801,7 +801,7 @@ fn load_infinite_tiles_layer(
 
                 let tile_pos = TilePos {
                     x: tile_x as u32,
-                    y: map_size.y - tile_y as u32,
+                    y: map_size.y - 1 - tile_y as u32,
                 };
                 let tile_entity = commands
                     .spawn(TileBundle {

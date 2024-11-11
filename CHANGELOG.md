@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Bugfixes
+
+- Fix crash when the top-left tile of an infinite map is used (#46)
+
 ## v0.3.10
 
 ### Documentation
