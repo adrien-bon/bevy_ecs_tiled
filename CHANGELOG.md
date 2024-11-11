@@ -6,6 +6,11 @@
 
 - Fix crash when the top-left tile of an infinite map is used (#46)
 
+### Documentation
+
+- Add debug guide
+- Add map spawn/despawn/reload guide
+
 ## v0.3.10
 
 ### Documentation
