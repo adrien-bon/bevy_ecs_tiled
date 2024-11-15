@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Spawn / Despawn / Reload a map - bevy_ecs_tiled Documentation</title>
+        <title>From v0.3.X to v0.4.X - bevy_ecs_tiled Documentation</title>
                 
 
         <!-- Custom HTML head -->
@@ -82,7 +82,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="../FAQ.html">FAQ</a></li><li class="chapter-item expanded affix "><li class="part-title">Design and explanation</li><li class="chapter-item expanded "><a href="../design/why-tiled.html"><strong aria-hidden="true">1.</strong> Why using Tiled ?</a></li><li class="chapter-item expanded "><a href="../design/entities_tree.html"><strong aria-hidden="true">2.</strong> Entities tree and marker components</a></li><li class="chapter-item expanded "><a href="../design/z_order.html"><strong aria-hidden="true">3.</strong> Layers Z-ordering</a></li><li class="chapter-item expanded "><a href="../design/map_events.html"><strong aria-hidden="true">4.</strong> Map loading events</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">5.</strong> Coordinates conversion between Tiled and Bevy</div></li><li class="chapter-item expanded affix "><li class="part-title">How-To's</li><li class="chapter-item expanded "><a href="../guides/minimal.html"><strong aria-hidden="true">6.</strong> Minimal working example</a></li><li class="chapter-item expanded "><a href="../guides/spawn_reload.html" class="active"><strong aria-hidden="true">7.</strong> Spawn / Despawn / Reload a map</a></li><li class="chapter-item expanded "><a href="../guides/physics.html"><strong aria-hidden="true">8.</strong> Add physics colliders</a></li><li class="chapter-item expanded "><a href="../guides/properties.html"><strong aria-hidden="true">9.</strong> Use Tiled custom properties</a></li><li class="chapter-item expanded "><a href="../guides/debug.html"><strong aria-hidden="true">10.</strong> Debug your project</a></li><li class="chapter-item expanded affix "><li class="part-title">Migration guides</li><li class="chapter-item expanded "><a href="../migrations/v0_4.html"><strong aria-hidden="true">11.</strong> From v0.3.X to v0.4.X</a></li><li class="chapter-item expanded affix "><li class="part-title">Miscellaneous</li><li class="chapter-item expanded "><a href="../misc/useful-links.html"><strong aria-hidden="true">12.</strong> Useful links</a></li><li class="chapter-item expanded "><a href="../misc/contributing.html"><strong aria-hidden="true">13.</strong> Contributing</a></li><li class="chapter-item expanded "><a href="../misc/api-reference.html"><strong aria-hidden="true">14.</strong> API reference</a></li></ol>            </div>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="../FAQ.html">FAQ</a></li><li class="chapter-item expanded affix "><li class="part-title">Design and explanation</li><li class="chapter-item expanded "><a href="../design/why-tiled.html"><strong aria-hidden="true">1.</strong> Why using Tiled ?</a></li><li class="chapter-item expanded "><a href="../design/entities_tree.html"><strong aria-hidden="true">2.</strong> Entities tree and marker components</a></li><li class="chapter-item expanded "><a href="../design/z_order.html"><strong aria-hidden="true">3.</strong> Layers Z-ordering</a></li><li class="chapter-item expanded "><a href="../design/map_events.html"><strong aria-hidden="true">4.</strong> Map loading events</a></li><li class="chapter-item expanded "><div><strong aria-hidden="true">5.</strong> Coordinates conversion between Tiled and Bevy</div></li><li class="chapter-item expanded affix "><li class="part-title">How-To's</li><li class="chapter-item expanded "><a href="../guides/minimal.html"><strong aria-hidden="true">6.</strong> Minimal working example</a></li><li class="chapter-item expanded "><a href="../guides/spawn_reload.html"><strong aria-hidden="true">7.</strong> Spawn / Despawn / Reload a map</a></li><li class="chapter-item expanded "><a href="../guides/physics.html"><strong aria-hidden="true">8.</strong> Add physics colliders</a></li><li class="chapter-item expanded "><a href="../guides/properties.html"><strong aria-hidden="true">9.</strong> Use Tiled custom properties</a></li><li class="chapter-item expanded "><a href="../guides/debug.html"><strong aria-hidden="true">10.</strong> Debug your project</a></li><li class="chapter-item expanded affix "><li class="part-title">Migration guides</li><li class="chapter-item expanded "><a href="../migrations/v0_4.html" class="active"><strong aria-hidden="true">11.</strong> From v0.3.X to v0.4.X</a></li><li class="chapter-item expanded affix "><li class="part-title">Miscellaneous</li><li class="chapter-item expanded "><a href="../misc/useful-links.html"><strong aria-hidden="true">12.</strong> Useful links</a></li><li class="chapter-item expanded "><a href="../misc/contributing.html"><strong aria-hidden="true">13.</strong> Contributing</a></li><li class="chapter-item expanded "><a href="../misc/api-reference.html"><strong aria-hidden="true">14.</strong> API reference</a></li></ol>            </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
@@ -143,98 +143,90 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="spawn--despawn--reload-a-map"><a class="header" href="#spawn--despawn--reload-a-map">Spawn / Despawn / Reload a map</a></h1>
-<p>These aspects are also covered in the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/map_reload.rs">dedicated example</a>.</p>
-<h2 id="spawn-a-map"><a class="header" href="#spawn-a-map">Spawn a map</a></h2>
-<p>Spawning a map is done in two steps:</p>
-<ul>
-<li>first, load a map asset / a map file using the Bevy <code>AssetServer</code></li>
-<li>then, spawn a <code>TiledMapHandle</code> containing a reference to this map asset</li>
-</ul>
+                        <h1 id="from-v03x-to-v04x"><a class="header" href="#from-v03x-to-v04x">From v0.3.X to v0.4.X</a></h1>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>Version 0.4 was initially motivated by an update to the way we handle user properties but ended as a major overhaul of the plugin to provide a better API and to give more control to the user.</p>
+<h2 id="plugin-instanciation"><a class="header" href="#plugin-instanciation">Plugin instanciation</a></h2>
+<p>The plugin now has an associated configuration, which you need to provide when you add it to your application.</p>
+<p>The easiest way is to use the default configuration value :</p>
+<pre><pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn main() {
+    App::new()
+        // You still need the bevy_ecs_tilemap plugin
+        .add_plugins(TilemapPlugin)
+        // And now, you have to provide a configuration for bevy_ecs_tiled plugin
+        .add_plugins(TiledMapPlugin::default())
+        .run();
+}
+</code></pre></pre>
+<p>The plugin configuration is described in the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/struct.TiledMapPluginConfig.html">API reference</a></p>
+<h2 id="tiled-map-spawn-and-configuration"><a class="header" href="#tiled-map-spawn-and-configuration">Tiled map spawn and configuration</a></h2>
+<p>The plugin entry point, ie. the <code>TiledMapBundle</code> bundle is gone.
+It was cumbersome and did not allow for a proper separation of concerns (for instance, for physics).</p>
+<p>Also, the <code>Handle&lt;TiledMap&gt;</code> type is not a Bevy component anymore.
+It was done in order to anticipate expected changes in Bevy where <code>Handle&lt;T&gt;</code> won't be able to derive the <code>Component</code> trait anymore.</p>
+<p>Anyway, the new way to spawn a map is now easier: you just have to spawn a <code>TiledMapHandle</code> referencing your .TMX file asset:</p>
 <pre><pre class="playground"><code class="language-rust no_run">
 <span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>fn spawn_map(
-    mut commands: Commands,
-    asset_server: Res&lt;AssetServer&gt;
-) {
-    // First, load the map
+</span>use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
+    // Load the map: ensure any tile / tileset paths are relative to assets/ folder
     let map_handle: Handle&lt;TiledMap&gt; = asset_server.load(&quot;map.tmx&quot;);
 
-    // Then, spawn it, using default settings
+    // Spawn the map with default options
     commands.spawn(TiledMapHandle(map_handle));
 }
 <span class="boring">}
 </span></code></pre></pre>
-<p>Note that you can perform the initial map loading beforehand (for instance, during your game startup) and  that there is no restriction on the number of maps loaded or spawned at the same time.</p>
-<h2 id="despawn-a-map"><a class="header" href="#despawn-a-map">Despawn a map</a></h2>
-<p>If you want to despawn a map, the easiest is to actually remove its top-level entity:</p>
-<pre><pre class="playground"><code class="language-rust no_run">
-<span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub fn despawn_map(
-    mut commands: Commands,
-    maps_query: Query&lt;Entity, With&lt;TiledMapMarker&gt;&gt;,
-) {
-    // Iterate over entities with a TiledMapMarker component
-    for map in q_maps.iter() {
-        // Despawn these entities, as well as their child entities
-        commands.entity(map).despawn_recursive();
-    }
-}
-<span class="boring">}
-</span></code></pre></pre>
-<p>All child entities, like layers and tiles, will automatically be despawned.</p>
-<h2 id="reload-a-map"><a class="header" href="#reload-a-map">Reload a map</a></h2>
-<p>If you want to reload a map, you can of course despawn it then spawn it again.
-It's tedious, but it works.</p>
-<p>However, there is an easier way.
-Instead, you can insert the <code>RespawnTiledMap</code> component:</p>
-<pre><pre class="playground"><code class="language-rust no_run">
-<span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>fn respawn_map(
-    mut commands: Commands,
-    maps_query: Query&lt;Entity, With&lt;TiledMapMarker&gt;&gt;,
-) {
-    if let Ok(entity) =  maps_query.get_single() {
-        commands.entity(entity).insert(RespawnTiledMap);
-    }
-}
-<span class="boring">}
-</span></code></pre></pre>
-<p>This will reload the exact same map but using new entities.
-It means that if you updated some components (for instance, a tile color or an object position) they will be back as they were when you first loaded the map.
-It's useful to implement a level respawn for instance.</p>
-<p>Another use case is to load a new map over an existing one.
-An easy way to do that is to just spawn a new <code>TiledMapHandle</code> over an existing map.</p>
-<pre><pre class="playground"><code class="language-rust no_run">
-<span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>fn handle_reload(
-    mut commands: Commands,
-    asset_server: Res&lt;AssetServer&gt;,
-    maps_query: Query&lt;Entity, With&lt;TiledMapMarker&gt;&gt;,
-) {
-    if let Ok(entity) = maps_query.get_single() {
-        commands.entity(entity)
-            .insert(
-                TiledMapHandle(asset_server.load(&quot;other_map.tmx&quot;))
-            );
-    }
-}
-<span class="boring">}
-</span></code></pre></pre>
+<p>You can customize various settings about how to load the map by inserting the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/components/struct.TiledMapSettings.html"><code>TiledMapSettings</code></a> component on the map entity.</p>
+<h2 id="tiled-user-properties"><a class="header" href="#tiled-user-properties">Tiled user properties</a></h2>
+<p>Before this change, you had to define your custom types both in Tiled and in your rust code.
+It was not user-friendly and error-prone.</p>
+<p>Now, we take advantage of <code>bevy_reflect</code> to generate a file containing all the types known to Bevy.
+This file can be imported in Tiled so you can use these types directly in the editor.</p>
+<p>Migrating from the old implementation should be straight-forward.</p>
+<p>First, you need need to update your custom types so they actually implement the <code>Reflect</code> trait :</p>
+<ul>
+<li>remove <code>#[derive(TiledObject)]</code>, <code>#[derive(TiledCustomTile)]</code>, <code>#[derive(TiledClass)]</code> and <code>#[derive(TiledEnum)]</code> derived traits. Make sure to also remove associated attributes.</li>
+<li>add <code>#[derive(Reflect)]</code> derive trait on the types you want to use in Tiled.</li>
+<li>make sure your components have the <code>#[reflect(Component)]</code> attribute</li>
+</ul>
+<p>Then, in your main / in your plugin setup, you then need to register your types with Bevy :</p>
+<ul>
+<li>replace calls to <code>register_tiled_object::&lt;T&gt;()</code> with calls to <code>register_type::&lt;T&gt;()</code>.</li>
+<li>replace calls to <code>register_tiled_custom_tile::&lt;T&gt;()</code> with calls to <code>register_type::&lt;T&gt;()</code>.</li>
+</ul>
+<p>The final step is to actually generate the types import file (run your game once) and import the types to Tiled.
+Note that you may have to update your map / your tilesets to use the new types you just imported.</p>
+<p><a href="../guides/properties.html"><strong>A dedicated guide about how to setup user properties is available in this book</strong></a>.</p>
+<h2 id="tiled-physics"><a class="header" href="#tiled-physics">Tiled physics</a></h2>
+<p>Eventhough functionnalities around physics did not change much, the internals have been completely reworked and the API was updated a bit.</p>
+<p>Notably, now you need to instanciate another plugin and specify which physics backend you want to use.
+<a href="../guides/physics.html">The physics section of the book should get you through</a>.</p>
+<h2 id="map-events"><a class="header" href="#map-events">Map events</a></h2>
+<p>This is a new feature of this version which gives more control to the user over what he wants to do with a Tiled map.
+<a href="../design/map_events.html">More information in the dedicated section</a></p>
+<h2 id="misc-changes"><a class="header" href="#misc-changes">Misc changes</a></h2>
+<h3 id="enum-mappositioning"><a class="header" href="#enum-mappositioning"><code>enum MapPositioning</code></a></h3>
+<p>Both enum name and fields name have been updated to better reflect what they actually do.
+You should now use the new <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/components/enum.LayerPositioning.html"><code>LayerPositioning</code></a> enum.</p>
+<h3 id="fn-from_isometric_coords_to_bevy"><a class="header" href="#fn-from_isometric_coords_to_bevy"><code>fn from_isometric_coords_to_bevy()</code></a></h3>
+<p>Parameters <code>tiled_position: Vec2</code> and <code>iso_coords: IsoCoordSystem</code> have been swapped for better consistency with other utility functions.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                                                    <a rel="prev" href="../guides/minimal.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                                    <a rel="prev" href="../guides/debug.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
                         
-                                                    <a rel="next" href="../guides/physics.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                                    <a rel="next" href="../misc/useful-links.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         
@@ -244,11 +236,11 @@ An easy way to do that is to just spawn a new <code>TiledMapHandle</code> over a
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                                    <a rel="prev" href="../guides/minimal.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                    <a rel="prev" href="../guides/debug.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
                 
-                                    <a rel="next" href="../guides/physics.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                    <a rel="next" href="../misc/useful-links.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
                             </nav>
