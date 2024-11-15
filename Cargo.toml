@@ -48,12 +48,12 @@ user_properties = ["dep:serde", "dep:serde_json"]
 # Main dependencies
 bevy = { version = "0.14", default-features = false }
 bevy_ecs_tilemap = { version = "0.14", default-features = false }
-tiled = "0.12"
+tiled = "0.13"
 
 # Utilities
 futures-lite = "2.4"
 log = "0.4"
-thiserror = "1.0"
+thiserror = "2.0"
 
 # Optional dependencies, enabled via features.
 bevy_rapier2d = { version = "0.27", optional = true }
@@ -74,7 +74,7 @@ denylist = ["png", "bmp", "jpeg"]
 
 [dev-dependencies]
 bevy = "0.14"
-bevy-inspector-egui = "0.26"
+bevy-inspector-egui = "0.27"
 
 [[example]]
 name = "basic"
