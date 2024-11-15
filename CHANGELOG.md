@@ -6,7 +6,7 @@
 
 **BREAKING CHANGES**
 This version brings breaking changes.
-A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/v0_4.html) is available to help adapt to these.
+A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_4.html) is available to help adapt to these.
 
 ### Features
 
