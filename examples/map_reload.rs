@@ -22,7 +22,7 @@ fn main() {
             Update,
             (
                 handle_load.run_if(in_state(MapState::Unloaded)),
-                (handle_unload, handle_reload, handle_respawn).run_if(in_state(MapState::Loaded)),
+                (handle_unload, handle_reload).run_if(in_state(MapState::Loaded)),
             ),
         )
         .add_systems(Update, log_transitions)
@@ -57,6 +57,7 @@ fn handle_load(
     mut next_state: ResMut<NextState<MapState>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyL) {
+        info!("Load map");
         commands.spawn(TiledMapHandle(asset_server.load("finite.tmx")));
         next_state.set(MapState::Loaded);
     }
@@ -69,16 +70,29 @@ fn handle_reload(
     maps_query: Query<Entity, With<TiledMapMarker>>,
     mut next_state: ResMut<NextState<MapState>>,
 ) {
+    // Reload the map by inserting a map asset on an existing map entity
+    // Note that you can use the same map asset or a different one
     if keyboard_input.just_pressed(KeyCode::KeyK) {
         if let Ok(entity) = maps_query.get_single() {
+            info!("Reload map");
             commands
                 .entity(entity)
                 .insert(TiledMapHandle(asset_server.load("infinite.tmx")));
+            next_state.set(MapState::Loaded);
         } else {
             warn!("Cannot reload: no map loaded ?");
         }
+    }
 
-        next_state.set(MapState::Loaded);
+    // Reload the same map by pushing the RespawnTiledMap component on it
+    if keyboard_input.just_pressed(KeyCode::KeyR) {
+        if let Ok(entity) = maps_query.get_single() {
+            info!("Respawn map");
+            commands.entity(entity).insert(RespawnTiledMap);
+            next_state.set(MapState::Loaded);
+        } else {
+            warn!("Cannot respawn: no map loaded ?");
+        }
     }
 }
 
@@ -94,39 +108,20 @@ fn handle_unload(
         // `TiledMap` asset is removed.
         //
         // However, typically you would remove the map entity instead.
+        info!("Unload map");
         let handles: Vec<_> = maps.iter().map(|(handle, _)| handle).collect();
         for handle in handles {
             // This will cause the map to unload.
             maps.remove(handle);
         }
-
-        // Actually remove the entities, so that we can re-add later.
-        // If we don't do this, the entity still exists and the map will not be
-        // reloaded properly.
-        for entity in maps_query.iter() {
-            commands.entity(entity).despawn_recursive();
-        }
         next_state.set(MapState::Unloaded);
     } else if keyboard_input.just_pressed(KeyCode::KeyI) {
         // Just remove the entities directly. This will also unload the map.
+        info!("Remove map entities");
         for entity in maps_query.iter() {
             commands.entity(entity).despawn_recursive();
         }
         next_state.set(MapState::Unloaded);
-    }
-}
-
-fn handle_respawn(
-    mut commands: Commands,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    maps_query: Query<Entity, With<TiledMapMarker>>,
-) {
-    if keyboard_input.just_pressed(KeyCode::KeyR) {
-        if let Ok(entity) = maps_query.get_single() {
-            commands.entity(entity).insert(RespawnTiledMap);
-        } else {
-            warn!("Cannot respawn: no map loaded ?");
-        }
     }
 }
 

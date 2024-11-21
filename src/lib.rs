@@ -124,7 +124,6 @@ fn process_loaded_maps(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     maps: ResMut<Assets<TiledMap>>,
-    tile_storage_query: Query<(Entity, &TileStorage)>,
     mut map_query: Query<
         (
             Entity,
@@ -150,29 +149,28 @@ fn process_loaded_maps(
                 continue;
             }
 
-            if let Some(tiled_map) = maps.get(&map_handle.0) {
-                info!(
-                    "Map '{}' has finished loading, spawn it",
-                    map_handle.0.path().unwrap()
-                );
+            let tiled_map = maps.get(&map_handle.0).unwrap();
+            info!(
+                "Map '{}' has finished loading, spawn it",
+                map_handle.0.path().unwrap()
+            );
 
-                // Make sure our tile_storage is empty
-                remove_layers(&mut commands, &tile_storage_query, &mut tiled_id_storage);
+            // Clean map layers
+            remove_layers(&mut commands, &mut tiled_id_storage);
 
-                debug!("Spawn map layers");
-                loader::load_map(
-                    &mut commands,
-                    map_entity,
-                    &map_handle.0,
-                    tiled_map,
-                    &mut tiled_id_storage,
-                    render_settings,
-                    tiled_settings,
-                );
+            debug!("Spawn map layers");
+            loader::load_map(
+                &mut commands,
+                map_entity,
+                &map_handle.0,
+                tiled_map,
+                &mut tiled_id_storage,
+                render_settings,
+                tiled_settings,
+            );
 
-                // Remove the respawn marker
-                commands.entity(map_entity).remove::<RespawnTiledMap>();
-            }
+            // Remove the respawn marker
+            commands.entity(map_entity).remove::<RespawnTiledMap>();
         }
     }
 }
@@ -181,79 +179,33 @@ fn process_loaded_maps(
 fn handle_map_events(
     mut commands: Commands,
     mut map_events: EventReader<AssetEvent<TiledMap>>,
-    tile_storage_query: Query<(Entity, &TileStorage)>,
-    mut map_query: Query<(Entity, &TiledMapHandle, &mut TiledIdStorage)>,
-    layer_query: Query<(Entity, &TiledMapLayer), With<TiledMapLayer>>,
+    mut map_query: Query<(Entity, &TiledMapHandle)>,
 ) {
     for event in map_events.read() {
         match event {
             AssetEvent::Modified { id } => {
-                log::info!("Map changed: {id}");
-                for (map_entity, map_handle, _) in map_query.iter() {
+                info!("Map changed: {id}");
+                for (map_entity, map_handle) in map_query.iter() {
                     if map_handle.0.id() == *id {
                         commands.entity(map_entity).insert(RespawnTiledMap);
                     }
                 }
             }
             AssetEvent::Removed { id } => {
-                log::info!("Map removed: {id}");
-                remove_map_by_asset_id(
-                    &mut commands,
-                    &tile_storage_query,
-                    &mut map_query,
-                    &layer_query,
-                    id,
-                );
+                info!("Map removed: {id}");
+                for (map_entity, map_handle) in map_query.iter_mut() {
+                    if map_handle.0.id() == *id {
+                        commands.entity(map_entity).despawn_recursive();
+                    }
+                }
             }
             _ => continue,
         }
     }
 }
 
-fn remove_map_by_asset_id(
-    commands: &mut Commands,
-    tile_storage_query: &Query<(Entity, &TileStorage)>,
-    map_query: &mut Query<(Entity, &TiledMapHandle, &mut TiledIdStorage)>,
-    layer_query: &Query<(Entity, &TiledMapLayer), With<TiledMapLayer>>,
-    asset_id: &AssetId<TiledMap>,
-) {
-    log::info!("removing map by asset id: {}", asset_id);
-    for (_, map_handle, mut tiled_id_storage) in map_query.iter_mut() {
-        log::info!("checking layer to remove: {}", map_handle.0.id());
-
-        // Only process the map that was removed.
-        if map_handle.0.id() != *asset_id {
-            continue;
-        }
-
-        remove_layers(commands, tile_storage_query, &mut tiled_id_storage);
-    }
-
-    // Also manually despawn layers for this map.
-    // This is necessary because when a new layer is added, the map handle
-    // generation is incremented, and then a subsequent removal event will not
-    // match the map_handle in the loop above.
-    for (layer_entity, map_layer) in layer_query.iter() {
-        // only deal with currently changed map
-        if map_layer.map_handle_id != *asset_id {
-            continue;
-        }
-
-        commands.entity(layer_entity).despawn_recursive();
-    }
-}
-
-fn remove_layers(
-    commands: &mut Commands,
-    tile_storage_query: &Query<(Entity, &TileStorage)>,
-    tiled_id_storage: &mut TiledIdStorage,
-) {
+fn remove_layers(commands: &mut Commands, tiled_id_storage: &mut TiledIdStorage) {
     for layer_entity in tiled_id_storage.layers.values() {
-        if let Ok((_, layer_tile_storage)) = tile_storage_query.get(*layer_entity) {
-            for tile in layer_tile_storage.iter().flatten() {
-                commands.entity(*tile).despawn_recursive()
-            }
-        }
         commands.entity(*layer_entity).despawn_recursive();
     }
     tiled_id_storage.layers.clear();
