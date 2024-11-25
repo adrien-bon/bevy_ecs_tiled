@@ -199,7 +199,7 @@ fn handle_map_events(
     mut commands: Commands,
     mut map_events: EventReader<AssetEvent<TiledMap>>,
     tile_storage_query: Query<(Entity, &TileStorage)>,
-    mut map_query: Query<(Entity, &Handle<TiledMap>, &mut TiledIdStorage)>,
+    mut map_query: Query<(Entity, &TiledMapHandle, &mut TiledIdStorage)>,
     layer_query: Query<(Entity, &TiledMapLayer), With<TiledMapLayer>>,
 ) {
     for event in map_events.read() {
@@ -207,7 +207,7 @@ fn handle_map_events(
             AssetEvent::Modified { id } => {
                 log::info!("Map changed: {id}");
                 for (map_entity, map_handle, _) in map_query.iter() {
-                    if map_handle.id() == *id {
+                    if map_handle.0.id() == *id {
                         commands.entity(map_entity).insert(RespawnTiledMap);
                     }
                 }
@@ -230,16 +230,16 @@ fn handle_map_events(
 fn remove_map_by_asset_id(
     commands: &mut Commands,
     tile_storage_query: &Query<(Entity, &TileStorage)>,
-    map_query: &mut Query<(Entity, &Handle<TiledMap>, &mut TiledIdStorage)>,
+    map_query: &mut Query<(Entity, &TiledMapHandle, &mut TiledIdStorage)>,
     layer_query: &Query<(Entity, &TiledMapLayer), With<TiledMapLayer>>,
     asset_id: &AssetId<TiledMap>,
 ) {
     log::info!("removing map by asset id: {}", asset_id);
     for (_, map_handle, mut tiled_id_storage) in map_query.iter_mut() {
-        log::info!("checking layer to remove: {}", map_handle.id());
+        log::info!("checking layer to remove: {}", map_handle.0.id());
 
         // Only process the map that was removed.
-        if map_handle.id() != *asset_id {
+        if map_handle.0.id() != *asset_id {
             continue;
         }
 
