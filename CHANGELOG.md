@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Bugfixes
+
+- Fix hot-reload (#52)
+
 ## v0.4.0
 
 **BREAKING CHANGES**
