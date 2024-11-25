@@ -200,6 +200,9 @@ There are already some good documentations available on these topics and some re
 <p>Make sure you are actually using a &quot;diamond&quot; map and not a &quot;staggered&quot; one (which are not supported).</p>
 <p>Also, for isometric maps, you may want to tweak the <code>TilemapRenderSettings</code> Component from <code>bevy_ecs_tilemap</code>.
 More information in the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/orientation_isometric.rs#L34">isometric maps example</a></p>
+<h2 id="how-to-enable-map-hot-reload-"><a class="header" href="#how-to-enable-map-hot-reload-">How to enable map hot-reload ?</a></h2>
+<p>You need to enable Bevy <code>file_watcher</code> feature.
+<code>bevy_ecs_tiled</code> will then be able to automatically reload a map that was updated with Tiled.</p>
 <h2 id="i-found-a-bug-what-should-i-do-"><a class="header" href="#i-found-a-bug-what-should-i-do-">I found a bug! What should I do ?</a></h2>
 <p>Please have a look to <a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues">already openned issues</a> and if it does not already exists, please fill a new one !</p>
 <h2 id="i-want-to-add-a-new-feature-thats-not-yet-in-the-crate"><a class="header" href="#i-want-to-add-a-new-feature-thats-not-yet-in-the-crate">I want to add a new feature that's not yet in the crate!</a></h2>
