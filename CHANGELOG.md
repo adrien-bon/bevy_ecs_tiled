@@ -6,6 +6,10 @@
 
 - Enable Bevy `file_watcher` feature when running examples to enable assets hot-reloading
 
+### Documentation
+
+- Add a note in the FAQ about assets hot-reloading
+
 ### Bugfixes
 
 - Fix hot-reload (#52)

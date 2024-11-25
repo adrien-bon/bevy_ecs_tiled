@@ -38,6 +38,11 @@ Make sure you are actually using a "diamond" map and not a "staggered" one (whic
 Also, for isometric maps, you may want to tweak the `TilemapRenderSettings` Component from `bevy_ecs_tilemap`.
 More information in the [isometric maps example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/orientation_isometric.rs#L34)
 
+## How to enable map hot-reload ?
+
+You need to enable Bevy `file_watcher` feature.
+`bevy_ecs_tiled` will then be able to automatically reload a map that was updated with Tiled.
+
 ## I found a bug! What should I do ?
 
 Please have a look to [already openned issues](https://github.com/adrien-bon/bevy_ecs_tiled/issues) and if it does not already exists, please fill a new one !
