@@ -73,7 +73,7 @@ max_combination_size = 3
 denylist = ["png", "bmp", "jpeg"]
 
 [dev-dependencies]
-bevy = "0.14"
+bevy = { version = "0.14", features = ["file_watcher"] }
 bevy-inspector-egui = "0.27"
 
 [[example]]
