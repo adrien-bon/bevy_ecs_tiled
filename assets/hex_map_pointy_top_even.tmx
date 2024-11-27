@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.10.2" orientation="hexagonal" renderorder="right-down" width="10" height="10" tilewidth="16" tileheight="16" infinite="0" hexsidelength="8" staggeraxis="y" staggerindex="even" nextlayerid="5" nextobjectid="4">
+<map version="1.10" tiledversion="1.11.0" orientation="hexagonal" renderorder="right-down" width="10" height="10" tilewidth="16" tileheight="16" infinite="0" hexsidelength="8" staggeraxis="y" staggerindex="even" nextlayerid="7" nextobjectid="4">
  <tileset firstgid="1" source="drjamgo_hex_16x16.tsx"/>
+ <imagelayer id="6" name="Image Layer 1" offsetx="-36.6667" offsety="-68.6667">
+  <image source="bevy_icon.png" width="256" height="256"/>
+ </imagelayer>
  <layer id="1" name="Tile Layer 1" width="10" height="10">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,

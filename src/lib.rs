@@ -167,6 +167,7 @@ fn process_loaded_maps(
                 &mut tiled_id_storage,
                 render_settings,
                 tiled_settings,
+                &asset_server,
             );
 
             // Remove the respawn marker
