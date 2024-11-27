@@ -126,3 +126,8 @@ pub struct TiledMapTile;
 #[derive(Component)]
 #[require(Visibility, Transform)]
 pub struct TiledMapObject;
+
+/// Marker [Component] for a Tiled image
+#[derive(Component)]
+#[require(Visibility, Transform)]
+pub struct TiledMapImage;
