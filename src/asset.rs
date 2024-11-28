@@ -1,5 +1,3 @@
-//! This module contains all [Asset]s definition.
-
 use std::io::{Cursor, Error as IoError, ErrorKind, Read};
 #[cfg(feature = "user_properties")]
 use std::ops::Deref;
@@ -164,7 +162,7 @@ impl AssetLoader for TiledLoader {
             DeserializedMapProperties::load(&map, self.registry.read().deref(), load_context);
 
         #[cfg(feature = "user_properties")]
-        dbg!(&properties);
+        trace!(?properties, "user properties");
 
         let asset_map = TiledMap {
             map,
