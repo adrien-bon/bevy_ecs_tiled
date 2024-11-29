@@ -86,3 +86,21 @@ fn main() {
 ```
 
 And you also need to enable either the `debug-render-2d` feature on `bevy_rapier2d` crate or the `rapier_debug` feature on `bevy_ecs_tiled`
+
+## Logging
+
+Bevy uses the `tracing` crate for logging, which is very powerful in debugging and profiling, you can find more information in the [official documentation](https://docs.rs/tracing/).
+
+We recommend to enable the `trace` level in your application to get more informations about what's happening, just set the `RUST_LOG` environment variable to `trace`:
+
+```sh
+RUST_LOG=trace cargo run
+```
+
+But this will be very verbose, so you can also filter the logs to only display the informations you need:
+
+```sh
+RUST_LOG=bevy_ecs_tiled=trace cargo run
+```
+
+This will only display logs from the `bevy_ecs_tiled` crate in `trace` level.
