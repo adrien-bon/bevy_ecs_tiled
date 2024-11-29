@@ -50,7 +50,7 @@ impl<'a, 'b> BytesResourceReader<'a, 'b> {
     }
 }
 
-impl<'a, 'b> tiled::ResourceReader for BytesResourceReader<'a, 'b> {
+impl<'a> tiled::ResourceReader for BytesResourceReader<'a, '_> {
     type Resource = Box<dyn Read + 'a>;
     type Error = IoError;
 
