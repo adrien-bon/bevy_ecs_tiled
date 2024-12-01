@@ -46,9 +46,8 @@ user_properties = ["dep:serde", "dep:serde_json"]
 
 [dependencies]
 # Main dependencies
-bevy = { version = "0.15.0-rc.3", default-features = false }
-#bevy_ecs_tilemap = { git = "https://github.com/rparrett/bevy_ecs_tilemap.git", rev = "53bbc0e0a87d0324cc3c86163324f8842262cf07", default-features = false }
-bevy_ecs_tilemap = { git = "https://github.com/adrien-bon/bevy_ecs_tilemap.git", rev = "d814be54acfc014e61a1193bcaa42f9472d2f237", default-features = false }
+bevy = { version = "0.15", default-features = false }
+bevy_ecs_tilemap = { git = "https://github.com/adrien-bon/bevy_ecs_tilemap.git", rev = "de93ff7a0edc0ffe13f0c49e637414a1ab65f656", default-features = false }
 tiled = "0.13"
 
 # Utilities
@@ -58,7 +57,7 @@ thiserror = "2.0"
 
 # Optional dependencies, enabled via features.
 bevy_rapier2d = { git = "https://github.com/Vrixyz/bevy_rapier.git", rev = "61d3ef2ffc0793008f652a3a2f3552f40bbecdcb", optional = true }
-avian2d = { git = "https://github.com/Jondolf/avian.git", rev = "ed6a5c4925107636bfbf8f635d0b6a119c80ed22", optional = true }
+avian2d = { git = "https://github.com/Jondolf/avian.git", rev = "52cbcecce0fd05a65005ab6935ebeb231373c2c6", optional = true }
 serde = { version = "1.0", optional = true, features = ["derive"] }
 serde_json = { version = "1.0", optional = true }
 
@@ -74,10 +73,8 @@ max_combination_size = 3
 denylist = ["png", "bmp", "jpeg", "gif"]
 
 [dev-dependencies]
-bevy = { version = "0.15.0-rc.3", features = ["file_watcher"] }
-bevy-inspector-egui = "0.27"
-#bevy-inspector-egui = "0.27"
-#bevy-inspector-egui = { git = "https://github.com/Vrixyz/bevy-inspector-egui.git", rev = "af535e907d0d37987429e821452a425d62bfba18" }
+bevy = { version = "0.15", features = ["file_watcher"] }
+bevy-inspector-egui = "0.28"
 
 [[example]]
 name = "basic"
