@@ -629,6 +629,15 @@ fn main() {
 }
 </code></pre></pre>
 <p>And you also need to enable either the <code>debug-render-2d</code> feature on <code>bevy_rapier2d</code> crate or the <code>rapier_debug</code> feature on <code>bevy_ecs_tiled</code></p>
+<h2 id="logging"><a class="header" href="#logging">Logging</a></h2>
+<p>Bevy uses the <code>tracing</code> crate for logging, which is very powerful in debugging and profiling, you can find more information in the <a href="https://docs.rs/tracing/">official documentation</a>.</p>
+<p>We recommend to enable the <code>trace</code> level in your application to get more informations about what's happening, just set the <code>RUST_LOG</code> environment variable to <code>trace</code>:</p>
+<pre><code class="language-sh">RUST_LOG=trace cargo run
+</code></pre>
+<p>But this will be very verbose, so you can also filter the logs to only display the informations you need:</p>
+<pre><code class="language-sh">RUST_LOG=bevy_ecs_tiled=trace cargo run
+</code></pre>
+<p>This will only display logs from the <code>bevy_ecs_tiled</code> crate in <code>trace</code> level.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="from-v03x-to-v04x"><a class="header" href="#from-v03x-to-v04x">From v0.3.X to v0.4.X</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>Version 0.4 was initially motivated by an update to the way we handle user properties but ended as a major overhaul of the plugin to provide a better API and to give more control to the user.</p>
