@@ -50,7 +50,7 @@ impl<'a, 'b> BytesResourceReader<'a, 'b> {
     }
 }
 
-impl<'a, 'b> tiled::ResourceReader for BytesResourceReader<'a, 'b> {
+impl<'a> tiled::ResourceReader for BytesResourceReader<'a, '_> {
     type Resource = Box<dyn Read + 'a>;
     type Error = IoError;
 
@@ -164,7 +164,7 @@ impl AssetLoader for TiledLoader {
             DeserializedMapProperties::load(&map, self.registry.read().deref(), load_context);
 
         #[cfg(feature = "user_properties")]
-        dbg!(&properties);
+        trace!(?properties, "user properties");
 
         let asset_map = TiledMap {
             map,

@@ -2,6 +2,16 @@
 
 ## [unreleased]
 
+## v0.4.2
+
+### Changed
+
+- Removed the `dbg!` macro from the codebase and replaced it with `trace!` (#54)
+
+### Documentation
+
+- Added a note about the `logging` and `tracing` features in the debugging guide (#54)
+
 ## v0.4.1
 
 ### Changed
