@@ -40,7 +40,7 @@ use tiled::{
 };
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn load_map(
+pub(crate) fn load_map(
     commands: &mut Commands,
     map_entity: Entity,
     map_handle: &Handle<TiledMap>,
