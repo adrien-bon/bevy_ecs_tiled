@@ -53,7 +53,7 @@ tiled = "0.13"
 # Utilities
 futures-lite = "2.5"
 log = "0.4"
-thiserror = "2.0"
+thiserror = "1.0"
 
 # Optional dependencies, enabled via features.
 bevy_rapier2d = { git = "https://github.com/Vrixyz/bevy_rapier.git", rev = "61d3ef2ffc0793008f652a3a2f3552f40bbecdcb", optional = true }
