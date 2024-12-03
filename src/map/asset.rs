@@ -78,12 +78,12 @@ impl<'a> tiled::ResourceReader for BytesResourceReader<'a, '_> {
     }
 }
 
-pub(crate) struct TiledLoader {
+pub(crate) struct TiledMapLoader {
     #[cfg(feature = "user_properties")]
     pub registry: TypeRegistryArc,
 }
 
-impl FromWorld for TiledLoader {
+impl FromWorld for TiledMapLoader {
     fn from_world(_world: &mut World) -> Self {
         Self {
             #[cfg(feature = "user_properties")]
@@ -94,16 +94,16 @@ impl FromWorld for TiledLoader {
 
 /// [TiledMap] loading error.
 #[derive(Debug, thiserror::Error)]
-pub enum TiledAssetLoaderError {
+pub enum TiledMapLoaderError {
     /// An [IO](std::io) Error
     #[error("Could not load Tiled file: {0}")]
     Io(#[from] std::io::Error),
 }
 
-impl AssetLoader for TiledLoader {
+impl AssetLoader for TiledMapLoader {
     type Asset = TiledMap;
     type Settings = ();
-    type Error = TiledAssetLoaderError;
+    type Error = TiledMapLoaderError;
 
     async fn load(
         &self,
