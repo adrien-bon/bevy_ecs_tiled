@@ -90,7 +90,7 @@ pub struct TiledMapPlugin(pub TiledMapPluginConfig);
 impl Plugin for TiledMapPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.init_asset::<TiledMap>()
-            .init_asset_loader::<TiledLoader>()
+            .init_asset_loader::<TiledMapLoader>()
             .add_systems(Update, (handle_map_events, process_loaded_maps))
             .insert_resource(self.0.clone());
 
