@@ -47,7 +47,7 @@ user_properties = ["dep:serde", "dep:serde_json"]
 [dependencies]
 # Main dependencies
 bevy = { version = "0.15", default-features = false }
-bevy_ecs_tilemap = { git = "https://github.com/adrien-bon/bevy_ecs_tilemap.git", rev = "de93ff7a0edc0ffe13f0c49e637414a1ab65f656", default-features = false }
+bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap.git", rev = "17ff958538c0431afb8e6d53fc4916ed3fb821b0", default-features = false }
 tiled = "0.13"
 
 # Utilities
