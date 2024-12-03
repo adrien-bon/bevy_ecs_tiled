@@ -10,12 +10,8 @@
 //!
 #![doc = include_str!("../book/src/getting-started.md")]
 
-pub mod asset;
-pub mod components;
-pub mod events;
-pub mod loader;
+pub mod map;
 pub mod names;
-pub mod utils;
 
 #[cfg(feature = "debug")]
 pub mod debug;
@@ -28,17 +24,14 @@ pub mod properties;
 
 /// `bevy_ecs_tiled` public exports.
 pub mod prelude {
-    pub use super::TiledMapHandle;
-    pub use super::TiledMapPlugin;
-    pub use crate::asset::*;
-    pub use crate::components::*;
+    pub use crate::TiledMapHandle;
+    pub use crate::TiledMapPlugin;
+    pub use super::map::prelude::*;
     #[cfg(feature = "debug")]
-    pub use crate::debug::*;
-    pub use crate::events::*;
-    pub use crate::names::*;
+    pub use super::debug::*;
+    pub use super::names::*;
     #[cfg(feature = "physics")]
-    pub use crate::physics::prelude::*;
-    pub use crate::utils::*;
+    pub use super::physics::prelude::*;
 }
 
 use crate::prelude::*;
@@ -163,7 +156,7 @@ fn process_loaded_maps(
             remove_layers(&mut commands, &mut tiled_id_storage);
 
             debug!("Spawn map layers");
-            loader::load_map(
+            map::loader::load_map(
                 &mut commands,
                 map_entity,
                 &map_handle.0,
