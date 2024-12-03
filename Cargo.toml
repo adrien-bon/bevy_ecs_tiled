@@ -42,7 +42,7 @@ avian_debug = ["avian", "debug"]
 wasm = ["bevy_rapier2d/wasm-bindgen", "tiled/wasm"]
 
 # User Properties
-user_properties = ["dep:serde", "dep:serde_json"]
+user_properties = []
 
 [dependencies]
 # Main dependencies
@@ -54,12 +54,12 @@ tiled = "0.13"
 futures-lite = "2.5"
 log = "0.4"
 thiserror = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0" }
 
 # Optional dependencies, enabled via features.
 bevy_rapier2d = { git = "https://github.com/Vrixyz/bevy_rapier.git", rev = "61d3ef2ffc0793008f652a3a2f3552f40bbecdcb", optional = true }
 avian2d = { git = "https://github.com/Jondolf/avian.git", rev = "52cbcecce0fd05a65005ab6935ebeb231373c2c6", optional = true }
-serde = { version = "1.0", optional = true, features = ["derive"] }
-serde_json = { version = "1.0", optional = true }
 
 # docs.rs-specific configuration
 [package.metadata.docs.rs]

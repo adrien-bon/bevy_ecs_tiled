@@ -39,7 +39,7 @@ use tiled::{
     TileLayer,
 };
 
-pub(super) fn load_map(
+pub(crate) fn load_map(
     commands: &mut Commands,
     map_entity: Entity,
     map_handle: &Handle<TiledMap>,
