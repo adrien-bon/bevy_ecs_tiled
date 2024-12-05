@@ -75,6 +75,7 @@ pub struct TiledIdStorage {
 
 /// Marker [Component] for a Tiled map.
 #[derive(Component)]
+#[require(Visibility, Transform)]
 pub struct TiledMapMarker;
 
 /// Marker [Component] for a Tiled map layer.
@@ -89,6 +90,7 @@ pub struct TiledMapLayer {
 
 /// Marker [Component] for a Tiled map tile layer.
 #[derive(Component)]
+#[require(Visibility, Transform)]
 pub struct TiledMapTileLayer;
 
 /// Marker [Component] for a Tiled map tile layer for a given tileset.
@@ -98,20 +100,29 @@ pub struct TiledMapTileLayerForTileset;
 
 /// Marker [Component] for a Tiled map object layer.
 #[derive(Component)]
+#[require(Visibility, Transform)]
 pub struct TiledMapObjectLayer;
 
 /// Marker [Component] for a Tiled map group layer.
 #[derive(Component)]
+#[require(Visibility, Transform)]
 pub struct TiledMapGroupLayer;
 
 /// Marker [Component] for a Tiled map image layer.
 #[derive(Component)]
+#[require(Visibility, Transform)]
 pub struct TiledMapImageLayer;
 
 /// Marker [Component] for a Tiled map tile.
+///
+/// Note that this component does not require [Visibility] or [Transform]
+/// It would be useless to add these components to tile entities:
+/// - it will not do what you think: rendering is done at the [TiledMapTileLayerForTileset] level through `TilemapBundle` from `bevy_ecs_tilemap`
+/// - it could impact performances pretty badly since it would mean to compute both [GlobalTransform] and [InheritedVisibility] for all tiles
 #[derive(Component)]
 pub struct TiledMapTile;
 
 /// Marker [Component] for a Tiled map object.
 #[derive(Component)]
+#[require(Visibility, Transform)]
 pub struct TiledMapObject;

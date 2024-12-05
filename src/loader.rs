@@ -48,13 +48,13 @@ pub(super) fn load_map(
     render_settings: &TilemapRenderSettings,
     tiled_settings: &TiledMapSettings,
 ) {
-    commands
-        .entity(map_entity)
-        .insert(Name::new(format!(
+    commands.entity(map_entity).insert((
+        Name::new(format!(
             "TiledMap({} x {})",
             tiled_map.map.width, tiled_map.map.height
-        )))
-        .insert(TiledMapMarker);
+        )),
+        TiledMapMarker,
+    ));
 
     let map_type = get_map_type(&tiled_map.map);
     let map_size = get_map_size(&tiled_map.map);
@@ -344,23 +344,22 @@ fn load_finite_tiles_layer(
 
             let tile_pos = TilePos { x, y };
             let tile_entity = commands
-                .spawn(TileBundle {
-                    position: tile_pos,
-                    tilemap_id: TilemapId(layer_for_tileset_entity),
-                    texture_index: TileTextureIndex(texture_index),
-                    flip: TileFlip {
-                        x: layer_tile_data.flip_h,
-                        y: layer_tile_data.flip_v,
-                        d: layer_tile_data.flip_d,
+                .spawn((
+                    TileBundle {
+                        position: tile_pos,
+                        tilemap_id: TilemapId(layer_for_tileset_entity),
+                        texture_index: TileTextureIndex(texture_index),
+                        flip: TileFlip {
+                            x: layer_tile_data.flip_h,
+                            y: layer_tile_data.flip_v,
+                            d: layer_tile_data.flip_d,
+                        },
+                        ..Default::default()
                     },
-                    ..Default::default()
-                })
+                    Name::new(format!("TiledMapTile({},{})", tile_pos.x, tile_pos.y)),
+                    TiledMapTile,
+                ))
                 .set_parent(layer_for_tileset_entity)
-                .insert(Name::new(format!(
-                    "TiledMapTile({},{})",
-                    tile_pos.x, tile_pos.y
-                )))
-                .insert(TiledMapTile)
                 .id();
 
             handle_special_tile(
@@ -474,20 +473,22 @@ fn load_infinite_tiles_layer(
                     y: map_size.y - 1 - tile_y as u32,
                 };
                 let tile_entity = commands
-                    .spawn(TileBundle {
-                        position: tile_pos,
-                        tilemap_id: TilemapId(layer_for_tileset_entity),
-                        texture_index: TileTextureIndex(texture_index),
-                        flip: TileFlip {
-                            x: layer_tile_data.flip_h,
-                            y: layer_tile_data.flip_v,
-                            d: layer_tile_data.flip_d,
+                    .spawn((
+                        TileBundle {
+                            position: tile_pos,
+                            tilemap_id: TilemapId(layer_for_tileset_entity),
+                            texture_index: TileTextureIndex(texture_index),
+                            flip: TileFlip {
+                                x: layer_tile_data.flip_h,
+                                y: layer_tile_data.flip_v,
+                                d: layer_tile_data.flip_d,
+                            },
+                            ..Default::default()
                         },
-                        ..Default::default()
-                    })
+                        Name::new(format!("Tile({},{})", tile_pos.x, tile_pos.y)),
+                        TiledMapTile,
+                    ))
                     .set_parent(layer_for_tileset_entity)
-                    .insert(Name::new(format!("Tile({},{})", tile_pos.x, tile_pos.y)))
-                    .insert(TiledMapTile)
                     .id();
                 handle_special_tile(
                     commands,
@@ -534,13 +535,11 @@ fn load_objects_layer(
             &grid_size,
         );
         let object_entity = commands
-            .spawn(Transform::from_xyz(
-                object_position.x,
-                object_position.y,
-                0.,
+            .spawn((
+                Name::new(format!("Object({})", object_data.name)),
+                TiledMapObject,
+                Transform::from_xyz(object_position.x, object_position.y, 0.),
             ))
-            .insert(Name::new(format!("Object({})", object_data.name)))
-            .insert(TiledMapObject)
             .set_parent(layer_infos.layer)
             .id();
 
