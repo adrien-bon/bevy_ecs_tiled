@@ -193,9 +193,9 @@ fn collider_from_tile<
         // We need to add a Transform to our tile so Transform from
         // the map and layers will be propagated down to the collider(s)
         let world_position = trigger.event().world_position(&map_asset);
-        commands.entity(trigger.event().tile).insert(
-            Transform::from_xyz(world_position.x, world_position.y, 0.0),
-        );
+        commands
+            .entity(trigger.event().tile)
+            .insert(Transform::from_xyz(world_position.x, world_position.y, 0.0));
 
         for (object_id, object_data) in collision.object_data().iter().enumerate() {
             if objects_filter.contains(&object_data.name) {
