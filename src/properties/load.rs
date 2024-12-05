@@ -114,7 +114,7 @@ impl DeserializedMapProperties<false> {
 /// Properties for an entity deserialized from a [`Properties`](tiled::Properties)
 #[derive(Debug)]
 pub(crate) struct DeserializedProperties {
-    pub(crate) properties: Vec<Box<dyn Reflect>>,
+    pub(crate) properties: Vec<Box<dyn PartialReflect>>,
 }
 
 impl Clone for DeserializedProperties {
@@ -132,7 +132,7 @@ impl DeserializedProperties {
         load_cx: &mut LoadContext<'_>,
         resources_allowed: bool,
     ) -> Self {
-        let mut props: Vec<Box<dyn Reflect>> = Vec::new();
+        let mut props: Vec<Box<dyn PartialReflect>> = Vec::new();
 
         for (name, property) in properties.clone() {
             let PropertyValue::ClassValue {
@@ -141,7 +141,7 @@ impl DeserializedProperties {
             } = &property
             else {
                 if let PropertyValue::FileValue(file) = &property {
-                    props.push(Box::new(load_cx.loader().untyped().load(file)));
+                    props.push(Box::new(load_cx.loader().with_unknown_type().load(file)));
                     continue;
                 }
 
@@ -188,7 +188,7 @@ impl DeserializedProperties {
         registration: &TypeRegistration,
         registry: &TypeRegistry,
         load_cx: &mut Option<&mut LoadContext<'_>>,
-    ) -> Result<Box<dyn Reflect>, String> {
+    ) -> Result<Box<dyn PartialReflect>, String> {
         // I wonder if it's possible to call FromStr for String?
         // or ToString/Display?
         use PropertyValue as PV;
@@ -225,7 +225,7 @@ impl DeserializedProperties {
             ("std::path::PathBuf", PV::FileValue(s), _) => Ok(Box::new(PathBuf::from(s))),
             (a, PV::FileValue(s), _) if a.starts_with("bevy_asset::handle::Handle") => {
                 if let Some(cx) = load_cx.as_mut() {
-                    Ok(Box::new(cx.loader().untyped().load(s)))
+                    Ok(Box::new(cx.loader().with_unknown_type().load(s)))
                 } else {
                     Err("No LoadContext provided: cannot load Handle<T>".to_string())
                 }
@@ -272,7 +272,7 @@ impl DeserializedProperties {
                     } else if let Some(default_value) =
                         default_value_from_type_path(registry, field.type_path())
                     {
-                        value = default_value;
+                        value = default_value.into_partial_reflect();
                     } else {
                         return Err(format!(
                             "missing property on `{}`: `{}`",
@@ -299,7 +299,7 @@ impl DeserializedProperties {
                     } else if let Some(default_value) =
                         default_value_from_type_path(registry, field.type_path())
                     {
-                        value = default_value;
+                        value = default_value.into_partial_reflect();
                     } else {
                         return Err(format!(
                             "missing property on `{}`: `{}`",
@@ -327,7 +327,7 @@ impl DeserializedProperties {
                     } else if let Some(default_value) =
                         default_value_from_type_path(registry, field.type_path())
                     {
-                        value = default_value;
+                        value = default_value.into_partial_reflect();
                     } else {
                         return Err(format!(
                             "missing property on `{}`: `{}`",
@@ -344,10 +344,10 @@ impl DeserializedProperties {
             (_, PV::ClassValue { mut properties, .. }, TypeInfo::Array(info)) => {
                 let mut array = Vec::new();
 
-                let Some(reg) = registry.get(info.item_type_id()) else {
+                let Some(reg) = registry.get(info.item_ty().id()) else {
                     return Err(format!(
                         "type `{}` is not registered",
-                        info.item_type_path_table().path()
+                        info.item_ty().path()
                     ));
                 };
 
@@ -398,9 +398,9 @@ fn default_value_from_type_path(registry: &TypeRegistry, path: &str) -> Option<B
 }
 
 fn object_ref(
-    obj: &dyn Reflect,
+    obj: &dyn PartialReflect,
     obj_entity_map: &HashMap<u32, Entity>,
-) -> Option<Box<dyn Reflect>> {
+) -> Option<Box<dyn PartialReflect>> {
     if obj.represents::<Entity>() {
         let obj = Entity::take_from_reflect(obj.clone_value()).unwrap();
         if let Some(&e) = obj_entity_map.get(&obj.index()) {
@@ -423,9 +423,9 @@ fn object_ref(
     }
 }
 
-fn hydrate(object: &mut dyn Reflect, obj_entity_map: &HashMap<u32, Entity>) {
+fn hydrate(object: &mut dyn PartialReflect, obj_entity_map: &HashMap<u32, Entity>) {
     if let Some(obj) = object_ref(object, obj_entity_map) {
-        object.apply(&*obj);
+        object.apply(obj.as_partial_reflect());
         return;
     }
 
@@ -469,8 +469,10 @@ fn hydrate(object: &mut dyn Reflect, obj_entity_map: &HashMap<u32, Entity>) {
                 hydrate(v, obj_entity_map);
             }
         }
+        // Cannot hydrate a Set since it does not have a get_mut() function
+        ReflectMut::Set(_) => {}
         // we don't care about any of the other values
-        ReflectMut::Value(_) => {}
+        ReflectMut::Opaque(_) => {}
     }
 }
 

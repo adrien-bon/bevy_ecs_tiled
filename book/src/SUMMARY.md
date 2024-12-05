@@ -21,6 +21,7 @@
 
 # Migration guides
 
+- [From v0.4.X to v0.5.X](migrations/v0_5.md)
 - [From v0.3.X to v0.4.X](migrations/v0_4.md)
 
 # Miscellaneous

@@ -4,7 +4,6 @@ use bevy::{
     color::palettes::css::{PURPLE, RED},
     ecs::component::StorageType,
     prelude::*,
-    sprite::MaterialMesh2dBundle,
 };
 use bevy_ecs_tiled::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
@@ -29,7 +28,7 @@ fn main() {
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2d);
     commands.spawn(TiledMapHandle(asset_server.load("finite.tmx")));
 }
 
@@ -114,12 +113,7 @@ impl Component for MyCustomPhysicsComponent {
             world
                 .commands()
                 .entity(entity)
-                .insert(MaterialMesh2dBundle {
-                    mesh: mesh.into(),
-                    transform: Transform::default(),
-                    material,
-                    ..default()
-                });
+                .insert((Mesh2d(mesh), MeshMaterial2d(material)));
         });
     }
 }

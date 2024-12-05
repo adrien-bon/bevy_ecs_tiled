@@ -5,6 +5,7 @@ use tiled::{Layer, Map, Object, Tile};
 
 /// Marker component for colliders
 #[derive(Component)]
+#[require(Transform)]
 pub struct TiledColliderMarker;
 
 /// Describe the type of the [TiledColliderSource].
@@ -201,9 +202,11 @@ pub(super) fn spawn_collider<T: super::TiledPhysicsBackend>(
             ));
             commands
                 .entity(collider.entity)
-                .insert(TiledColliderMarker)
-                .insert(TransformBundle::from_transform(transform))
-                .insert(Name::new(format!("Collider: {}", collider.name)))
+                .insert((
+                    TiledColliderMarker,
+                    transform,
+                    Name::new(format!("Collider: {}", collider.name)),
+                ))
                 .set_parent(collider_source.entity);
             commands.trigger(TiledColliderCreated {
                 map_handle: map_handle.clone(),

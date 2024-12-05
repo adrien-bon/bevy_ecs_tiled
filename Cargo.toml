@@ -21,7 +21,7 @@ default = ["render", "png"]
 png = ["bevy/png"]
 bmp = ["bevy/bmp"]
 jpeg = ["bevy/jpeg"]
-#gif = ["bevy/gif"]
+gif = ["bevy/gif"]
 
 # Expose features of the bevy_ecs_tilemap crate.
 atlas = ["bevy_ecs_tilemap/atlas"]
@@ -46,18 +46,18 @@ user_properties = ["dep:serde", "dep:serde_json"]
 
 [dependencies]
 # Main dependencies
-bevy = { version = "0.14", default-features = false }
-bevy_ecs_tilemap = { version = "0.14", default-features = false }
+bevy = { version = "0.15", default-features = false }
+bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap.git", rev = "05eb36a58f5481f6f065f362d2b35089a9d1502d", default-features = false }
 tiled = "0.13"
 
 # Utilities
-futures-lite = "2.4"
+futures-lite = "2.5"
 log = "0.4"
-thiserror = "2.0"
+thiserror = "1.0"
 
 # Optional dependencies, enabled via features.
-bevy_rapier2d = { version = "0.27", optional = true }
-avian2d = { version = "0.1", optional = true }
+bevy_rapier2d = { git = "https://github.com/Vrixyz/bevy_rapier.git", rev = "fd85257d234833696e40c3d69e63f9d004286b5d", optional = true }
+avian2d = { git = "https://github.com/Jondolf/avian.git", rev = "52cbcecce0fd05a65005ab6935ebeb231373c2c6", optional = true }
 serde = { version = "1.0", optional = true, features = ["derive"] }
 serde_json = { version = "1.0", optional = true }
 
@@ -70,11 +70,11 @@ features = ["debug","user_properties","physics","avian","rapier"]
 # only check 3 features at once
 max_combination_size = 3
 # do not check bevy images features since we don't directly use them
-denylist = ["png", "bmp", "jpeg"]
+denylist = ["png", "bmp", "jpeg", "gif"]
 
 [dev-dependencies]
-bevy = { version = "0.14", features = ["file_watcher"] }
-bevy-inspector-egui = "0.27"
+bevy = { version = "0.15", features = ["file_watcher"] }
+bevy-inspector-egui = "0.28"
 
 [[example]]
 name = "basic"

@@ -30,7 +30,7 @@ fn main() {
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2d);
     commands.spawn(TiledMapHandle(
         asset_server.load("multiple_layers_with_colliders.tmx"),
     ));

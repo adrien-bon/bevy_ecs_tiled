@@ -26,6 +26,8 @@ enum ExportConversionError {
     MapUnsupported,
     #[error("field of type {0} is not supported")]
     UnsupportedValue(&'static str),
+    #[error("set fields are not supported")]
+    SetUnsupported,
     //#[error("type {0} does not reflect Component, Bundle or Resource")]
     //NotReflectable(&'static str),
 }
@@ -118,7 +120,8 @@ impl TypeExportRegistry {
             TypeInfo::Array(info) => self.generate_array_export(info, registry, use_as),
             TypeInfo::Map(_) => Err(ExportConversionError::MapUnsupported),
             TypeInfo::Enum(info) => self.generate_enum_export(info, registry),
-            TypeInfo::Value(_) => Ok(vec![]),
+            TypeInfo::Opaque(_) => Ok(vec![]),
+            TypeInfo::Set(_) => Err(ExportConversionError::SetUnsupported),
         }
     }
 
@@ -165,7 +168,10 @@ impl TypeExportRegistry {
                             name: s.index().to_string(),
                             property_type,
                             type_field,
-                            value: unnamed_field_json_value(default_value, s),
+                            value: unnamed_field_json_value(
+                                default_value.map(|v| v.as_partial_reflect()),
+                                s,
+                            ),
                         })
                     })
                     .collect::<Result<_, _>>()?,
@@ -182,7 +188,7 @@ impl TypeExportRegistry {
         use_as: Vec<UseAs>,
     ) -> ExportConversionResult {
         let (type_field, property_type) =
-            type_to_field(registry.get(info.item_type_id()).unwrap())?;
+            type_to_field(registry.get(info.item_ty().id()).unwrap())?;
 
         let root = TypeExport {
             id: self.next_id(),
@@ -228,7 +234,10 @@ impl TypeExportRegistry {
                             name: s.index().to_string(),
                             property_type,
                             type_field,
-                            value: unnamed_field_json_value(default_value, s),
+                            value: unnamed_field_json_value(
+                                default_value.map(|v| v.as_partial_reflect()),
+                                s,
+                            ),
                         })
                     })
                     .collect::<Result<_, _>>()?,
@@ -261,7 +270,10 @@ impl TypeExportRegistry {
                             name: s.name().to_string(),
                             property_type,
                             type_field,
-                            value: named_field_json_value(default_value, s),
+                            value: named_field_json_value(
+                                default_value.map(|v| v.as_partial_reflect()),
+                                s,
+                            ),
                         })
                     })
                     .collect::<Result<_, _>>()?,
@@ -294,39 +306,61 @@ impl TypeExportRegistry {
     }
 }
 
-fn value_to_json(value: &dyn Reflect) -> serde_json::Value {
+fn value_to_json(value: &dyn PartialReflect) -> serde_json::Value {
     let Some(type_info) = value.get_represented_type_info() else {
         return serde_json::Value::default();
     };
 
     match (type_info.type_path(), type_info, value.reflect_ref()) {
-        ("bool", _, ReflectRef::Value(v)) => serde_json::json!(*v.downcast_ref::<bool>().unwrap()),
-        ("f32", _, ReflectRef::Value(v)) => serde_json::json!(*v.downcast_ref::<f32>().unwrap()),
-        ("f64", _, ReflectRef::Value(v)) => serde_json::json!(*v.downcast_ref::<f64>().unwrap()),
-        ("isize", _, ReflectRef::Value(v)) => {
-            serde_json::json!(*v.downcast_ref::<isize>().unwrap())
+        ("bool", _, ReflectRef::Opaque(v)) => {
+            serde_json::json!(*v.try_downcast_ref::<bool>().unwrap())
         }
-        ("i8", _, ReflectRef::Value(v)) => serde_json::json!(*v.downcast_ref::<i8>().unwrap()),
-        ("i16", _, ReflectRef::Value(v)) => serde_json::json!(*v.downcast_ref::<i16>().unwrap()),
-        ("i32", _, ReflectRef::Value(v)) => serde_json::json!(*v.downcast_ref::<i32>().unwrap()),
-        ("i64", _, ReflectRef::Value(v)) => serde_json::json!(*v.downcast_ref::<i64>().unwrap()),
-        ("i128", _, ReflectRef::Value(v)) => serde_json::json!(*v.downcast_ref::<i128>().unwrap()),
-        ("usize", _, ReflectRef::Value(v)) => {
-            serde_json::json!(*v.downcast_ref::<usize>().unwrap())
+        ("f32", _, ReflectRef::Opaque(v)) => {
+            serde_json::json!(*v.try_downcast_ref::<f32>().unwrap())
         }
-        ("u8", _, ReflectRef::Value(v)) => serde_json::json!(*v.downcast_ref::<u8>().unwrap()),
-        ("u16", _, ReflectRef::Value(v)) => serde_json::json!(*v.downcast_ref::<u16>().unwrap()),
-        ("u32", _, ReflectRef::Value(v)) => serde_json::json!(*v.downcast_ref::<u32>().unwrap()),
-        ("u64", _, ReflectRef::Value(v)) => serde_json::json!(*v.downcast_ref::<u64>().unwrap()),
-        ("u128", _, ReflectRef::Value(v)) => serde_json::json!(*v.downcast_ref::<u128>().unwrap()),
-        ("alloc::string::String", _, ReflectRef::Value(v)) => {
-            serde_json::json!(*v.downcast_ref::<String>().unwrap())
+        ("f64", _, ReflectRef::Opaque(v)) => {
+            serde_json::json!(*v.try_downcast_ref::<f64>().unwrap())
         }
-        ("alloc::borrow::Cow<str>", _, ReflectRef::Value(v)) => {
-            serde_json::json!(*v.downcast_ref::<Cow<str>>().unwrap())
+        ("isize", _, ReflectRef::Opaque(v)) => {
+            serde_json::json!(*v.try_downcast_ref::<isize>().unwrap())
+        }
+        ("i8", _, ReflectRef::Opaque(v)) => serde_json::json!(*v.try_downcast_ref::<i8>().unwrap()),
+        ("i16", _, ReflectRef::Opaque(v)) => {
+            serde_json::json!(*v.try_downcast_ref::<i16>().unwrap())
+        }
+        ("i32", _, ReflectRef::Opaque(v)) => {
+            serde_json::json!(*v.try_downcast_ref::<i32>().unwrap())
+        }
+        ("i64", _, ReflectRef::Opaque(v)) => {
+            serde_json::json!(*v.try_downcast_ref::<i64>().unwrap())
+        }
+        ("i128", _, ReflectRef::Opaque(v)) => {
+            serde_json::json!(*v.try_downcast_ref::<i128>().unwrap())
+        }
+        ("usize", _, ReflectRef::Opaque(v)) => {
+            serde_json::json!(*v.try_downcast_ref::<usize>().unwrap())
+        }
+        ("u8", _, ReflectRef::Opaque(v)) => serde_json::json!(*v.try_downcast_ref::<u8>().unwrap()),
+        ("u16", _, ReflectRef::Opaque(v)) => {
+            serde_json::json!(*v.try_downcast_ref::<u16>().unwrap())
+        }
+        ("u32", _, ReflectRef::Opaque(v)) => {
+            serde_json::json!(*v.try_downcast_ref::<u32>().unwrap())
+        }
+        ("u64", _, ReflectRef::Opaque(v)) => {
+            serde_json::json!(*v.try_downcast_ref::<u64>().unwrap())
+        }
+        ("u128", _, ReflectRef::Opaque(v)) => {
+            serde_json::json!(*v.try_downcast_ref::<u128>().unwrap())
+        }
+        ("alloc::string::String", _, ReflectRef::Opaque(v)) => {
+            serde_json::json!(*v.try_downcast_ref::<String>().unwrap())
+        }
+        ("alloc::borrow::Cow<str>", _, ReflectRef::Opaque(v)) => {
+            serde_json::json!(*v.try_downcast_ref::<Cow<str>>().unwrap())
         }
         ("bevy_color::color::Color", _, _) => {
-            let c = value.downcast_ref::<Color>().unwrap();
+            let c = value.try_downcast_ref::<Color>().unwrap();
             serde_json::json!(format!("#{:08x}", c.to_linear().as_u32()))
         }
         (_, TypeInfo::Enum(info), ReflectRef::Enum(v)) => {
@@ -369,7 +403,10 @@ fn value_to_json(value: &dyn Reflect) -> serde_json::Value {
     }
 }
 
-fn named_field_json_value(value: Option<&dyn Reflect>, field: &NamedField) -> serde_json::Value {
+fn named_field_json_value(
+    value: Option<&dyn PartialReflect>,
+    field: &NamedField,
+) -> serde_json::Value {
     match value {
         Some(v) => match v.reflect_ref() {
             ReflectRef::Struct(t) => t
@@ -383,7 +420,7 @@ fn named_field_json_value(value: Option<&dyn Reflect>, field: &NamedField) -> se
 }
 
 fn unnamed_field_json_value(
-    value: Option<&dyn Reflect>,
+    value: Option<&dyn PartialReflect>,
     field: &UnnamedField,
 ) -> serde_json::Value {
     match value {
@@ -427,7 +464,7 @@ fn type_to_field(
         "std::path::PathBuf" => (FieldType::File, None),
         f if f.starts_with("bevy_asset::handle::Handle") => (FieldType::File, None),
         path => {
-            if matches!(info, TypeInfo::Value(_)) {
+            if matches!(info, TypeInfo::Opaque(_)) {
                 return Err(ExportConversionError::UnsupportedValue(info.type_path()));
             }
 

@@ -48,7 +48,7 @@ fn main() {
 
 // Just load the map as usual
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2d);
     commands.spawn(TiledMapHandle(asset_server.load("finite.tmx")));
 }
 ```
@@ -62,7 +62,7 @@ use bevy_ecs_tiled::prelude::*;
 
 // Load the map with custom physics settings (and an Avian backend)
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2d);
     commands.spawn((
         TiledMapHandle(asset_server.load("finite.tmx")),
         // With this configuration, we will restrict the spawn of collider

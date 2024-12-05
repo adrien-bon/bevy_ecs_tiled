@@ -32,7 +32,7 @@ struct MapSpawner {
 const DELAY_VALUE_S: u64 = 5;
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2d);
 
     info!("Loading asset, will spawn a map in {}s ...", DELAY_VALUE_S);
     commands.insert_resource(MapSpawner {

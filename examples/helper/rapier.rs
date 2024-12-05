@@ -16,11 +16,7 @@ pub fn spawn_player(commands: &mut Commands, radius: f32, spawn_position: Vec2) 
         .insert(Collider::ball(radius))
         .insert(Velocity::zero())
         .insert(GravityScale(GRAVITY_SCALE))
-        .insert(TransformBundle::from(Transform::from_xyz(
-            spawn_position.x,
-            spawn_position.y,
-            0.0,
-        )));
+        .insert(Transform::from_xyz(spawn_position.x, spawn_position.y, 0.0));
 }
 
 pub fn move_player(
