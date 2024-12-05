@@ -5,7 +5,7 @@ use tiled::{Layer, Map, Object, Tile};
 
 /// Marker component for colliders
 #[derive(Component)]
-#[require(Visibility, Transform)]
+#[require(Transform)]
 pub struct TiledColliderMarker;
 
 /// Describe the type of the [TiledColliderSource].
