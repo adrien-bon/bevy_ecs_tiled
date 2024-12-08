@@ -4,17 +4,15 @@ use crate::properties::types_json::{
 use bevy::ecs::reflect::ReflectBundle;
 use bevy::reflect::{
     ArrayInfo, EnumInfo, NamedField, StructInfo, TupleInfo, TupleStructInfo, TypeInfo,
-    TypeRegistration, TypeRegistry, UnitVariantInfo, UnnamedField, VariantInfo,
+    TypeRegistration, TypeRegistry, UnnamedField, VariantInfo,
 };
 use bevy::utils::hashbrown::HashMap;
 use bevy::{prelude::*, reflect::ReflectRef};
 use std::borrow::Cow;
-use std::collections::hash_map::Entry;
 use thiserror::Error;
-use tiled::PropertyValue;
 
-const UNIT_COLOR: &str = "#00aa00";
 const DEFAULT_COLOR: &str = "#000000";
+const USE_AS_PROPERTY: &[UseAs] = &[UseAs::Property];
 
 type ExportConversionResult = Result<Vec<TypeExport>, ExportConversionError>;
 
@@ -28,8 +26,8 @@ enum ExportConversionError {
     UnsupportedValue(&'static str),
     #[error("set fields are not supported")]
     SetUnsupported,
-    //#[error("type {0} does not reflect Component, Bundle or Resource")]
-    //NotReflectable(&'static str),
+    #[error("a dependency is not supported")]
+    DependencyError,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -47,10 +45,30 @@ impl TypeExportRegistry {
     }
 
     pub(crate) fn from_registry(registry: &TypeRegistry) -> Self {
+        let mut deps = vec![];
         let mut out = Self::default();
         for t in registry.iter() {
-            out.register_from_type_registration(t, registry);
+            if t.data::<ReflectComponent>().is_some()
+                || t.data::<ReflectBundle>().is_some()
+                || t.data::<ReflectResource>().is_some()
+            {
+                let mut new_deps =
+                    out.register_from_type_registration(t, registry, USE_AS_PROPERTY.to_vec());
+                deps.append(&mut new_deps);
+            }
         }
+
+        // We should have a dedicated 'useAs' flags so we cannot add these dependencies
+        // directly as objects properties (only usable nested)
+        for d in deps {
+            if out.types.contains_key(d) {
+                continue;
+            }
+            if let Some(t) = registry.get_with_type_path(d) {
+                out.register_from_type_registration(t, registry, USE_AS_PROPERTY.to_vec());
+            }
+        }
+
         out
     }
 
@@ -63,24 +81,42 @@ impl TypeExportRegistry {
         &mut self,
         registration: &TypeRegistration,
         registry: &TypeRegistry,
-    ) {
-        match self.generate_export(registration, registry) {
+        use_as: Vec<UseAs>,
+    ) -> Vec<&'static str> {
+        let mut deps = vec![];
+        match self.generate_export(registration, registry, use_as, &mut deps) {
             Ok(export) => {
                 if !export.is_empty() {
                     self.types
                         .insert(registration.type_info().type_path(), export);
                 }
+                deps
             }
             Err(_) => {
                 self.remove_with_dependency(registration.type_info().type_path());
+                vec![]
             }
         }
+    }
+
+    fn is_supported(registration: &TypeRegistration) -> bool {
+        matches!(
+            registration.type_info(),
+            TypeInfo::TupleStruct(_)
+                | TypeInfo::Struct(_)
+                | TypeInfo::Tuple(_)
+                | TypeInfo::Array(_)
+                | TypeInfo::Enum(_)
+                | TypeInfo::Opaque(_)
+        )
     }
 
     fn generate_export(
         &mut self,
         registration: &TypeRegistration,
         registry: &TypeRegistry,
+        use_as: Vec<UseAs>,
+        deps: &mut Vec<&'static str>,
     ) -> ExportConversionResult {
         let mut default_value = None;
         let tmp;
@@ -90,25 +126,9 @@ impl TypeExportRegistry {
             default_value = Some(tmp.as_ref());
         }
 
-        let use_as;
-        if registration.data::<ReflectResource>().is_some() {
-            use_as = vec![UseAs::Map];
-        } else if registration.data::<ReflectComponent>().is_some()
-            || registration.data::<ReflectBundle>().is_some()
-        {
-            use_as = UseAs::all_supported();
-        } else {
-            // TODO: right now, we need to export all registered types even if we won't be able to use them
-            // We will change that when we have implemented a way to recursively add types
-            use_as = vec![];
-            // return Err(ExportConversionError::NotReflectable(
-            //    registration.type_info().type_path(),
-            // ));
-        }
-
-        match registration.type_info() {
+        let out = match registration.type_info() {
             TypeInfo::TupleStruct(info) => {
-                self.generate_tuple_struct_export(info, registry, default_value)
+                self.generate_tuple_struct_export(info, registry, default_value, use_as)
             }
             TypeInfo::Struct(info) => {
                 self.generate_struct_export(info, registry, default_value, use_as)
@@ -119,17 +139,33 @@ impl TypeExportRegistry {
             TypeInfo::List(_) => Err(ExportConversionError::ListUnsupported),
             TypeInfo::Array(info) => self.generate_array_export(info, registry, use_as),
             TypeInfo::Map(_) => Err(ExportConversionError::MapUnsupported),
-            TypeInfo::Enum(info) => self.generate_enum_export(info, registry),
+            TypeInfo::Enum(info) => self.generate_enum_export(info, registry, use_as),
             TypeInfo::Opaque(_) => Ok(vec![]),
             TypeInfo::Set(_) => Err(ExportConversionError::SetUnsupported),
+        };
+
+        if out.is_ok() {
+            let mut new_deps = dependencies(registration, registry);
+            if new_deps.iter().all(|n| {
+                if let Some(t) = registry.get_with_type_path(n) {
+                    return Self::is_supported(t);
+                }
+                false
+            }) {
+                deps.append(&mut new_deps);
+                return out;
+            } else {
+                return Err(ExportConversionError::DependencyError);
+            }
         }
+        out
     }
 
     fn remove_with_dependency(&mut self, type_path: &str) {
         let mut to_remove = vec![type_path.to_string()];
         while let Some(type_path) = to_remove.pop() {
-            self.types.retain(|_, import| {
-                import.iter().all(|import| match &import.type_data {
+            self.types.retain(|_, export| {
+                export.iter().all(|export| match &export.type_data {
                     TypeData::Enum(_) => true,
                     TypeData::Class(class) => {
                         if class.members.iter().any(|m| {
@@ -137,7 +173,7 @@ impl TypeExportRegistry {
                                 .as_ref()
                                 .is_some_and(|s| s.as_str() == type_path)
                         }) {
-                            to_remove.push(import.name.clone());
+                            to_remove.push(export.name.clone());
                             false
                         } else {
                             true
@@ -153,12 +189,13 @@ impl TypeExportRegistry {
         info: &TupleStructInfo,
         registry: &TypeRegistry,
         default_value: Option<&dyn Reflect>,
+        _use_as: Vec<UseAs>,
     ) -> ExportConversionResult {
         let root = TypeExport {
             id: self.next_id(),
             name: info.type_path().to_string(),
             type_data: TypeData::Class(Class {
-                use_as: UseAs::all_supported(),
+                use_as: USE_AS_PROPERTY.to_vec(),
                 color: DEFAULT_COLOR.to_string(),
                 draw_fill: true,
                 members: info
@@ -289,6 +326,7 @@ impl TypeExportRegistry {
         &mut self,
         info: &EnumInfo,
         registry: &TypeRegistry,
+        _use_as: Vec<UseAs>,
     ) -> ExportConversionResult {
         let simple = info.iter().all(|s| matches!(s, VariantInfo::Unit(_)));
 
@@ -343,8 +381,8 @@ impl TypeExportRegistry {
                             id: self.next_id(),
                             name: name.clone(),
                             type_data: TypeData::Class(Class {
-                                use_as: UseAs::all_supported(),
-                                color: "#000000".to_string(),
+                                use_as: USE_AS_PROPERTY.to_vec(),
+                                color: DEFAULT_COLOR.to_string(),
                                 draw_fill: true,
                                 members: s
                                     .iter()
@@ -379,8 +417,8 @@ impl TypeExportRegistry {
                             id: self.next_id(),
                             name: name.clone(),
                             type_data: TypeData::Class(Class {
-                                use_as: UseAs::all_supported(),
-                                color: "#000000".to_string(),
+                                use_as: USE_AS_PROPERTY.to_vec(),
+                                color: DEFAULT_COLOR.to_string(),
                                 draw_fill: true,
                                 members: tuple
                                     .iter()
@@ -417,8 +455,8 @@ impl TypeExportRegistry {
                 id: self.next_id(),
                 name: info.type_path().to_string(),
                 type_data: TypeData::Class(Class {
-                    use_as: UseAs::all_supported(),
-                    color: "#000000".to_string(),
+                    use_as: USE_AS_PROPERTY.to_vec(),
+                    color: DEFAULT_COLOR.to_string(),
                     draw_fill: true,
                     members: root_members,
                 }),
@@ -492,7 +530,6 @@ fn value_to_json(value: &dyn PartialReflect) -> serde_json::Value {
             if info.iter().all(|v| matches!(v, VariantInfo::Unit(_))) {
                 serde_json::json!(v.variant_name())
             } else {
-                // TODO: non-unit enums
                 serde_json::Value::default()
             }
         }
@@ -519,10 +556,10 @@ fn value_to_json(value: &dyn PartialReflect) -> serde_json::Value {
             })
             .collect(),
         _ => {
-            warn!(
-                "cannot convert type '{}' to a JSON value",
-                type_info.type_path()
-            );
+            // warn!(
+            //     "cannot convert type '{}' to a JSON value",
+            //     type_info.type_path()
+            // );
             serde_json::Value::default()
         }
     }
@@ -614,133 +651,16 @@ fn is_enum_and_simple(t: &TypeRegistration) -> bool {
     }
 }
 
-#[allow(dead_code)]
-fn unit_variant_to_export(info: &UnitVariantInfo, id: u32) -> TypeExport {
-    unit_export(id, info.name().to_string())
-}
-
-fn unit_export(id: u32, name: String) -> TypeExport {
-    TypeExport {
-        id,
-        name,
-        type_data: TypeData::Class(Class {
-            use_as: UseAs::all_supported(),
-            color: UNIT_COLOR.to_string(),
-            draw_fill: true,
-            members: vec![],
-        }),
-    }
-}
-
-#[allow(dead_code)]
-fn insert_value(a: &mut PropertyValue, b: PropertyValue) {
-    use PropertyValue as PV;
-    match (a, b) {
-        (PV::BoolValue(a), PV::BoolValue(b)) => {
-            *a = b;
-        }
-        (PV::FloatValue(a), PV::FloatValue(b)) => {
-            *a = b;
-        }
-        (PV::IntValue(a), PV::IntValue(b)) => {
-            *a = b;
-        }
-        (PV::ColorValue(a), PV::ColorValue(b)) => {
-            *a = b;
-        }
-        (PV::StringValue(a), PV::StringValue(b)) => {
-            *a = b;
-        }
-        (PV::FileValue(a), PV::FileValue(b)) => {
-            *a = b;
-        }
-        (PV::ObjectValue(a), PV::ObjectValue(b)) => {
-            *a = b;
-        }
-        (
-            PV::ClassValue {
-                property_type: property_type_a,
-                properties: properties_a,
-            },
-            PV::ClassValue {
-                property_type: property_type_b,
-                properties: properties_b,
-            },
-        ) => {
-            assert_eq!(property_type_a, &property_type_b);
-
-            for (name, value) in properties_b {
-                match properties_a.entry(name) {
-                    Entry::Occupied(mut a) => {
-                        insert_value(a.get_mut(), value);
-                    }
-                    Entry::Vacant(a) => {
-                        a.insert(value);
-                    }
-                }
-            }
-        }
-        _ => {
-            panic!("mismatched property values");
-        }
-    }
-}
-
-#[allow(dead_code)]
-fn insert_json_value(property: &mut PropertyValue, json: serde_json::Value) {
-    use PropertyValue as PV;
-    match (property, json) {
-        (PV::BoolValue(a), serde_json::Value::Bool(b)) => {
-            *a = b;
-        }
-        (PV::FloatValue(a), serde_json::Value::Number(b)) => {
-            *a = b.as_f64().unwrap() as f32;
-        }
-        (PV::IntValue(a), serde_json::Value::Number(b)) => {
-            *a = b.as_f64().unwrap() as i32;
-        }
-        (PV::ColorValue(a), serde_json::Value::String(b)) => {
-            *a = b.parse().unwrap();
-        }
-        (PV::StringValue(a), serde_json::Value::String(b)) => {
-            *a = b;
-        }
-        (PV::FileValue(a), serde_json::Value::String(b)) => {
-            *a = b;
-        }
-        (PV::ObjectValue(a), serde_json::Value::Number(b)) => {
-            *a = b.as_u64().unwrap() as u32;
-        }
-        (
-            PV::ClassValue {
-                property_type: _,
-                properties,
-            },
-            serde_json::Value::Object(b),
-        ) => {
-            for (name, value) in b {
-                if let Some(property) = properties.get_mut(&name) {
-                    insert_json_value(property, value);
-                }
-            }
-        }
-        (a, b) => {
-            panic!("mismatched property values: {:?} vs {:?}", a, b);
-        }
-    }
-}
-
-#[allow(dead_code)]
-fn dependencies(t: &TypeRegistration) -> Vec<&'static str> {
-    match t.type_info() {
+fn dependencies(registration: &TypeRegistration, registry: &TypeRegistry) -> Vec<&'static str> {
+    let deps = match registration.type_info() {
         TypeInfo::Struct(info) => info.iter().map(NamedField::type_path).collect(),
         TypeInfo::TupleStruct(info) => info.iter().map(UnnamedField::type_path).collect(),
         TypeInfo::Tuple(info) => info.iter().map(UnnamedField::type_path).collect(),
-        TypeInfo::List(info) => vec![info.item_type_path_table().path()],
-        TypeInfo::Array(info) => vec![info.item_type_path_table().path()],
+        TypeInfo::List(info) => vec![info.item_ty().type_path_table().path()],
+        TypeInfo::Array(info) => vec![info.item_ty().type_path_table().path()],
         TypeInfo::Map(info) => vec![
-            info.key_type_path_table().path(),
-            info.value_type_path_table().path(),
+            info.key_ty().type_path_table().path(),
+            info.value_ty().type_path_table().path(),
         ],
         TypeInfo::Enum(info) => info
             .iter()
@@ -750,71 +670,24 @@ fn dependencies(t: &TypeRegistration) -> Vec<&'static str> {
                 VariantInfo::Unit(_) => vec![],
             })
             .collect(),
-        TypeInfo::Value(_) => vec![],
+        TypeInfo::Set(info) => vec![info.value_ty().type_path_table().path()],
+        TypeInfo::Opaque(_) => vec![],
+    };
+
+    let mut all_deps = deps.clone();
+    for d in deps {
+        if let Some(t) = registry.get_with_type_path(d) {
+            let mut new_deps = dependencies(t, registry);
+            all_deps.append(&mut new_deps);
+        }
     }
+    all_deps
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_insert_value() {
-        let mut a = PropertyValue::ClassValue {
-            property_type: "[f32; 3]".to_string(),
-            properties: tiled::Properties::from([
-                ("[0]".to_string(), PropertyValue::IntValue(0)),
-                ("[1]".to_string(), PropertyValue::IntValue(0)),
-                ("[2]".to_string(), PropertyValue::IntValue(0)),
-            ]),
-        };
-
-        let b = PropertyValue::ClassValue {
-            property_type: "[f32; 3]".to_string(),
-            properties: tiled::Properties::from([("[1]".to_string(), PropertyValue::IntValue(1))]),
-        };
-
-        let expected = PropertyValue::ClassValue {
-            property_type: "[f32; 3]".to_string(),
-            properties: tiled::Properties::from([
-                ("[0]".to_string(), PropertyValue::IntValue(0)),
-                ("[1]".to_string(), PropertyValue::IntValue(1)),
-                ("[2]".to_string(), PropertyValue::IntValue(0)),
-            ]),
-        };
-
-        insert_value(&mut a, b);
-        assert_eq!(a, expected);
-    }
-
-    #[test]
-    fn test_insert_json_value() {
-        let mut a = PropertyValue::ClassValue {
-            property_type: "[f32; 3]".to_string(),
-            properties: tiled::Properties::from([
-                ("[0]".to_string(), PropertyValue::IntValue(0)),
-                ("[1]".to_string(), PropertyValue::IntValue(0)),
-                ("[2]".to_string(), PropertyValue::IntValue(0)),
-            ]),
-        };
-
-        let b = serde_json::json!({
-            "[1]": 1,
-            "[2]": 2
-        });
-
-        let expected = PropertyValue::ClassValue {
-            property_type: "[f32; 3]".to_string(),
-            properties: tiled::Properties::from([
-                ("[0]".to_string(), PropertyValue::IntValue(0)),
-                ("[1]".to_string(), PropertyValue::IntValue(1)),
-                ("[2]".to_string(), PropertyValue::IntValue(2)),
-            ]),
-        };
-
-        insert_json_value(&mut a, b);
-        assert_eq!(a, expected);
-    }
+    use bevy::render::render_resource::encase::rts_array::Length;
 
     #[test]
     fn generate_with_entity() {
@@ -826,12 +699,13 @@ mod tests {
         registry.register::<ComponentA>();
 
         let exports = TypeExportRegistry::from_registry(&registry);
-        let export_type = &exports.types.get(ComponentA::type_path()).unwrap()[0];
-        assert_eq!(export_type.name, ComponentA::type_path().to_string());
+        let export_type = &exports.types.get(ComponentA::type_path()).unwrap();
+        assert_eq!(export_type.length(), 1);
+        assert_eq!(export_type[0].name, ComponentA::type_path().to_string());
         assert_eq!(
-            export_type.type_data,
+            export_type[0].type_data,
             TypeData::Class(Class {
-                use_as: UseAs::all_supported(),
+                use_as: USE_AS_PROPERTY.to_vec(),
                 color: DEFAULT_COLOR.to_string(),
                 draw_fill: true,
                 members: vec![Member {
@@ -854,12 +728,13 @@ mod tests {
         registry.register::<ComponentA>();
 
         let exports = TypeExportRegistry::from_registry(&registry);
-        let export_type = &exports.types.get(ComponentA::type_path()).unwrap()[0];
-        assert_eq!(export_type.name, ComponentA::type_path().to_string());
+        let export_type = &exports.types.get(ComponentA::type_path()).unwrap();
+        assert_eq!(export_type.length(), 1);
+        assert_eq!(export_type[0].name, ComponentA::type_path().to_string());
         assert_eq!(
-            export_type.type_data,
+            export_type[0].type_data,
             TypeData::Class(Class {
-                use_as: UseAs::all_supported(),
+                use_as: USE_AS_PROPERTY.to_vec(),
                 color: DEFAULT_COLOR.to_string(),
                 draw_fill: true,
                 members: vec![Member {
@@ -886,10 +761,11 @@ mod tests {
         registry.register::<EnumComponent>();
 
         let exports = TypeExportRegistry::from_registry(&registry);
-        let export_type = &exports.types.get(EnumComponent::type_path()).unwrap()[0];
-        assert_eq!(export_type.name, EnumComponent::type_path().to_string());
+        let export_type = &exports.types.get(EnumComponent::type_path()).unwrap();
+        assert_eq!(export_type.length(), 1);
+        assert_eq!(export_type[0].name, EnumComponent::type_path().to_string());
         assert_eq!(
-            export_type.type_data,
+            export_type[0].type_data,
             TypeData::Enum(Enum {
                 storage_type: StorageType::String,
                 values: vec!["VarA".to_string(), "VarB".to_string(), "VarC".to_string(),],
@@ -941,12 +817,16 @@ mod tests {
         registry.register::<StructComponent>();
 
         let exports = TypeExportRegistry::from_registry(&registry);
-        let export_type = &exports.types.get(StructComponent::type_path()).unwrap()[0];
-        assert_eq!(export_type.name, StructComponent::type_path().to_string());
+        let export_type = &exports.types.get(StructComponent::type_path()).unwrap();
+        assert_eq!(export_type.length(), 1);
         assert_eq!(
-            export_type.type_data,
+            export_type[0].name,
+            StructComponent::type_path().to_string()
+        );
+        assert_eq!(
+            export_type[0].type_data,
             TypeData::Class(Class {
-                use_as: UseAs::all_supported(),
+                use_as: USE_AS_PROPERTY.to_vec(),
                 color: DEFAULT_COLOR.to_string(),
                 draw_fill: true,
                 members: vec![
@@ -1012,12 +892,13 @@ mod tests {
         registry.register::<TestVariant>();
 
         let exports = TypeExportRegistry::from_registry(&registry);
-        let export_type = &exports.types.get(TestOuter::type_path()).unwrap()[0];
-        assert_eq!(export_type.name, TestOuter::type_path().to_string());
+        let export_type = &exports.types.get(TestOuter::type_path()).unwrap();
+        assert_eq!(export_type.length(), 1);
+        assert_eq!(export_type[0].name, TestOuter::type_path().to_string());
         assert_eq!(
-            export_type.type_data,
+            export_type[0].type_data,
             TypeData::Class(Class {
-                use_as: UseAs::all_supported(),
+                use_as: USE_AS_PROPERTY.to_vec(),
                 color: DEFAULT_COLOR.to_string(),
                 draw_fill: true,
                 members: vec![Member {
@@ -1029,6 +910,139 @@ mod tests {
                         "1": serde_json::Value::default(),
                     })
                 }]
+            })
+        );
+    }
+
+    #[test]
+    fn generate_non_simple_enum() {
+        #[derive(Reflect)]
+        struct TestStruct {
+            a: i32,
+            b: String,
+        }
+
+        #[derive(Component, Reflect)]
+        #[reflect(Component)]
+        enum EnumComponent {
+            VarA,
+            VarB(u32),
+            VarC(TestStruct),
+            VarD((u16, f32)),
+        }
+
+        let mut registry = TypeRegistry::new();
+        registry.register::<TestStruct>();
+        registry.register::<EnumComponent>();
+
+        let exports = TypeExportRegistry::from_registry(&registry);
+        let export_type = &exports.types.get(EnumComponent::type_path()).unwrap();
+
+        assert_eq!(export_type.length(), 5);
+        assert_eq!(
+            export_type[0].name,
+            EnumComponent::type_path().to_string() + ":::Variant"
+        );
+        assert_eq!(
+            export_type[0].type_data,
+            TypeData::Enum(Enum {
+                storage_type: StorageType::String,
+                values: vec![
+                    "VarA".to_string(),
+                    "VarB".to_string(),
+                    "VarC".to_string(),
+                    "VarD".to_string(),
+                ],
+                values_as_flags: false,
+            }),
+        );
+        assert_eq!(
+            export_type[1].name,
+            EnumComponent::type_path().to_string() + "::VarB"
+        );
+        assert_eq!(
+            export_type[1].type_data,
+            TypeData::Class(Class {
+                use_as: USE_AS_PROPERTY.to_vec(),
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: vec![Member {
+                    name: "0".to_string(),
+                    property_type: None,
+                    type_field: FieldType::Int,
+                    value: serde_json::Value::default(),
+                }],
+            })
+        );
+        assert_eq!(
+            export_type[2].name,
+            EnumComponent::type_path().to_string() + "::VarC"
+        );
+        assert_eq!(
+            export_type[2].type_data,
+            TypeData::Class(Class {
+                use_as: USE_AS_PROPERTY.to_vec(),
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: vec![Member {
+                    name: "0".to_string(),
+                    property_type: Some(TestStruct::type_path().to_string()),
+                    type_field: FieldType::Class,
+                    value: serde_json::Value::default(),
+                }],
+            })
+        );
+        assert_eq!(
+            export_type[3].name,
+            EnumComponent::type_path().to_string() + "::VarD"
+        );
+        assert_eq!(
+            export_type[3].type_data,
+            TypeData::Class(Class {
+                use_as: USE_AS_PROPERTY.to_vec(),
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: vec![Member {
+                    name: "0".to_string(),
+                    property_type: Some("(u16, f32)".to_string()),
+                    type_field: FieldType::Class,
+                    value: serde_json::Value::default(),
+                }],
+            })
+        );
+        assert_eq!(export_type[4].name, EnumComponent::type_path().to_string());
+        assert_eq!(
+            export_type[4].type_data,
+            TypeData::Class(Class {
+                use_as: USE_AS_PROPERTY.to_vec(),
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: vec![
+                    Member {
+                        name: ":variant".to_string(),
+                        property_type: Some(EnumComponent::type_path().to_string() + ":::Variant"),
+                        type_field: FieldType::Class,
+                        value: serde_json::json!("VarA"),
+                    },
+                    Member {
+                        name: "VarB".to_string(),
+                        property_type: Some(EnumComponent::type_path().to_string() + "::VarB"),
+                        type_field: FieldType::Class,
+                        value: serde_json::Value::default(),
+                    },
+                    Member {
+                        name: "VarC".to_string(),
+                        property_type: Some(EnumComponent::type_path().to_string() + "::VarC"),
+                        type_field: FieldType::Class,
+                        value: serde_json::Value::default(),
+                    },
+                    Member {
+                        name: "VarD".to_string(),
+                        property_type: Some(EnumComponent::type_path().to_string() + "::VarD"),
+                        type_field: FieldType::Class,
+                        value: serde_json::Value::default(),
+                    },
+                ],
             })
         );
     }
