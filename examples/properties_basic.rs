@@ -77,22 +77,39 @@ enum BiomeType {
 enum SpawnType {
     #[default]
     Unknown,
-    Player,
-    Enemy,
+    Player {
+        color: Color,
+        id: u32,
+    },
+    Enemy(Color),
+    Friendly(u32),
 }
 
-// Only print the first tile to avoid flooding the console
-fn display_custom_tiles(q_tile: Query<(&TilePos, Option<&BiomeInfos>)>) {
-    for (position, biome_infos) in q_tile.iter() {
+#[derive(Component)]
+struct DoNotPrint;
+
+fn display_custom_tiles(
+    mut commands: Commands,
+    q_tile: Query<(Entity, &TilePos, Option<&BiomeInfos>), Without<DoNotPrint>>,
+) {
+    for (entity, position, biome_infos) in q_tile.iter() {
         if let Some(i) = biome_infos {
-            info_once!("Found TileBundle [{:?} @ {:?}]", i, position);
+            // Only print the first tile to avoid flooding the console
+            info_once!("Found BiomeInfos [{:?} @ {:?}]", i, position);
         }
+        commands.entity(entity).insert(DoNotPrint);
     }
 }
 
-// Only print the first object to avoid flooding the console
-fn display_objects(q_object: Query<(&Transform, &SpawnInfos)>) {
-    for (transform, spawn_infos) in q_object.iter() {
-        info_once!("Found SpawnInfos [{:?} @ {:?}]", spawn_infos, transform);
+fn display_objects(
+    mut commands: Commands,
+    q_object: Query<(Entity, &Transform, &SpawnInfos), Without<DoNotPrint>>,
+) {
+    for (entity, transform, spawn_infos) in q_object.iter() {
+        info!(
+            "Found SpawnInfos [{:?} @ {:?}]",
+            spawn_infos, transform.translation
+        );
+        commands.entity(entity).insert(DoNotPrint);
     }
 }
