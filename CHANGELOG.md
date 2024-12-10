@@ -26,6 +26,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_5.
 - Do not skip last frame for animated tiles (#61)
 - Make sure all custom properties we export have the 'useAs property' flag set (and only this one)
   Not having this flag was preventing to use some some of the properties
+- Prevent infinite loop in case of an asset loading error
 
 ## v0.4.2
 

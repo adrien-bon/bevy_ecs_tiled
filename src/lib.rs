@@ -42,7 +42,7 @@ pub mod prelude {
 }
 
 use crate::prelude::*;
-use bevy::prelude::*;
+use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 use bevy_ecs_tilemap::prelude::*;
 use std::{env, path::PathBuf};
 
@@ -140,6 +140,10 @@ fn process_loaded_maps(
     {
         if let Some(load_state) = asset_server.get_recursive_dependency_load_state(&map_handle.0) {
             if !load_state.is_loaded() {
+                if let RecursiveDependencyLoadState::Failed(err) = load_state {
+                    error!("Error loading map: {}", err);
+                    return;
+                }
                 // If not fully loaded yet, insert the 'Respawn' marker so we will try to load it at next frame
                 commands.entity(map_entity).insert(RespawnTiledMap);
                 debug!(
