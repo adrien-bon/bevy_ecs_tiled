@@ -112,7 +112,7 @@ impl DeserializedMapProperties<false> {
     }
 }
 
-/// Properties for an entity deserialized from a [`Properties`](tiled::Properties)
+/// Properties for an entity deserialized from a [`Properties`]
 #[derive(Debug)]
 pub(crate) struct DeserializedProperties {
     pub(crate) properties: Vec<Box<dyn PartialReflect>>,
