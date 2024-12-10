@@ -24,8 +24,8 @@ In addition to this guide, there is also a [dedicated example](https://github.co
 Your Tiled map, layer, tile or object will be represented by a Bevy `Entity`.
 So, it makes sense that if you want to add custom properties to them, these properties should either be a `Component` or a `Bundle`.
 
-Also, Tiled custom properties use Bevy `Reflect` mechanism.
-So, in order to be usable in Tiled, your custom types must be "Reflectable".
+Tiled custom properties use Bevy `Reflect` mechanism.
+In order to be usable in Tiled, your custom types must be "Reflectable".
 To do, these types must derive the `Reflect` trait and get registered with Bevy.
 
 ```rust, no_run
@@ -56,13 +56,13 @@ fn main() {
 }
 ```
 
-And that's all !
+And that's all for the code part !
 
 Note that in the above example, our custom type also derive the `Default` trait.
 It is particulary useful to do so: if you don't, you would have to fill all the fields of your custom type when you use it in Tiled.
 
 Finally, note that you can also add `Resource` to your map.
-They won't be attached to a particular entity and as such are only allowed on Tiled maps.
+Since `Resource`s are not attached to a particular entity and they are shared accros your app, we chose to restrict their usage only as Tiled map properties.
 
 ## Add custom properties to your map
 
@@ -87,5 +87,6 @@ Note that it concerns all the types that derive the `Reflect` trait: there can b
 ![view-custom-types](images/properties_custom-type.png)
 
 You can now add them to different elements of your map, like tiles objects, layers or the map itself.
-For more information on how to do add custom properties, see the [official TIled documentation](https://doc.mapeditor.org/en/stable/manual/custom-properties/).
-You should only add properties imported from Bevy: adding ones that you created only in Tiled will not be loaded.
+For more information on how to do add custom properties, see the [official Tiled documentation](https://doc.mapeditor.org/en/stable/manual/custom-properties/).
+
+You should only add properties imported from Bevy: adding ones that you created only in Tiled will not be loaded in Bevy if they do not contain actual Bevy `Component`s.
