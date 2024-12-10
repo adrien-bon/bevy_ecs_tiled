@@ -195,9 +195,7 @@ impl DeserializedProperties {
         let mut default_value = None;
         if let Some(default) = parent_default_value {
             default_value = match default.reflect_ref() {
-                ReflectRef::Struct(t) => (*t)
-                    .field(field.name())
-                    .and_then(|f| f.try_as_reflect()),
+                ReflectRef::Struct(t) => (*t).field(field.name()).and_then(|f| f.try_as_reflect()),
                 _ => None,
             };
         }
@@ -235,12 +233,10 @@ impl DeserializedProperties {
         let mut default_value = None;
         if let Some(default) = parent_default_value {
             default_value = match default.reflect_ref() {
-                ReflectRef::TupleStruct(t) => (*t)
-                    .field(field.index())
-                    .and_then(|f| f.try_as_reflect()),
-                ReflectRef::Tuple(t) => (*t)
-                    .field(field.index())
-                    .and_then(|f| f.try_as_reflect()),
+                ReflectRef::TupleStruct(t) => {
+                    (*t).field(field.index()).and_then(|f| f.try_as_reflect())
+                }
+                ReflectRef::Tuple(t) => (*t).field(field.index()).and_then(|f| f.try_as_reflect()),
                 _ => None,
             };
         }
