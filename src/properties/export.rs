@@ -566,10 +566,10 @@ fn value_to_json(value: &dyn PartialReflect) -> serde_json::Value {
 }
 
 fn named_field_json_value(
-    value: Option<&dyn PartialReflect>,
+    parent_value: Option<&dyn PartialReflect>,
     field: &NamedField,
 ) -> serde_json::Value {
-    match value {
+    match parent_value {
         Some(v) => match v.reflect_ref() {
             ReflectRef::Struct(t) => t
                 .field(field.name())
@@ -582,10 +582,10 @@ fn named_field_json_value(
 }
 
 fn unnamed_field_json_value(
-    value: Option<&dyn PartialReflect>,
+    parent_value: Option<&dyn PartialReflect>,
     field: &UnnamedField,
 ) -> serde_json::Value {
-    match value {
+    match parent_value {
         Some(v) => match v.reflect_ref() {
             ReflectRef::TupleStruct(t) => (*t)
                 .field(field.index())

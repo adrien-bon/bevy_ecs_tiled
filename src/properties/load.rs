@@ -3,11 +3,12 @@ use bevy::ecs::reflect::ReflectBundle;
 use bevy::prelude::*;
 use bevy::reflect::{
     DynamicArray, DynamicEnum, DynamicStruct, DynamicTuple, DynamicTupleStruct, DynamicVariant,
-    Reflect, ReflectMut, TypeInfo, TypeRegistration, TypeRegistry, VariantInfo,
+    NamedField, Reflect, ReflectMut, ReflectRef, TypeInfo, TypeRegistration, TypeRegistry,
+    UnnamedField, VariantInfo, VariantType,
 };
 use bevy::utils::HashMap;
 use std::path::PathBuf;
-use tiled::{LayerType, PropertyValue, TileId};
+use tiled::{LayerType, Properties, PropertyValue, TileId};
 
 #[derive(Debug, Clone)]
 pub(crate) struct DeserializedMapProperties<const HYDRATED: bool = false> {
@@ -160,7 +161,7 @@ impl DeserializedProperties {
                 if reg.data::<ReflectResource>().is_some() {
                     if !resources_allowed {
                         bevy::log::warn!(
-                            "error deserializing property: Resources are not allowed here"
+                            "error deserializing property: Resources are only allowed as map properties"
                         );
                         continue;
                     }
@@ -170,7 +171,7 @@ impl DeserializedProperties {
                 }
             }
 
-            match Self::deserialize_property(property, reg, registry, &mut Some(load_cx)) {
+            match Self::deserialize_property(property, reg, registry, &mut Some(load_cx), None) {
                 Ok(prop) => {
                     props.push(prop);
                 }
@@ -183,11 +184,97 @@ impl DeserializedProperties {
         Self { properties: props }
     }
 
+    fn deserialize_named_field(
+        field: &NamedField,
+        properties: &mut Properties,
+        registration: &TypeRegistration,
+        registry: &TypeRegistry,
+        load_cx: &mut Option<&mut LoadContext<'_>>,
+        parent_default_value: Option<&dyn Reflect>,
+    ) -> Result<Box<dyn PartialReflect>, String> {
+        let mut default_value = None;
+        if let Some(default) = parent_default_value {
+            default_value = match default.reflect_ref() {
+                ReflectRef::Struct(t) => (*t)
+                    .field(field.name())
+                    .and_then(|f| f.try_as_reflect()),
+                _ => None,
+            };
+        }
+
+        let value;
+        if let Some(pv) = properties.remove(field.name()) {
+            let Some(reg) = registry.get(field.type_id()) else {
+                return Err(format!("type `{}` is not registered", field.type_path()));
+            };
+            value = Self::deserialize_property(pv, reg, registry, load_cx, default_value)?;
+        } else if let Some(def) = default_value {
+            // If a default value from parent is provided, use it
+            value = def.clone_value().into_partial_reflect();
+        } else if let Some(def) = default_value_from_type_path(registry, field.type_path()) {
+            // If no default value from parent is not provided, try to use type default()
+            value = def.into_partial_reflect();
+        } else {
+            return Err(format!(
+                "missing property `{}` on `{}` and no default value provided",
+                field.name(),
+                registration.type_info().type_path(),
+            ));
+        }
+        Ok(value)
+    }
+
+    fn deserialize_unnamed_field(
+        field: &UnnamedField,
+        properties: &mut Properties,
+        registration: &TypeRegistration,
+        registry: &TypeRegistry,
+        load_cx: &mut Option<&mut LoadContext<'_>>,
+        parent_default_value: Option<&dyn Reflect>,
+    ) -> Result<Box<dyn PartialReflect>, String> {
+        let mut default_value = None;
+        if let Some(default) = parent_default_value {
+            default_value = match default.reflect_ref() {
+                ReflectRef::TupleStruct(t) => (*t)
+                    .field(field.index())
+                    .and_then(|f| f.try_as_reflect()),
+                ReflectRef::Tuple(t) => (*t)
+                    .field(field.index())
+                    .and_then(|f| f.try_as_reflect()),
+                _ => None,
+            };
+        }
+
+        let value;
+        if let Some(pv) = properties.remove(&field.index().to_string()) {
+            let Some(reg) = registry.get(field.type_id()) else {
+                return Err(format!("type `{}` is not registered", field.type_path()));
+            };
+            value = Self::deserialize_property(pv, reg, registry, load_cx, default_value)?;
+        } else if let Some(def) = default_value {
+            // If a default value from parent is provided, use it
+            value = def.clone_value().into_partial_reflect();
+        } else if let Some(default_value) =
+            default_value_from_type_path(registry, field.type_path())
+        {
+            // If no default value from parent is not provided, try to use type default()
+            value = default_value.into_partial_reflect();
+        } else {
+            return Err(format!(
+                "missing property `{}` on `{}` and no default value found",
+                field.index(),
+                registration.type_info().type_path(),
+            ));
+        }
+        Ok(value)
+    }
+
     fn deserialize_property(
         property: PropertyValue,
         registration: &TypeRegistration,
         registry: &TypeRegistry,
         load_cx: &mut Option<&mut LoadContext<'_>>,
+        default_value: Option<&dyn Reflect>,
     ) -> Result<Box<dyn PartialReflect>, String> {
         // I wonder if it's possible to call FromStr for String?
         // or ToString/Display?
@@ -219,8 +306,7 @@ impl DeserializedProperties {
             ("bevy_color::color::Color", PV::ColorValue(c), _) => {
                 Ok(Box::new(Color::srgba_u8(c.red, c.green, c.blue, c.alpha)))
             }
-
-            ("std::alloc::String", PV::StringValue(s), _) => Ok(Box::new(s)),
+            ("alloc::string::String", PV::StringValue(s), _) => Ok(Box::new(s)),
             ("char", PV::StringValue(s), _) => Ok(Box::new(s.chars().next().unwrap())),
             ("std::path::PathBuf", PV::FileValue(s), _) => Ok(Box::new(PathBuf::from(s))),
             (a, PV::FileValue(s), _) if a.starts_with("bevy_asset::handle::Handle") => {
@@ -262,24 +348,24 @@ impl DeserializedProperties {
                 let mut out = DynamicStruct::default();
                 out.set_represented_type(Some(registration.type_info()));
 
+                let tmp;
+                let mut default_value = default_value;
+                let default_value_from_type =
+                    default_value_from_type_path(registry, info.type_path());
+                if default_value_from_type.is_some() {
+                    tmp = default_value_from_type.unwrap();
+                    default_value = Some(tmp.as_ref());
+                }
+
                 for field in info.iter() {
-                    let value;
-                    if let Some(pv) = properties.remove(field.name()) {
-                        let Some(reg) = registry.get(field.type_id()) else {
-                            return Err(format!("type `{}` is not registered", field.type_path()));
-                        };
-                        value = Self::deserialize_property(pv, reg, registry, load_cx)?;
-                    } else if let Some(default_value) =
-                        default_value_from_type_path(registry, field.type_path())
-                    {
-                        value = default_value.into_partial_reflect();
-                    } else {
-                        return Err(format!(
-                            "missing property on `{}`: `{}`",
-                            info.type_path(),
-                            field.name()
-                        ));
-                    }
+                    let value = Self::deserialize_named_field(
+                        field,
+                        &mut properties,
+                        registration,
+                        registry,
+                        load_cx,
+                        default_value,
+                    )?;
                     out.insert_boxed(field.name(), value);
                 }
 
@@ -289,25 +375,24 @@ impl DeserializedProperties {
                 let mut out = DynamicTupleStruct::default();
                 out.set_represented_type(Some(registration.type_info()));
 
-                for field in info.iter() {
-                    let value;
-                    if let Some(pv) = properties.remove(&field.index().to_string()) {
-                        let Some(reg) = registry.get(field.type_id()) else {
-                            return Err(format!("type `{}` is not registered", field.type_path()));
-                        };
-                        value = Self::deserialize_property(pv, reg, registry, load_cx)?;
-                    } else if let Some(default_value) =
-                        default_value_from_type_path(registry, field.type_path())
-                    {
-                        value = default_value.into_partial_reflect();
-                    } else {
-                        return Err(format!(
-                            "missing property on `{}`: `{}`",
-                            info.type_path(),
-                            field.index()
-                        ));
-                    }
+                let tmp;
+                let mut default_value = default_value;
+                let default_value_from_type =
+                    default_value_from_type_path(registry, info.type_path());
+                if default_value_from_type.is_some() {
+                    tmp = default_value_from_type.unwrap();
+                    default_value = Some(tmp.as_ref());
+                }
 
+                for field in info.iter() {
+                    let value = Self::deserialize_unnamed_field(
+                        field,
+                        &mut properties,
+                        registration,
+                        registry,
+                        load_cx,
+                        default_value,
+                    )?;
                     out.insert_boxed(value);
                 }
 
@@ -317,25 +402,24 @@ impl DeserializedProperties {
                 let mut out = DynamicTuple::default();
                 out.set_represented_type(Some(registration.type_info()));
 
-                for field in info.iter() {
-                    let value;
-                    if let Some(pv) = properties.remove(&field.index().to_string()) {
-                        let Some(reg) = registry.get(field.type_id()) else {
-                            return Err(format!("type `{}` is not registered", field.type_path()));
-                        };
-                        value = Self::deserialize_property(pv, reg, registry, load_cx)?;
-                    } else if let Some(default_value) =
-                        default_value_from_type_path(registry, field.type_path())
-                    {
-                        value = default_value.into_partial_reflect();
-                    } else {
-                        return Err(format!(
-                            "missing property on `{}`: `{}`",
-                            info.type_path(),
-                            field.index()
-                        ));
-                    }
+                let tmp;
+                let mut default_value = default_value;
+                let default_value_from_type =
+                    default_value_from_type_path(registry, info.type_path());
+                if default_value_from_type.is_some() {
+                    tmp = default_value_from_type.unwrap();
+                    default_value = Some(tmp.as_ref());
+                }
 
+                for field in info.iter() {
+                    let value = Self::deserialize_unnamed_field(
+                        field,
+                        &mut properties,
+                        registration,
+                        registry,
+                        load_cx,
+                        default_value,
+                    )?;
                     out.insert_boxed(value);
                 }
 
@@ -360,7 +444,8 @@ impl DeserializedProperties {
                         ));
                     };
 
-                    let value = Self::deserialize_property(pv, reg, registry, load_cx)?;
+                    let value =
+                        Self::deserialize_property(pv, reg, registry, load_cx, default_value)?;
 
                     array.push(value);
                 }
@@ -370,14 +455,93 @@ impl DeserializedProperties {
 
                 Ok(Box::new(out))
             }
-            (_, PV::ClassValue { .. }, TypeInfo::Enum(_)) => {
-                Err("enums are currently unsupported".to_string())
+            (_, PV::ClassValue { mut properties, .. }, TypeInfo::Enum(info)) => {
+                let mut out = DynamicEnum::default();
+                out.set_represented_type(Some(registration.type_info()));
+
+                let tmp;
+                let mut default_value = default_value;
+                let default_value_from_type =
+                    default_value_from_type_path(registry, info.type_path());
+                if default_value_from_type.is_some() {
+                    tmp = default_value_from_type.unwrap();
+                    default_value = Some(tmp.as_ref());
+                }
+
+                if let Some(PV::StringValue(variant_name)) = properties.remove(":variant") {
+                    if let Some(PV::ClassValue { mut properties, .. }) =
+                        properties.remove(&variant_name)
+                    {
+                        let variant_out = match info.variant(&variant_name) {
+                            Some(VariantInfo::Struct(variant_info)) => {
+                                let mut out = DynamicStruct::default();
+                                for field in variant_info.iter() {
+                                    let value = Self::deserialize_named_field(
+                                        field,
+                                        &mut properties,
+                                        registration,
+                                        registry,
+                                        load_cx,
+                                        default_value,
+                                    )?;
+                                    out.insert_boxed(field.name(), value);
+                                }
+
+                                Ok(DynamicVariant::Struct(out))
+                            }
+                            Some(VariantInfo::Tuple(variant_info)) => {
+                                let mut out = DynamicTuple::default();
+                                for field in variant_info.iter() {
+                                    let value = Self::deserialize_unnamed_field(
+                                        field,
+                                        &mut properties,
+                                        registration,
+                                        registry,
+                                        load_cx,
+                                        default_value,
+                                    )?;
+                                    out.insert_boxed(value);
+                                }
+
+                                Ok(DynamicVariant::Tuple(out))
+                            }
+                            Some(VariantInfo::Unit(_)) => Ok(DynamicVariant::Unit),
+                            None => Err(format!(
+                                "`{}` enum does not contain `{}` variant",
+                                info.type_path(),
+                                variant_name,
+                            )),
+                        }?;
+                        out.set_variant_with_index(
+                            info.index_of(&variant_name).unwrap(),
+                            variant_name,
+                            variant_out,
+                        );
+
+                        return Ok(Box::new(out));
+                    }
+                };
+
+                if let Some(default_value) = default_value {
+                    if let ReflectRef::Enum(e) = default_value.reflect_ref() {
+                        out = e.clone_dynamic();
+                        return Ok(Box::new(out));
+                    }
+                }
+
+                Err(format!(
+                    "missing enum properties for `{}` and no default value provided",
+                    info.type_path()
+                ))
             }
             (_, PV::ClassValue { .. }, TypeInfo::List(_)) => {
                 Err("lists are currently unsupported".to_string())
             }
             (_, PV::ClassValue { .. }, TypeInfo::Map(_)) => {
                 Err("maps are currently unsupported".to_string())
+            }
+            (_, PV::ClassValue { .. }, TypeInfo::Set(_)) => {
+                Err("sets are currently unsupported".to_string())
             }
             // Note: ClassValue and TypeInfo::Value is not included
             (a, b, _) => Err(format!("unable to deserialize `{a}` from {b:?}")),
@@ -455,11 +619,20 @@ fn hydrate(object: &mut dyn PartialReflect, obj_entity_map: &HashMap<u32, Entity
                 hydrate(s.get_mut(i).unwrap(), obj_entity_map);
             }
         }
-        ReflectMut::Enum(s) => {
-            for i in 0..s.field_len() {
-                hydrate(s.field_at_mut(i).unwrap(), obj_entity_map);
+        ReflectMut::Enum(s) => match s.variant_type() {
+            VariantType::Tuple => {
+                for i in 0..s.field_len() {
+                    hydrate(s.field_at_mut(i).unwrap(), obj_entity_map);
+                }
             }
-        }
+            VariantType::Struct => {
+                for i in 0..s.field_len() {
+                    let name = s.name_at(i).unwrap().to_owned();
+                    hydrate(s.field_mut(&name).unwrap(), obj_entity_map);
+                }
+            }
+            _ => {}
+        },
         ReflectMut::Map(s) => {
             for i in 0..s.len() {
                 let (k, v) = s.get_at_mut(i).unwrap();
@@ -532,6 +705,7 @@ mod tests {
                 .unwrap(),
             &registry,
             &mut None,
+            None,
         )
         .unwrap();
         assert!(res.represents::<EnumComponent>());
@@ -616,6 +790,7 @@ mod tests {
                 .unwrap(),
             &registry,
             &mut None,
+            None,
         )
         .unwrap();
         assert!(res.represents::<StructComponent>());
