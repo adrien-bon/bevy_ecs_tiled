@@ -35,10 +35,11 @@ use crate::prelude::*;
 use bevy::{prelude::*, utils::HashMap};
 use bevy_ecs_tilemap::prelude::*;
 use tiled::{
-    ChunkData, FiniteTileLayer, InfiniteTileLayer, Layer, LayerType, ObjectLayer, Tile, TileId,
-    TileLayer,
+    ChunkData, FiniteTileLayer, ImageLayer, InfiniteTileLayer, Layer, LayerType, ObjectLayer, Tile,
+    TileId, TileLayer,
 };
 
+#[allow(clippy::too_many_arguments)]
 pub(super) fn load_map(
     commands: &mut Commands,
     map_entity: Entity,
@@ -47,6 +48,7 @@ pub(super) fn load_map(
     tiled_id_storage: &mut TiledIdStorage,
     render_settings: &TilemapRenderSettings,
     tiled_settings: &TiledMapSettings,
+    asset_server: &Res<AssetServer>,
 ) {
     commands.entity(map_entity).insert((
         Name::new(format!(
@@ -139,12 +141,12 @@ pub(super) fn load_map(
                 ));
                 warn!("Group layers are not yet implemented");
             }
-            LayerType::Image(_image_layer) => {
+            LayerType::Image(image_layer) => {
                 commands.entity(layer_entity).insert((
                     Name::new(format!("TiledMapImageLayer({})", layer.name)),
                     TiledMapImageLayer,
                 ));
-                warn!("Image layers are not yet implemented");
+                load_image_layer(commands, tiled_map, &layer_infos, image_layer, asset_server);
             }
         };
 
@@ -549,6 +551,38 @@ fn load_objects_layer(
             object_entity,
             object_id,
         ));
+    }
+}
+
+fn load_image_layer(
+    commands: &mut Commands,
+    tiled_map: &TiledMap,
+    layer_infos: &TiledLayerCreated,
+    image_layer: ImageLayer,
+    asset_server: &Res<AssetServer>,
+) {
+    let map_type = get_map_type(&tiled_map.map);
+    let grid_size = get_grid_size(&tiled_map.map);
+    let map_size = get_map_size(&tiled_map.map);
+
+    if let Some(image) = &image_layer.image {
+        let image_position =
+            from_tiled_coords_to_bevy(Vec2::splat(0.), &map_type, &map_size, &grid_size);
+        commands
+            .spawn((
+                Name::new(format!("Image({})", image.source.display())),
+                TiledMapImage,
+                Sprite {
+                    image: asset_server.load(image.source.clone()),
+                    ..Default::default()
+                },
+                Transform::from_xyz(
+                    image_position.x + image.width as f32 / 2.,
+                    image_position.y - image.height as f32 / 2.,
+                    0.,
+                ),
+            ))
+            .set_parent(layer_infos.layer);
     }
 }
 
