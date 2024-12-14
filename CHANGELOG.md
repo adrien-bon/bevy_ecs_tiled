@@ -27,6 +27,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_5.
 - Make sure all custom properties we export have the 'useAs property' flag set (and only this one)
   Not having this flag was preventing to use some some of the properties
 - Prevent infinite loop in case of an asset loading error
+- Fix typo which was preventing to load the first object collider (#64)
 
 ## v0.4.2
 

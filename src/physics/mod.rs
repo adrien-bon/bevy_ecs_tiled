@@ -105,7 +105,7 @@ impl<T: TiledPhysicsBackend + Default + 'static + std::marker::Sync + std::marke
 fn default_physics_settings<
     T: TiledPhysicsBackend + Default + 'static + std::marker::Sync + std::marker::Send,
 >(
-    trigger: Trigger<TiledObjectCreated>,
+    trigger: Trigger<TiledMapCreated>,
     mut commands: Commands,
     q_settings: Query<&TiledPhysicsSettings<T>, With<TiledMapMarker>>,
 ) {
