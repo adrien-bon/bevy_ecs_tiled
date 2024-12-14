@@ -50,9 +50,9 @@ Add dependencies to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-bevy = "0.14"
+bevy = "0.15"
 bevy_ecs_tiled = "0.4"
-bevy_ecs_tilemap = "0.14"
+bevy_ecs_tilemap = "0.15"
 ```
 
 Then add the plugin to your app and spawn a map:
@@ -77,7 +77,7 @@ fn main() {
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Spawn a 2D camera
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2d);
 
     // Load the map: ensure any tile / tileset paths are relative to assets/ folder
     let map_handle: Handle<TiledMap> = asset_server.load("map.tmx");
@@ -87,16 +87,23 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 ```
 
-Please note that you should have the `map.tmx` file in your local `assets/` folder, as well as required dependencies (for instance, associated tilesets).
+Basically, all you have to do is to spawn a [`TiledMapHandle`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/struct.TiledMapHandle.html) with the map asset you want to load (the `map.tmx` file).
+Note that this map asset should be in your local `assets/` folder, as well as required dependencies (for instance, associated tilesets).
 
-You can customize various settings about how to load the map by inserting the [`TiledMapSettings`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/components/struct.TiledMapSettings.html) component on the map entity.
+You can tweak how to load the map by adding various components on the map entity, notably:
 
-Also, you can browse the [examples](https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/README.md) for more advanced use cases.
+- [`TiledMapSettings`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/components/struct.TiledMapSettings.html)
+- [`TilemapRenderSettings`](https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/map/struct.TilemapRenderSettings.html)
+- [`Transform`](https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html)
+- [`Visibility`](https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html)
+
+You can browse the [examples](https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/README.md) for more advanced use cases.
 
 ## Bevy Compatibility
 
 |bevy|bevy_ecs_tilemap|bevy_ecs_tiled|
 |---|---|---|
+|0.15|0.15|0.5|
 |0.14|0.14|0.3 - 0.4|
 |0.13|main@e4f3cc6|branch 0.2|
 |0.12|0.12|0.1|

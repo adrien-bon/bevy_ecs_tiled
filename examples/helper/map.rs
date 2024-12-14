@@ -10,11 +10,11 @@ pub fn rotate(
 ) {
     for (_, mut transform) in tilemap.iter_mut() {
         if keyboard_input.pressed(KeyCode::KeyQ) {
-            transform.rotate_z(f32::to_radians(ROTATION_SPEED * time.delta_seconds()));
+            transform.rotate_z(f32::to_radians(ROTATION_SPEED * time.delta_secs()));
         }
 
         if keyboard_input.pressed(KeyCode::KeyE) {
-            transform.rotate_z(f32::to_radians(ROTATION_SPEED * time.delta_seconds() * -1.));
+            transform.rotate_z(f32::to_radians(ROTATION_SPEED * time.delta_secs() * -1.));
         }
     }
 }

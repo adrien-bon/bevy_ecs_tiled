@@ -18,7 +18,7 @@ fn main() {
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Spawn a 2D camera (required by Bevy)
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2d);
 
     // Load the map ...
     let map_handle: Handle<TiledMap> = asset_server.load("finite.tmx");

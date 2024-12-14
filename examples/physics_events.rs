@@ -19,14 +19,14 @@ fn main() {
         // bevy_ecs_tiled physics plugin: this is where we select which physics backend to use
         .add_plugins(TiledPhysicsPlugin::<MyCustomPhysicsBackend>::default())
         // Add observers for physics collider events
-        .observe(handle_physics_events)
+        .add_observer(handle_physics_events)
         // Add our systems and run the app!
         .add_systems(Startup, startup)
         .run();
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2d);
     commands.spawn(TiledMapHandle(asset_server.load("finite.tmx")));
 }
 
