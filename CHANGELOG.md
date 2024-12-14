@@ -9,6 +9,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_5.
 ### Features
 
 - Update to Bevy 0.15
+- Support Tiled image layers (#16)
 
 ### Changed
 
