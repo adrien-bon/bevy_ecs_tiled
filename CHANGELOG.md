@@ -10,15 +10,23 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_5.
 
 - Update to Bevy 0.15
 - Support Tiled image layers (#16)
+- Add support for non-unit enums user properties (#49)
+- Better handling for user properties default values: you should now be able to load
+  properties without having to fully define them
 
 ### Changed
 
 - Remove `map_initial_transform` and `map_initial_visibility` from `TiledMapSettings`, use required components instead
 - Simplify map reload mechanisms and update corresponding example
+- Only export custom properties that are related to either a Component, a Bundle or a Resource (#50)
+  This should reduce the clutter when adding a new property
 
 ### Bugfixes
 
 - Do not skip last frame for animated tiles (#61)
+- Make sure all custom properties we export have the 'useAs property' flag set (and only this one)
+  Not having this flag was preventing to use some some of the properties
+- Prevent infinite loop in case of an asset loading error
 
 ## v0.4.2
 
