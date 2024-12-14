@@ -16,6 +16,10 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_5.
 - Remove `map_initial_transform` and `map_initial_visibility` from `TiledMapSettings`, use required components instead
 - Simplify map reload mechanisms and update corresponding example
 
+### Bugfixes
+
+- Do not skip last frame for animated tiles (#61)
+
 ## v0.4.2
 
 ### Changed

@@ -611,7 +611,7 @@ fn get_animated_tile(tile: &Tile) -> Option<AnimatedTile> {
 
     Some(AnimatedTile {
         start: first_tile.tile_id,
-        end: last_tile.tile_id,
+        end: last_tile.tile_id + 1,
         speed: 1000. / first_tile.duration as f32, // duration is in ms and we want a 'frames per second' speed
     })
 }
