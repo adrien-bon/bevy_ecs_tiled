@@ -48,14 +48,13 @@ user_properties = []
 # Main dependencies
 bevy = { version = "0.15", default-features = false }
 bevy_ecs_tilemap = { git = "https://github.com/rparrett/bevy_ecs_tilemap.git", rev = "86235d6f9f4f05cd4e3f6af9d3392b08a590a48f", default-features = false }
-tiled = "0.13"
+# tiled = "0.13"
+tiled = { git = "https://github.com/JtoTheThree/rs-tiled.git", branch = "worldfiles" }
 
 # Utilities
 futures-lite = "2.5"
 log = "0.4"
 thiserror = "1.0"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = { version = "1.0" }
 
 # Optional dependencies, enabled via features.
 bevy_rapier2d = { version = "0.28", optional = true }
@@ -138,3 +137,6 @@ required-features = ["avian_debug"]
 [[example]]
 name = "properties_basic"
 required-features = ["user_properties"]
+
+[[example]]
+name = "world"

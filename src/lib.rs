@@ -108,10 +108,13 @@ pub struct TiledMapPlugin(pub TiledMapPluginConfig);
 impl Plugin for TiledMapPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.init_asset::<TiledMap>()
+            .init_asset::<TiledWorld>()
             .init_asset_loader::<TiledMapLoader>()
             .init_asset_loader::<TiledWorldLoader>()
-            .add_systems(Update, (map::handle_map_events, map::process_loaded_maps, world::handle_world_events, world::process_loaded_worlds))
-            .insert_resource(self.0.clone());
+            .add_systems(Update, (map::handle_map_events, map::process_loaded_maps, world::handle_world_events, world::process_loaded_worlds, world::world_chunking))
+            .insert_resource(self.0.clone())
+            .insert_resource(WorldChunkedMaps(Vec::new()));
+
 
         #[cfg(feature = "user_properties")]
         app.add_systems(Startup, map::export_types);
