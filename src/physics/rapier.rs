@@ -4,11 +4,11 @@
 
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
-use tiled::Map;
+use tiled::{Map, ObjectShape};
 
 use crate::prelude::*;
 
-/// The actual Rapier physics backend to use when instanciating the physics plugin.
+/// The actual Rapier physics backend to use when instantiating the physics plugin.
 ///
 /// Example:
 /// ```rust,no_run
@@ -21,7 +21,7 @@ use crate::prelude::*;
 #[derive(Default)]
 pub struct TiledPhysicsRapierBackend;
 
-impl super::TiledPhysicsBackend for TiledPhysicsRapierBackend {
+impl TiledPhysicsBackend for TiledPhysicsRapierBackend {
     fn spawn_collider(
         &self,
         commands: &mut Commands,
@@ -51,62 +51,69 @@ impl super::TiledPhysicsBackend for TiledPhysicsRapierBackend {
             } => object.as_deref(),
         })?;
 
-        let (pos, collider) = match &object_data.shape {
-            tiled::ObjectShape::Rect { width, height } => {
-                // The origin is the top-left corner of the rectangle when not rotated.
-                let shape = Collider::cuboid(width / 2., height / 2.);
-                let pos = Vect::new(width / 2., -height / 2.);
-                (pos, shape)
-            }
-            tiled::ObjectShape::Ellipse { width, height } => {
-                let shape = if width > height {
-                    Collider::capsule(
-                        Vec2::new((-width + height) / 2., 0.),
-                        Vec2::new((width - height) / 2., 0.),
-                        height / 2.,
-                    )
-                } else {
-                    Collider::capsule(
-                        Vec2::new(0., (-height + width) / 2.),
-                        Vec2::new(0., (height - width) / 2.),
-                        width / 2.,
-                    )
-                };
+        let (pos, collider) = get_position_and_collider(&object_data.shape)?;
 
-                let pos = Vect::new(width / 2., -height / 2.);
-                (pos, shape)
-            }
-            tiled::ObjectShape::Polyline { points } => {
-                let shape = Collider::polyline(
-                    points.iter().map(|(x, y)| Vect::new(*x, -*y)).collect(),
-                    None,
-                );
-                (Vect::ZERO, shape)
-            }
-            tiled::ObjectShape::Polygon { points } => {
-                let shape = match Collider::convex_hull(
-                    &points
-                        .iter()
-                        .map(|(x, y)| Vect::new(*x, -*y))
-                        .collect::<Vec<_>>(),
-                ) {
-                    Some(x) => x,
-                    None => {
-                        return None;
-                    }
-                };
-
-                (Vect::ZERO, shape)
-            }
-            _ => {
-                return None;
-            }
-        };
         Some(TiledColliderSpawnInfos {
             name: format!("Rapier[{}]", object_data.name),
             entity: commands.spawn(collider).id(),
             position: pos,
             rotation: -object_data.rotation,
         })
+    }
+}
+
+fn get_position_and_collider(shape: &ObjectShape) -> Option<(Vect, Collider)> {
+    match shape {
+        ObjectShape::Rect { width, height } => {
+            // The origin is the top-left corner of the rectangle when not rotated.
+            let shape = Collider::cuboid(width / 2., height / 2.);
+            let pos = Vect::new(width / 2., -height / 2.);
+            Some((pos, shape))
+        }
+        ObjectShape::Ellipse { width, height } => {
+            let shape = if width > height {
+                Collider::capsule(
+                    Vec2::new((-width + height) / 2., 0.),
+                    Vec2::new((width - height) / 2., 0.),
+                    height / 2.,
+                )
+            } else {
+                Collider::capsule(
+                    Vec2::new(0., (-height + width) / 2.),
+                    Vec2::new(0., (height - width) / 2.),
+                    width / 2.,
+                )
+            };
+
+            let pos = Vect::new(width / 2., -height / 2.);
+            Some((pos, shape))
+        }
+        ObjectShape::Polyline { points } => {
+            let shape = Collider::polyline(
+                points.iter().map(|(x, y)| Vect::new(*x, -*y)).collect(),
+                None,
+            );
+            Some((Vect::ZERO, shape))
+        }
+        ObjectShape::Polygon { points } => {
+            if points.len() < 3 {
+                return None;
+            }
+
+            let points = points
+                .iter()
+                .map(|(x, y)| Vect::new(*x, -*y))
+                .collect::<Vec<_>>();
+
+            let indices = (0..points.len() as u32 - 1)
+                .map(|i| [i, i + 1])
+                .chain([[points.len() as u32 - 1, 0]])
+                .collect();
+
+            let shape = Collider::polyline(points, Some(indices));
+
+            Some((Vect::ZERO, shape))
+        }
+        _ => None,
     }
 }
