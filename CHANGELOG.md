@@ -28,6 +28,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_5.
   Not having this flag was preventing to use some some of the properties
 - Prevent infinite loop in case of an asset loading error
 - Fix typo which was preventing to load the first object collider (#64)
+- Fix convex polygon colliders (#65)
 
 ## v0.4.2
 
