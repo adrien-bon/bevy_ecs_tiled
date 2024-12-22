@@ -2,6 +2,8 @@
 
 ## [unreleased]
 
+## v0.5.0
+
 **BREAKING CHANGES**
 This version brings breaking changes.
 A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_5.html) is available to help adapt to these.
