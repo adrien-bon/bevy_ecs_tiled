@@ -40,7 +40,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 // Define a custom physics collider which will use the TiledPhysicsAvianBackend
 // but add an extra RigidBody::Static component on top of the colliders.
-#[derive(Default)]
+#[derive(Default, Clone)]
 struct MyCustomAvianPhysicsBackend(TiledPhysicsAvianBackend);
 
 impl TiledPhysicsBackend for MyCustomAvianPhysicsBackend {
@@ -49,11 +49,11 @@ impl TiledPhysicsBackend for MyCustomAvianPhysicsBackend {
         commands: &mut Commands,
         map: &Map,
         collider_source: &TiledColliderSource,
-    ) -> Option<TiledColliderSpawnInfos> {
-        let collider = self.0.spawn_collider(commands, map, collider_source);
-        if let Some(c) = &collider {
+    ) -> Vec<TiledColliderSpawnInfos> {
+        let colliders = self.0.spawn_collider(commands, map, collider_source);
+        for c in &colliders {
             commands.entity(c.entity).insert(RigidBody::Static);
         }
-        collider
+        colliders
     }
 }
