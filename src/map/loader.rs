@@ -698,8 +698,6 @@ fn handle_special_tile(
     entity_map: &mut HashMap<(String, TileId), Vec<Entity>>,
     event_list: &mut Vec<TiledSpecialTileCreated>,
 ) {
-    let mut is_special_tile = false;
-
     // Handle animated tiles
     if let Some(animated_tile) = get_animated_tile(tile) {
         commands.entity(tile_infos.tile).insert(animated_tile);
@@ -714,15 +712,6 @@ fn handle_special_tile(
                 entities.push(tile_infos.tile);
             })
             .or_insert(vec![tile_infos.tile]);
-        is_special_tile = true;
-    }
-
-    // Handle tiles with collision
-    if let Some(_collision) = tile.collision.as_ref() {
-        is_special_tile = true;
-    }
-
-    if is_special_tile {
         event_list.push(tile_infos);
     }
 }

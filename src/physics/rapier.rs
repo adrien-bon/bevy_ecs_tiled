@@ -3,7 +3,10 @@
 //! Only available when the `rapier` feature is enabled.
 
 use bevy::prelude::*;
-use bevy_rapier2d::prelude::*;
+use bevy_rapier2d::{
+    prelude::*,
+    rapier::prelude::{Isometry, Real, SharedShape},
+};
 use tiled::{Map, ObjectShape};
 
 use crate::prelude::*;
@@ -27,92 +30,130 @@ impl TiledPhysicsBackend for TiledPhysicsRapierBackend {
         commands: &mut Commands,
         map: &Map,
         collider_source: &TiledColliderSource,
-    ) -> Option<TiledColliderSpawnInfos> {
-        // TODO: use this function once I figure out how to prevent cloning ObjectData
-        // let object_data = collider_source.object_data(map)?;
-
-        let tile = collider_source.tile(map);
-        let object = collider_source.object(map);
-
-        let object_data = (match collider_source.ty {
-            TiledColliderSourceType::Tile {
-                layer_id: _,
-                x: _,
-                y: _,
-                object_id,
-            } => tile
-                .as_ref()
-                .and_then(|tile| tile.collision.as_ref())
-                .map(|collision| collision.object_data())
-                .and_then(|objects| objects.get(object_id)),
+    ) -> Vec<TiledColliderSpawnInfos> {
+        match collider_source.ty {
             TiledColliderSourceType::Object {
                 layer_id: _,
                 object_id: _,
-            } => object.as_deref(),
-        })?;
-
-        let (pos, collider) = get_position_and_collider(&object_data.shape)?;
-
-        Some(TiledColliderSpawnInfos {
-            name: format!("Rapier[{}]", object_data.name),
-            entity: commands.spawn(collider).id(),
-            position: pos,
-            rotation: -object_data.rotation,
-        })
+            } => {
+                let Some(object) = collider_source.object(map) else {
+                    return vec![];
+                };
+                let Some((pos, shared_shape, _)) = get_position_and_shape(&object.shape) else {
+                    return vec![];
+                };
+                let collider: Collider = shared_shape.into();
+                vec![TiledColliderSpawnInfos {
+                    name: format!("Rapier[Object={}]", object.name),
+                    entity: commands.spawn(collider).id(),
+                    position: pos,
+                    rotation: -object.rotation,
+                }]
+            }
+            TiledColliderSourceType::TilesLayer { layer_id: _ } => {
+                let mut composables = vec![];
+                let mut spawn_infos = vec![];
+                for (tile_position, tile) in collider_source.tiles_from_layer(map) {
+                    if let Some(collision) = &tile.collision {
+                        for object in collision.object_data() {
+                            let object_position = Vec2 {
+                                x: object.x - map.tile_width as f32 / 2.,
+                                y: (map.tile_height as f32 - object.y)
+                                    - map.tile_height as f32 / 2.,
+                            };
+                            if let Some((mut position, shared_shape, is_composable)) =
+                                get_position_and_shape(&object.shape)
+                            {
+                                position += tile_position + object_position;
+                                position += Vec2 {
+                                    x: (map.tile_width as f32) / 2.,
+                                    y: (map.tile_height as f32) / 2.,
+                                };
+                                if is_composable {
+                                    composables.push((
+                                        Isometry::<Real>::new(
+                                            position.into(),
+                                            f32::to_radians(-object.rotation),
+                                        ),
+                                        shared_shape,
+                                    ));
+                                } else {
+                                    let collider: Collider = shared_shape.into();
+                                    spawn_infos.push(TiledColliderSpawnInfos {
+                                        name: "Rapier[ComplexTile]".to_string(),
+                                        entity: commands.spawn(collider).id(),
+                                        position,
+                                        rotation: -object.rotation,
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+                if !composables.is_empty() {
+                    let collider: Collider = SharedShape::compound(composables).into();
+                    spawn_infos.push(TiledColliderSpawnInfos {
+                        name: "Rapier[ComposedTile]".to_string(),
+                        entity: commands.spawn(collider).id(),
+                        position: Vec2::ZERO,
+                        rotation: 0.,
+                    });
+                }
+                spawn_infos
+            }
+        }
     }
 }
 
-fn get_position_and_collider(shape: &ObjectShape) -> Option<(Vect, Collider)> {
+fn get_position_and_shape(shape: &ObjectShape) -> Option<(Vec2, SharedShape, bool)> {
     match shape {
         ObjectShape::Rect { width, height } => {
-            // The origin is the top-left corner of the rectangle when not rotated.
-            let shape = Collider::cuboid(width / 2., height / 2.);
-            let pos = Vect::new(width / 2., -height / 2.);
-            Some((pos, shape))
+            let shape = SharedShape::cuboid(width / 2., height / 2.);
+            let pos = Vec2::new(width / 2., -height / 2.);
+            Some((pos, shape, true))
         }
         ObjectShape::Ellipse { width, height } => {
             let shape = if width > height {
-                Collider::capsule(
-                    Vec2::new((-width + height) / 2., 0.),
-                    Vec2::new((width - height) / 2., 0.),
+                SharedShape::capsule(
+                    Vec2::new((-width + height) / 2., 0.).into(),
+                    Vec2::new((width - height) / 2., 0.).into(),
                     height / 2.,
                 )
             } else {
-                Collider::capsule(
-                    Vec2::new(0., (-height + width) / 2.),
-                    Vec2::new(0., (height - width) / 2.),
+                SharedShape::capsule(
+                    Vec2::new(0., (-height + width) / 2.).into(),
+                    Vec2::new(0., (height - width) / 2.).into(),
                     width / 2.,
                 )
             };
-
-            let pos = Vect::new(width / 2., -height / 2.);
-            Some((pos, shape))
+            let pos = Vec2::new(width / 2., -height / 2.);
+            Some((pos, shape, true))
         }
         ObjectShape::Polyline { points } => {
-            let shape = Collider::polyline(
-                points.iter().map(|(x, y)| Vect::new(*x, -*y)).collect(),
-                None,
-            );
-            Some((Vect::ZERO, shape))
+            let vertices = points
+                .iter()
+                .map(|(x, y)| Vec2::new(*x, -*y))
+                .map(|v| v.into())
+                .collect();
+            let shape = SharedShape::polyline(vertices, None);
+            Some((Vec2::ZERO, shape, false))
         }
         ObjectShape::Polygon { points } => {
             if points.len() < 3 {
                 return None;
             }
 
-            let points = points
+            let vertices = points
                 .iter()
-                .map(|(x, y)| Vect::new(*x, -*y))
-                .collect::<Vec<_>>();
-
+                .map(|(x, y)| Vec2::new(*x, -*y))
+                .map(|v| v.into())
+                .collect();
             let indices = (0..points.len() as u32 - 1)
                 .map(|i| [i, i + 1])
                 .chain([[points.len() as u32 - 1, 0]])
                 .collect();
-
-            let shape = Collider::polyline(points, Some(indices));
-
-            Some((Vect::ZERO, shape))
+            let shape = SharedShape::polyline(vertices, Some(indices));
+            Some((Vec2::ZERO, shape, false))
         }
         _ => None,
     }

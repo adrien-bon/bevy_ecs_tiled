@@ -99,7 +99,7 @@ impl<'a> TiledObjectCreated {
             .unwrap()
     }
 
-    /// Retrieve object world position (origin = top left).
+    /// Retrieve object world position (origin = top left) relative to its parent layer.
     pub fn world_position(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Vec2 {
         let map = self.map(map_asset);
         let object_data = self.object(map_asset);
@@ -176,7 +176,7 @@ impl<'a> TiledSpecialTileCreated {
             .unwrap()
     }
 
-    /// Retrieve tile world position (origin = tile center).
+    /// Retrieve tile world position (origin = tile center) relative to its parent layer.
     pub fn world_position(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Vec2 {
         let map = self.map(map_asset);
         self.tilemap_index

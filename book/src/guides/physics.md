@@ -66,11 +66,10 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         TiledMapHandle(asset_server.load("finite.tmx")),
         // With this configuration, we will restrict the spawn of collider
-        // for objects named 'collision' attached to a tile.
-        // No collider for objects attached to objects layer.
+        // for tiles in a layer named 'collision' and prevent spawning colliders for Tiled objects.
         TiledPhysicsSettings::<TiledPhysicsAvianBackend> {
             objects_layer_filter: ObjectNames::None,
-            tiles_objects_filter: ObjectNames::Names(vec!["collision".to_string()]),
+            tiles_layer_filter: ObjectNames::Names(vec!["collision".to_string()]),
             ..default()
         },
     ));
@@ -89,3 +88,11 @@ You can even use one the provided backend, but if their implementation have some
 Finally, whatever the backend you are using, a dedicated [`TiledColliderCreated`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliderCreated.html) event will be fired after a collider is spawned.
 Note that you will have one event per spawned collider.
 These events can be used for instance to add a missing component to the collider (or anything you want).
+
+## Special considerations
+
+For Tiled objects (ie. objects attached to an object layer), we will spawn one collider per object.
+
+For objects attached to tiles, we will try to merge all colliders from a given layer together so from a physics point of view, we actually have a single collider.
+The idea is to improve performances by reducing the number of entities we spawn.
+However, keep in mind that if you use complex geometric forms for your collisions, we won't be able to merge these colliders and you will end up with a lot of entities which can impact performances.
