@@ -1,10 +1,9 @@
-
 use crate::prelude::*;
 use bevy::prelude::*;
 
 #[derive(Component, Default)]
 pub struct TiledWorldSettings {
-    // XXX: here we could have world related settings, such as culling
+    pub chunking: Option<(u32, u32)>,
 }
 
 /// Marker [Component] for a Tiled world.
@@ -15,10 +14,16 @@ pub struct TiledWorldMarker;
 pub struct RespawnTiledWorld;
 
 #[derive(Component, Default)]
-pub struct TiledWorldStorage(pub Vec<TiledWorldMapStorage>);
+pub struct TiledWorldStorage {
+    pub maps: Vec<TiledWorldMapStorage>,
+    pub spawned_maps: Vec<(Entity, Rect)>,
+}
 
 pub struct TiledWorldMapStorage {
     pub asset: Handle<TiledMap>,
     pub entity: Option<Entity>,
-    // XXX: add informations about where this particular map is postionned
+    pub x: i32,
+    pub y: i32,
+    pub height: u32,
+    pub width: u32,
 }

@@ -42,24 +42,26 @@ avian_debug = ["avian", "debug"]
 wasm = ["bevy_rapier2d/wasm-bindgen", "tiled/wasm"]
 
 # User Properties
-user_properties = []
+user_properties = ["dep:serde", "dep:serde_json"]
 
 [dependencies]
 # Main dependencies
 bevy = { version = "0.15", default-features = false }
 bevy_ecs_tilemap = { version = "0.15", default-features = false }
-tiled = "0.13"
+# tiled = "0.13"
+tiled = { git = "https://github.com/JtoTheThree/rs-tiled.git", branch = "worldfiles", features = ["world"] }
+#tiled = { path = "../rs-tiled", features = ["world"] }
 
 # Utilities
 futures-lite = "2.5"
 log = "0.4"
 thiserror = "1.0"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = { version = "1.0" }
 
 # Optional dependencies, enabled via features.
 bevy_rapier2d = { version = "0.28", optional = true }
 avian2d = { version = "0.2", optional = true }
+serde = { version = "1.0", optional = true, features = ["derive"] }
+serde_json = { version = "1.0", optional = true }
 
 # docs.rs-specific configuration
 [package.metadata.docs.rs]
@@ -138,3 +140,6 @@ required-features = ["avian_debug"]
 [[example]]
 name = "properties_basic"
 required-features = ["user_properties"]
+
+[[example]]
+name = "world"

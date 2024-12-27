@@ -1,16 +1,16 @@
 //! This module contains all [Asset]s definition.
 
-use std::io::{Cursor, Error as IoError, ErrorKind, Read};
+use std::io::ErrorKind;
 #[cfg(feature = "user_properties")]
 use std::ops::Deref;
-use std::path::Path;
-use std::sync::Arc;
 
 #[cfg(feature = "user_properties")]
 use bevy::reflect::TypeRegistryArc;
 
 #[cfg(feature = "user_properties")]
 use crate::properties::load::DeserializedMapProperties;
+
+use crate::{cache::TiledResourceCache, reader::BytesResourceReader};
 
 use bevy::{
     asset::{io::Reader, AssetLoader, AssetPath, LoadContext, LoadedAsset},
@@ -48,46 +48,18 @@ pub struct TiledMap {
     pub texture_atlas_layout: HashMap<usize, Handle<TextureAtlasLayout>>,
 }
 
-struct BytesResourceReader<'a, 'b> {
-    bytes: Arc<[u8]>,
-    context: &'a mut LoadContext<'b>,
-}
-impl<'a, 'b> BytesResourceReader<'a, 'b> {
-    fn new(bytes: &'a [u8], context: &'a mut LoadContext<'b>) -> Self {
-        Self {
-            bytes: Arc::from(bytes),
-            context,
-        }
-    }
-}
-
-impl<'a> tiled::ResourceReader for BytesResourceReader<'a, '_> {
-    type Resource = Box<dyn Read + 'a>;
-    type Error = IoError;
-
-    fn read_from(&mut self, path: &Path) -> std::result::Result<Self::Resource, Self::Error> {
-        if let Some(extension) = path.extension() {
-            if extension == "tsx" {
-                let future = self.context.read_asset_bytes(path.to_path_buf());
-                let data = futures_lite::future::block_on(future)
-                    .map_err(|err| IoError::new(ErrorKind::NotFound, err))?;
-                return Ok(Box::new(Cursor::new(data)));
-            }
-        }
-        Ok(Box::new(Cursor::new(self.bytes.clone())))
-    }
-}
-
 pub(crate) struct TiledMapLoader {
+    pub cache: TiledResourceCache,
     #[cfg(feature = "user_properties")]
     pub registry: TypeRegistryArc,
 }
 
 impl FromWorld for TiledMapLoader {
-    fn from_world(_world: &mut World) -> Self {
+    fn from_world(world: &mut World) -> Self {
         Self {
+            cache: world.resource::<TiledResourceCache>().clone(),
             #[cfg(feature = "user_properties")]
-            registry: _world.resource::<AppTypeRegistry>().0.clone(),
+            registry: world.resource::<AppTypeRegistry>().0.clone(),
         }
     }
 }
@@ -120,7 +92,7 @@ impl AssetLoader for TiledMapLoader {
         let map = {
             // Allow the loader to also load tileset images.
             let mut loader = tiled::Loader::with_cache_and_reader(
-                tiled::DefaultResourceCache::new(),
+                self.cache.clone(),
                 BytesResourceReader::new(&bytes, load_context),
             );
             // Load the map and all tiles.

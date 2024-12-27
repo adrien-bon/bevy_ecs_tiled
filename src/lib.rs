@@ -10,8 +10,10 @@
 //!
 #![doc = include_str!("../book/src/getting-started.md")]
 
+pub mod cache;
 pub mod map;
 pub mod names;
+pub mod reader;
 pub mod world;
 
 #[cfg(feature = "debug")]
@@ -39,7 +41,7 @@ pub mod prelude {
 }
 
 use crate::prelude::*;
-use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
+use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use std::{env, path::PathBuf};
 
@@ -108,7 +110,10 @@ pub struct TiledMapPlugin(pub TiledMapPluginConfig);
 impl Plugin for TiledMapPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.init_asset::<TiledMap>()
+            .init_asset::<TiledWorld>()
+            .insert_resource(cache::TiledResourceCache::new())
             .init_asset_loader::<TiledMapLoader>()
+            .init_asset_loader::<TiledWorldLoader>()
             .add_systems(
                 Update,
                 (
@@ -117,6 +122,7 @@ impl Plugin for TiledMapPlugin {
                     map::animate_tiled_sprites,
                     world::handle_world_events,
                     world::process_loaded_worlds,
+                    world::world_chunking,
                 ),
             )
             .insert_resource(self.0.clone());
