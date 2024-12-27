@@ -2,13 +2,9 @@ use bevy::{
     asset::{io::Reader, AssetLoader, AssetPath, LoadContext},
     prelude::*,
 };
-use std::{
-    io::{Cursor, Error as IoError, ErrorKind, Read},
-    path::Path,
-    sync::Arc,
-};
+use std::{io::{Cursor, Error as IoError, ErrorKind, Read}, path::Path, sync::Arc};
 
-use crate::TiledMap;
+use crate::{TiledMap, cache::TiledResourceCache};
 
 /// Tiled world `Asset`.
 ///
@@ -30,8 +26,17 @@ pub enum TiledWorldLoaderError {
     Io(#[from] std::io::Error),
 }
 
-#[derive(Default)]
-pub(crate) struct TiledWorldLoader;
+pub(crate) struct TiledWorldLoader {
+    cache: TiledResourceCache,
+}
+
+impl FromWorld for TiledWorldLoader {
+    fn from_world(world: &mut World) -> Self {
+        Self {
+            cache: world.resource::<TiledResourceCache>().clone(),
+        }
+    }
+}
 
 struct BytesResourceReader<'a, 'b> {
     bytes: Arc<[u8]>,
@@ -83,7 +88,7 @@ impl AssetLoader for TiledWorldLoader {
 
         let mut world = {
             let mut loader = tiled::Loader::with_cache_and_reader(
-                tiled::DefaultResourceCache::new(),
+                self.cache.clone(),
                 BytesResourceReader::new(&bytes, load_context),
             );
             loader.load_world(&world_path).map_err(|e| {

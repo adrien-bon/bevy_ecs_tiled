@@ -12,6 +12,8 @@ use bevy::reflect::TypeRegistryArc;
 #[cfg(feature = "user_properties")]
 use crate::properties::load::DeserializedMapProperties;
 
+use crate::cache::TiledResourceCache;
+
 use bevy::{
     asset::{io::Reader, AssetLoader, AssetPath, LoadContext},
     prelude::*,
@@ -68,15 +70,17 @@ impl<'a> tiled::ResourceReader for BytesResourceReader<'a, '_> {
 }
 
 pub(crate) struct TiledMapLoader {
+    pub cache: TiledResourceCache,
     #[cfg(feature = "user_properties")]
     pub registry: TypeRegistryArc,
 }
 
 impl FromWorld for TiledMapLoader {
-    fn from_world(_world: &mut World) -> Self {
+    fn from_world(world: &mut World) -> Self {
         Self {
+            cache: world.resource::<TiledResourceCache>().clone(),
             #[cfg(feature = "user_properties")]
-            registry: _world.resource::<AppTypeRegistry>().0.clone(),
+            registry: world.resource::<AppTypeRegistry>().0.clone(),
         }
     }
 }
@@ -109,7 +113,7 @@ impl AssetLoader for TiledMapLoader {
         let map = {
             // Allow the loader to also load tileset images.
             let mut loader = tiled::Loader::with_cache_and_reader(
-                tiled::DefaultResourceCache::new(),
+                self.cache.clone(),
                 BytesResourceReader::new(&bytes, load_context),
             );
             // Load the map and all tiles.
