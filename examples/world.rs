@@ -2,8 +2,8 @@
 // dynamic loading of the world maps for performance
 
 use bevy::prelude::*;
-use bevy_ecs_tilemap::prelude::*;
 use bevy_ecs_tiled::prelude::*;
+use bevy_ecs_tilemap::prelude::*;
 
 mod helper;
 
@@ -43,11 +43,8 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
         TiledWorldSettings {
-            chunking: true,
-            chunking_width: 200,
-            chunking_height: 200,
+            chunking: Some((200, 200)),
         },
-        TilemapRenderSettings::default(),
     ));
 
     commands
@@ -66,28 +63,25 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             },
             HelperText,
         ));
-
 }
 
-fn input(
-    mut settings: Query<&mut TiledWorldSettings>,
-    keys: Res<ButtonInput<KeyCode>>,
-) {
+fn input(mut settings: Query<&mut TiledWorldSettings>, keys: Res<ButtonInput<KeyCode>>) {
     let mut settings = settings.single_mut();
 
     if keys.pressed(KeyCode::Minus) {
         // Decrease the chunking size
-        if (settings.chunking_width as i32 - STEP_SIZE as i32) > 0 {
-            settings.chunking_width -= STEP_SIZE;
-            settings.chunking_height -= STEP_SIZE;
+        if let Some((width, height)) = settings.chunking {
+            if (width as i32 - STEP_SIZE as i32) > 0 {
+                settings.chunking = Some((width - STEP_SIZE, height - STEP_SIZE));
+            }
         }
     }
 
     if keys.pressed(KeyCode::Equal) {
-        // Increase the chunking size
-        if settings.chunking_width < u32::MAX - STEP_SIZE {
-            settings.chunking_width += STEP_SIZE;
-            settings.chunking_height += STEP_SIZE;
+        if let Some((width, height)) = settings.chunking {
+            if width < u32::MAX - STEP_SIZE {
+                settings.chunking = Some((width + STEP_SIZE, height + STEP_SIZE));
+            }
         }
     }
 }
@@ -98,10 +92,10 @@ fn text_update_system(
 ) {
     for mut span in &mut query {
         let settings = settings.single();
-
-        **span = format!(
-            "{}x{}",
-            settings.chunking_width, settings.chunking_height
-        );
+        span.0 = if let Some((width, height)) = settings.chunking {
+            format!("{}x{}", width, height)
+        } else {
+            "None".to_string()
+        };
     }
 }

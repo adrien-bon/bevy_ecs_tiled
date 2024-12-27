@@ -7,14 +7,11 @@ pub mod prelude {
     pub use super::asset::*;
     pub use super::components::*;
     pub use super::events::*;
-    pub use super::WorldChunkedMaps;
 }
 
 use bevy::prelude::*;
 
 use crate::prelude::*;
-#[derive(Resource, Default)]
-pub struct WorldChunkedMaps(pub Vec<(Entity, Rect)>);
 
 pub(crate) fn world_chunking(
     camera: Query<&Transform, (With<Camera>, Changed<Transform>)>,
@@ -24,24 +21,23 @@ pub(crate) fn world_chunking(
         Entity,
         &TiledWorldHandle,
         &TiledWorldSettings,
+        &mut TiledWorldStorage,
         &TiledMapSettings,
     )>,
-    mut chunked_maps: ResMut<WorldChunkedMaps>,
 ) {
-    let camera_transform = match camera.iter().next() {
-        Some(camera) => camera,
-        None => return,
-    };
-
-    for (world_entity, world_handle, world_settings, tiled_settings) in world_query.iter_mut() {
-        if !world_settings.chunking {
-            return;
-        }
+    for (world_entity, world_handle, world_settings, mut storage, tiled_settings) in
+        world_query.iter_mut()
+    {
+        let chunking = match world_settings.chunking {
+            Some(chunking) => chunking,
+            None => return,
+        };
 
         let Some(tiled_world) = worlds.get(&world_handle.0) else {
             return;
         };
 
+        // Adhere to the positioning settings
         let offset = match tiled_settings.layer_positioning {
             LayerPositioning::Centered => Vec3::new(
                 -tiled_world.world_rect.max.x as f32 / 2.0,
@@ -53,59 +49,68 @@ pub(crate) fn world_chunking(
 
         let tiled_world = worlds.get(&world_handle.0).unwrap();
 
-        let chunk_view = Rect::new(
-            camera_transform.translation.x - world_settings.chunking_width as f32,
-            camera_transform.translation.y - world_settings.chunking_height as f32,
-            camera_transform.translation.x + world_settings.chunking_width as f32,
-            camera_transform.translation.y + world_settings.chunking_height as f32,
-        );
-
-        // Despawn maps not in the chunking view
         let mut to_remove = Vec::new();
+        let mut to_spawn = Vec::new();
 
-        for (idx, (_, rect)) in chunked_maps.0.iter().enumerate() {
-            // If map_rect does not overlap at all with the chunk_view, remove it
-            if rect.min.x + offset.x > chunk_view.max.x
-                || rect.min.y + offset.y > chunk_view.max.y
-                || rect.max.x + offset.x < chunk_view.min.x
-                || rect.max.y + offset.y < chunk_view.min.y
-            {
-                to_remove.push(idx);
+        // Test maps against each camera if there are multiple
+        for camera_transform in camera.iter() {
+            let chunk_view = Rect::new(
+                camera_transform.translation.x - chunking.0 as f32,
+                camera_transform.translation.y - chunking.1 as f32,
+                camera_transform.translation.x + chunking.0 as f32,
+                camera_transform.translation.y + chunking.1 as f32,
+            );
+
+            // Iterate through the chunked maps and remove any that are not in the chunk rect
+            for (idx, (_, rect)) in storage.spawned_maps.iter().enumerate() {
+                // If map_rect does not overlap at all with the chunk_view, remove it
+                if rect.min.x + offset.x > chunk_view.max.x
+                    || rect.min.y + offset.y > chunk_view.max.y
+                    || rect.max.x + offset.x < chunk_view.min.x
+                    || rect.max.y + offset.y < chunk_view.min.y
+                {
+                    to_remove.push(idx);
+                }
+            }
+
+            // Check if any maps need to be spawned
+            for map in tiled_world.maps.iter() {
+                if storage.spawned_maps.iter().any(|(_, rect)| rect == &map.0) {
+                    continue;
+                }
+
+                // If map_rect does not overlap at all with the chunk_view skip it
+                if map.0.min.x + offset.x > chunk_view.max.x
+                    || map.0.min.y + offset.y > chunk_view.max.y
+                    || map.0.max.x + offset.x < chunk_view.min.x
+                    || map.0.max.y + offset.y < chunk_view.min.y
+                {
+                    continue;
+                }
+
+                to_spawn.push(map);
             }
         }
 
+        // Despawn maps
         for idx in to_remove.iter().rev() {
             log::info!("Despawning map at index {}", idx);
-            let (map_entity, _) = chunked_maps.0.swap_remove(*idx);
+            let (map_entity, _) = storage.spawned_maps.swap_remove(*idx);
             commands.entity(map_entity).despawn_recursive();
         }
 
-        // Spawn maps in the chunking view if they're not already spawned
-        for map in tiled_world.maps.iter() {
-            if chunked_maps.0.iter().any(|(_, rect)| rect == &map.0) {
-                continue;
-            }
-
-            // If map_rect does not overlap at all with the chunk_view skip it
-            if map.0.min.x + offset.x > chunk_view.max.x
-                || map.0.min.y + offset.y > chunk_view.max.y
-                || map.0.max.x + offset.x < chunk_view.min.x
-                || map.0.max.y + offset.y < chunk_view.min.y
-            {
-                continue;
-            }
-
+        // Spawn maps
+        for map in to_spawn.iter() {
             let map_entity = commands
                 .spawn_empty()
                 .insert(TiledMapHandle(map.1.clone()))
-                .insert(RespawnTiledMap)
                 .insert(Transform::from_translation(
                     Vec3::new(map.0.min.x, map.0.min.y, 0.0) + offset,
                 ))
                 .set_parent(world_entity)
                 .id();
 
-            chunked_maps.0.push((map_entity, map.0));
+            storage.spawned_maps.push((map_entity, map.0));
         }
     }
 }
@@ -160,7 +165,8 @@ pub(crate) fn process_loaded_worlds(
                 LayerPositioning::TiledOffset => Vec3::ZERO,
             };
 
-            if !world_settings.chunking {
+            // Spawn all maps if chunking is not set
+            if world_settings.chunking.is_none() {
                 // Load all the maps
                 for map in tiled_world.maps.iter() {
                     commands
@@ -215,10 +221,11 @@ pub(crate) fn handle_world_events(
 }
 
 fn remove_maps(commands: &mut Commands, world_storage: &mut TiledWorldStorage) {
-    for map in world_storage.0.iter() {
+    for map in world_storage.maps.iter() {
         if let Some(map_entity) = map.entity {
             commands.entity(map_entity).despawn_recursive();
         }
     }
-    world_storage.0.clear();
+    world_storage.maps.clear();
+    world_storage.spawned_maps.clear();
 }

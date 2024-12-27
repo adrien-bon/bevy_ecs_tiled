@@ -115,8 +115,7 @@ impl Plugin for TiledMapPlugin {
             .init_asset_loader::<TiledMapLoader>()
             .init_asset_loader::<TiledWorldLoader>()
             .add_systems(Update, (map::handle_map_events, map::process_loaded_maps, world::handle_world_events, world::process_loaded_worlds, world::world_chunking))
-            .insert_resource(self.0.clone())
-            .insert_resource(WorldChunkedMaps(Vec::new()));
+            .insert_resource(self.0.clone());
 
         #[cfg(feature = "user_properties")]
         app.add_systems(Startup, map::export_types);

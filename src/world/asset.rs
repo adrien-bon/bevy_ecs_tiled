@@ -4,7 +4,7 @@ use bevy::{
 };
 use std::io::ErrorKind;
 
-use crate::{TiledMap, cache::TiledResourceCache, reader::BytesResourceReader};
+use crate::{cache::TiledResourceCache, reader::BytesResourceReader, TiledMap};
 
 /// Tiled world `Asset`.
 ///
