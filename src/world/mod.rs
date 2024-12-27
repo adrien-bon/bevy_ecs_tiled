@@ -181,7 +181,7 @@ pub(crate) fn process_loaded_worlds(
                         "TiledWorld: {}",
                         tiled_world.world.source.display()
                     )),
-                    TiledMapMarker,
+                    TiledWorldMarker,
                 ))
                 .remove::<RespawnTiledWorld>();
 
