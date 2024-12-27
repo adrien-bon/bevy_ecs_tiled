@@ -13,6 +13,7 @@
 pub mod cache;
 pub mod map;
 pub mod names;
+pub mod reader;
 pub mod world;
 
 #[cfg(feature = "debug")]
