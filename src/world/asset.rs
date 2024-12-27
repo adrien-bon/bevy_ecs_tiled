@@ -2,13 +2,9 @@ use bevy::{
     asset::{io::Reader, AssetLoader, AssetPath, LoadContext},
     prelude::*,
 };
-use std::{
-    io::{Cursor, Error as IoError, ErrorKind, Read},
-    path::Path,
-    sync::Arc,
-};
+use std::io::ErrorKind;
 
-use crate::TiledMap;
+use crate::{TiledMap, cache::TiledResourceCache, reader::BytesResourceReader};
 
 /// Tiled world `Asset`.
 ///
@@ -30,36 +26,15 @@ pub enum TiledWorldLoaderError {
     Io(#[from] std::io::Error),
 }
 
-#[derive(Default)]
-pub(crate) struct TiledWorldLoader;
-
-struct BytesResourceReader<'a, 'b> {
-    bytes: Arc<[u8]>,
-    context: &'a mut LoadContext<'b>,
+pub(crate) struct TiledWorldLoader {
+    cache: TiledResourceCache,
 }
-impl<'a, 'b> BytesResourceReader<'a, 'b> {
-    fn new(bytes: &'a [u8], context: &'a mut LoadContext<'b>) -> Self {
+
+impl FromWorld for TiledWorldLoader {
+    fn from_world(world: &mut World) -> Self {
         Self {
-            bytes: Arc::from(bytes),
-            context,
+            cache: world.resource::<TiledResourceCache>().clone(),
         }
-    }
-}
-
-impl<'a> tiled::ResourceReader for BytesResourceReader<'a, '_> {
-    type Resource = Box<dyn Read + 'a>;
-    type Error = IoError;
-
-    fn read_from(&mut self, path: &Path) -> std::result::Result<Self::Resource, Self::Error> {
-        if let Some(extension) = path.extension() {
-            if extension == "tsx" {
-                let future = self.context.read_asset_bytes(path.to_path_buf());
-                let data = futures_lite::future::block_on(future)
-                    .map_err(|err| IoError::new(ErrorKind::NotFound, err))?;
-                return Ok(Box::new(Cursor::new(data)));
-            }
-        }
-        Ok(Box::new(Cursor::new(self.bytes.clone())))
     }
 }
 
@@ -83,7 +58,7 @@ impl AssetLoader for TiledWorldLoader {
 
         let mut world = {
             let mut loader = tiled::Loader::with_cache_and_reader(
-                tiled::DefaultResourceCache::new(),
+                self.cache.clone(),
                 BytesResourceReader::new(&bytes, load_context),
             );
             loader.load_world(&world_path).map_err(|e| {
