@@ -1,5 +1,9 @@
-use std::{io::{Cursor, Error as IoError, ErrorKind, Read}, path::Path, sync::Arc};
 use bevy::asset::LoadContext;
+use std::{
+    io::{Cursor, Error as IoError, ErrorKind, Read},
+    path::Path,
+    sync::Arc,
+};
 
 pub(crate) struct BytesResourceReader<'a, 'b> {
     bytes: Arc<[u8]>,

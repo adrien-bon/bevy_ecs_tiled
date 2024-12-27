@@ -1,4 +1,3 @@
-
 pub mod asset;
 pub mod components;
 pub mod events;
@@ -24,7 +23,8 @@ pub(crate) fn export_types(reg: Res<AppTypeRegistry>, config: Res<TiledMapPlugin
         info!("Export Tiled types to '{:?}'", path);
         let file = File::create(path).unwrap();
         let writer = BufWriter::new(file);
-        let registry = crate::properties::export::TypeExportRegistry::from_registry(reg.0.read().deref());
+        let registry =
+            crate::properties::export::TypeExportRegistry::from_registry(reg.0.read().deref());
         serde_json::to_writer_pretty(writer, &registry.to_vec()).unwrap();
     }
 }

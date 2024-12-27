@@ -1,5 +1,5 @@
-use std::sync::{Arc, RwLock};
 use bevy::prelude::*;
+use std::sync::{Arc, RwLock};
 use tiled::{DefaultResourceCache, ResourceCache};
 
 #[derive(Resource, Clone)]
@@ -7,9 +7,7 @@ pub(crate) struct TiledResourceCache(pub(crate) Arc<RwLock<DefaultResourceCache>
 
 impl TiledResourceCache {
     pub(crate) fn new() -> Self {
-        Self(
-            Arc::new(RwLock::new(DefaultResourceCache::new()))
-        )
+        Self(Arc::new(RwLock::new(DefaultResourceCache::new())))
     }
 }
 
@@ -31,7 +29,7 @@ impl ResourceCache for TiledResourceCache {
     fn insert_tileset(
         &mut self,
         path: impl AsRef<tiled::ResourcePath>,
-        tileset: Arc<tiled::Tileset>
+        tileset: Arc<tiled::Tileset>,
     ) {
         self.0.write().unwrap().insert_tileset(path, tileset);
     }
@@ -39,7 +37,7 @@ impl ResourceCache for TiledResourceCache {
     fn insert_template(
         &mut self,
         path: impl AsRef<tiled::ResourcePath>,
-        template: Arc<tiled::Template>
+        template: Arc<tiled::Template>,
     ) {
         self.0.write().unwrap().insert_template(path, template);
     }

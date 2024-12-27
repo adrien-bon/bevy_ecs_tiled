@@ -27,17 +27,17 @@ pub mod properties;
 
 /// `bevy_ecs_tiled` public exports.
 pub mod prelude {
-    pub use crate::TiledMapHandle;
-    pub use crate::TiledWorldHandle;
-    pub use crate::TiledMapPlugin;
-    pub use crate::TiledMapPluginConfig;
-    pub use super::map::prelude::*;
-    pub use super::names::*;
-    pub use super::world::prelude::*;
     #[cfg(feature = "debug")]
     pub use super::debug::*;
+    pub use super::map::prelude::*;
+    pub use super::names::*;
     #[cfg(feature = "physics")]
     pub use super::physics::prelude::*;
+    pub use super::world::prelude::*;
+    pub use crate::TiledMapHandle;
+    pub use crate::TiledMapPlugin;
+    pub use crate::TiledMapPluginConfig;
+    pub use crate::TiledWorldHandle;
 }
 
 use crate::prelude::*;

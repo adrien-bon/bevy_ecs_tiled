@@ -51,10 +51,7 @@ pub(crate) fn load_map(
     asset_server: &Res<AssetServer>,
 ) {
     commands.entity(map_entity).insert((
-        Name::new(format!(
-            "TiledMap: {}",
-            tiled_map.map.source.display()
-        )),
+        Name::new(format!("TiledMap: {}", tiled_map.map.source.display())),
         TiledMapMarker,
     ));
 

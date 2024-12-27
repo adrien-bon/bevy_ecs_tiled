@@ -9,9 +9,9 @@ pub mod prelude {
     pub use super::events::*;
 }
 
+use crate::prelude::*;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapRenderSettings;
-use crate::prelude::*;
 
 pub(crate) fn world_chunking(
     camera: Query<&Transform, (With<Camera>, Changed<Transform>)>,
@@ -27,14 +27,24 @@ pub(crate) fn world_chunking(
         &mut TiledWorldStorage,
     )>,
 ) {
-    for (world_entity, world_handle, world_transform, world_settings, map_settings, render_settings, mut storage) in
-        world_query.iter_mut()
+    for (
+        world_entity,
+        world_handle,
+        world_transform,
+        world_settings,
+        map_settings,
+        render_settings,
+        mut storage,
+    ) in world_query.iter_mut()
     {
         let Some(tiled_world) = worlds.get(&world_handle.0) else {
             return;
         };
 
-        let world_position = Vec2::new(world_transform.translation().x, world_transform.translation().y);
+        let world_position = Vec2::new(
+            world_transform.translation().x,
+            world_transform.translation().y,
+        );
 
         let mut to_remove = Vec::new();
         let mut to_spawn = Vec::new();
@@ -98,12 +108,10 @@ pub(crate) fn world_chunking(
             let map_entity = commands
                 .spawn((
                     TiledMapHandle(map.1.clone()),
-                    Transform::from_translation(
-                        Vec3::new(map.0.min.x, map.0.min.y, 0.0)
-                    ),
+                    Transform::from_translation(Vec3::new(map.0.min.x, map.0.min.y, 0.0)),
                     TiledMapSettings {
                         layer_positioning: LayerPositioning::TiledOffset,
-                        .. *map_settings
+                        ..*map_settings
                     },
                     *render_settings,
                 ))
@@ -159,14 +167,15 @@ pub(crate) fn process_loaded_worlds(
             // Adjust world transform if needed
             if let LayerPositioning::Centered = map_settings.layer_positioning {
                 world_transform.translation += Vec3::new(
-                    - tiled_world.world_rect.max.x / 2.0,
-                    - tiled_world.world_rect.max.y / 2.0,
-                    0.0
+                    -tiled_world.world_rect.max.x / 2.0,
+                    -tiled_world.world_rect.max.y / 2.0,
+                    0.0,
                 );
             }
 
             // Remove the 'Respawn' marker and insert additional components
-            commands.entity(world_entity)
+            commands
+                .entity(world_entity)
                 .insert((
                     Name::new(format!(
                         "TiledWorld: {}",

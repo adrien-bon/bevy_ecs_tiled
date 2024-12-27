@@ -10,6 +10,6 @@ pub struct TiledWorldCreated {
 
 impl<'a> TiledWorldCreated {
     pub fn world(&self, world_asset: &'a Res<Assets<TiledWorld>>) -> &'a TiledWorld {
-        &world_asset.get(self.world_handle.id()).unwrap()
+        world_asset.get(self.world_handle.id()).unwrap()
     }
 }
