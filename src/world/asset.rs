@@ -24,6 +24,8 @@ pub enum TiledWorldLoaderError {
     /// An [IO](std::io) Error
     #[error("Could not load Tiled file: {0}")]
     Io(#[from] std::io::Error),
+    #[error("No map found in this world")]
+    EmptyWorld,
 }
 
 pub(crate) struct TiledWorldLoader {
@@ -56,7 +58,7 @@ impl AssetLoader for TiledWorldLoader {
 
         let world_path = load_context.path().to_path_buf();
 
-        let mut world = {
+        let world = {
             let mut loader = tiled::Loader::with_cache_and_reader(
                 self.cache.clone(),
                 BytesResourceReader::new(&bytes, load_context),
@@ -66,10 +68,13 @@ impl AssetLoader for TiledWorldLoader {
             })?
         };
 
+        let Some(world_maps) = &world.maps else {
+            return Err(TiledWorldLoaderError::EmptyWorld);
+        };
+
         // Calculate the full rect of the world
         let mut world_rect = Rect::new(0.0, 0.0, 0.0, 0.0);
-
-        for map in world.maps.as_ref().unwrap().iter() {
+        for map in world_maps.iter() {
             let map_rect = Rect::new(
                 map.x as f32,
                 map.y as f32, // Invert for Tiled to Bevy Y axis
@@ -82,21 +87,21 @@ impl AssetLoader for TiledWorldLoader {
 
         // Load all maps
         let mut maps = Vec::new();
-
-        for map in world.maps.take().unwrap().iter() {
+        for map in world_maps.iter() {
             let asset_path =
                 AssetPath::from(world_path.parent().unwrap().join(map.filename.clone()));
 
             let map_handle: Handle<TiledMap> = load_context.load(asset_path);
 
             let map_height = map.height.unwrap() as f32;
+            let map_width = map.width.unwrap() as f32;
 
             // Position maps
             maps.push((
                 Rect::new(
                     map.x as f32,
                     world_rect.max.y - map_height - map.y as f32, // Invert for Tiled to Bevy Y axis
-                    map.x as f32 + map.width.unwrap() as f32,
+                    map.x as f32 + map_width,
                     world_rect.max.y - map.y as f32,
                 ),
                 map_handle,

@@ -52,8 +52,8 @@ pub(crate) fn load_map(
 ) {
     commands.entity(map_entity).insert((
         Name::new(format!(
-            "TiledMap({} x {})",
-            tiled_map.map.width, tiled_map.map.height
+            "TiledMap: {}",
+            tiled_map.map.source.display()
         )),
         TiledMapMarker,
     ));
