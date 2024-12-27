@@ -49,8 +49,8 @@ user_properties = []
 bevy = { version = "0.15", default-features = false }
 bevy_ecs_tilemap = { git = "https://github.com/rparrett/bevy_ecs_tilemap.git", rev = "86235d6f9f4f05cd4e3f6af9d3392b08a590a48f", default-features = false }
 # tiled = "0.13"
-tiled = { git = "https://github.com/JtoTheThree/rs-tiled.git", branch = "worldfiles" }
-
+tiled = { git = "https://github.com/JtoTheThree/rs-tiled.git", branch = "worldfiles", features = ["world"] }
+#tiled = { path = "../rs-tiled", features = ["world"] }
 # Utilities
 futures-lite = "2.5"
 log = "0.4"

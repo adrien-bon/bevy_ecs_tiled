@@ -1,13 +1,25 @@
-use std::{io::{Cursor, Error as IoError, ErrorKind, Read}, path::Path, sync::Arc};
-use bevy::{asset::{io::Reader, AssetLoader, LoadContext}, prelude::*};
+use bevy::{
+    asset::{io::Reader, AssetLoader, AssetPath, LoadContext},
+    prelude::*,
+};
+use std::{
+    io::{Cursor, Error as IoError, ErrorKind, Read},
+    path::Path,
+    sync::Arc,
+};
 
+use crate::TiledMap;
 
 /// Tiled world `Asset`.
 ///
 /// `Asset` holding Tiled world informations.
 #[derive(TypePath, Asset)]
 pub struct TiledWorld {
-    pub maps: Vec<(String, Rect)>,
+    pub world: tiled::World,
+
+    pub world_rect: Rect,
+
+    pub maps: Vec<(Rect, Handle<TiledMap>)>,
 }
 
 /// [TiledWorldMap] loading error.
@@ -68,7 +80,8 @@ impl AssetLoader for TiledWorldLoader {
         log::info!("Start loading world '{}'", load_context.path().display());
 
         let world_path = load_context.path().to_path_buf();
-        let world = {
+
+        let mut world = {
             let mut loader = tiled::Loader::with_cache_and_reader(
                 tiled::DefaultResourceCache::new(),
                 BytesResourceReader::new(&bytes, load_context),
@@ -78,21 +91,48 @@ impl AssetLoader for TiledWorldLoader {
             })?
         };
 
+        // Calculate the full rect of the world
+        let mut world_rect = Rect::new(0.0, 0.0, 0.0, 0.0);
+
+        for map in world.maps.as_ref().unwrap().iter() {
+            let map_rect = Rect::new(
+                map.x as f32,
+                map.y as f32, // Invert for Tiled to Bevy Y axis
+                map.x as f32 + map.width.unwrap() as f32,
+                map.y as f32 + map.height.unwrap() as f32,
+            );
+
+            world_rect = world_rect.union(map_rect);
+        }
+
+        // Load all maps
         let mut maps = Vec::new();
 
-        for map in world.maps.unwrap().iter() {
+        for map in world.maps.take().unwrap().iter() {
+            let asset_path =
+                AssetPath::from(world_path.parent().unwrap().join(map.filename.clone()));
+
+            let map_handle: Handle<TiledMap> = load_context.load(asset_path);
+
+            let map_height = map.height.unwrap() as f32;
+
+            // Position maps
             maps.push((
-                map.filename.clone(),
                 Rect::new(
-                    map.x as f32, 
-                    -map.y as f32,  // Invert for Tiled to Bevy Y axis
-                    map.x as f32 + map.width.unwrap() as f32, 
-                    -map.y as f32 + map.height.unwrap() as f32
+                    map.x as f32,
+                    world_rect.max.y - map_height - map.y as f32, // Invert for Tiled to Bevy Y axis
+                    map.x as f32 + map.width.unwrap() as f32,
+                    world_rect.max.y - map.y as f32,
                 ),
+                map_handle,
             ));
         }
 
-        Ok(TiledWorld { maps })
+        Ok(TiledWorld {
+            world,
+            world_rect,
+            maps,
+        })
     }
 
     fn extensions(&self) -> &[&str] {

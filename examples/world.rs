@@ -20,7 +20,6 @@ fn main() {
         .run();
 }
 
-
 #[derive(Component, Debug)]
 struct HelperText;
 
