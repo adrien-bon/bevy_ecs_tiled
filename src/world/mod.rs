@@ -17,10 +17,15 @@ use crate::prelude::*;
 pub struct WorldChunkedMaps(pub Vec<(Entity, Rect)>);
 
 pub(crate) fn world_chunking(
-    camera: Query<&Transform, (With<Camera>, Changed<Transform>)>,    
+    camera: Query<&Transform, (With<Camera>, Changed<Transform>)>,
     worlds: Res<Assets<TiledWorld>>,
     mut commands: Commands,
-    mut world_query: Query<(Entity, &TiledWorldHandle, &TiledWorldSettings, &TiledMapSettings)>,
+    mut world_query: Query<(
+        Entity,
+        &TiledWorldHandle,
+        &TiledWorldSettings,
+        &TiledMapSettings,
+    )>,
     mut chunked_maps: ResMut<WorldChunkedMaps>,
 ) {
     let camera_transform = match camera.iter().next() {
@@ -28,12 +33,14 @@ pub(crate) fn world_chunking(
         None => return,
     };
 
-    for (world_entity, world_handle, world_settings, tiled_settings) in world_query.iter_mut() {        
+    for (world_entity, world_handle, world_settings, tiled_settings) in world_query.iter_mut() {
         if !world_settings.chunking {
             return;
         }
 
-        let tiled_world = worlds.get(&world_handle.0).unwrap();
+        let Some(tiled_world) = worlds.get(&world_handle.0) else {
+            return;
+        };
 
         let offset = match tiled_settings.layer_positioning {
             LayerPositioning::Centered => Vec3::new(
@@ -43,7 +50,7 @@ pub(crate) fn world_chunking(
             ),
             LayerPositioning::TiledOffset => Vec3::ZERO,
         };
-        
+
         let tiled_world = worlds.get(&world_handle.0).unwrap();
 
         let chunk_view = Rect::new(
@@ -81,19 +88,20 @@ pub(crate) fn world_chunking(
 
             // If map_rect does not overlap at all with the chunk_view skip it
             if map.0.min.x + offset.x > chunk_view.max.x
-                || map.0.min.y + offset.y  > chunk_view.max.y
+                || map.0.min.y + offset.y > chunk_view.max.y
                 || map.0.max.x + offset.x < chunk_view.min.x
                 || map.0.max.y + offset.y < chunk_view.min.y
             {
                 continue;
             }
 
-
             let map_entity = commands
                 .spawn_empty()
                 .insert(TiledMapHandle(map.1.clone()))
                 .insert(RespawnTiledMap)
-                .insert(Transform::from_translation(Vec3::new(map.0.min.x, map.0.min.y, 0.0) + offset))
+                .insert(Transform::from_translation(
+                    Vec3::new(map.0.min.x, map.0.min.y, 0.0) + offset,
+                ))
                 .set_parent(world_entity)
                 .id();
 
@@ -122,7 +130,8 @@ pub(crate) fn process_loaded_worlds(
     for (world_entity, world_handle, world_settings, tiled_settings, mut world_storage) in
         world_query.iter_mut()
     {
-        if let Some(load_state) = asset_server.get_recursive_dependency_load_state(&world_handle.0) {
+        if let Some(load_state) = asset_server.get_recursive_dependency_load_state(&world_handle.0)
+        {
             if !load_state.is_loaded() {
                 // If not fully loaded yet, insert the 'Respawn' marker so we will try to load it at next frame
                 commands.entity(world_entity).insert(RespawnTiledWorld);
@@ -158,7 +167,9 @@ pub(crate) fn process_loaded_worlds(
                         .spawn_empty()
                         .insert(TiledMapHandle(map.1.clone()))
                         .insert(RespawnTiledMap)
-                        .insert(Transform::from_translation(Vec3::new(map.0.min.x, map.0.min.y, 0.0) + offset))
+                        .insert(Transform::from_translation(
+                            Vec3::new(map.0.min.x, map.0.min.y, 0.0) + offset,
+                        ))
                         .set_parent(world_entity);
                 }
             }

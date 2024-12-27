@@ -5,6 +5,8 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 
+mod helper;
+
 const STEP_SIZE: u32 = 8;
 
 fn main() {
@@ -14,6 +16,7 @@ fn main() {
         // bevy_ecs_tilemap and bevy_ecs_tiled main plugins
         .add_plugins(TilemapPlugin)
         .add_plugins(TiledMapPlugin::default())
+        .add_plugins(helper::HelperPlugin)
         // Add our systems and run the app!
         .add_systems(Startup, startup)
         .add_systems(Update, (input, text_update_system))
@@ -67,65 +70,25 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn input(
-    mut query: Query<(&Camera2d, &mut Transform)>,
     mut settings: Query<&mut TiledWorldSettings>,
     keys: Res<ButtonInput<KeyCode>>,
 ) {
     let mut settings = settings.single_mut();
 
-    for (_, mut transform) in query.iter_mut() {
-        let mut translation = Vec3::ZERO;
-        if keys.pressed(KeyCode::KeyW) {
-            translation.y += 1.0;
+    if keys.pressed(KeyCode::Minus) {
+        // Decrease the chunking size
+        if (settings.chunking_width as i32 - STEP_SIZE as i32) > 0 {
+            settings.chunking_width -= STEP_SIZE;
+            settings.chunking_height -= STEP_SIZE;
         }
-        if keys.pressed(KeyCode::KeyS) {
-            translation.y -= 1.0;
-        }
-        if keys.pressed(KeyCode::KeyA) {
-            translation.x -= 1.0;
-        }
-        if keys.pressed(KeyCode::KeyD) {
-            translation.x += 1.0;
-        }
+    }
 
-        // Zoom up and down
-        if keys.pressed(KeyCode::KeyZ) {
-            transform.scale *= 1.02;
+    if keys.pressed(KeyCode::Equal) {
+        // Increase the chunking size
+        if settings.chunking_width < u32::MAX - STEP_SIZE {
+            settings.chunking_width += STEP_SIZE;
+            settings.chunking_height += STEP_SIZE;
         }
-        if keys.pressed(KeyCode::KeyX) {
-            transform.scale /= 1.02;
-        }
-
-        if keys.pressed(KeyCode::Minus) {
-            // Decrease the chunking size
-            if (settings.chunking_width as i32 - STEP_SIZE as i32) > 0 {
-                settings.chunking_width -= STEP_SIZE;
-                settings.chunking_height -= STEP_SIZE;
-
-                log::info!(
-                    "Chunking size: {}x{}",
-                    settings.chunking_width,
-                    settings.chunking_height
-                );
-            }
-        }
-
-        if keys.pressed(KeyCode::Equal) {
-            // Increase the chunking size
-            if settings.chunking_width < u32::MAX - STEP_SIZE {
-                settings.chunking_width += STEP_SIZE;
-                settings.chunking_height += STEP_SIZE;
-
-                log::info!(
-                    "Chunking size: {}x{}",
-                    settings.chunking_width,
-                    settings.chunking_height
-                );
-            }
-
-        }
-
-        transform.translation += translation * 5.0;
     }
 }
 
