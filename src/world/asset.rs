@@ -18,7 +18,7 @@ pub struct TiledWorld {
     pub maps: Vec<(Rect, Handle<TiledMap>)>,
 }
 
-/// [TiledWorldMap] loading error.
+/// [TiledWorld] loading error.
 #[derive(Debug, thiserror::Error)]
 pub enum TiledWorldLoaderError {
     /// An [IO](std::io) Error
