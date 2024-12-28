@@ -68,13 +68,13 @@ impl AssetLoader for TiledWorldLoader {
             })?
         };
 
-        let Some(world_maps) = &world.maps else {
+        if world.maps.is_empty() {
             return Err(TiledWorldLoaderError::EmptyWorld);
-        };
+        }
 
         // Calculate the full rect of the world
         let mut world_rect = Rect::new(0.0, 0.0, 0.0, 0.0);
-        for map in world_maps.iter() {
+        for map in world.maps.iter() {
             let map_rect = Rect::new(
                 map.x as f32,
                 map.y as f32, // Invert for Tiled to Bevy Y axis
@@ -87,7 +87,7 @@ impl AssetLoader for TiledWorldLoader {
 
         // Load all maps
         let mut maps = Vec::new();
-        for map in world_maps.iter() {
+        for map in world.maps.iter() {
             let asset_path =
                 AssetPath::from(world_path.parent().unwrap().join(map.filename.clone()));
 
