@@ -18,7 +18,7 @@ use crate::prelude::*;
 /// App::new()
 ///     .add_plugins(TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default());
 /// ```
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct TiledPhysicsRapierBackend;
 
 impl TiledPhysicsBackend for TiledPhysicsRapierBackend {
