@@ -48,7 +48,7 @@ user_properties = ["dep:serde", "dep:serde_json"]
 # Main dependencies
 bevy = { version = "0.15", default-features = false }
 bevy_ecs_tilemap = { version = "0.15", default-features = false }
-tiled = { git = "https://github.com/JtoTheThree/rs-tiled.git", rev = "82d9bfdc41f33d92f283b0f9c63c3912bbf01e13", features = ["world"] }
+tiled = { git = "https://github.com/JtoTheThree/rs-tiled.git", rev = "c434e1be8904917bacc1286c5334b721f1f6deef", features = ["world"] }
 
 # Utilities
 futures-lite = "2.5"
