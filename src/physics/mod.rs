@@ -32,7 +32,9 @@ pub mod prelude {
 /// Physics backend public trait.
 ///
 /// A custom physics backend should implement this trait.
-pub trait TiledPhysicsBackend {
+pub trait TiledPhysicsBackend:
+    Default + Clone + 'static + std::marker::Sync + std::marker::Send
+{
     /// Function responsible for spawning a physics collider
     ///
     /// This function should spawn an [Entity] representing a single physics
@@ -49,7 +51,7 @@ pub trait TiledPhysicsBackend {
 
 /// Physics related settings.
 #[derive(Clone, Component, Default)]
-pub struct TiledPhysicsSettings<T: TiledPhysicsBackend + Default> {
+pub struct TiledPhysicsSettings<T: TiledPhysicsBackend> {
     /// Specify which Tiled object to add colliders for using their layer name.
     ///
     /// Colliders will be automatically added for all objects whose containing layer name matches this filter.
@@ -88,13 +90,9 @@ pub struct TiledPhysicsSettings<T: TiledPhysicsBackend + Default> {
 ///     .add_plugins(TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default());
 /// ```
 #[derive(Default)]
-pub struct TiledPhysicsPlugin<T: TiledPhysicsBackend + Default + std::marker::Sync>(
-    std::marker::PhantomData<T>,
-);
+pub struct TiledPhysicsPlugin<T: TiledPhysicsBackend>(std::marker::PhantomData<T>);
 
-impl<T: TiledPhysicsBackend + Default + 'static + std::marker::Sync + std::marker::Send> Plugin
-    for TiledPhysicsPlugin<T>
-{
+impl<T: TiledPhysicsBackend> Plugin for TiledPhysicsPlugin<T> {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_observer(default_physics_settings::<T>);
         app.add_observer(collider_from_object::<T>);
@@ -102,24 +100,31 @@ impl<T: TiledPhysicsBackend + Default + 'static + std::marker::Sync + std::marke
     }
 }
 
-fn default_physics_settings<
-    T: TiledPhysicsBackend + Default + 'static + std::marker::Sync + std::marker::Send,
->(
+#[allow(clippy::type_complexity)]
+fn default_physics_settings<T: TiledPhysicsBackend>(
     trigger: Trigger<TiledMapCreated>,
     mut commands: Commands,
-    q_settings: Query<&TiledPhysicsSettings<T>, With<TiledMapMarker>>,
+    q_maps: Query<(Option<&Parent>, Option<&TiledPhysicsSettings<T>>), With<TiledMapMarker>>,
+    q_worlds: Query<Option<&TiledPhysicsSettings<T>>, With<TiledWorldMarker>>,
 ) {
     let map_entity = trigger.event().map;
-    if q_settings.get(map_entity).is_err() {
-        commands
-            .entity(map_entity)
-            .insert(TiledPhysicsSettings::<T>::default());
+    if let Ok((parent, settings)) = q_maps.get(map_entity) {
+        // Map does not have physics settings
+        if settings.is_none() {
+            if let Some(settings) = parent.and_then(|p| q_worlds.get(p.get()).ok().flatten()) {
+                // Use physics settings from the parent world
+                commands.entity(map_entity).insert((*settings).clone());
+            } else {
+                // Use default settings
+                commands
+                    .entity(map_entity)
+                    .insert(TiledPhysicsSettings::<T>::default());
+            }
+        }
     }
 }
 
-fn collider_from_object<
-    T: TiledPhysicsBackend + Default + 'static + std::marker::Sync + std::marker::Send,
->(
+fn collider_from_object<T: TiledPhysicsBackend>(
     trigger: Trigger<TiledObjectCreated>,
     mut commands: Commands,
     map_asset: Res<Assets<TiledMap>>,
@@ -151,9 +156,7 @@ fn collider_from_object<
     }
 }
 
-fn collider_from_tile<
-    T: TiledPhysicsBackend + Default + 'static + std::marker::Sync + std::marker::Send,
->(
+fn collider_from_tile<T: TiledPhysicsBackend>(
     trigger: Trigger<TiledSpecialTileCreated>,
     mut commands: Commands,
     map_asset: Res<Assets<TiledMap>>,

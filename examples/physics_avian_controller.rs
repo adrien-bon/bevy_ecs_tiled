@@ -40,7 +40,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 // Define a custom physics collider which will use the TiledPhysicsAvianBackend
 // but add an extra RigidBody::Static component on top of the colliders.
-#[derive(Default)]
+#[derive(Default, Clone)]
 struct MyCustomAvianPhysicsBackend(TiledPhysicsAvianBackend);
 
 impl TiledPhysicsBackend for MyCustomAvianPhysicsBackend {

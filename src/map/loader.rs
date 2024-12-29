@@ -40,7 +40,7 @@ use tiled::{
 };
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn load_map(
+pub(crate) fn load_map(
     commands: &mut Commands,
     map_entity: Entity,
     map_handle: &Handle<TiledMap>,
@@ -51,10 +51,7 @@ pub(super) fn load_map(
     asset_server: &Res<AssetServer>,
 ) {
     commands.entity(map_entity).insert((
-        Name::new(format!(
-            "TiledMap({} x {})",
-            tiled_map.map.width, tiled_map.map.height
-        )),
+        Name::new(format!("TiledMap: {}", tiled_map.map.source.display())),
         TiledMapMarker,
     ));
 
