@@ -4,7 +4,8 @@
 
 ### Bugfixes
 
--   Fixed debug and info logging in `process_loaded_maps` to handle cases where a map handle's path is unavailable, using the handle ID as a fallback.
+- Fixed debug and info logging in `process_loaded_maps` to handle cases where a map handle's path is unavailable, using the handle ID as a fallback.
+- Properly abort map loading and despawn map entity in case of asset load error
 
 ## v0.5.0
 

@@ -140,8 +140,9 @@ fn process_loaded_maps(
     {
         if let Some(load_state) = asset_server.get_recursive_dependency_load_state(&map_handle.0) {
             if !load_state.is_loaded() {
-                if let RecursiveDependencyLoadState::Failed(err) = load_state {
-                    error!("Error loading map: {}", err);
+                if let RecursiveDependencyLoadState::Failed(_) = load_state {
+                    error!("Map '{}' failed to load", map_handle.0.path().unwrap());
+                    commands.entity(map_entity).despawn_recursive();
                     return;
                 }
                 // If not fully loaded yet, insert the 'Respawn' marker so we will try to load it at next frame
