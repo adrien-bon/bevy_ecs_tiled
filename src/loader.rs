@@ -73,28 +73,32 @@ pub(super) fn load_map(
 
     // Once materials have been created/added we need to then create the layers.
     for (layer_id, layer) in tiled_map.map.layers().enumerate() {
+        // Increment Z offset and compute layer transform offset
+        offset_z += tiled_settings.layer_z_offset;
+        let offset_transform = Transform::from_xyz(layer.offset_x, -layer.offset_y, offset_z);
+
         // Spawn layer entity and attach it to the map entity
         let layer_entity = commands
-            .spawn(TiledMapLayer {
-                map_handle_id: map_handle.id(),
-            })
+            .spawn((
+                TiledMapLayer {
+                    map_handle_id: map_handle.id(),
+                },
+                // Apply layer offset and MapPositioning setting
+                match &tiled_settings.layer_positioning {
+                    LayerPositioning::TiledOffset => offset_transform,
+                    LayerPositioning::Centered => {
+                        get_tilemap_center_transform(&map_size, &grid_size, &map_type, 0.)
+                            * offset_transform
+                    }
+                },
+                // Determine default visibility
+                match &layer.visible {
+                    true => Visibility::Inherited,
+                    false => Visibility::Hidden,
+                },
+            ))
             .set_parent(map_entity)
             .id();
-
-        // Increment Z offset
-        offset_z += tiled_settings.layer_z_offset;
-
-        // Apply layer offset and MapPositioning setting
-        let offset_transform = Transform::from_xyz(layer.offset_x, -layer.offset_y, offset_z);
-        commands
-            .entity(layer_entity)
-            .insert(match &tiled_settings.layer_positioning {
-                LayerPositioning::TiledOffset => offset_transform,
-                LayerPositioning::Centered => {
-                    get_tilemap_center_transform(&map_size, &grid_size, &map_type, 0.)
-                        * offset_transform
-                }
-            });
 
         let layer_infos = TiledLayerCreated {
             map: map_entity,

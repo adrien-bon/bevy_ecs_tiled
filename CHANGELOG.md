@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Features
+
+- Take into account the layer visibility information from Tiled and set Bevy Visibility component accordingly
+
 ### Bugfixes
 
 - Fixed debug and info logging in `process_loaded_maps` to handle cases where a map handle's path is unavailable, using the handle ID as a fallback.
