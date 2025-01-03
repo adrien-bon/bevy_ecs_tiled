@@ -69,7 +69,7 @@ pub(super) fn load_map(
     // Order of the differents layers in the .TMX file is important:
     // a layer appearing last in the .TMX should appear "on top" of previous layers
     // Start with a negative offset so the upper layer will be at Z-offset = 0
-    let mut offset_z = tiled_map.map.layers().len() as f32 * (-100.0);
+    let mut offset_z = tiled_map.map.layers().len() as f32 * (-tiled_settings.layer_z_offset);
 
     // Once materials have been created/added we need to then create the layers.
     for (layer_id, layer) in tiled_map.map.layers().enumerate() {

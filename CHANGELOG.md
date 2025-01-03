@@ -6,6 +6,7 @@
 
 - Fixed debug and info logging in `process_loaded_maps` to handle cases where a map handle's path is unavailable, using the handle ID as a fallback.
 - Properly abort map loading and despawn map entity in case of asset load error
+- Layers Z-offset was not correct in case of non-default value for 'layer_z_offset' setting
 
 ## v0.5.0
 
