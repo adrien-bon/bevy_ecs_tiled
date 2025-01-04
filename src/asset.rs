@@ -25,9 +25,17 @@ use bevy_ecs_tilemap::prelude::*;
 /// `Asset` holding Tiled map informations.
 #[derive(TypePath, Asset)]
 pub struct TiledMap {
+    /// The raw Tiled map
     pub map: tiled::Map,
 
-    pub tilemap_textures: HashMap<usize, TilemapTexture>,
+    /// HashMap of the map tilesets.
+    ///
+    /// Key is the Tiled tileset index.
+    /// Value is a tuple of a boolean saying if this tileset can be used for tiles layer
+    /// and the tileset texture (ie. a single image or a collection of images)
+    /// A tileset can be used for tiles layer only if all the images it contains have the
+    /// same dimensions (restriction from bevy_ecs_tilemap).
+    pub tilemap_textures: HashMap<usize, (bool, TilemapTexture)>,
 
     #[cfg(feature = "user_properties")]
     pub(crate) properties: DeserializedMapProperties,
@@ -123,7 +131,7 @@ impl AssetLoader for TiledLoader {
         let mut tile_image_offsets = HashMap::default();
 
         for (tileset_index, tileset) in map.tilesets().iter().enumerate() {
-            let tilemap_texture = match &tileset.image {
+            let (usable_for_tiles_layer, tilemap_texture) = match &tileset.image {
                 None => {
                     #[cfg(feature = "atlas")]
                     {
@@ -133,6 +141,8 @@ impl AssetLoader for TiledLoader {
 
                     #[cfg(not(feature = "atlas"))]
                     {
+                        let mut usable_for_tiles_layer = true;
+                        let mut image_size: Option<(i32, i32)> = None;
                         let mut tile_images: Vec<Handle<Image>> = Vec::new();
                         for (tile_id, tile) in tileset.tiles() {
                             if let Some(img) = &tile.image {
@@ -142,21 +152,33 @@ impl AssetLoader for TiledLoader {
                                 tile_image_offsets
                                     .insert((tileset_index, tile_id), tile_images.len() as u32);
                                 tile_images.push(texture.clone());
+                                if let Some(image_size) = image_size {
+                                    if img.width != image_size.0 || img.height != image_size.1 {
+                                        usable_for_tiles_layer = false;
+                                    }
+                                } else {
+                                    image_size = Some((img.width, img.height));
+                                }
                             }
                         }
-
-                        TilemapTexture::Vector(tile_images)
+                        (usable_for_tiles_layer, TilemapTexture::Vector(tile_images))
                     }
                 }
                 Some(img) => {
                     let asset_path = AssetPath::from(img.source.clone());
                     let texture: Handle<Image> = load_context.load(asset_path.clone());
 
-                    TilemapTexture::Single(texture.clone())
+                    (true, TilemapTexture::Single(texture.clone()))
                 }
             };
 
-            tilemap_textures.insert(tileset_index, tilemap_texture);
+            if !usable_for_tiles_layer {
+                log::warn!(
+                    "Tileset (index={:?}) cannot be used for tiles layer",
+                    tileset_index
+                );
+            }
+            tilemap_textures.insert(tileset_index, (usable_for_tiles_layer, tilemap_texture));
         }
 
         #[cfg(feature = "user_properties")]

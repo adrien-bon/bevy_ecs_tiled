@@ -12,6 +12,7 @@
 - Properly abort map loading and despawn map entity in case of asset load error
 - Layers Z-offset was not correct in case of non-default value for 'layer_z_offset' setting
 - Fix animated tiles animation speed
+- Prevent bevy_ecs_tilemap panic when using a tileset with non constant image size
 
 ## v0.5.0
 

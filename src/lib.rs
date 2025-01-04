@@ -145,6 +145,7 @@ fn process_loaded_maps(
                     commands.entity(map_entity).despawn_recursive();
                     return;
                 }
+
                 // If not fully loaded yet, insert the 'Respawn' marker so we will try to load it at next frame
                 commands.entity(map_entity).insert(RespawnTiledMap);
                 if let Some(path) = map_handle.0.path() {
