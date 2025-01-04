@@ -1,0 +1,22 @@
+----------------------------------------
+***Thank you for the downloading.***
+***Magic Market Tilesets***
+----------------------------------------
+
+
+Tile size : 16 x 16 pixel
+
+This tileset contain following file
+-13 water and props animation 
+-Items tile
+-Tile floor
+-Tileset nature
+-Tileset props
+-Tileset props02
+
+
+You can use any and all of the assets in this package in your own games including commercial 
+or non-commercial one.
+
+Created by GFragger 
+

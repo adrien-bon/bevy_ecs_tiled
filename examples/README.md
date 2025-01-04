@@ -30,6 +30,7 @@ For instance, on an "AZERTY" keyboard, you must use `A` instead of `Q` and `Z` i
 | Name | Required features | Description |
 |------|-------------------|-------------|
 | `basic` | None | This example shows the basic usage of the plugin. |
+| `magic_market` | None | This example shows the basic usage of the plugin but load a more complex / realistic map. |
 | `map_events` | None | This example shows how to use map loading events. |
 | `map_reload` | None | This example demonstrates how to load and unload maps. |
 | `map_settings` | None | This example cycles through different map settings that can be applied. |
