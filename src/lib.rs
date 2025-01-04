@@ -98,7 +98,14 @@ impl Plugin for TiledMapPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.init_asset::<TiledMap>()
             .init_asset_loader::<TiledLoader>()
-            .add_systems(Update, (handle_map_events, process_loaded_maps))
+            .add_systems(
+                Update,
+                (
+                    handle_map_events,
+                    process_loaded_maps,
+                    animate_tiled_sprites,
+                ),
+            )
             .insert_resource(self.0.clone());
 
         #[cfg(feature = "user_properties")]
@@ -226,4 +233,22 @@ fn remove_layers(commands: &mut Commands, tiled_id_storage: &mut TiledIdStorage)
     tiled_id_storage.layers.clear();
     tiled_id_storage.objects.clear();
     tiled_id_storage.tiles.clear();
+}
+
+fn animate_tiled_sprites(
+    time: Res<Time>,
+    mut sprite_query: Query<(&mut TiledAnimation, &mut Sprite)>,
+) {
+    for (mut animation, mut sprite) in sprite_query.iter_mut() {
+        animation.timer.tick(time.delta());
+
+        if animation.timer.just_finished() {
+            if let Some(atlas) = &mut sprite.texture_atlas {
+                atlas.index += 1;
+                if atlas.index >= animation.end {
+                    atlas.index = animation.start;
+                }
+            }
+        }
+    }
 }

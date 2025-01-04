@@ -32,11 +32,11 @@
 use crate::properties::command::PropertiesCommandExt;
 
 use crate::prelude::*;
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{prelude::*, sprite::Anchor, utils::HashMap};
 use bevy_ecs_tilemap::prelude::*;
 use tiled::{
     ChunkData, FiniteTileLayer, ImageLayer, InfiniteTileLayer, Layer, LayerType, ObjectLayer, Tile,
-    TileId, TileLayer,
+    TileId, TileLayer, TilesetLocation,
 };
 
 #[allow(clippy::too_many_arguments)]
@@ -554,6 +554,72 @@ fn load_objects_layer(
             ))
             .set_parent(layer_infos.layer)
             .id();
+
+        let mut sprite = None;
+        let mut animation = None;
+
+        if let Some(tile) = object_data.get_tile() {
+            match tile.tileset_location() {
+                TilesetLocation::Map(tileset_index) => {
+                    sprite = tiled_map.tilemap_textures.get(tileset_index).and_then(|(_ , texture)| {
+                        match texture {
+                            TilemapTexture::Single(single) => {
+                                tiled_map.texture_atlas_layout.get(tileset_index).map(|atlas| {
+                                    Sprite {
+                                        image: single.clone(),
+                                        texture_atlas: Some(TextureAtlas {
+                                            layout: atlas.clone(),
+                                            index: tile.id() as usize,
+                                        }),
+                                        anchor: Anchor::BottomLeft,
+                                        ..default()
+                                    }
+                                })
+                            },
+                            #[cfg(not(feature = "atlas"))]
+                            TilemapTexture::Vector(vector) => {
+                                let index = *tiled_map.tile_image_offsets.get(&(*tileset_index, tile.id()))
+                                    .expect("The offset into to image vector should have been saved during the initial load.");
+                                vector.get(index as usize).map(|image| {
+                                    Sprite {
+                                        image: image.clone(),
+                                        anchor: Anchor::BottomLeft,
+                                        ..default()
+                                    }
+                                })
+                            }
+                            #[cfg(not(feature = "atlas"))]
+                            _ => unreachable!(),
+                        }
+                    });
+                    animation =
+                        tile.get_tile()
+                            .and_then(|t| get_animated_tile(&t))
+                            .map(|animation| TiledAnimation {
+                                start: animation.start as usize,
+                                end: animation.end as usize,
+                                timer: Timer::from_seconds(
+                                    1. / (animation.speed
+                                        * (animation.end - animation.start) as f32),
+                                    TimerMode::Repeating,
+                                ),
+                            });
+                }
+                TilesetLocation::Template(_) => {
+                    log::warn!("Objects from template are not yet supported");
+                }
+            }
+        }
+
+        match (sprite, animation) {
+            (Some(sprite), None) => {
+                commands.entity(object_entity).insert(sprite);
+            }
+            (Some(sprite), Some(animation)) => {
+                commands.entity(object_entity).insert((sprite, animation));
+            }
+            _ => {}
+        }
 
         entity_map.insert(object_data.id(), object_entity);
         event_list.push(TiledObjectCreated::from_layer(

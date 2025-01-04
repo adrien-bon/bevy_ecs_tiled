@@ -6,6 +6,7 @@
 
 - Take into account the layer visibility information from Tiled and set Bevy Visibility component accordingly
 - Add the 'Magic Market' tileset and example to showcase a more realistic / complex map
+- Handle objects with embedded TileData: we will spawn a (potentially animated) Sprite using the corresponding tile image
 
 ### Bugfixes
 

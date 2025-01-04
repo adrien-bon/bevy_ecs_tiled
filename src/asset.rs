@@ -13,7 +13,7 @@ use bevy::reflect::TypeRegistryArc;
 use crate::properties::load::DeserializedMapProperties;
 
 use bevy::{
-    asset::{io::Reader, AssetLoader, AssetPath, LoadContext},
+    asset::{io::Reader, AssetLoader, AssetPath, LoadContext, LoadedAsset},
     prelude::*,
     utils::HashMap,
 };
@@ -40,9 +40,12 @@ pub struct TiledMap {
     #[cfg(feature = "user_properties")]
     pub(crate) properties: DeserializedMapProperties,
 
-    // The offset into the tileset_images for each tile id within each tileset.
+    /// The offset into the tileset_images for each tile id within each tileset.
     #[cfg(not(feature = "atlas"))]
     pub tile_image_offsets: HashMap<(usize, tiled::TileId), u32>,
+
+    /// The [TextureAtlasLayout] handles associated to each tileset.
+    pub texture_atlas_layout: HashMap<usize, Handle<TextureAtlasLayout>>,
 }
 
 struct BytesResourceReader<'a, 'b> {
@@ -127,6 +130,7 @@ impl AssetLoader for TiledLoader {
         };
 
         let mut tilemap_textures = HashMap::default();
+        let mut texture_atlas_layout = HashMap::default();
         #[cfg(not(feature = "atlas"))]
         let mut tile_image_offsets = HashMap::default();
 
@@ -168,6 +172,26 @@ impl AssetLoader for TiledLoader {
                     let asset_path = AssetPath::from(img.source.clone());
                     let texture: Handle<Image> = load_context.load(asset_path.clone());
 
+                    let columns = (img.width as u32 - tileset.margin + tileset.spacing)
+                        / (tileset.tile_width + tileset.spacing);
+                    if columns > 0 {
+                        let layout = TextureAtlasLayout::from_grid(
+                            UVec2::new(tileset.tile_width, tileset.tile_height),
+                            columns,
+                            tileset.tilecount / columns,
+                            Some(UVec2::new(tileset.spacing, tileset.spacing)),
+                            Some(UVec2::new(
+                                tileset.offset_x as u32 + tileset.margin,
+                                tileset.offset_y as u32 + tileset.margin,
+                            )),
+                        );
+                        let atlas_handle = load_context.add_loaded_labeled_asset(
+                            tileset.name.clone(),
+                            LoadedAsset::from(layout),
+                        );
+                        texture_atlas_layout.insert(tileset_index, atlas_handle);
+                    }
+
                     (true, TilemapTexture::Single(texture.clone()))
                 }
             };
@@ -195,6 +219,7 @@ impl AssetLoader for TiledLoader {
             properties,
             #[cfg(not(feature = "atlas"))]
             tile_image_offsets,
+            texture_atlas_layout,
         };
 
         log::info!("Loaded map '{}'", load_context.path().display());

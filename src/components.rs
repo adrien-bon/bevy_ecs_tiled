@@ -131,3 +131,16 @@ pub struct TiledMapObject;
 #[derive(Component)]
 #[require(Visibility, Transform)]
 pub struct TiledMapImage;
+
+/// This [Component] is used for animated objects.
+/// We will automatically update the Sprite index every time the timer fires.
+#[derive(Component)]
+#[require(Visibility, Transform, Sprite)]
+pub struct TiledAnimation {
+    /// First index of the animation
+    pub start: usize,
+    /// First index after the animation
+    pub end: usize,
+    /// Timer firing every time we should update the frame
+    pub timer: Timer,
+}
