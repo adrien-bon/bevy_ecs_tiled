@@ -26,6 +26,8 @@ pub enum TiledWorldLoaderError {
     Io(#[from] std::io::Error),
     #[error("No map found in this world")]
     EmptyWorld,
+    #[error("Infinite map found in this world (not supported)")]
+    WorldWithInfiniteMap,
 }
 
 pub(crate) struct TiledWorldLoader {
@@ -75,11 +77,15 @@ impl AssetLoader for TiledWorldLoader {
         // Calculate the full rect of the world
         let mut world_rect = Rect::new(0.0, 0.0, 0.0, 0.0);
         for map in world.maps.iter() {
+            let (Some(map_width), Some(map_height)) = (map.width, map.height) else {
+                // Assume that we cannot get map width / map height because it's an infinite map
+                return Err(TiledWorldLoaderError::WorldWithInfiniteMap);
+            };
             let map_rect = Rect::new(
                 map.x as f32,
                 map.y as f32, // Invert for Tiled to Bevy Y axis
-                map.x as f32 + map.width.unwrap() as f32,
-                map.y as f32 + map.height.unwrap() as f32,
+                map.x as f32 + map_width as f32,
+                map.y as f32 + map_height as f32,
             );
 
             world_rect = world_rect.union(map_rect);
@@ -88,23 +94,22 @@ impl AssetLoader for TiledWorldLoader {
         // Load all maps
         let mut maps = Vec::new();
         for map in world.maps.iter() {
-            let asset_path =
-                AssetPath::from(world_path.parent().unwrap().join(map.filename.clone()));
+            // Seems safe to unwrap() here since we do it on the world path (which should always have a parent)
+            let map_path = world_path.parent().unwrap().join(map.filename.clone());
 
-            let map_handle: Handle<TiledMap> = load_context.load(asset_path);
+            let (Some(map_width), Some(map_height)) = (map.width, map.height) else {
+                // Assume that we cannot get map width / map height because it's an infinite map
+                return Err(TiledWorldLoaderError::WorldWithInfiniteMap);
+            };
 
-            let map_height = map.height.unwrap() as f32;
-            let map_width = map.width.unwrap() as f32;
-
-            // Position maps
             maps.push((
                 Rect::new(
                     map.x as f32,
-                    world_rect.max.y - map_height - map.y as f32, // Invert for Tiled to Bevy Y axis
-                    map.x as f32 + map_width,
+                    world_rect.max.y - map_height as f32 - map.y as f32, // Invert for Tiled to Bevy Y axis
+                    map.x as f32 + map_width as f32,
                     world_rect.max.y - map.y as f32,
                 ),
-                map_handle,
+                load_context.load(AssetPath::from(map_path)),
             ));
         }
 
