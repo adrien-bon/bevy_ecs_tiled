@@ -1,3 +1,5 @@
+//! This module contains an implementation for [tiled::ResourceCache]
+
 use bevy::prelude::*;
 use std::sync::{Arc, RwLock};
 use tiled::{DefaultResourceCache, ResourceCache};

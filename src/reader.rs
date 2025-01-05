@@ -1,3 +1,5 @@
+//! This module contains an implementation for [tiled::ResourceReader]
+
 use bevy::asset::LoadContext;
 use std::{
     io::{Cursor, Error as IoError, ErrorKind, Read},

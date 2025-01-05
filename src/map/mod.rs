@@ -1,3 +1,5 @@
+//! This module handles all the logic related to loading and spawning Tiled maps
+
 pub mod asset;
 pub mod components;
 pub mod events;

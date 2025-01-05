@@ -1,3 +1,5 @@
+//! This module contains all world [Asset]s definition.
+
 use bevy::{
     asset::{io::Reader, AssetLoader, AssetPath, LoadContext},
     prelude::*,
@@ -11,10 +13,11 @@ use crate::{cache::TiledResourceCache, reader::BytesResourceReader, TiledMap};
 /// `Asset` holding Tiled world informations.
 #[derive(TypePath, Asset)]
 pub struct TiledWorld {
+    /// The raw Tiled world data
     pub world: tiled::World,
-
+    /// The [Rect] boundary of our worlds ie. the sum of all the maps boundary it contains
     pub world_rect: Rect,
-
+    /// List of all the maps contained in this world and their associated [Rect] boundary
     pub maps: Vec<(Rect, Handle<TiledMap>)>,
 }
 

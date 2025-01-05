@@ -1,4 +1,4 @@
-//! This module contains all [Asset]s definition.
+//! This module contains all map [Asset]s definition.
 
 use std::io::ErrorKind;
 #[cfg(feature = "user_properties")]
