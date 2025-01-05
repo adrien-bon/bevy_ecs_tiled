@@ -54,7 +54,7 @@ impl AssetLoader for TiledWorldLoader {
         let mut bytes = Vec::new();
         reader.read_to_end(&mut bytes).await?;
 
-        log::info!("Start loading world '{}'", load_context.path().display());
+        debug!("Start loading world '{}'", load_context.path().display());
 
         let world_path = load_context.path().to_path_buf();
 
@@ -108,7 +108,7 @@ impl AssetLoader for TiledWorldLoader {
             ));
         }
 
-        log::info!("Loaded world '{}'", load_context.path().display());
+        debug!("Loaded world '{}'", load_context.path().display());
         Ok(TiledWorld {
             world,
             world_rect,

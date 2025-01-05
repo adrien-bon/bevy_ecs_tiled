@@ -86,7 +86,7 @@ impl AssetLoader for TiledMapLoader {
         let mut bytes = Vec::new();
         reader.read_to_end(&mut bytes).await?;
 
-        log::info!("Start loading map '{}'", load_context.path().display());
+        debug!("Start loading map '{}'", load_context.path().display());
 
         let map_path = load_context.path().to_path_buf();
         let map = {
@@ -111,7 +111,7 @@ impl AssetLoader for TiledMapLoader {
                 None => {
                     #[cfg(feature = "atlas")]
                     {
-                        log::info!("Skipping image collection tileset '{}' which is incompatible with atlas feature", tileset.name);
+                        info!("Skipping image collection tileset '{}' which is incompatible with atlas feature", tileset.name);
                         continue;
                     }
 
@@ -123,7 +123,7 @@ impl AssetLoader for TiledMapLoader {
                         for (tile_id, tile) in tileset.tiles() {
                             if let Some(img) = &tile.image {
                                 let asset_path = AssetPath::from(img.source.clone());
-                                log::debug!("Loading tile image from {asset_path:?} as image ({tileset_index}, {tile_id})");
+                                debug!("Loading tile image from {asset_path:?} as image ({tileset_index}, {tile_id})");
                                 let texture: Handle<Image> = load_context.load(asset_path.clone());
                                 tile_image_offsets
                                     .insert((tileset_index, tile_id), tile_images.len() as u32);
@@ -169,7 +169,7 @@ impl AssetLoader for TiledMapLoader {
             };
 
             if !usable_for_tiles_layer {
-                log::warn!(
+                warn!(
                     "Tileset (index={:?}) cannot be used for tiles layer",
                     tileset_index
                 );
@@ -194,7 +194,7 @@ impl AssetLoader for TiledMapLoader {
             texture_atlas_layout,
         };
 
-        log::info!("Loaded map '{}'", load_context.path().display());
+        debug!("Loaded map '{}'", load_context.path().display());
         Ok(asset_map)
     }
 
