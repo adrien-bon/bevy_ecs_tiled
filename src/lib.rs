@@ -146,18 +146,26 @@ fn process_loaded_maps(
                 }
                 // If not fully loaded yet, insert the 'Respawn' marker so we will try to load it at next frame
                 commands.entity(map_entity).insert(RespawnTiledMap);
-                debug!(
-                    "Map '{}' is not fully loaded yet...",
-                    map_handle.0.path().unwrap()
-                );
+                if let Some(path) = map_handle.0.path() {
+                    debug!("Map '{}' is not fully loaded yet...", path);
+                } else {
+                    debug!(
+                        "Map with handle '{}' is not fully loaded yet...",
+                        map_handle.0.id()
+                    );
+                }
                 continue;
             }
 
             let tiled_map = maps.get(&map_handle.0).unwrap();
-            info!(
-                "Map '{}' has finished loading, spawn it",
-                map_handle.0.path().unwrap()
-            );
+            if let Some(path) = map_handle.0.path() {
+                info!("Map '{}' has finished loading, spawn it", path);
+            } else {
+                info!(
+                    "Map with handle '{}' has finished loading, spawn it",
+                    map_handle.0.id()
+                );
+            }
 
             // Clean map layers
             remove_layers(&mut commands, &mut tiled_id_storage);

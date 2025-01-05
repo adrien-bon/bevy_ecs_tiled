@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Bugfixes
+
+-   Fixed debug and info logging in `process_loaded_maps` to handle cases where a map handle's path is unavailable, using the handle ID as a fallback.
+
 ## v0.5.0
 
 **BREAKING CHANGES**
