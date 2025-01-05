@@ -14,5 +14,5 @@ pub struct RespawnTiledWorld;
 
 #[derive(Component, Default)]
 pub struct TiledWorldStorage {
-    pub spawned_maps: Vec<(Entity, Rect)>,
+    pub spawned_maps: Vec<(Rect, Entity)>,
 }

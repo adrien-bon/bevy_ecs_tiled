@@ -14,7 +14,7 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 use bevy_ecs_tilemap::map::TilemapRenderSettings;
 
 pub(crate) fn world_chunking(
-    camera: Query<&Transform, (With<Camera>, Changed<Transform>)>,
+    camera_query: Query<&Transform, (With<Camera>, Changed<Transform>)>,
     worlds: Res<Assets<TiledWorld>>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
@@ -60,65 +60,61 @@ pub(crate) fn world_chunking(
         let mut to_spawn = Vec::new();
 
         if let Some(chunking) = world_settings.chunking {
-            // Test maps against each camera if there are multiple
-            for camera_transform in camera.iter() {
+            let mut visible_maps = Vec::new();
+            // Check which map is visible by testing them against each camera (if there are multiple)
+            for camera_transform in camera_query.iter() {
                 let chunk_view = Rect::new(
                     camera_transform.translation.x - chunking.0 as f32,
                     camera_transform.translation.y - chunking.1 as f32,
                     camera_transform.translation.x + chunking.0 as f32,
                     camera_transform.translation.y + chunking.1 as f32,
                 );
-
-                // Iterate through the chunked maps and remove any that are not in the chunk rect
-                for (idx, (_, rect)) in storage.spawned_maps.iter().enumerate() {
-                    // If map_rect does not overlap at all with the chunk_view, remove it
+                for (rect, handle) in tiled_world.maps.iter() {
+                    // If map rect does not overlap at all with the chunk_view, it is not visible
                     if rect.min.x + world_position.x > chunk_view.max.x
                         || rect.min.y + world_position.y > chunk_view.max.y
                         || rect.max.x + world_position.x < chunk_view.min.x
                         || rect.max.y + world_position.y < chunk_view.min.y
                     {
-                        to_remove.push(idx);
+                        continue;
                     }
+                    visible_maps.push((rect, handle));
                 }
+            }
 
-                // Check if any maps need to be spawned
-                for map in tiled_world.maps.iter() {
-                    if storage.spawned_maps.iter().any(|(_, rect)| rect == &map.0) {
-                        continue;
-                    }
+            // All the maps that are visible but not already spawned should be spawned
+            for (rect, handle) in visible_maps.iter() {
+                if !storage.spawned_maps.iter().any(|(r, _)| r == *rect) {
+                    to_spawn.push((*rect, *handle));
+                }
+            }
 
-                    // If map_rect does not overlap at all with the chunk_view skip it
-                    if map.0.min.x + world_position.x > chunk_view.max.x
-                        || map.0.min.y + world_position.y > chunk_view.max.y
-                        || map.0.max.x + world_position.x < chunk_view.min.x
-                        || map.0.max.y + world_position.y < chunk_view.min.y
-                    {
-                        continue;
-                    }
-
-                    to_spawn.push(map);
+            // All the maps that are spawned but not visible should be removed
+            for (idx, (rect, _)) in storage.spawned_maps.iter().enumerate() {
+                if !visible_maps.iter().any(|(r, _)| *r == rect) {
+                    to_remove.push(idx);
                 }
             }
         } else if storage.spawned_maps.is_empty() {
             // No chunking and we don't have spawned any map yet: just spawn all maps
-            for map in tiled_world.maps.iter() {
-                to_spawn.push(map);
+            for (rect, handle) in tiled_world.maps.iter() {
+                to_spawn.push((rect, handle));
             }
         }
 
         // Despawn maps
         for idx in to_remove.iter().rev() {
-            let (map_entity, _) = storage.spawned_maps.swap_remove(*idx);
+            let (_, map_entity) = storage.spawned_maps.swap_remove(*idx);
             debug!("Despawning map (entity = {:?})", map_entity);
             commands.entity(map_entity).despawn_recursive();
         }
 
         // Spawn maps
-        for map in to_spawn.iter() {
+        for (rect, handle) in to_spawn {
             let map_entity = commands
                 .spawn((
-                    TiledMapHandle(Handle::Weak(map.1.id())),
-                    Transform::from_translation(Vec3::new(map.0.min.x, map.0.min.y, 0.0)),
+                    TiledMapHandle(handle.clone_weak()),
+                    Transform::from_translation(Vec3::new(rect.min.x, rect.min.y, 0.0)),
                     TiledMapSettings {
                         layer_positioning: LayerPositioning::TiledOffset,
                         ..*map_settings
@@ -129,9 +125,9 @@ pub(crate) fn world_chunking(
                 .id();
             debug!(
                 "Spawned map (handle = {:?} / entity = {:?})",
-                map.1, map_entity
+                handle, map_entity
             );
-            storage.spawned_maps.push((map_entity, map.0));
+            storage.spawned_maps.push((*rect, map_entity));
         }
     }
 }
@@ -250,7 +246,7 @@ pub(crate) fn handle_world_events(
 }
 
 fn remove_maps(commands: &mut Commands, world_storage: &mut TiledWorldStorage) {
-    for (map_entity, _) in world_storage.spawned_maps.iter() {
+    for (_, map_entity) in world_storage.spawned_maps.iter() {
         commands.entity(*map_entity).despawn_recursive();
     }
     world_storage.spawned_maps.clear();
