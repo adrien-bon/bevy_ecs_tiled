@@ -148,38 +148,35 @@ fn process_loaded_maps(
         if let Some(load_state) = asset_server.get_recursive_dependency_load_state(&map_handle.0) {
             if !load_state.is_loaded() {
                 if let RecursiveDependencyLoadState::Failed(_) = load_state {
-                    error!("Map '{}' failed to load", map_handle.0.path().unwrap());
+                    error!(
+                        "Map failed to load, despawn it (handle = {:?})",
+                        map_handle.0
+                    );
                     commands.entity(map_entity).despawn_recursive();
-                    return;
-                }
-
-                // If not fully loaded yet, insert the 'Respawn' marker so we will try to load it at next frame
-                commands.entity(map_entity).insert(RespawnTiledMap);
-                if let Some(path) = map_handle.0.path() {
-                    debug!("Map '{}' is not fully loaded yet...", path);
                 } else {
                     debug!(
-                        "Map with handle '{}' is not fully loaded yet...",
-                        map_handle.0.id()
+                        "Map is not fully loaded yet, will try again next frame (handle = {:?})",
+                        map_handle.0
                     );
+                    commands.entity(map_entity).insert(RespawnTiledMap);
                 }
                 continue;
             }
 
-            let tiled_map = maps.get(&map_handle.0).unwrap();
-            if let Some(path) = map_handle.0.path() {
-                info!("Map '{}' has finished loading, spawn it", path);
-            } else {
-                info!(
-                    "Map with handle '{}' has finished loading, spawn it",
-                    map_handle.0.id()
-                );
-            }
+            // Map should be loaded at this point
+            let Some(tiled_map) = maps.get(&map_handle.0) else {
+                error!("Cannot get a valid TiledMap out of Handle<TiledMap>: has the last strong reference to the asset been dropped ? (handle = {:?})", map_handle.0);
+                commands.entity(map_entity).despawn_recursive();
+                continue;
+            };
 
-            // Clean map layers
+            debug!(
+                "Map has finished loading, spawn map layers (handle = {:?})",
+                map_handle.0
+            );
+
+            // Clean previous map layers before trying to spawn the new ones
             remove_layers(&mut commands, &mut tiled_id_storage);
-
-            debug!("Spawn map layers");
             loader::load_map(
                 &mut commands,
                 map_entity,
