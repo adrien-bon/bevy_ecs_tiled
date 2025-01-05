@@ -108,6 +108,7 @@ impl AssetLoader for TiledWorldLoader {
             ));
         }
 
+        log::info!("Loaded world '{}'", load_context.path().display());
         Ok(TiledWorld {
             world,
             world_rect,

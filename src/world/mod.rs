@@ -38,7 +38,8 @@ pub(crate) fn world_chunking(
     ) in world_query.iter_mut()
     {
         let Some(tiled_world) = worlds.get(&world_handle.0) else {
-            return;
+            warn!("Cannot get a valid TiledWorld out of Handle<TiledWorld>: has the last strong reference to the asset been dropped ? (handle = {:?} / entity = {:?})", world_handle.0, world_entity);
+            continue;
         };
 
         let world_position = Vec2::new(
@@ -147,26 +148,35 @@ pub(crate) fn process_loaded_worlds(
         {
             if !load_state.is_loaded() {
                 if let RecursiveDependencyLoadState::Failed(_) = load_state {
-                    error!("World '{}' failed to load", world_handle.0.path().unwrap());
+                    error!(
+                        "World failed to load, despawn it (handle = {:?} / entity = {:?})",
+                        world_handle.0, world_entity
+                    );
                     commands.entity(world_entity).despawn_recursive();
-                    return;
+                } else {
+                    // If not fully loaded yet, insert the 'Respawn' marker so we will try to load it at next frame
+                    debug!(
+                        "World is not fully loaded yet, will try again next frame (handle = {:?} / entity = {:?})",
+                        world_handle.0, world_entity
+                    );
+                    commands.entity(world_entity).insert(RespawnTiledWorld);
                 }
-                // If not fully loaded yet, insert the 'Respawn' marker so we will try to load it at next frame
-                commands.entity(world_entity).insert(RespawnTiledWorld);
-                debug!(
-                    "World '{}' is not fully loaded yet...",
-                    world_handle.0.path().unwrap()
-                );
                 continue;
             }
 
-            let tiled_world = worlds.get(&world_handle.0).unwrap();
-            info!(
-                "World '{}' has finished loading, spawn it",
-                world_handle.0.path().unwrap()
+            // World should be loaded at this point
+            let Some(tiled_world) = worlds.get(&world_handle.0) else {
+                error!("Cannot get a valid TiledWorld out of Handle<TiledWorld>: has the last strong reference to the asset been dropped ? (handle = {:?} / entity = {:?})", world_handle.0, world_entity);
+                commands.entity(world_entity).despawn_recursive();
+                continue;
+            };
+
+            debug!(
+                "World has finished loading, spawn it (handle = {:?} / entity = {:?})",
+                world_handle.0, world_entity
             );
 
-            // Clean world
+            // Clean previous maps before trying to spawn the new ones
             remove_maps(&mut commands, &mut world_storage);
 
             // Adjust world transform if needed
@@ -192,7 +202,7 @@ pub(crate) fn process_loaded_worlds(
 
             commands.trigger(TiledWorldCreated {
                 world: world_entity,
-                world_handle: world_handle.0.clone(),
+                world_asset_id: world_handle.0.id(),
             });
         }
     }
