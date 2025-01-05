@@ -16,6 +16,7 @@ use bevy_ecs_tilemap::map::TilemapRenderSettings;
 pub(crate) fn world_chunking(
     camera: Query<&Transform, (With<Camera>, Changed<Transform>)>,
     worlds: Res<Assets<TiledWorld>>,
+    asset_server: Res<AssetServer>,
     mut commands: Commands,
     mut world_query: Query<(
         Entity,
@@ -37,8 +38,16 @@ pub(crate) fn world_chunking(
         mut storage,
     ) in world_query.iter_mut()
     {
-        let Some(tiled_world) = worlds.get(&world_handle.0) else {
-            warn!("Cannot get a valid TiledWorld out of Handle<TiledWorld>: has the last strong reference to the asset been dropped ? (handle = {:?} / entity = {:?})", world_handle.0, world_entity);
+        // Make sure we have a valid reference on a fully loaded world asset
+        let Some(tiled_world) = asset_server
+            .get_recursive_dependency_load_state(&world_handle.0)
+            .and_then(|state| {
+                if state.is_loaded() {
+                    return worlds.get(&world_handle.0);
+                }
+                None
+            })
+        else {
             continue;
         };
 

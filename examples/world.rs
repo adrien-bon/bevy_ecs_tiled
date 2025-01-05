@@ -66,7 +66,9 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn input(mut settings: Query<&mut TiledWorldSettings>, keys: Res<ButtonInput<KeyCode>>) {
-    let mut settings = settings.single_mut();
+    let Ok(mut settings) = settings.get_single_mut() else {
+        return;
+    };
 
     if keys.pressed(KeyCode::Minus) {
         // Decrease the chunking size
@@ -90,12 +92,15 @@ fn text_update_system(
     settings: Query<&TiledWorldSettings>,
     mut query: Query<&mut TextSpan, With<HelperText>>,
 ) {
+    let Ok(settings) = settings.get_single() else {
+        return;
+    };
+
     for mut span in &mut query {
-        let settings = settings.single();
-        span.0 = if let Some((width, height)) = settings.chunking {
-            format!("{}x{}", width, height)
-        } else {
-            "None".to_string()
-        };
+        span.0 = settings
+            .chunking
+            .map_or(String::from("None"), |(width, height)| {
+                format!("{}x{}", width, height)
+            });
     }
 }
