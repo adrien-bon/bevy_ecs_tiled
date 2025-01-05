@@ -108,8 +108,8 @@ pub(crate) fn world_chunking(
 
         // Despawn maps
         for idx in to_remove.iter().rev() {
-            log::info!("Despawning map at index {}", idx);
             let (map_entity, _) = storage.spawned_maps.swap_remove(*idx);
+            debug!("Despawning map (entity = {:?})", map_entity);
             commands.entity(map_entity).despawn_recursive();
         }
 
@@ -117,7 +117,7 @@ pub(crate) fn world_chunking(
         for map in to_spawn.iter() {
             let map_entity = commands
                 .spawn((
-                    TiledMapHandle(map.1.clone()),
+                    TiledMapHandle(Handle::Weak(map.1.id())),
                     Transform::from_translation(Vec3::new(map.0.min.x, map.0.min.y, 0.0)),
                     TiledMapSettings {
                         layer_positioning: LayerPositioning::TiledOffset,
@@ -127,7 +127,10 @@ pub(crate) fn world_chunking(
                 ))
                 .set_parent(world_entity)
                 .id();
-
+            debug!(
+                "Spawned map (handle = {:?} / entity = {:?})",
+                map.1, map_entity
+            );
             storage.spawned_maps.push((map_entity, map.0));
         }
     }
