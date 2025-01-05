@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 
 #[derive(Component, Default)]
 pub struct TiledWorldSettings {
@@ -14,5 +14,5 @@ pub struct RespawnTiledWorld;
 
 #[derive(Component, Default)]
 pub struct TiledWorldStorage {
-    pub spawned_maps: Vec<(Rect, Entity)>,
+    pub spawned_maps: HashMap<usize, Entity>,
 }

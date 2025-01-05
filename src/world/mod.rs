@@ -69,7 +69,7 @@ pub(crate) fn world_chunking(
                     camera_transform.translation.x + chunking.0 as f32,
                     camera_transform.translation.y + chunking.1 as f32,
                 );
-                for (rect, handle) in tiled_world.maps.iter() {
+                for (idx, (rect, _)) in tiled_world.maps.iter().enumerate() {
                     // If map rect does not overlap at all with the chunk_view, it is not visible
                     if rect.min.x + world_position.x > chunk_view.max.x
                         || rect.min.y + world_position.y > chunk_view.max.y
@@ -78,39 +78,43 @@ pub(crate) fn world_chunking(
                     {
                         continue;
                     }
-                    visible_maps.push((rect, handle));
+                    visible_maps.push(idx);
                 }
             }
 
             // All the maps that are visible but not already spawned should be spawned
-            for (rect, handle) in visible_maps.iter() {
-                if !storage.spawned_maps.iter().any(|(r, _)| r == *rect) {
-                    to_spawn.push((*rect, *handle));
+            for idx in visible_maps.iter() {
+                if !storage.spawned_maps.contains_key(idx) {
+                    to_spawn.push(*idx);
                 }
             }
 
             // All the maps that are spawned but not visible should be removed
-            for (idx, (rect, _)) in storage.spawned_maps.iter().enumerate() {
-                if !visible_maps.iter().any(|(r, _)| *r == rect) {
-                    to_remove.push(idx);
+            for (idx, _) in storage.spawned_maps.iter() {
+                if !visible_maps.iter().any(|i| i == idx) {
+                    to_remove.push(*idx);
                 }
             }
         } else if storage.spawned_maps.is_empty() {
             // No chunking and we don't have spawned any map yet: just spawn all maps
-            for (rect, handle) in tiled_world.maps.iter() {
-                to_spawn.push((rect, handle));
+            for idx in 0..tiled_world.maps.len() - 1 {
+                to_spawn.push(idx);
             }
         }
 
         // Despawn maps
-        for idx in to_remove.iter().rev() {
-            let (_, map_entity) = storage.spawned_maps.swap_remove(*idx);
-            debug!("Despawning map (entity = {:?})", map_entity);
-            commands.entity(map_entity).despawn_recursive();
+        for idx in to_remove {
+            if let Some(map_entity) = storage.spawned_maps.remove(&idx) {
+                debug!("Despawning map (entity = {:?})", map_entity);
+                commands.entity(map_entity).despawn_recursive();
+            }
         }
 
         // Spawn maps
-        for (rect, handle) in to_spawn {
+        for idx in to_spawn {
+            let Some((rect, handle)) = tiled_world.maps.get(idx) else {
+                continue;
+            };
             let map_entity = commands
                 .spawn((
                     TiledMapHandle(handle.clone_weak()),
@@ -127,7 +131,7 @@ pub(crate) fn world_chunking(
                 "Spawned map (handle = {:?} / entity = {:?})",
                 handle, map_entity
             );
-            storage.spawned_maps.push((*rect, map_entity));
+            storage.spawned_maps.insert(idx, map_entity);
         }
     }
 }
