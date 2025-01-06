@@ -48,7 +48,7 @@ user_properties = ["dep:serde", "dep:serde_json"]
 # Main dependencies
 bevy = { version = "0.15", default-features = false }
 bevy_ecs_tilemap = { version = "0.15", default-features = false }
-tiled = "0.13"
+tiled = { git = "https://github.com/mapeditor/rs-tiled.git", rev = "c434e1be8904917bacc1286c5334b721f1f6deef", features = ["world"] }
 
 # Utilities
 futures-lite = "2.5"
@@ -138,3 +138,6 @@ required-features = ["avian_debug"]
 [[example]]
 name = "properties_basic"
 required-features = ["user_properties"]
+
+[[example]]
+name = "world"

@@ -2,6 +2,15 @@
 
 ## [unreleased]
 
+### Features
+
+- Add Tiled .world file support (#55)
+
+### Changed
+
+- `TiledPhysicsBackend` now requires to implement the `Clone` trait
+- Switched some map logs from `info!()` to `debug!()`
+
 ## v0.5.1
 
 ### Features

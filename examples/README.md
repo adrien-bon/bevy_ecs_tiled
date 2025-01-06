@@ -47,3 +47,4 @@ For instance, on an "AZERTY" keyboard, you must use `A` instead of `Q` and `Z` i
 | `physics_rapier_controller` | `rapier_debug` | This example shows a simple player-controlled object using Rapier physics. You can move the object using arrow keys. |
 | `physics_rapier_orientation` | `rapier_debug` | This example shows Rapier physics backend with various map orientation. |
 | `properties_basic` | `user_properties` | This example shows how to map custom tiles and objects properties from Tiled to Bevy Components. |
+| `world` | None | This example shows how to load Tiled World files and demonstrates chunking the loaded maps |

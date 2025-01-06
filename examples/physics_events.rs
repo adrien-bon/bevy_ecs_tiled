@@ -69,7 +69,7 @@ fn handle_physics_events(trigger: Trigger<TiledColliderCreated>) {
 #[derive(Component)]
 struct MyCustomPhysicsComponent;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 struct MyCustomPhysicsBackend;
 
 // This simple example will just spawn an entity with a `MyCustomPhysicsComponent` Component,

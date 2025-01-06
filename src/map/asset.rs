@@ -1,16 +1,16 @@
-//! This module contains all [Asset]s definition.
+//! This module contains all map [Asset]s definition.
 
-use std::io::{Cursor, Error as IoError, ErrorKind, Read};
+use std::io::ErrorKind;
 #[cfg(feature = "user_properties")]
 use std::ops::Deref;
-use std::path::Path;
-use std::sync::Arc;
 
 #[cfg(feature = "user_properties")]
 use bevy::reflect::TypeRegistryArc;
 
 #[cfg(feature = "user_properties")]
 use crate::properties::load::DeserializedMapProperties;
+
+use crate::{cache::TiledResourceCache, reader::BytesResourceReader};
 
 use bevy::{
     asset::{io::Reader, AssetLoader, AssetPath, LoadContext, LoadedAsset},
@@ -48,62 +48,34 @@ pub struct TiledMap {
     pub texture_atlas_layout: HashMap<usize, Handle<TextureAtlasLayout>>,
 }
 
-struct BytesResourceReader<'a, 'b> {
-    bytes: Arc<[u8]>,
-    context: &'a mut LoadContext<'b>,
-}
-impl<'a, 'b> BytesResourceReader<'a, 'b> {
-    fn new(bytes: &'a [u8], context: &'a mut LoadContext<'b>) -> Self {
-        Self {
-            bytes: Arc::from(bytes),
-            context,
-        }
-    }
-}
-
-impl<'a> tiled::ResourceReader for BytesResourceReader<'a, '_> {
-    type Resource = Box<dyn Read + 'a>;
-    type Error = IoError;
-
-    fn read_from(&mut self, path: &Path) -> std::result::Result<Self::Resource, Self::Error> {
-        if let Some(extension) = path.extension() {
-            if extension == "tsx" {
-                let future = self.context.read_asset_bytes(path.to_path_buf());
-                let data = futures_lite::future::block_on(future)
-                    .map_err(|err| IoError::new(ErrorKind::NotFound, err))?;
-                return Ok(Box::new(Cursor::new(data)));
-            }
-        }
-        Ok(Box::new(Cursor::new(self.bytes.clone())))
-    }
-}
-
-pub(crate) struct TiledLoader {
+pub(crate) struct TiledMapLoader {
+    pub cache: TiledResourceCache,
     #[cfg(feature = "user_properties")]
     pub registry: TypeRegistryArc,
 }
 
-impl FromWorld for TiledLoader {
-    fn from_world(_world: &mut World) -> Self {
+impl FromWorld for TiledMapLoader {
+    fn from_world(world: &mut World) -> Self {
         Self {
+            cache: world.resource::<TiledResourceCache>().clone(),
             #[cfg(feature = "user_properties")]
-            registry: _world.resource::<AppTypeRegistry>().0.clone(),
+            registry: world.resource::<AppTypeRegistry>().0.clone(),
         }
     }
 }
 
 /// [TiledMap] loading error.
 #[derive(Debug, thiserror::Error)]
-pub enum TiledAssetLoaderError {
+pub enum TiledMapLoaderError {
     /// An [IO](std::io) Error
     #[error("Could not load Tiled file: {0}")]
     Io(#[from] std::io::Error),
 }
 
-impl AssetLoader for TiledLoader {
+impl AssetLoader for TiledMapLoader {
     type Asset = TiledMap;
     type Settings = ();
-    type Error = TiledAssetLoaderError;
+    type Error = TiledMapLoaderError;
 
     async fn load(
         &self,
@@ -114,13 +86,13 @@ impl AssetLoader for TiledLoader {
         let mut bytes = Vec::new();
         reader.read_to_end(&mut bytes).await?;
 
-        log::info!("Start loading map '{}'", load_context.path().display());
+        debug!("Start loading map '{}'", load_context.path().display());
 
         let map_path = load_context.path().to_path_buf();
         let map = {
             // Allow the loader to also load tileset images.
             let mut loader = tiled::Loader::with_cache_and_reader(
-                tiled::DefaultResourceCache::new(),
+                self.cache.clone(),
                 BytesResourceReader::new(&bytes, load_context),
             );
             // Load the map and all tiles.
@@ -139,7 +111,7 @@ impl AssetLoader for TiledLoader {
                 None => {
                     #[cfg(feature = "atlas")]
                     {
-                        log::info!("Skipping image collection tileset '{}' which is incompatible with atlas feature", tileset.name);
+                        info!("Skipping image collection tileset '{}' which is incompatible with atlas feature", tileset.name);
                         continue;
                     }
 
@@ -151,7 +123,7 @@ impl AssetLoader for TiledLoader {
                         for (tile_id, tile) in tileset.tiles() {
                             if let Some(img) = &tile.image {
                                 let asset_path = AssetPath::from(img.source.clone());
-                                log::debug!("Loading tile image from {asset_path:?} as image ({tileset_index}, {tile_id})");
+                                debug!("Loading tile image from {asset_path:?} as image ({tileset_index}, {tile_id})");
                                 let texture: Handle<Image> = load_context.load(asset_path.clone());
                                 tile_image_offsets
                                     .insert((tileset_index, tile_id), tile_images.len() as u32);
@@ -197,7 +169,7 @@ impl AssetLoader for TiledLoader {
             };
 
             if !usable_for_tiles_layer {
-                log::warn!(
+                warn!(
                     "Tileset (index={:?}) cannot be used for tiles layer",
                     tileset_index
                 );
@@ -222,7 +194,7 @@ impl AssetLoader for TiledLoader {
             texture_atlas_layout,
         };
 
-        log::info!("Loaded map '{}'", load_context.path().display());
+        debug!("Loaded map '{}'", load_context.path().display());
         Ok(asset_map)
     }
 

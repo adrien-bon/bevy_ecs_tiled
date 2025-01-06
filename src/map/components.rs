@@ -1,10 +1,10 @@
-//! This module contains all [Component]s definition.
+//! This module contains all map [Component]s definition.
 
 use crate::prelude::*;
 use bevy::{prelude::*, utils::HashMap};
 use tiled::TileId;
 
-/// [Component] holding Tiled related settings.
+/// [Component] holding Tiled map related settings.
 ///
 /// Controls various settings related to the way we handle the Tiled map.
 /// Must be added to the [Entity] holding the map.
