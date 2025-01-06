@@ -271,7 +271,7 @@ fn load_tiles_layer(
                     event_list,
                 );
                 _map_size = new_map_size;
-                // log::info!("Infinite layer origin: {:?}", origin);
+                debug!("Infinite layer origin: {:?}", origin);
                 _offset_x += origin.0 * grid_size.x;
                 _offset_y -= origin.1 * grid_size.y;
                 storage
@@ -417,7 +417,7 @@ fn load_infinite_tiles_layer(
             (acc.0.max(pos.0), acc.1.max(pos.1))
         });
 
-    log::info!(
+    debug!(
         "(infinite map) topleft: ({}, {}), bottomright: ({}, {})",
         topleft_x,
         topleft_y,
@@ -433,7 +433,7 @@ fn load_infinite_tiles_layer(
         x: (bottomright_x - topleft_x + 1) as u32 * ChunkData::WIDTH,
         y: (bottomright_y - topleft_y + 1) as u32 * ChunkData::HEIGHT,
     };
-    log::info!("(infinite map) size: {:?}", map_size);
+    debug!("(infinite map) size: {:?}", map_size);
     let origin = (
         topleft_x as f32 * ChunkData::WIDTH as f32,
         ((topleft_y as f32 / 2.) * ChunkData::HEIGHT as f32) + 1.,
