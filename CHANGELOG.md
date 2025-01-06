@@ -2,6 +2,8 @@
 
 ## [unreleased]
 
+## v0.5.1
+
 ### Features
 
 - Take into account the layer visibility information from Tiled and set Bevy Visibility component accordingly
