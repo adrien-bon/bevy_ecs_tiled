@@ -419,10 +419,7 @@ fn load_infinite_tiles_layer(
 
     debug!(
         "(infinite map) topleft: ({}, {}), bottomright: ({}, {})",
-        topleft_x,
-        topleft_y,
-        bottomright_x,
-        bottomright_y
+        topleft_x, topleft_y, bottomright_x, bottomright_y
     );
 
     // TODO: Provide a way to surface the origin point (the point that was 0,0 in Tiled)
