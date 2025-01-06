@@ -134,7 +134,7 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
         return;
     };
 
-    if ObjectNameFilter::from(&settings.objects_layer_filter).contains(&layer.name) {
+    if ObjectNameFilter::from(&settings.tiles_layer_filter).contains(&layer.name) {
         collider::spawn_collider::<T>(
             &settings.backend,
             &mut commands,
