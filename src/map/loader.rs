@@ -271,7 +271,7 @@ fn load_tiles_layer(
                     event_list,
                 );
                 _map_size = new_map_size;
-                // log::info!("Infinite layer origin: {:?}", origin);
+                debug!("Infinite layer origin: {:?}", origin);
                 _offset_x += origin.0 * grid_size.x;
                 _offset_y -= origin.1 * grid_size.y;
                 storage
@@ -417,12 +417,9 @@ fn load_infinite_tiles_layer(
             (acc.0.max(pos.0), acc.1.max(pos.1))
         });
 
-    log::info!(
+    debug!(
         "(infinite map) topleft: ({}, {}), bottomright: ({}, {})",
-        topleft_x,
-        topleft_y,
-        bottomright_x,
-        bottomright_y
+        topleft_x, topleft_y, bottomright_x, bottomright_y
     );
 
     // TODO: Provide a way to surface the origin point (the point that was 0,0 in Tiled)
@@ -433,7 +430,7 @@ fn load_infinite_tiles_layer(
         x: (bottomright_x - topleft_x + 1) as u32 * ChunkData::WIDTH,
         y: (bottomright_y - topleft_y + 1) as u32 * ChunkData::HEIGHT,
     };
-    log::info!("(infinite map) size: {:?}", map_size);
+    debug!("(infinite map) size: {:?}", map_size);
     let origin = (
         topleft_x as f32 * ChunkData::WIDTH as f32,
         ((topleft_y as f32 / 2.) * ChunkData::HEIGHT as f32) + 1.,
@@ -698,8 +695,6 @@ fn handle_special_tile(
     entity_map: &mut HashMap<(String, TileId), Vec<Entity>>,
     event_list: &mut Vec<TiledSpecialTileCreated>,
 ) {
-    let mut is_special_tile = false;
-
     // Handle animated tiles
     if let Some(animated_tile) = get_animated_tile(tile) {
         commands.entity(tile_infos.tile).insert(animated_tile);
@@ -714,15 +709,6 @@ fn handle_special_tile(
                 entities.push(tile_infos.tile);
             })
             .or_insert(vec![tile_infos.tile]);
-        is_special_tile = true;
-    }
-
-    // Handle tiles with collision
-    if let Some(_collision) = tile.collision.as_ref() {
-        is_special_tile = true;
-    }
-
-    if is_special_tile {
         event_list.push(tile_infos);
     }
 }

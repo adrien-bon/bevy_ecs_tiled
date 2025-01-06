@@ -5,11 +5,15 @@
 ### Features
 
 - Add Tiled .world file support (#55)
+- Aggregate tiles colliders together: likely to reduce the overall number of colliders which improves performances (#68)
 
 ### Changed
 
 - `TiledPhysicsBackend` now requires to implement the `Clone` trait
 - Switched some map logs from `info!()` to `debug!()`
+- `TiledPhysicsBackend::spawn_collider()` is now expected to spawn several colliders in on call. To reflect that, now it returns a `Vec<TiledColliderSpawnInfos>` instead of an `Option<TiledColliderSpawnInfos>`
+- Remove the `TiledColliderSourceType::Tile` which is superseded by `TiledColliderSourceType::TilesLayer`
+- Remove the capacity to filter out tiles colliders using the collider object name
 
 ## v0.5.1
 

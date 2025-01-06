@@ -2,7 +2,7 @@
 
 use bevy::{
     color::palettes::css::{PURPLE, RED},
-    ecs::component::StorageType,
+    ecs::{component::ComponentId, world::DeferredWorld},
     prelude::*,
 };
 use bevy_ecs_tiled::prelude::*;
@@ -41,79 +41,50 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
     fn spawn_collider(
         &self,
         commands: &mut Commands,
-        map: &Map,
+        _map: &Map,
         collider_source: &TiledColliderSource,
-    ) -> Option<TiledColliderSpawnInfos> {
-        // TODO: use this function once I figure out how to prevent cloning ObjectData
-        // let object_data = collider_source.object_data(map)?;
-
-        let tile = collider_source.tile(map);
-        let object = collider_source.object(map);
-
-        let object_data = (match collider_source.ty {
-            TiledColliderSourceType::Tile {
-                layer_id: _,
-                x: _,
-                y: _,
-                object_id,
-            } => tile
-                .as_ref()
-                .and_then(|tile| tile.collision.as_ref())
-                .map(|collision| collision.object_data())
-                .and_then(|objects| objects.get(object_id)),
+    ) -> Vec<TiledColliderSpawnInfos> {
+        match collider_source.ty {
             TiledColliderSourceType::Object {
                 layer_id: _,
                 object_id: _,
-            } => object.as_deref(),
-        })?;
-
-        let pos = match &object_data.shape {
-            tiled::ObjectShape::Rect { width, height } => Vec2::new(width / 2., -height / 2.),
-            tiled::ObjectShape::Ellipse { width, height } => Vec2::new(width / 2., -height / 2.),
-            tiled::ObjectShape::Polyline { points: _ } => Vec2::ZERO,
-            tiled::ObjectShape::Polygon { points: _ } => Vec2::ZERO,
-            _ => {
-                return None;
+            } => {
+                vec![TiledColliderSpawnInfos {
+                    name: "Custom[Object]".to_string(),
+                    entity: commands
+                        .spawn(MyCustomPhysicsComponent(Color::from(PURPLE)))
+                        .id(),
+                    position: Vec2::ZERO,
+                    rotation: 0.,
+                }]
             }
-        };
-
-        let color = match collider_source.ty {
-            TiledColliderSourceType::Object {
-                layer_id: _,
-                object_id: _,
-            } => Color::from(PURPLE),
-            TiledColliderSourceType::Tile {
-                layer_id: _,
-                x: _,
-                y: _,
-                object_id: _,
-            } => Color::from(RED),
-        };
-        Some(TiledColliderSpawnInfos {
-            name: format!("Custom[{}]", object_data.name),
-            entity: commands.spawn(MyCustomPhysicsComponent(color)).id(),
-            position: pos,
-            rotation: -object_data.rotation,
-        })
+            TiledColliderSourceType::TilesLayer { layer_id: _ } => {
+                vec![TiledColliderSpawnInfos {
+                    name: "Custom[TilesLayer]".to_string(),
+                    entity: commands
+                        .spawn(MyCustomPhysicsComponent(Color::from(RED)))
+                        .id(),
+                    position: Vec2::ZERO,
+                    rotation: 0.,
+                }]
+            }
+        }
     }
 }
 
 // For debugging purpose, we will also add a 2D mesh where the collider is.
+#[derive(Component)]
+#[component(on_add = on_physics_component_added)]
 struct MyCustomPhysicsComponent(pub Color);
 
-impl Component for MyCustomPhysicsComponent {
-    const STORAGE_TYPE: StorageType = StorageType::Table;
-    fn register_component_hooks(hooks: &mut bevy::ecs::component::ComponentHooks) {
-        hooks.on_add(|mut world, entity, _| {
-            let color = world.get::<MyCustomPhysicsComponent>(entity).unwrap().0;
-            let mesh = world
-                .resource_mut::<Assets<Mesh>>()
-                .add(Rectangle::from_length(10.));
-            let material = world.resource_mut::<Assets<ColorMaterial>>().add(color);
-            world
-                .commands()
-                .entity(entity)
-                .insert((Mesh2d(mesh), MeshMaterial2d(material)));
-        });
-    }
+fn on_physics_component_added(mut world: DeferredWorld, entity: Entity, _: ComponentId) {
+    let color = world.get::<MyCustomPhysicsComponent>(entity).unwrap().0;
+    let mesh = world
+        .resource_mut::<Assets<Mesh>>()
+        .add(Rectangle::from_length(10.));
+    let material = world.resource_mut::<Assets<ColorMaterial>>().add(color);
+    world
+        .commands()
+        .entity(entity)
+        .insert((Mesh2d(mesh), MeshMaterial2d(material)));
 }

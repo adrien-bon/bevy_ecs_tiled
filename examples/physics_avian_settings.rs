@@ -58,22 +58,6 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
         "finite.tmx",
-        "A finite orthogonal map with only tiles colliders named 'collision'",
-        |c| {
-            c.insert(TiledMapSettings {
-                layer_positioning: LayerPositioning::Centered,
-                ..default()
-            });
-            c.insert(TiledPhysicsSettings::<TiledPhysicsAvianBackend> {
-                objects_layer_filter: ObjectNames::None,
-                tiles_objects_filter: ObjectNames::Names(vec!["collision".to_string()]),
-                ..default()
-            });
-        },
-    ));
-    mgr.add_map(helper::assets::MapInfos::new(
-        &asset_server,
-        "finite.tmx",
         "A finite orthogonal map with only object colliders",
         |c| {
             c.insert(TiledMapSettings {
@@ -82,7 +66,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             });
             c.insert(TiledPhysicsSettings::<TiledPhysicsAvianBackend> {
                 objects_layer_filter: ObjectNames::All,
-                tiles_objects_filter: ObjectNames::None,
+                tiles_layer_filter: ObjectNames::None,
                 ..default()
             });
         },

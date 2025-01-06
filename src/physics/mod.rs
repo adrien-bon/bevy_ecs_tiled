@@ -46,7 +46,7 @@ pub trait TiledPhysicsBackend:
         commands: &mut Commands,
         map: &Map,
         collider_source: &TiledColliderSource,
-    ) -> Option<TiledColliderSpawnInfos>;
+    ) -> Vec<TiledColliderSpawnInfos>;
 }
 
 /// Physics related settings.
@@ -67,11 +67,6 @@ pub struct TiledPhysicsSettings<T: TiledPhysicsBackend> {
     /// Colliders will be automatically added for all tiles collision objects whose layer name matches this filter.
     /// By default, we add colliders for all collision objects.
     pub tiles_layer_filter: ObjectNames,
-    /// Specify which tiles collision object to add colliders for using their name.
-    ///
-    /// Colliders will be automatically added for all tiles collision objects whose name matches this filter.
-    /// By default, we add colliders for all collision objects.
-    pub tiles_objects_filter: ObjectNames,
     /// Physics backend to use for adding colliders.
     pub backend: T,
 }
@@ -95,8 +90,8 @@ pub struct TiledPhysicsPlugin<T: TiledPhysicsBackend>(std::marker::PhantomData<T
 impl<T: TiledPhysicsBackend> Plugin for TiledPhysicsPlugin<T> {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_observer(default_physics_settings::<T>);
+        app.add_observer(collider_from_tiles_layer::<T>);
         app.add_observer(collider_from_object::<T>);
-        app.add_observer(collider_from_tile::<T>);
     }
 }
 
@@ -121,6 +116,35 @@ fn default_physics_settings<T: TiledPhysicsBackend>(
                     .insert(TiledPhysicsSettings::<T>::default());
             }
         }
+    }
+}
+
+fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
+    trigger: Trigger<TiledLayerCreated>,
+    mut commands: Commands,
+    map_asset: Res<Assets<TiledMap>>,
+    q_settings: Query<&TiledPhysicsSettings<T>, With<TiledMapMarker>>,
+) {
+    let layer = trigger.event().layer(&map_asset);
+    if layer.as_tile_layer().is_none() {
+        return;
+    }
+
+    let Ok(settings) = q_settings.get(trigger.event().map) else {
+        return;
+    };
+
+    if ObjectNameFilter::from(&settings.tiles_layer_filter).contains(&layer.name) {
+        collider::spawn_collider::<T>(
+            &settings.backend,
+            &mut commands,
+            &map_asset,
+            &trigger.event().map_handle,
+            &TiledColliderSource {
+                entity: trigger.event().layer,
+                ty: TiledColliderSourceType::new_tiles_layer(trigger.event().layer_id),
+            },
+        );
     }
 }
 
@@ -151,77 +175,6 @@ fn collider_from_object<T: TiledPhysicsBackend>(
                     trigger.event().object_id,
                 ),
             },
-            Vec2::ZERO,
         );
-    }
-}
-
-fn collider_from_tile<T: TiledPhysicsBackend>(
-    trigger: Trigger<TiledSpecialTileCreated>,
-    mut commands: Commands,
-    map_asset: Res<Assets<TiledMap>>,
-    q_settings: Query<&TiledPhysicsSettings<T>, With<TiledMapMarker>>,
-) {
-    if let Some(tile_data) = trigger.event().tile(&map_asset).get_tile() {
-        if tile_data.collision.is_none() {
-            return;
-        }
-    };
-
-    let Ok(settings) = q_settings.get(trigger.event().map) else {
-        return;
-    };
-
-    let map = trigger.event().map(&map_asset);
-    let layer = trigger.event().layer(&map_asset);
-    if settings.tiles_objects_filter == ObjectNames::None
-        || !ObjectNameFilter::from(&settings.tiles_layer_filter).contains(&layer.name)
-    {
-        return;
-    }
-
-    let objects_filter = &ObjectNameFilter::from(&settings.tiles_objects_filter);
-
-    if let Some(collision) = trigger
-        .event()
-        .layer(&map_asset)
-        .as_tile_layer()
-        .and_then(|tile_layer| {
-            tile_layer.get_tile(trigger.event().tiled_index.x, trigger.event().tiled_index.y)
-        })
-        .and_then(|layer_tile| layer_tile.get_tile())
-        .as_ref()
-        .and_then(|tile| tile.collision.as_ref())
-    {
-        // We need to add a Transform to our tile so Transform from
-        // the map and layers will be propagated down to the collider(s)
-        let world_position = trigger.event().world_position(&map_asset);
-        commands
-            .entity(trigger.event().tile)
-            .insert(Transform::from_xyz(world_position.x, world_position.y, 0.0));
-
-        for (object_id, object_data) in collision.object_data().iter().enumerate() {
-            if objects_filter.contains(&object_data.name) {
-                collider::spawn_collider::<T>(
-                    &settings.backend,
-                    &mut commands,
-                    &map_asset,
-                    &trigger.event().map_handle,
-                    &TiledColliderSource {
-                        entity: trigger.event().tile,
-                        ty: TiledColliderSourceType::new_tile(
-                            trigger.event().layer_id,
-                            trigger.event().tiled_index.x,
-                            trigger.event().tiled_index.y,
-                            object_id,
-                        ),
-                    },
-                    Vec2 {
-                        x: object_data.x - map.tile_width as f32 / 2.,
-                        y: (map.tile_height as f32 - object_data.y) - map.tile_height as f32 / 2.,
-                    },
-                );
-            }
-        }
     }
 }

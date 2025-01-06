@@ -45,18 +45,10 @@ fn handle_physics_events(trigger: Trigger<TiledColliderCreated>) {
                 trigger.event(),
             );
         }
-        TiledColliderSourceType::Tile {
-            layer_id,
-            x,
-            y,
-            object_id,
-        } => {
+        TiledColliderSourceType::TilesLayer { layer_id } => {
             info!(
-                "Created a collider for tile (layer={}, x={}, y={}, object_id={}): {:?}",
+                "Created a collider for tiles layer (layer={}): {:?}",
                 layer_id,
-                x,
-                y,
-                object_id,
                 trigger.event(),
             );
         }
@@ -78,47 +70,29 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
     fn spawn_collider(
         &self,
         commands: &mut Commands,
-        map: &Map,
+        _map: &Map,
         collider_source: &TiledColliderSource,
-    ) -> Option<TiledColliderSpawnInfos> {
-        // TODO: use this function once I figure out how to prevent cloning ObjectData
-        // let object_data = collider_source.object_data(map)?;
-
-        let tile = collider_source.tile(map);
-        let object = collider_source.object(map);
-
-        let object_data = (match collider_source.ty {
-            TiledColliderSourceType::Tile {
-                layer_id: _,
-                x: _,
-                y: _,
-                object_id,
-            } => tile
-                .as_ref()
-                .and_then(|tile| tile.collision.as_ref())
-                .map(|collision| collision.object_data())
-                .and_then(|objects| objects.get(object_id)),
+    ) -> Vec<TiledColliderSpawnInfos> {
+        match collider_source.ty {
             TiledColliderSourceType::Object {
                 layer_id: _,
                 object_id: _,
-            } => object.as_deref(),
-        })?;
-
-        let pos = match &object_data.shape {
-            tiled::ObjectShape::Rect { width, height } => Vec2::new(width / 2., -height / 2.),
-            tiled::ObjectShape::Ellipse { width, height } => Vec2::new(width / 2., -height / 2.),
-            tiled::ObjectShape::Polyline { points: _ } => Vec2::ZERO,
-            tiled::ObjectShape::Polygon { points: _ } => Vec2::ZERO,
-            _ => {
-                return None;
+            } => {
+                vec![TiledColliderSpawnInfos {
+                    name: "Custom[Object]".to_string(),
+                    entity: commands.spawn(MyCustomPhysicsComponent).id(),
+                    position: Vec2::ZERO,
+                    rotation: 0.,
+                }]
             }
-        };
-
-        Some(TiledColliderSpawnInfos {
-            name: format!("Custom[{}]", object_data.name),
-            entity: commands.spawn(MyCustomPhysicsComponent).id(),
-            position: pos,
-            rotation: -object_data.rotation,
-        })
+            TiledColliderSourceType::TilesLayer { layer_id: _ } => {
+                vec![TiledColliderSpawnInfos {
+                    name: "Custom[TilesLayer]".to_string(),
+                    entity: commands.spawn(MyCustomPhysicsComponent).id(),
+                    position: Vec2::ZERO,
+                    rotation: 0.,
+                }]
+            }
+        }
     }
 }
