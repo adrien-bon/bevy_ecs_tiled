@@ -143,7 +143,7 @@ pub(crate) fn world_chunking(
 pub(crate) fn process_loaded_worlds(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    worlds: ResMut<Assets<TiledWorld>>,
+    worlds: Res<Assets<TiledWorld>>,
     mut world_query: Query<
         (
             Entity,
@@ -226,7 +226,7 @@ pub(crate) fn process_loaded_worlds(
 pub(crate) fn handle_world_events(
     mut commands: Commands,
     mut world_events: EventReader<AssetEvent<TiledWorld>>,
-    mut world_query: Query<(Entity, &TiledWorldHandle)>,
+    world_query: Query<(Entity, &TiledWorldHandle)>,
 ) {
     for event in world_events.read() {
         match event {
@@ -240,7 +240,7 @@ pub(crate) fn handle_world_events(
             }
             AssetEvent::Removed { id } => {
                 info!("World removed: {id}");
-                for (world_entity, world_handle) in world_query.iter_mut() {
+                for (world_entity, world_handle) in world_query.iter() {
                     if world_handle.0.id() == *id {
                         commands.entity(world_entity).despawn_recursive();
                     }

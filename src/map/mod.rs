@@ -14,7 +14,7 @@ pub mod prelude {
     pub use super::utils::*;
 }
 
-use crate::prelude::*;
+use crate::{cache::TiledResourceCache, prelude::*};
 use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 use bevy_ecs_tilemap::prelude::*;
 
@@ -36,7 +36,7 @@ pub(crate) fn export_types(reg: Res<AppTypeRegistry>, config: Res<TiledMapPlugin
 pub(crate) fn process_loaded_maps(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    maps: ResMut<Assets<TiledMap>>,
+    maps: Res<Assets<TiledMap>>,
     mut map_query: Query<
         (
             Entity,
@@ -104,12 +104,18 @@ pub(crate) fn process_loaded_maps(
 pub(crate) fn handle_map_events(
     mut commands: Commands,
     mut map_events: EventReader<AssetEvent<TiledMap>>,
-    mut map_query: Query<(Entity, &TiledMapHandle)>,
+    map_query: Query<(Entity, &TiledMapHandle)>,
+    mut cache: ResMut<TiledResourceCache>,
 ) {
     for event in map_events.read() {
         match event {
             AssetEvent::Modified { id } => {
                 info!("Map changed: {id}");
+                // Note: this call actually clear the cache for the next time we reload an asset
+                // That's because the AssetEvent::Modified is sent AFTER the asset is reloaded from disk
+                // It means that is the first reload is triggered by a tileset modification, the tileset will
+                // not be properly updated since we will still use its previous version in the cache
+                cache.clear();
                 for (map_entity, map_handle) in map_query.iter() {
                     if map_handle.0.id() == *id {
                         commands.entity(map_entity).insert(RespawnTiledMap);
@@ -118,7 +124,7 @@ pub(crate) fn handle_map_events(
             }
             AssetEvent::Removed { id } => {
                 info!("Map removed: {id}");
-                for (map_entity, map_handle) in map_query.iter_mut() {
+                for (map_entity, map_handle) in map_query.iter() {
                     if map_handle.0.id() == *id {
                         commands.entity(map_entity).despawn_recursive();
                     }

@@ -13,6 +13,13 @@ impl TiledResourceCache {
     }
 }
 
+impl TiledResourceCache {
+    pub fn clear(&mut self) {
+        debug!("Clearing cache");
+        *self.0.write().unwrap() = DefaultResourceCache::new();
+    }
+}
+
 impl ResourceCache for TiledResourceCache {
     fn get_tileset(
         &self,
