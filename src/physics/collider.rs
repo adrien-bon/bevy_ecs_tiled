@@ -27,7 +27,7 @@ pub enum TiledColliderSourceType {
 
 impl TiledColliderSourceType {
     /// Create a new [TiledColliderSourceType::Object].
-    pub fn new_object(layer_id: usize, object_id: usize) -> Self {
+    pub fn from_object(layer_id: usize, object_id: usize) -> Self {
         Self::Object {
             layer_id,
             object_id,
@@ -35,7 +35,7 @@ impl TiledColliderSourceType {
     }
 
     /// Create a new [TiledColliderSourceType::TilesLayer].
-    pub fn new_tiles_layer(layer_id: usize) -> Self {
+    pub fn from_tiles_layer(layer_id: usize) -> Self {
         Self::TilesLayer { layer_id }
     }
 }
@@ -51,7 +51,7 @@ pub struct TiledColliderSource {
 
 impl<'a> TiledColliderSource {
     /// Get the underlying [Layer] of a [TiledColliderSource].
-    pub fn layer(&self, map: &'a Map) -> Option<Layer<'a>> {
+    pub fn get_layer(&self, map: &'a Map) -> Option<Layer<'a>> {
         match self.ty {
             TiledColliderSourceType::Object {
                 layer_id,
@@ -62,7 +62,7 @@ impl<'a> TiledColliderSource {
     }
 
     /// Get the underlying [Object] of a [TiledColliderSource].
-    pub fn object(&self, map: &'a Map) -> Option<Object<'a>> {
+    pub fn get_object(&self, map: &'a Map) -> Option<Object<'a>> {
         match self.ty {
             TiledColliderSourceType::Object {
                 layer_id,
@@ -75,9 +75,8 @@ impl<'a> TiledColliderSource {
         }
     }
 
-    /// Get a vector containing tiles in this layer as well as their relative position
-    /// to their parent layer.
-    pub fn tiles_from_layer(&self, map: &'a Map) -> Vec<(Vec2, Tile<'a>)> {
+    /// Get a vector containing tiles in this layer as well as their relative position to their parent tileset layer.
+    pub fn get_tiles(&self, map: &'a Map) -> Vec<(Vec2, Tile<'a>)> {
         match self.ty {
             TiledColliderSourceType::TilesLayer { layer_id } => map
                 .get_layer(layer_id)
@@ -178,7 +177,7 @@ pub struct TiledColliderSpawnInfos {
 #[derive(Event, Clone, Debug)]
 pub struct TiledColliderCreated {
     /// [Handle] to the [TiledMap].
-    pub map_handle: Handle<TiledMap>,
+    pub map_asset_id: AssetId<TiledMap>,
     /// Collider spawn informations.
     pub collider: TiledColliderSpawnInfos,
     /// Collider source informations.
@@ -187,18 +186,32 @@ pub struct TiledColliderCreated {
 
 impl<'a> TiledColliderCreated {
     /// Retrieve the [Map] associated to this [TiledColliderCreated] event.
-    pub fn map(&self, map_asset: &'a Res<Assets<TiledMap>>) -> &'a Map {
-        &map_asset.get(self.map_handle.id()).unwrap().map
+    pub fn get_map_asset(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Option<&'a TiledMap> {
+        map_asset.get(self.map_asset_id)
+    }
+
+    /// Retrieve the [Map] associated to this [TiledColliderCreated] event.
+    pub fn get_map(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Option<&'a Map> {
+        self.get_map_asset(map_asset).map(|m| &m.map)
     }
 
     /// Retrieve the [Layer] associated to this [TiledColliderCreated] event.
-    pub fn layer(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Option<Layer<'a>> {
-        self.collider_source.layer(self.map(map_asset))
+    pub fn get_layer(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Option<Layer<'a>> {
+        self.get_map(map_asset)
+            .and_then(|map| self.collider_source.get_layer(map))
     }
 
     /// Retrieve the [Object] associated to this [TiledColliderCreated] event.
-    pub fn object(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Option<Object<'a>> {
-        self.collider_source.object(self.map(map_asset))
+    pub fn get_object(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Option<Object<'a>> {
+        self.get_map(map_asset)
+            .and_then(|map| self.collider_source.get_object(map))
+    }
+
+    /// Retrieve a vector containing tiles in this layer as well as their relative position to their parent tileset layer.
+    pub fn get_tiles(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Vec<(Vec2, Tile<'a>)> {
+        self.get_map(map_asset)
+            .map(|map| self.collider_source.get_tiles(map))
+            .unwrap_or_default()
     }
 }
 
@@ -206,10 +219,10 @@ pub(super) fn spawn_collider<T: super::TiledPhysicsBackend>(
     backend: &T,
     commands: &mut Commands,
     map_asset: &Res<Assets<TiledMap>>,
-    map_handle: &Handle<TiledMap>,
+    map_asset_id: &AssetId<TiledMap>,
     collider_source: &TiledColliderSource,
 ) {
-    if let Some(tiled_map) = map_asset.get(map_handle) {
+    if let Some(tiled_map) = map_asset.get(*map_asset_id) {
         for spawn_infos in backend.spawn_collider(commands, &tiled_map.map, collider_source) {
             commands
                 .entity(spawn_infos.entity)
@@ -224,7 +237,7 @@ pub(super) fn spawn_collider<T: super::TiledPhysicsBackend>(
                 ))
                 .set_parent(collider_source.entity);
             commands.trigger(TiledColliderCreated {
-                map_handle: map_handle.clone(),
+                map_asset_id: *map_asset_id,
                 collider: spawn_infos,
                 collider_source: *collider_source,
             });

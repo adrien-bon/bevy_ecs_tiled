@@ -86,7 +86,7 @@ pub(crate) fn process_loaded_maps(
             loader::load_map(
                 &mut commands,
                 map_entity,
-                &map_handle.0,
+                map_handle.0.id(),
                 tiled_map,
                 &mut tiled_id_storage,
                 render_settings,

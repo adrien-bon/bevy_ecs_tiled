@@ -14,6 +14,9 @@
 - `TiledPhysicsBackend::spawn_collider()` is now expected to spawn several colliders in on call. To reflect that, now it returns a `Vec<TiledColliderSpawnInfos>` instead of an `Option<TiledColliderSpawnInfos>`
 - Remove the `TiledColliderSourceType::Tile` which is superseded by `TiledColliderSourceType::TilesLayer`
 - Remove the capacity to filter out tiles colliders using the collider object name
+- Update Map, World and Physics events to use safe methods for getting their inner data
+- Update Map and physics events to use `AsssetId` instead of a direct `Handle`
+- Update the `TiledMapLayer` marker component to not contains a reference to the map `AssetId`, we should instead query the map directly
 
 ## v0.5.1
 

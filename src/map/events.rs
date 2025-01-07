@@ -8,178 +8,114 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use tiled::{Layer, LayerTile, Map, Object};
 
-/// Event sent when a Tiled map has finished loading
-#[derive(Event, Clone, Debug)]
+/// Event sent when a map is spawned
+#[derive(Event, Clone, Debug, Copy)]
 pub struct TiledMapCreated {
     /// Spawned map [Entity]
-    pub map: Entity,
-    /// Handle to the loaded Tiled Map
-    pub map_handle: Handle<TiledMap>,
+    pub entity: Entity,
+    /// [AssetId] of the [TiledMap]
+    pub asset_id: AssetId<TiledMap>,
 }
 
 impl<'a> TiledMapCreated {
-    /// Retrieve the [Map] associated to this [TiledMapCreated] event.
-    pub fn map(&self, map_asset: &'a Res<Assets<TiledMap>>) -> &'a Map {
-        &map_asset.get(self.map_handle.id()).unwrap().map
+    /// Retrieve the [TiledMap] associated with this [TiledMapCreated] event.
+    pub fn get_map_asset(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Option<&'a TiledMap> {
+        map_asset.get(self.asset_id)
+    }
+
+    /// Retrieve the [Map] associated with this [TiledMapCreated] event.
+    pub fn get_map(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Option<&'a Map> {
+        map_asset.get(self.asset_id).map(|m| &m.map)
     }
 }
 
-/// Event sent when a Tiled layer has finished loading
-#[derive(Event, Clone, Debug)]
+/// Event sent when a layer is spawned
+#[derive(Event, Clone, Debug, Copy)]
 pub struct TiledLayerCreated {
-    /// Spawned map [Entity]
-    pub map: Entity,
+    /// Creation event of the map this layer belongs to
+    pub map: TiledMapCreated,
     /// Spawned layer [Entity]
-    pub layer: Entity,
-    /// Handle to the loaded [TiledMap]
-    pub map_handle: Handle<TiledMap>,
-    /// Layer ID
-    pub layer_id: usize,
+    pub entity: Entity,
+    /// ID of this layer in the [Map]
+    pub id: usize,
 }
 
 impl<'a> TiledLayerCreated {
-    /// Retrieve the [Map] associated to this [TiledLayerCreated] event.
-    pub fn map(&self, map_asset: &'a Res<Assets<TiledMap>>) -> &'a Map {
-        &map_asset.get(self.map_handle.id()).unwrap().map
-    }
-
-    /// Retrieve the [Layer] associated to this [TiledLayerCreated] event.
-    pub fn layer(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Layer<'a> {
-        self.map(map_asset).get_layer(self.layer_id).unwrap()
+    /// Retrieve the [Layer] associated with this [TiledLayerCreated] event.
+    pub fn get_layer(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Option<Layer<'a>> {
+        self.map
+            .get_map(map_asset)
+            .and_then(|m| m.get_layer(self.id))
     }
 }
 
-/// Event sent when a Tiled object has finished loading
-#[derive(Event, Clone, Debug)]
+/// Event sent when an object is spawned
+#[derive(Event, Clone, Debug, Copy)]
 pub struct TiledObjectCreated {
-    /// Spawned map [Entity]
-    pub map: Entity,
-    /// Spawned layer [Entity]
-    pub layer: Entity,
+    /// Creation event of the layer this object belongs to
+    pub layer: TiledLayerCreated,
     /// Spawned object [Entity]
-    pub object: Entity,
-    /// Handle to the loaded [TiledMap]
-    pub map_handle: Handle<TiledMap>,
-    /// Layer ID
-    pub layer_id: usize,
-    /// Object ID
-    pub object_id: usize,
-}
-
-impl TiledObjectCreated {
-    pub fn from_layer(layer: &TiledLayerCreated, object: Entity, object_id: usize) -> Self {
-        Self {
-            map: layer.map,
-            layer: layer.layer,
-            layer_id: layer.layer_id,
-            map_handle: layer.map_handle.clone(),
-            object,
-            object_id,
-        }
-    }
+    pub entity: Entity,
+    /// ID of this layer in the [tiled::ObjectLayer]
+    pub id: usize,
 }
 
 impl<'a> TiledObjectCreated {
-    /// Retrieve the [Map] associated to this [TiledObjectCreated] event.
-    pub fn map(&self, map_asset: &'a Res<Assets<TiledMap>>) -> &'a Map {
-        &map_asset.get(self.map_handle.id()).unwrap().map
-    }
-
-    /// Retrieve the [Layer] associated to this [TiledObjectCreated] event.
-    pub fn layer(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Layer<'a> {
-        self.map(map_asset).get_layer(self.layer_id).unwrap()
-    }
-
-    /// Retrieve the [Object] associated to this [TiledObjectCreated] event.
-    pub fn object(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Object<'a> {
-        self.layer(map_asset)
-            .as_object_layer()
-            .unwrap()
-            .get_object(self.object_id)
-            .unwrap()
+    /// Retrieve the [Object] associated with this [TiledObjectCreated] event.
+    pub fn get_object(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Option<Object<'a>> {
+        self.layer
+            .get_layer(map_asset)
+            .and_then(|l| l.as_object_layer())
+            .and_then(|l| l.get_object(self.id))
     }
 
     /// Retrieve object world position (origin = top left) relative to its parent layer.
-    pub fn world_position(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Vec2 {
-        let map = self.map(map_asset);
-        let object_data = self.object(map_asset);
-        from_tiled_coords_to_bevy(
-            Vec2::new(object_data.x, object_data.y),
-            &get_map_type(map),
-            &get_map_size(map),
-            &get_grid_size(map),
-        )
+    pub fn world_position(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Option<Vec2> {
+        self.layer.map.get_map(map_asset).and_then(|map| {
+            self.get_object(map_asset).map(|object| {
+                from_tiled_coords_to_bevy(
+                    Vec2::new(object.x, object.y),
+                    &get_map_type(map),
+                    &get_map_size(map),
+                    &get_grid_size(map),
+                )
+            })
+        })
     }
 }
 
-/// Event sent when a Tiled special tile has finished loading
+/// Event sent when a tile has finished loading
 ///
-/// Special tile means it either contains custom properties or physics colliders.
-#[derive(Event, Clone, Debug)]
-pub struct TiledSpecialTileCreated {
-    /// Spawned map [Entity]
-    pub map: Entity,
-    /// Spawned layer [Entity]
-    pub layer: Entity,
+/// This event is only sent for tiles which contain custom properties.
+#[derive(Event, Clone, Debug, Copy)]
+pub struct TiledTileCreated {
+    /// Creation event of the layer this tile belongs to
+    pub layer: TiledLayerCreated,
     /// Spawned layer for tileset [Entity]
-    pub layer_for_tileset: Entity,
+    /// Note this is different from the layer entity
+    pub parent: Entity,
     /// Spawned tile [Entity]
-    pub tile: Entity,
-    /// Handle to the loaded [TiledMap]
-    pub map_handle: Handle<TiledMap>,
-    /// Layer ID
-    pub layer_id: usize,
-    /// Tile index for Tiled referential
-    pub tiled_index: IVec2,
-    /// Tile index for bevy_ecs_tilemap referential
-    pub tilemap_index: TilePos,
+    pub entity: Entity,
+    /// Tile index (Tiled referential)
+    pub index: IVec2,
+    /// Tile position (bevy_ecs_tilemap referential)
+    pub position: TilePos,
 }
 
-impl TiledSpecialTileCreated {
-    pub fn from_layer(
-        layer: &TiledLayerCreated,
-        layer_for_tileset: Entity,
-        tile: Entity,
-        tiled_index: IVec2,
-        tilemap_index: TilePos,
-    ) -> Self {
-        Self {
-            map: layer.map,
-            layer: layer.layer,
-            layer_id: layer.layer_id,
-            map_handle: layer.map_handle.clone(),
-            layer_for_tileset,
-            tile,
-            tiled_index,
-            tilemap_index,
-        }
-    }
-}
-
-impl<'a> TiledSpecialTileCreated {
-    /// Retrieve the [Map] associated to this [TiledSpecialTileCreated] event.
-    pub fn map(&self, map_asset: &'a Res<Assets<TiledMap>>) -> &'a Map {
-        &map_asset.get(self.map_handle.id()).unwrap().map
-    }
-
-    /// Retrieve the [Layer] associated to this [TiledSpecialTileCreated] event.
-    pub fn layer(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Layer<'a> {
-        self.map(map_asset).get_layer(self.layer_id).unwrap()
-    }
-
-    /// Retrieve the [LayerTile] associated to this [TiledSpecialTileCreated] event.
-    pub fn tile(&self, map_asset: &'a Res<Assets<TiledMap>>) -> LayerTile<'a> {
-        self.layer(map_asset)
-            .as_tile_layer()
-            .unwrap()
-            .get_tile(self.tiled_index.x, self.tiled_index.y)
-            .unwrap()
+impl<'a> TiledTileCreated {
+    /// Retrieve the [LayerTile] associated with this [TiledTileCreated] event.
+    pub fn get_tile(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Option<LayerTile<'a>> {
+        self.layer
+            .get_layer(map_asset)
+            .and_then(|l| l.as_tile_layer())
+            .and_then(|l| l.get_tile(self.index.x, self.index.y))
     }
 
     /// Retrieve tile world position (origin = tile center) relative to its parent layer.
-    pub fn world_position(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Vec2 {
-        let map = self.map(map_asset);
-        self.tilemap_index
-            .center_in_world(&get_grid_size(map), &get_map_type(map))
+    pub fn world_position(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Option<Vec2> {
+        self.layer.map.get_map(map_asset).map(|map| {
+            self.position
+                .center_in_world(&get_grid_size(map), &get_map_type(map))
+        })
     }
 }

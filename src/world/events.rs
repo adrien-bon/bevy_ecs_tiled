@@ -9,14 +9,17 @@ use bevy::prelude::*;
 #[derive(Event, Clone, Debug)]
 pub struct TiledWorldCreated {
     /// Spawned world [Entity].
-    pub world: Entity,
+    pub entity: Entity,
     /// [AssetId] of the corresponding [super::asset::TiledWorld] asset.
-    pub world_asset_id: AssetId<TiledWorld>,
+    pub asset_id: AssetId<TiledWorld>,
 }
 
 impl<'a> TiledWorldCreated {
-    /// Retrieve the [TiledWorld] associated to this [TiledWorldCreated] event.
-    pub fn get_world(&self, world_asset: &'a Res<Assets<TiledWorld>>) -> Option<&'a TiledWorld> {
-        world_asset.get(self.world_asset_id)
+    /// Retrieve the [TiledWorld] associated with this [TiledWorldCreated] event.
+    pub fn get_world_asset(
+        &self,
+        world_asset: &'a Res<Assets<TiledWorld>>,
+    ) -> Option<&'a TiledWorld> {
+        world_asset.get(self.asset_id)
     }
 }

@@ -39,7 +39,7 @@ impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
                 layer_id: _,
                 object_id: _,
             } => {
-                let Some(object) = collider_source.object(map) else {
+                let Some(object) = collider_source.get_object(map) else {
                     return vec![];
                 };
                 let Some((pos, shared_shape, _)) = get_position_and_shape(&object.shape) else {
@@ -56,7 +56,7 @@ impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
             TiledColliderSourceType::TilesLayer { layer_id: _ } => {
                 let mut composables = vec![];
                 let mut spawn_infos = vec![];
-                for (tile_position, tile) in collider_source.tiles_from_layer(map) {
+                for (tile_position, tile) in collider_source.get_tiles(map) {
                     if let Some(collision) = &tile.collision {
                         for object in collision.object_data() {
                             let object_position = Vec2 {

@@ -1,6 +1,5 @@
 //! This module contains all map [Component]s definition.
 
-use crate::prelude::*;
 use bevy::{prelude::*, utils::HashMap};
 use tiled::TileId;
 
@@ -81,12 +80,7 @@ pub struct TiledMapMarker;
 /// Marker [Component] for a Tiled map layer.
 #[derive(Component)]
 #[require(Visibility, Transform)]
-pub struct TiledMapLayer {
-    // Store the map id so that we can delete layers for this map later.
-    // We don't want to store the handle as a [Component] because the parent
-    // entity already has it and it complicates queries.
-    pub map_handle_id: AssetId<TiledMap>,
-}
+pub struct TiledMapLayer;
 
 /// Marker [Component] for a Tiled map tile layer.
 #[derive(Component)]
@@ -127,7 +121,7 @@ pub struct TiledMapTile;
 #[require(Visibility, Transform)]
 pub struct TiledMapObject;
 
-/// Marker [Component] for a Tiled image
+/// Marker [Component] for the [Sprite] attached to an image layer.
 #[derive(Component)]
 #[require(Visibility, Transform)]
 pub struct TiledMapImage;

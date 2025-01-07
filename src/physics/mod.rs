@@ -102,7 +102,7 @@ fn default_physics_settings<T: TiledPhysicsBackend>(
     q_maps: Query<(Option<&Parent>, Option<&TiledPhysicsSettings<T>>), With<TiledMapMarker>>,
     q_worlds: Query<Option<&TiledPhysicsSettings<T>>, With<TiledWorldMarker>>,
 ) {
-    let map_entity = trigger.event().map;
+    let map_entity = trigger.event().entity;
     if let Ok((parent, settings)) = q_maps.get(map_entity) {
         // Map does not have physics settings
         if settings.is_none() {
@@ -125,26 +125,27 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
     map_asset: Res<Assets<TiledMap>>,
     q_settings: Query<&TiledPhysicsSettings<T>, With<TiledMapMarker>>,
 ) {
-    let layer = trigger.event().layer(&map_asset);
-    if layer.as_tile_layer().is_none() {
-        return;
-    }
-
-    let Ok(settings) = q_settings.get(trigger.event().map) else {
+    let Some(layer) = trigger.event().get_layer(&map_asset) else {
         return;
     };
 
-    if ObjectNameFilter::from(&settings.tiles_layer_filter).contains(&layer.name) {
-        collider::spawn_collider::<T>(
-            &settings.backend,
-            &mut commands,
-            &map_asset,
-            &trigger.event().map_handle,
-            &TiledColliderSource {
-                entity: trigger.event().layer,
-                ty: TiledColliderSourceType::new_tiles_layer(trigger.event().layer_id),
-            },
-        );
+    let Ok(settings) = q_settings.get(trigger.event().map.entity) else {
+        return;
+    };
+
+    if let tiled::LayerType::Tiles(_) = layer.layer_type() {
+        if ObjectNameFilter::from(&settings.tiles_layer_filter).contains(&layer.name) {
+            collider::spawn_collider::<T>(
+                &settings.backend,
+                &mut commands,
+                &map_asset,
+                &trigger.event().map.asset_id,
+                &TiledColliderSource {
+                    entity: trigger.event().entity,
+                    ty: TiledColliderSourceType::from_tiles_layer(trigger.event().id),
+                },
+            );
+        }
     }
 }
 
@@ -154,9 +155,13 @@ fn collider_from_object<T: TiledPhysicsBackend>(
     map_asset: Res<Assets<TiledMap>>,
     q_settings: Query<&TiledPhysicsSettings<T>, With<TiledMapMarker>>,
 ) {
-    let layer = trigger.event().layer(&map_asset);
-    let object = trigger.event().object(&map_asset);
-    let Ok(settings) = q_settings.get(trigger.event().map) else {
+    let Some(layer) = trigger.event().layer.get_layer(&map_asset) else {
+        return;
+    };
+    let Some(object) = trigger.event().get_object(&map_asset) else {
+        return;
+    };
+    let Ok(settings) = q_settings.get(trigger.event().layer.map.entity) else {
         return;
     };
 
@@ -167,12 +172,12 @@ fn collider_from_object<T: TiledPhysicsBackend>(
             &settings.backend,
             &mut commands,
             &map_asset,
-            &trigger.event().map_handle,
+            &trigger.event().layer.map.asset_id,
             &TiledColliderSource {
-                entity: trigger.event().object,
-                ty: TiledColliderSourceType::new_object(
-                    trigger.event().layer_id,
-                    trigger.event().object_id,
+                entity: trigger.event().entity,
+                ty: TiledColliderSourceType::from_object(
+                    trigger.event().layer.id,
+                    trigger.event().id,
                 ),
             },
         );

@@ -215,8 +215,8 @@ pub(crate) fn process_loaded_worlds(
                 .remove::<RespawnTiledWorld>();
 
             commands.trigger(TiledWorldCreated {
-                world: world_entity,
-                world_asset_id: world_handle.0.id(),
+                entity: world_entity,
+                asset_id: world_handle.0.id(),
             });
         }
     }
