@@ -19,6 +19,7 @@
 - Update the `TiledMapLayer` marker component to not contains a reference to the map `AssetId`, we should instead query the map directly
 - Prevent mutating our Map and World asset for nothing: it was triggering an additionnal asset reload
 - Clear our tileset cache when we receive an `AssetEvent::Modified` (ie. the asset is reloaded from disk)
+- Rename `TiledIdStorage` component to `TiledMapStorage` to be consistent with the new world API
 
 ## v0.5.1
 

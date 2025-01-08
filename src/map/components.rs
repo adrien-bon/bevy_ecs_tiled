@@ -60,7 +60,7 @@ pub struct RespawnTiledMap;
 ///
 /// Should not be manually inserted but can be accessed from the map [Entity].
 #[derive(Component, Default)]
-pub struct TiledIdStorage {
+pub struct TiledMapStorage {
     /// Map of layers entities, using their Tiled ID as key
     pub layers: HashMap<u32, Entity>,
     /// Map of objects entities, using their Tiled ID as key

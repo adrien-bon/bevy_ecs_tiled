@@ -50,7 +50,7 @@ use std::{env, path::PathBuf};
 /// This is the main [Component] that must be spawned to load a Tiled map.
 #[derive(Component)]
 #[require(
-    TiledIdStorage,
+    TiledMapStorage,
     TiledMapSettings,
     TilemapRenderSettings,
     Visibility,

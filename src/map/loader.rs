@@ -45,7 +45,7 @@ pub(crate) fn load_map(
     map_entity: Entity,
     map_asset_id: AssetId<TiledMap>,
     tiled_map: &TiledMap,
-    tiled_id_storage: &mut TiledIdStorage,
+    tiled_id_storage: &mut TiledMapStorage,
     render_settings: &TilemapRenderSettings,
     tiled_settings: &TiledMapSettings,
     asset_server: &Res<AssetServer>,

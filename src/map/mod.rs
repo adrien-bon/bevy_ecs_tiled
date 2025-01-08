@@ -41,7 +41,7 @@ pub(crate) fn process_loaded_maps(
         (
             Entity,
             &TiledMapHandle,
-            &mut TiledIdStorage,
+            &mut TiledMapStorage,
             &TilemapRenderSettings,
             &TiledMapSettings,
         ),
@@ -135,7 +135,7 @@ pub(crate) fn handle_map_events(
     }
 }
 
-fn remove_layers(commands: &mut Commands, tiled_id_storage: &mut TiledIdStorage) {
+fn remove_layers(commands: &mut Commands, tiled_id_storage: &mut TiledMapStorage) {
     for layer_entity in tiled_id_storage.layers.values() {
         commands.entity(*layer_entity).despawn_recursive();
     }
