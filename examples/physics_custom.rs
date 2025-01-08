@@ -32,7 +32,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(TiledMapHandle(asset_server.load("finite.tmx")));
 }
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Reflect)]
 struct MyCustomPhysicsBackend;
 
 // This simple example will just spawn an entity with a `MyCustomPhysicsComponent` Component,

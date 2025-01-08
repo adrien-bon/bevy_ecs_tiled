@@ -6,6 +6,7 @@
 
 - Add Tiled .world file support (#55)
 - Aggregate tiles colliders together: likely to reduce the overall number of colliders which improves performances (#68)
+- Most of `bevy_ecs_tiled` Components and Resources are now registered in Bevy type registry
 
 ### Changed
 
@@ -20,6 +21,7 @@
 - Prevent mutating our Map and World asset for nothing: it was triggering an additionnal asset reload
 - Clear our tileset cache when we receive an `AssetEvent::Modified` (ie. the asset is reloaded from disk)
 - Rename `TiledIdStorage` component to `TiledMapStorage` to be consistent with the new world API
+- `TiledPhysicsBackend` trait now requires to derive `Reflect`
 
 ## v0.5.1
 

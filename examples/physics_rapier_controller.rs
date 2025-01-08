@@ -39,7 +39,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 // Define a custom physics collider which will use the TiledPhysicsRapierBackend
 // but add an extra RigidBody::KinematicPositionBased component on top of the colliders.
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Reflect)]
 struct MyCustomRapierPhysicsBackend(TiledPhysicsRapierBackend);
 
 impl TiledPhysicsBackend for MyCustomRapierPhysicsBackend {

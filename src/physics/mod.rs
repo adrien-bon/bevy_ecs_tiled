@@ -13,7 +13,7 @@ pub mod rapier;
 pub mod avian;
 
 use crate::prelude::*;
-use bevy::prelude::*;
+use bevy::{prelude::*, reflect::Reflectable};
 use prelude::*;
 use tiled::Map;
 
@@ -33,7 +33,7 @@ pub mod prelude {
 ///
 /// A custom physics backend should implement this trait.
 pub trait TiledPhysicsBackend:
-    Default + Clone + 'static + std::marker::Sync + std::marker::Send
+    Default + Clone + 'static + std::marker::Sync + std::marker::Send + FromReflect + Reflectable
 {
     /// Function responsible for spawning a physics collider
     ///
@@ -50,7 +50,7 @@ pub trait TiledPhysicsBackend:
 }
 
 /// Physics related settings.
-#[derive(Clone, Component, Default)]
+#[derive(Clone, Component, Default, Reflect)]
 pub struct TiledPhysicsSettings<T: TiledPhysicsBackend> {
     /// Specify which Tiled object to add colliders for using their layer name.
     ///
@@ -89,9 +89,10 @@ pub struct TiledPhysicsPlugin<T: TiledPhysicsBackend>(std::marker::PhantomData<T
 
 impl<T: TiledPhysicsBackend> Plugin for TiledPhysicsPlugin<T> {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_observer(default_physics_settings::<T>);
-        app.add_observer(collider_from_tiles_layer::<T>);
-        app.add_observer(collider_from_object::<T>);
+        app.add_observer(default_physics_settings::<T>)
+            .add_observer(collider_from_tiles_layer::<T>)
+            .add_observer(collider_from_object::<T>)
+            .register_type::<TiledPhysicsSettings<T>>();
     }
 }
 

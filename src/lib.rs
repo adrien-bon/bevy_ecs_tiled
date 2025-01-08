@@ -48,7 +48,7 @@ use std::{env, path::PathBuf};
 /// Wrapper around the [Handle] to the `.tmx` file representing the [TiledMap].
 ///
 /// This is the main [Component] that must be spawned to load a Tiled map.
-#[derive(Component)]
+#[derive(Component, Reflect)]
 #[require(
     TiledMapStorage,
     TiledMapSettings,
@@ -61,7 +61,7 @@ pub struct TiledMapHandle(pub Handle<TiledMap>);
 /// Wrapper around the [Handle] to the `.world` file representing the [TiledWorld].
 ///
 /// This is the main [Component] that must be spawned to load a Tiled world.
-#[derive(Component)]
+#[derive(Component, Reflect)]
 #[require(
     TiledWorldStorage,
     TiledWorldSettings,
@@ -74,7 +74,7 @@ pub struct TiledWorldHandle(pub Handle<TiledWorld>);
 
 /// [TiledMapPlugin] [Plugin] global configuration.
 #[allow(dead_code)]
-#[derive(Resource, Clone)]
+#[derive(Resource, Clone, Reflect)]
 pub struct TiledMapPluginConfig {
     /// Path to the Tiled types export file.
     ///
@@ -125,7 +125,15 @@ impl Plugin for TiledMapPlugin {
                     world::world_chunking,
                 ),
             )
-            .insert_resource(self.0.clone());
+            .insert_resource(self.0.clone())
+            .register_type::<TiledMapHandle>()
+            .register_type::<TiledMapPluginConfig>()
+            .register_type::<TiledMapSettings>()
+            .register_type::<TiledMapStorage>()
+            .register_type::<TiledAnimation>()
+            .register_type::<TiledWorldHandle>()
+            .register_type::<TiledWorldSettings>()
+            .register_type::<TiledWorldStorage>();
 
         #[cfg(feature = "user_properties")]
         app.add_systems(Startup, map::export_types);

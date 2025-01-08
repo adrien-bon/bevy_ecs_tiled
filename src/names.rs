@@ -1,5 +1,5 @@
 //! This module contains utilities to work with Tiled names.
-use bevy::utils::HashSet;
+use bevy::{prelude::*, utils::HashSet};
 
 /// A struct to specify names when using [ObjectNameFilter]
 ///
@@ -16,7 +16,7 @@ use bevy::utils::HashSet;
 /// assert_eq!(ObjectNameFilter::from(&ObjectNames::All).contains(&name_to_check), true);
 /// assert_eq!(ObjectNameFilter::from(&ObjectNames::None).contains(&name_to_check), false);
 /// ```
-#[derive(Default, Clone, PartialEq)]
+#[derive(Default, Clone, PartialEq, Reflect)]
 pub enum ObjectNames {
     /// Matches all names.
     #[default]

@@ -7,7 +7,7 @@ use tiled::TileId;
 ///
 /// Controls various settings related to the way we handle the Tiled map.
 /// Must be added to the [Entity] holding the map.
-#[derive(Component, Copy, Clone)]
+#[derive(Component, Copy, Clone, Reflect)]
 pub struct TiledMapSettings {
     /// Specify which layer positioning strategy should be applied to the map.
     pub layer_positioning: LayerPositioning,
@@ -27,7 +27,7 @@ impl Default for TiledMapSettings {
 /// Controls layers positioning strategy.
 ///
 /// Based upon this setting, you can determine where your layers (ie. your map) will be rendered.
-#[derive(Default, Copy, Clone)]
+#[derive(Default, Copy, Clone, Reflect)]
 pub enum LayerPositioning {
     #[default]
     /// Do not tweak layers position and keep original Tiled coordinate system so that Bevy (0, 0) is at the bottom-left of the map.
@@ -59,7 +59,7 @@ pub struct RespawnTiledMap;
 /// [Component] storing maps to navigate from Tiled ID to Bevy [Entity].
 ///
 /// Should not be manually inserted but can be accessed from the map [Entity].
-#[derive(Component, Default)]
+#[derive(Component, Default, Reflect)]
 pub struct TiledMapStorage {
     /// Map of layers entities, using their Tiled ID as key
     pub layers: HashMap<u32, Entity>,
@@ -128,7 +128,7 @@ pub struct TiledMapImage;
 
 /// This [Component] is used for animated objects.
 /// We will automatically update the Sprite index every time the timer fires.
-#[derive(Component)]
+#[derive(Component, Reflect)]
 #[require(Visibility, Transform, Sprite)]
 pub struct TiledAnimation {
     /// First index of the animation

@@ -6,7 +6,7 @@ use bevy::{prelude::*, utils::HashMap};
 ///
 /// Controls various settings related to the way we handle the Tiled world.
 /// Must be added to the [Entity] holding the world.
-#[derive(Component, Default)]
+#[derive(Component, Default, Reflect)]
 pub struct TiledWorldSettings {
     /// World chunking configuration
     ///
@@ -27,7 +27,7 @@ pub struct TiledWorldMarker;
 pub struct RespawnTiledWorld;
 
 /// [Component] storing informations about which maps are actually spawned
-#[derive(Component, Default)]
+#[derive(Component, Default, Reflect)]
 pub struct TiledWorldStorage {
     /// Map using the map index from [super::asset::TiledWorld] maps list as key.
     /// It contains the map entity.
