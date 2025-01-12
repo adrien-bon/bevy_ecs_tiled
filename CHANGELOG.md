@@ -7,6 +7,7 @@
 - Add Tiled .world file support (#55)
 - Aggregate tiles colliders together: likely to reduce the overall number of colliders which improves performances (#68)
 - Most of `bevy_ecs_tiled` Components and Resources are now registered in Bevy type registry
+- Properly spawn colliders for `TileOjbect`
 
 ### Changed
 
@@ -22,6 +23,11 @@
 - Clear our tileset cache when we receive an `AssetEvent::Modified` (ie. the asset is reloaded from disk)
 - Rename `TiledIdStorage` component to `TiledMapStorage` to be consistent with the new world API
 - `TiledPhysicsBackend` trait now requires to derive `Reflect`
+- Rename `ObjectNameFilter` to `TiledNameFilter` since we also use it for layer name
+- Rework physics backend: remove collider spawn events, rename types so they are easier to use
+- Update TiledPhysicsBackend::spawn_colliders signature so it can now take an object name filter
+- Add back the possibility to filter out individual tile object colliders based upon their name
+- Change the way we retrieve `PhysicsSettings` so we don't require to get the map event first
 
 ## v0.5.1
 

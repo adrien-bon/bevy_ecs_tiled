@@ -39,7 +39,6 @@ For instance, on an "AZERTY" keyboard, you must use `A` instead of `Q` and `Z` i
 | `orientation_isometric` | `debug` | This example cycles through different kinds of isometric maps. |
 | `orientation_hexagonal` | `debug` | This example cycles through different kinds of hexagonal maps. |
 | `physics_custom` | `physics` | This example shows how to use a custom physics backend. |
-| `physics_events` | `physics` | This example shows how to use physics events. |
 | `physics_avian_settings` | `avian_debug` | This example shows how to use Avian2D physics backend. |
 | `physics_avian_controller` | `avian_debug` | This example shows a simple player-controlled object using Avian2D physics. You can move the object using arrow keys. |
 | `physics_avian_orientation` | `avian_debug` | This example shows Avian2D physics backend with various map orientation. |

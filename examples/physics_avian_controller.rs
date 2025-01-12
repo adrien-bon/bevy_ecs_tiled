@@ -44,13 +44,14 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 struct MyCustomAvianPhysicsBackend(TiledPhysicsAvianBackend);
 
 impl TiledPhysicsBackend for MyCustomAvianPhysicsBackend {
-    fn spawn_collider(
+    fn spawn_colliders(
         &self,
         commands: &mut Commands,
         map: &Map,
-        collider_source: &TiledColliderSource,
+        filter: &TiledNameFilter,
+        collider: &TiledCollider,
     ) -> Vec<TiledColliderSpawnInfos> {
-        let colliders = self.0.spawn_collider(commands, map, collider_source);
+        let colliders = self.0.spawn_colliders(commands, map, filter, collider);
         for c in &colliders {
             commands.entity(c.entity).insert(RigidBody::Static);
         }

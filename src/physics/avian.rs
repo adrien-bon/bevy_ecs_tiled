@@ -10,7 +10,7 @@ use avian2d::{
     prelude::*,
 };
 use bevy::prelude::*;
-use tiled::{Map, ObjectShape};
+use tiled::{Map, ObjectLayerData, ObjectShape};
 
 use crate::prelude::*;
 
@@ -28,69 +28,77 @@ use crate::prelude::*;
 pub struct TiledPhysicsAvianBackend;
 
 impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
-    fn spawn_collider(
+    fn spawn_colliders(
         &self,
         commands: &mut Commands,
         map: &Map,
-        collider_source: &TiledColliderSource,
+        filter: &TiledNameFilter,
+        collider: &TiledCollider,
     ) -> Vec<TiledColliderSpawnInfos> {
-        match collider_source.ty {
-            TiledColliderSourceType::Object {
+        match collider {
+            TiledCollider::Object {
                 layer_id: _,
                 object_id: _,
             } => {
-                let Some(object) = collider_source.get_object(map) else {
+                let Some(object) = collider.get_object(map) else {
                     return vec![];
                 };
-                let Some((pos, shared_shape, _)) = get_position_and_shape(&object.shape) else {
-                    return vec![];
-                };
-                let collider: Collider = shared_shape.into();
-                vec![TiledColliderSpawnInfos {
-                    name: format!("Avian[Object={}]", object.name),
-                    entity: commands.spawn(collider).id(),
-                    position: pos,
-                    rotation: -object.rotation,
-                }]
+
+                match object.get_tile() {
+                    Some(object_tile) => object_tile.get_tile().and_then(|tile| {
+                        let Some(object_layer_data) = &tile.collision else {
+                            return None;
+                        };
+                        let mut composables = vec![];
+                        let mut spawn_infos = vec![];
+                        compose_tiles(
+                            commands,
+                            filter,
+                            object_layer_data,
+                            Vec2::ZERO,
+                            map.tile_width as f32,
+                            map.tile_height as f32,
+                            &mut composables,
+                            &mut spawn_infos,
+                        );
+                        if !composables.is_empty() {
+                            let collider: Collider = SharedShape::compound(composables).into();
+                            spawn_infos.push(TiledColliderSpawnInfos {
+                                name: "Avian[ComposedTile]".to_string(),
+                                entity: commands.spawn(collider).id(),
+                                position: Vec2::ZERO,
+                                rotation: 0.,
+                            });
+                        }
+                        Some(spawn_infos)
+                    }),
+                    None => get_position_and_shape(&object.shape).map(|(pos, shared_shape, _)| {
+                        let collider: Collider = shared_shape.into();
+                        vec![TiledColliderSpawnInfos {
+                            name: format!("Avian[Object={}]", object.name),
+                            entity: commands.spawn(collider).id(),
+                            position: pos,
+                            rotation: -object.rotation,
+                        }]
+                    }),
+                }
+                .unwrap_or_default()
             }
-            TiledColliderSourceType::TilesLayer { layer_id: _ } => {
+            TiledCollider::TilesLayer { layer_id: _ } => {
                 let mut composables = vec![];
                 let mut spawn_infos = vec![];
-                for (tile_position, tile) in collider_source.get_tiles(map) {
+                for (tile_position, tile) in collider.get_tiles(map) {
                     if let Some(collision) = &tile.collision {
-                        for object in collision.object_data() {
-                            let object_position = Vec2 {
-                                x: object.x - map.tile_width as f32 / 2.,
-                                y: (map.tile_height as f32 - object.y)
-                                    - map.tile_height as f32 / 2.,
-                            };
-                            if let Some((mut position, shared_shape, is_composable)) =
-                                get_position_and_shape(&object.shape)
-                            {
-                                position += tile_position + object_position;
-                                position += Vec2 {
-                                    x: (map.tile_width as f32) / 2.,
-                                    y: (map.tile_height as f32) / 2.,
-                                };
-                                if is_composable {
-                                    composables.push((
-                                        Isometry::<Real>::new(
-                                            position.into(),
-                                            f32::to_radians(-object.rotation),
-                                        ),
-                                        shared_shape,
-                                    ));
-                                } else {
-                                    let collider: Collider = shared_shape.into();
-                                    spawn_infos.push(TiledColliderSpawnInfos {
-                                        name: "Avian[ComplexTile]".to_string(),
-                                        entity: commands.spawn(collider).id(),
-                                        position,
-                                        rotation: -object.rotation,
-                                    });
-                                }
-                            }
-                        }
+                        compose_tiles(
+                            commands,
+                            filter,
+                            collision,
+                            tile_position,
+                            map.tile_width as f32,
+                            map.tile_height as f32,
+                            &mut composables,
+                            &mut spawn_infos,
+                        );
                     }
                 }
                 if !composables.is_empty() {
@@ -103,6 +111,51 @@ impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
                     });
                 }
                 spawn_infos
+            }
+        }
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn compose_tiles(
+    commands: &mut Commands,
+    filter: &TiledNameFilter,
+    object_layer_data: &ObjectLayerData,
+    origin: Vec2,
+    tile_width: f32,
+    tile_height: f32,
+    composables: &mut Vec<(Isometry<Real>, SharedShape)>,
+    spawn_infos: &mut Vec<TiledColliderSpawnInfos>,
+) {
+    for object in object_layer_data.object_data() {
+        if !filter.contains(&object.name) {
+            continue;
+        }
+        let object_position = Vec2 {
+            x: object.x - tile_width / 2.,
+            y: (tile_height - object.y) - tile_height / 2.,
+        };
+        if let Some((mut position, shared_shape, is_composable)) =
+            get_position_and_shape(&object.shape)
+        {
+            position += origin + object_position;
+            position += Vec2 {
+                x: (tile_width) / 2.,
+                y: (tile_height) / 2.,
+            };
+            if is_composable {
+                composables.push((
+                    Isometry::<Real>::new(position.into(), f32::to_radians(-object.rotation)),
+                    shared_shape,
+                ));
+            } else {
+                let collider: Collider = shared_shape.into();
+                spawn_infos.push(TiledColliderSpawnInfos {
+                    name: "Avian[ComplexTile]".to_string(),
+                    entity: commands.spawn(collider).id(),
+                    position,
+                    rotation: -object.rotation,
+                });
             }
         }
     }

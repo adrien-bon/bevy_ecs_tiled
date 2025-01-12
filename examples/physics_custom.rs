@@ -38,14 +38,15 @@ struct MyCustomPhysicsBackend;
 // This simple example will just spawn an entity with a `MyCustomPhysicsComponent` Component,
 // at the center of where the Tiled collider is.
 impl TiledPhysicsBackend for MyCustomPhysicsBackend {
-    fn spawn_collider(
+    fn spawn_colliders(
         &self,
         commands: &mut Commands,
         _map: &Map,
-        collider_source: &TiledColliderSource,
+        _filter: &TiledNameFilter,
+        collider: &TiledCollider,
     ) -> Vec<TiledColliderSpawnInfos> {
-        match collider_source.ty {
-            TiledColliderSourceType::Object {
+        match collider {
+            TiledCollider::Object {
                 layer_id: _,
                 object_id: _,
             } => {
@@ -58,7 +59,7 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
                     rotation: 0.,
                 }]
             }
-            TiledColliderSourceType::TilesLayer { layer_id: _ } => {
+            TiledCollider::TilesLayer { layer_id: _ } => {
                 vec![TiledColliderSpawnInfos {
                     name: "Custom[TilesLayer]".to_string(),
                     entity: commands
