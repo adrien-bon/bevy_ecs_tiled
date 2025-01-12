@@ -8,6 +8,8 @@
 - Aggregate tiles colliders together: likely to reduce the overall number of colliders which improves performances (#68)
 - Most of `bevy_ecs_tiled` Components and Resources are now registered in Bevy type registry
 - Properly spawn colliders for `TileOjbect`
+- Add a new debug plugin for tiles position
+- Create a `PluginGroup` to centralize all debug plugins
 
 ### Changed
 

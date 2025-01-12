@@ -15,8 +15,8 @@ fn main() {
         // bevy_ecs_tilemap and bevy_ecs_tiled main plugins
         .add_plugins(TilemapPlugin)
         .add_plugins(TiledMapPlugin::default())
-        // Enable debug informations about Tiled objects position
-        .add_plugins(TiledMapDebugPlugin::default())
+        // Enable debug informations
+        .add_plugins(TiledDebugPluginGroup)
         // Add our systems and run the app!
         .add_systems(Startup, startup)
         .add_systems(Update, switch_map)

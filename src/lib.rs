@@ -28,7 +28,7 @@ pub mod properties;
 /// `bevy_ecs_tiled` public exports.
 pub mod prelude {
     #[cfg(feature = "debug")]
-    pub use super::debug::*;
+    pub use super::debug::prelude::*;
     pub use super::map::prelude::*;
     pub use super::names::*;
     #[cfg(feature = "physics")]
