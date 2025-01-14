@@ -47,6 +47,7 @@ pub(crate) fn process_loaded_maps(
         ),
         Or<(Changed<TiledMapHandle>, With<RespawnTiledMap>)>,
     >,
+    mut event_writers: TiledMapEventWriters,
 ) {
     for (map_entity, map_handle, mut tiled_id_storage, render_settings, tiled_settings) in
         map_query.iter_mut()
@@ -92,6 +93,7 @@ pub(crate) fn process_loaded_maps(
                 render_settings,
                 tiled_settings,
                 &asset_server,
+                &mut event_writers,
             );
 
             // Remove the respawn marker

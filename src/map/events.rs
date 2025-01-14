@@ -4,17 +4,30 @@
 //! More informations in the [dedicated example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/map_events.rs)
 
 use crate::prelude::*;
-use bevy::prelude::*;
+use bevy::{ecs::system::SystemParam, prelude::*};
 use bevy_ecs_tilemap::prelude::*;
 use tiled::{Layer, LayerTile, Map, Object};
 
+#[derive(SystemParam)]
+pub struct TiledMapEventWriters<'w> {
+    pub map_event: EventWriter<'w, TiledMapCreated>,
+    pub layer_event: EventWriter<'w, TiledLayerCreated>,
+    pub object_event: EventWriter<'w, TiledObjectCreated>,
+    pub tile_event: EventWriter<'w, TiledTileCreated>,
+}
+
 /// Event sent when a map is spawned
-#[derive(Event, Clone, Debug, Copy)]
+#[derive(Component, Clone, Debug, Copy)]
 pub struct TiledMapCreated {
     /// Spawned map [Entity]
     pub entity: Entity,
     /// [AssetId] of the [TiledMap]
     pub asset_id: AssetId<TiledMap>,
+}
+
+impl Event for TiledMapCreated {
+    type Traversal = &'static Parent;
+    const AUTO_PROPAGATE: bool = true;
 }
 
 impl<'a> TiledMapCreated {
@@ -30,7 +43,7 @@ impl<'a> TiledMapCreated {
 }
 
 /// Event sent when a layer is spawned
-#[derive(Event, Clone, Debug, Copy)]
+#[derive(Component, Clone, Debug, Copy)]
 pub struct TiledLayerCreated {
     /// Creation event of the map this layer belongs to
     pub map: TiledMapCreated,
@@ -38,6 +51,11 @@ pub struct TiledLayerCreated {
     pub entity: Entity,
     /// ID of this layer in the [Map]
     pub id: usize,
+}
+
+impl Event for TiledLayerCreated {
+    type Traversal = &'static Parent;
+    const AUTO_PROPAGATE: bool = true;
 }
 
 impl<'a> TiledLayerCreated {
@@ -50,14 +68,19 @@ impl<'a> TiledLayerCreated {
 }
 
 /// Event sent when an object is spawned
-#[derive(Event, Clone, Debug, Copy)]
+#[derive(Component, Clone, Debug, Copy)]
 pub struct TiledObjectCreated {
     /// Creation event of the layer this object belongs to
     pub layer: TiledLayerCreated,
     /// Spawned object [Entity]
     pub entity: Entity,
-    /// ID of this layer in the [tiled::ObjectLayer]
+    /// ID of this object in the [tiled::ObjectLayer]
     pub id: usize,
+}
+
+impl Event for TiledObjectCreated {
+    type Traversal = &'static Parent;
+    const AUTO_PROPAGATE: bool = true;
 }
 
 impl<'a> TiledObjectCreated {
@@ -87,7 +110,7 @@ impl<'a> TiledObjectCreated {
 /// Event sent when a tile has finished loading
 ///
 /// This event is only sent for tiles which contain custom properties.
-#[derive(Event, Clone, Debug, Copy)]
+#[derive(Component, Clone, Debug, Copy)]
 pub struct TiledTileCreated {
     /// Creation event of the layer this tile belongs to
     pub layer: TiledLayerCreated,
@@ -100,6 +123,11 @@ pub struct TiledTileCreated {
     pub index: IVec2,
     /// Tile position (bevy_ecs_tilemap referential)
     pub position: TilePos,
+}
+
+impl Event for TiledTileCreated {
+    type Traversal = &'static Parent;
+    const AUTO_PROPAGATE: bool = true;
 }
 
 impl<'a> TiledTileCreated {

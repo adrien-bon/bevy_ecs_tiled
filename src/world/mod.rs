@@ -154,6 +154,7 @@ pub(crate) fn process_loaded_worlds(
         ),
         Or<(Changed<TiledWorldHandle>, With<RespawnTiledWorld>)>,
     >,
+    mut world_event: EventWriter<TiledWorldCreated>,
 ) {
     for (world_entity, world_handle, map_settings, mut world_transform, mut world_storage) in
         world_query.iter_mut()
@@ -214,10 +215,12 @@ pub(crate) fn process_loaded_worlds(
                 ))
                 .remove::<RespawnTiledWorld>();
 
-            commands.trigger(TiledWorldCreated {
+            let event = TiledWorldCreated {
                 entity: world_entity,
                 asset_id: world_handle.0.id(),
-            });
+            };
+            commands.trigger_targets(event.clone(), world_entity);
+            world_event.send(event);
         }
     }
 }

@@ -49,6 +49,7 @@ pub(crate) fn load_map(
     render_settings: &TilemapRenderSettings,
     tiled_settings: &TiledMapSettings,
     asset_server: &Res<AssetServer>,
+    event_writers: &mut TiledMapEventWriters,
 ) {
     commands.entity(map_entity).insert((
         Name::new(format!("TiledMap: {}", tiled_map.map.source.display())),
@@ -189,15 +190,19 @@ pub(crate) fn load_map(
     }
 
     // Send events
-    commands.trigger(map_event);
+    commands.trigger_targets(map_event, map_entity);
+    event_writers.map_event.send(map_event);
     for e in layer_events {
-        commands.trigger(e);
+        commands.trigger_targets(e, map_entity);
+        event_writers.layer_event.send(e);
     }
     for e in object_events {
-        commands.trigger(e);
+        commands.trigger_targets(e, map_entity);
+        event_writers.object_event.send(e);
     }
     for e in special_tile_events {
-        commands.trigger(e);
+        commands.trigger_targets(e, map_entity);
+        event_writers.tile_event.send(e);
     }
 }
 

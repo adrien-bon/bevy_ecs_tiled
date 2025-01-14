@@ -95,17 +95,19 @@ pub struct TiledPhysicsPlugin<T: TiledPhysicsBackend>(std::marker::PhantomData<T
 
 impl<T: TiledPhysicsBackend> Plugin for TiledPhysicsPlugin<T> {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_observer(collider_from_tiles_layer::<T>)
-            .add_observer(collider_from_object::<T>)
-            .register_type::<TiledPhysicsSettings<T>>();
+        app.add_systems(
+            Update,
+            (collider_from_tiles_layer::<T>, collider_from_object::<T>),
+        )
+        .register_type::<TiledPhysicsSettings<T>>();
     }
 }
 
 #[allow(clippy::type_complexity)]
 fn get_physics_settings<T: TiledPhysicsBackend>(
     map_entity: Entity,
-    q_maps: Query<(Option<&Parent>, Option<&TiledPhysicsSettings<T>>), With<TiledMapMarker>>,
-    q_worlds: Query<Option<&TiledPhysicsSettings<T>>, With<TiledWorldMarker>>,
+    q_maps: &Query<(Option<&Parent>, Option<&TiledPhysicsSettings<T>>), With<TiledMapMarker>>,
+    q_worlds: &Query<Option<&TiledPhysicsSettings<T>>, With<TiledWorldMarker>>,
 ) -> TiledPhysicsSettings<T> {
     q_maps
         .get(map_entity)
@@ -126,67 +128,71 @@ fn get_physics_settings<T: TiledPhysicsBackend>(
 
 #[allow(clippy::type_complexity)]
 fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
-    trigger: Trigger<TiledLayerCreated>,
+    mut layer_event: EventReader<TiledLayerCreated>,
     mut commands: Commands,
     map_asset: Res<Assets<TiledMap>>,
     q_maps: Query<(Option<&Parent>, Option<&TiledPhysicsSettings<T>>), With<TiledMapMarker>>,
     q_worlds: Query<Option<&TiledPhysicsSettings<T>>, With<TiledWorldMarker>>,
 ) {
-    let settings = get_physics_settings(trigger.event().map.entity, q_maps, q_worlds);
-    let Some(map) = trigger.event().map.get_map(&map_asset) else {
-        return;
-    };
-    let Some(layer) = trigger.event().get_layer(&map_asset) else {
-        return;
-    };
-    let tiled::LayerType::Tiles(_) = layer.layer_type() else {
-        return;
-    };
+    for ev in layer_event.read() {
+        let settings = get_physics_settings(ev.map.entity, &q_maps, &q_worlds);
+        let Some(map) = ev.map.get_map(&map_asset) else {
+            return;
+        };
+        let Some(layer) = ev.get_layer(&map_asset) else {
+            return;
+        };
+        let tiled::LayerType::Tiles(_) = layer.layer_type() else {
+            return;
+        };
 
-    if TiledNameFilter::from(&settings.tiles_layer_filter).contains(&layer.name) {
-        collider::spawn_colliders(
-            &settings.backend,
-            trigger.event().entity,
-            &mut commands,
-            map,
-            &settings.tiles_objects_filter,
-            &TiledCollider::from_tiles_layer(trigger.event().id),
-        );
+        if TiledNameFilter::from(&settings.tiles_layer_filter).contains(&layer.name) {
+            collider::spawn_colliders(
+                &settings.backend,
+                ev.entity,
+                &mut commands,
+                map,
+                &settings.tiles_objects_filter,
+                &TiledCollider::from_tiles_layer(ev.id),
+            );
+        }
     }
 }
 
 #[allow(clippy::type_complexity)]
 fn collider_from_object<T: TiledPhysicsBackend>(
-    trigger: Trigger<TiledObjectCreated>,
+    mut object_event: EventReader<TiledObjectCreated>,
     mut commands: Commands,
     map_asset: Res<Assets<TiledMap>>,
     q_maps: Query<(Option<&Parent>, Option<&TiledPhysicsSettings<T>>), With<TiledMapMarker>>,
     q_worlds: Query<Option<&TiledPhysicsSettings<T>>, With<TiledWorldMarker>>,
 ) {
-    let settings = get_physics_settings(trigger.event().layer.map.entity, q_maps, q_worlds);
-    let Some(map) = trigger.event().layer.map.get_map(&map_asset) else {
-        return;
-    };
-    let Some(layer) = trigger.event().layer.get_layer(&map_asset) else {
-        return;
-    };
-    let Some(object) = trigger.event().get_object(&map_asset) else {
-        return;
-    };
+    for ev in object_event.read() {
+        let settings = get_physics_settings(ev.layer.map.entity, &q_maps, &q_worlds);
+        let Some(map) = ev.layer.map.get_map(&map_asset) else {
+            return;
+        };
+        let Some(layer) = ev.layer.get_layer(&map_asset) else {
+            return;
+        };
+        let Some(object) = ev.get_object(&map_asset) else {
+            return;
+        };
 
-    if TiledNameFilter::from(&settings.objects_layer_filter).contains(&layer.name)
-        && TiledNameFilter::from(&settings.objects_filter).contains(&object.name)
-    {
-        collider::spawn_colliders(
-            &settings.backend,
-            trigger.event().entity,
-            &mut commands,
-            map,
-            match object.get_tile() {
-                Some(_) => &settings.tiles_objects_filter,
-                None => &TiledName::All,
-            },
-            &TiledCollider::from_object(trigger.event().layer.id, trigger.event().id),
-        );
+        if TiledNameFilter::from(&settings.objects_layer_filter).contains(&layer.name)
+            && TiledNameFilter::from(&settings.objects_filter).contains(&object.name)
+        {
+            collider::spawn_colliders(
+                &settings.backend,
+                ev.entity,
+                &mut commands,
+                map,
+                match object.get_tile() {
+                    Some(_) => &settings.tiles_objects_filter,
+                    None => &TiledName::All,
+                },
+                &TiledCollider::from_object(ev.layer.id, ev.id),
+            );
+        }
     }
 }

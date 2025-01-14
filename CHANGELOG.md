@@ -30,6 +30,7 @@
 - Update TiledPhysicsBackend::spawn_colliders signature so it can now take an object name filter
 - Add back the possibility to filter out individual tile object colliders based upon their name
 - Change the way we retrieve `PhysicsSettings` so we don't require to get the map event first
+- Replace global observers with an entity scoped observer + a global event writer
 
 ## v0.5.1
 

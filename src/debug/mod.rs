@@ -9,9 +9,9 @@ pub mod objects;
 pub mod tiles;
 
 pub mod prelude {
-    pub use super::TiledDebugPluginGroup;
     pub use super::objects::*;
     pub use super::tiles::*;
+    pub use super::TiledDebugPluginGroup;
 }
 
 pub struct TiledDebugPluginGroup;

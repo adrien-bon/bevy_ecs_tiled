@@ -1,6 +1,9 @@
 use crate::prelude::*;
 use bevy::{color::palettes::css::FUCHSIA, prelude::*};
-use bevy_ecs_tilemap::{map::{TilemapGridSize, TilemapType}, tiles::TilePos};
+use bevy_ecs_tilemap::{
+    map::{TilemapGridSize, TilemapType},
+    tiles::TilePos,
+};
 
 #[derive(Resource, Clone)]
 pub struct TiledDebugTilesConfig {
@@ -48,11 +51,7 @@ fn draw_tile_infos(
             TextColor(config.color),
             config.font.clone(),
             TextLayout::new_with_justify(JustifyText::Center),
-            Transform::from_translation(Vec3::new(
-                pos.x,
-                pos.y,
-                config.z_offset,
-            )),
+            Transform::from_translation(Vec3::new(pos.x, pos.y, config.z_offset)),
         ));
     }
 }

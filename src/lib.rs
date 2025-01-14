@@ -133,7 +133,12 @@ impl Plugin for TiledMapPlugin {
             .register_type::<TiledAnimation>()
             .register_type::<TiledWorldHandle>()
             .register_type::<TiledWorldSettings>()
-            .register_type::<TiledWorldStorage>();
+            .register_type::<TiledWorldStorage>()
+            .add_event::<TiledWorldCreated>()
+            .add_event::<TiledMapCreated>()
+            .add_event::<TiledLayerCreated>()
+            .add_event::<TiledObjectCreated>()
+            .add_event::<TiledTileCreated>();
 
         #[cfg(feature = "user_properties")]
         app.add_systems(Startup, map::export_types);
