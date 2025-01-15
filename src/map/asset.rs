@@ -27,25 +27,29 @@ use bevy_ecs_tilemap::prelude::*;
 pub struct TiledMap {
     /// The raw Tiled map
     pub map: tiled::Map,
-
     /// HashMap of the map tilesets.
     ///
     /// Key is the Tiled tileset index.
-    /// Value is a tuple of a boolean saying if this tileset can be used for tiles layer
-    /// and the tileset texture (ie. a single image or a collection of images)
-    /// A tileset can be used for tiles layer only if all the images it contains have the
-    /// same dimensions (restriction from bevy_ecs_tilemap).
-    pub tilemap_textures: HashMap<usize, (bool, TilemapTexture)>,
-
+    pub tilesets: HashMap<usize, TiledMapTileset>,
+    /// Map properties
     #[cfg(feature = "user_properties")]
     pub(crate) properties: DeserializedMapProperties,
+}
 
+#[derive(Default)]
+pub struct TiledMapTileset {
+    /// Does this tileset can be used for tiles layer ?
+    ///
+    /// A tileset can be used for tiles layer only if all the images it contains have the
+    /// same dimensions (restriction from bevy_ecs_tilemap).
+    pub usable_for_tiles_layer: bool,
+    /// Tileset texture (ie. a single image or an images collection)
+    pub tilemap_texture: TilemapTexture,
+    /// The [TextureAtlasLayout] handle associated to each tileset, if any.
+    pub texture_atlas_layout_handle: Option<Handle<TextureAtlasLayout>>,
     /// The offset into the tileset_images for each tile id within each tileset.
     #[cfg(not(feature = "atlas"))]
-    pub tile_image_offsets: HashMap<(usize, tiled::TileId), u32>,
-
-    /// The [TextureAtlasLayout] handles associated to each tileset.
-    pub texture_atlas_layout: HashMap<usize, Handle<TextureAtlasLayout>>,
+    pub tile_image_offsets: HashMap<tiled::TileId, u32>,
 }
 
 pub(crate) struct TiledMapLoader {
@@ -101,12 +105,15 @@ impl AssetLoader for TiledMapLoader {
             })?
         };
 
-        let mut tilemap_textures = HashMap::default();
-        let mut texture_atlas_layout = HashMap::default();
-        #[cfg(not(feature = "atlas"))]
-        let mut tile_image_offsets = HashMap::default();
-
+        let mut tilesets = HashMap::default();
         for (tileset_index, tileset) in map.tilesets().iter().enumerate() {
+            debug!(
+                "Loading tileset (index={:?} name={:?}) from {:?}",
+                tileset_index, tileset.name, tileset.source
+            );
+            let mut texture_atlas_layout_handle = None;
+            #[cfg(not(feature = "atlas"))]
+            let mut tile_image_offsets = HashMap::default();
             let (usable_for_tiles_layer, tilemap_texture) = match &tileset.image {
                 None => {
                     #[cfg(feature = "atlas")]
@@ -125,15 +132,20 @@ impl AssetLoader for TiledMapLoader {
                                 let asset_path = AssetPath::from(img.source.clone());
                                 debug!("Loading tile image from {asset_path:?} as image ({tileset_index}, {tile_id})");
                                 let texture: Handle<Image> = load_context.load(asset_path.clone());
-                                tile_image_offsets
-                                    .insert((tileset_index, tile_id), tile_images.len() as u32);
+                                tile_image_offsets.insert(tile_id, tile_images.len() as u32);
                                 tile_images.push(texture.clone());
-                                if let Some(image_size) = image_size {
-                                    if img.width != image_size.0 || img.height != image_size.1 {
-                                        usable_for_tiles_layer = false;
+                                if usable_for_tiles_layer {
+                                    if let Some(image_size) = image_size {
+                                        if img.width != image_size.0 || img.height != image_size.1 {
+                                            debug!(
+                                                "Tileset (index={:?}) have non constant image size and cannot be used for tiles layer",
+                                                tileset_index
+                                            );
+                                            usable_for_tiles_layer = false;
+                                        }
+                                    } else {
+                                        image_size = Some((img.width, img.height));
                                     }
-                                } else {
-                                    image_size = Some((img.width, img.height));
                                 }
                             }
                         }
@@ -157,24 +169,25 @@ impl AssetLoader for TiledMapLoader {
                                 tileset.offset_y as u32 + tileset.margin,
                             )),
                         );
-                        let atlas_handle = load_context.add_loaded_labeled_asset(
+                        texture_atlas_layout_handle = Some(load_context.add_loaded_labeled_asset(
                             tileset.name.clone(),
                             LoadedAsset::from(layout),
-                        );
-                        texture_atlas_layout.insert(tileset_index, atlas_handle);
+                        ));
                     }
 
                     (true, TilemapTexture::Single(texture.clone()))
                 }
             };
-
-            if !usable_for_tiles_layer {
-                warn!(
-                    "Tileset (index={:?}) cannot be used for tiles layer",
-                    tileset_index
-                );
-            }
-            tilemap_textures.insert(tileset_index, (usable_for_tiles_layer, tilemap_texture));
+            tilesets.insert(
+                tileset_index,
+                TiledMapTileset {
+                    usable_for_tiles_layer,
+                    tilemap_texture,
+                    texture_atlas_layout_handle,
+                    #[cfg(not(feature = "atlas"))]
+                    tile_image_offsets,
+                },
+            );
         }
 
         #[cfg(feature = "user_properties")]
@@ -186,12 +199,9 @@ impl AssetLoader for TiledMapLoader {
 
         let asset_map = TiledMap {
             map,
-            tilemap_textures,
+            tilesets,
             #[cfg(feature = "user_properties")]
             properties,
-            #[cfg(not(feature = "atlas"))]
-            tile_image_offsets,
-            texture_atlas_layout,
         };
 
         debug!("Loaded map '{}'", load_context.path().display());

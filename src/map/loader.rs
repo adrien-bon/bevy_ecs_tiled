@@ -223,14 +223,12 @@ fn load_tiles_layer(
     // tilesets on each layer and allows differently-sized tile images in each tileset,
     // this means we need to load each combination of tileset and layer separately.
     for (tileset_index, tileset) in tiled_map.map.tilesets().iter().enumerate() {
-        let Some((usable_for_tiles_layer, tilemap_texture)) =
-            tiled_map.tilemap_textures.get(&tileset_index)
-        else {
+        let Some(t) = tiled_map.tilesets.get(&tileset_index) else {
             log::warn!("Skipped creating layer with missing tilemap textures.");
             continue;
         };
 
-        if !usable_for_tiles_layer {
+        if !t.usable_for_tiles_layer {
             continue;
         }
 
@@ -258,7 +256,7 @@ fn load_tiles_layer(
                 layer_for_tileset_entity,
                 &layer_data,
                 tileset_index,
-                tilemap_texture,
+                &t.tilemap_texture,
                 entity_map,
                 event_list,
             ),
@@ -270,7 +268,7 @@ fn load_tiles_layer(
                     layer_for_tileset_entity,
                     &layer_data,
                     tileset_index,
-                    tilemap_texture,
+                    &t.tilemap_texture,
                     entity_map,
                     event_list,
                 );
@@ -289,7 +287,7 @@ fn load_tiles_layer(
                 grid_size,
                 size: _map_size,
                 storage: _tile_storage,
-                texture: tilemap_texture.clone(),
+                texture: t.tilemap_texture.clone(),
                 tile_size: TilemapTileSize {
                     x: tileset.tile_width as f32,
                     y: tileset.tile_height as f32,
@@ -349,7 +347,7 @@ fn load_finite_tiles_layer(
                 TilemapTexture::Single(_) => layer_tile.id(),
                 #[cfg(not(feature = "atlas"))]
                 TilemapTexture::Vector(_) =>
-                    *tiled_map.tile_image_offsets.get(&(tileset_index, layer_tile.id()))
+                    *tiled_map.tilesets.get(&tileset_index).and_then(|t| t.tile_image_offsets.get(&layer_tile.id()))
                         .expect("The offset into to image vector should have been saved during the initial load."),
                 #[cfg(not(feature = "atlas"))]
                 _ => unreachable!()
@@ -472,7 +470,7 @@ fn load_infinite_tiles_layer(
                     TilemapTexture::Single(_) => layer_tile.id(),
                     #[cfg(not(feature = "atlas"))]
                     TilemapTexture::Vector(_) =>
-                        *_tiled_map.tile_image_offsets.get(&(tileset_index, layer_tile.id()))
+                        *_tiled_map.tilesets.get(&tileset_index).and_then(|t| t.tile_image_offsets.get(&layer_tile.id()))
                             .expect("The offset into to image vector should have been saved during the initial load."),
                     #[cfg(not(feature = "atlas"))]
                     _ => unreachable!()
@@ -559,14 +557,14 @@ fn load_objects_layer(
         if let Some(tile) = object_data.get_tile() {
             match tile.tileset_location() {
                 TilesetLocation::Map(tileset_index) => {
-                    sprite = tiled_map.tilemap_textures.get(tileset_index).and_then(|(_ , texture)| {
-                        match texture {
+                    sprite = tiled_map.tilesets.get(tileset_index).and_then(|t| {
+                        match &t.tilemap_texture {
                             TilemapTexture::Single(single) => {
-                                tiled_map.texture_atlas_layout.get(tileset_index).map(|atlas| {
+                                t.texture_atlas_layout_handle.as_ref().map(|handle| {
                                     Sprite {
                                         image: single.clone(),
                                         texture_atlas: Some(TextureAtlas {
-                                            layout: atlas.clone(),
+                                            layout: handle.clone(),
                                             index: tile.id() as usize,
                                         }),
                                         anchor: Anchor::BottomLeft,
@@ -576,7 +574,7 @@ fn load_objects_layer(
                             },
                             #[cfg(not(feature = "atlas"))]
                             TilemapTexture::Vector(vector) => {
-                                let index = *tiled_map.tile_image_offsets.get(&(*tileset_index, tile.id()))
+                                let index = *t.tile_image_offsets.get(&tile.id())
                                     .expect("The offset into to image vector should have been saved during the initial load.");
                                 vector.get(index as usize).map(|image| {
                                     Sprite {

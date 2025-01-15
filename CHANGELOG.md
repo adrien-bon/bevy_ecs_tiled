@@ -31,6 +31,7 @@
 - Add back the possibility to filter out individual tile object colliders based upon their name
 - Change the way we retrieve `PhysicsSettings` so we don't require to get the map event first
 - Replace global observers with an entity scoped observer + a global event writer
+- Rework how we store tileset data in `TiledMap`
 
 ## v0.5.1
 

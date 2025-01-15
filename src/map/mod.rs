@@ -51,8 +51,7 @@ pub(crate) fn build(app: &mut bevy::prelude::App) {
                 process_loaded_maps,
                 animate_tiled_sprites,
             ),
-        )
-    ;
+        );
 
     #[cfg(feature = "user_properties")]
     app.add_systems(Startup, export_types);
