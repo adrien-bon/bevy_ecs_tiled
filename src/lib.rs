@@ -34,43 +34,13 @@ pub mod prelude {
     #[cfg(feature = "physics")]
     pub use super::physics::prelude::*;
     pub use super::world::prelude::*;
-    pub use crate::TiledMapHandle;
     pub use crate::TiledMapPlugin;
     pub use crate::TiledMapPluginConfig;
-    pub use crate::TiledWorldHandle;
 }
 
 use crate::prelude::*;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::prelude::*;
 use std::{env, path::PathBuf};
-
-/// Wrapper around the [Handle] to the `.tmx` file representing the [TiledMap].
-///
-/// This is the main [Component] that must be spawned to load a Tiled map.
-#[derive(Component, Reflect)]
-#[require(
-    TiledMapStorage,
-    TiledMapSettings,
-    TilemapRenderSettings,
-    Visibility,
-    Transform
-)]
-pub struct TiledMapHandle(pub Handle<TiledMap>);
-
-/// Wrapper around the [Handle] to the `.world` file representing the [TiledWorld].
-///
-/// This is the main [Component] that must be spawned to load a Tiled world.
-#[derive(Component, Reflect)]
-#[require(
-    TiledWorldStorage,
-    TiledWorldSettings,
-    TiledMapSettings,
-    TilemapRenderSettings,
-    Visibility,
-    Transform
-)]
-pub struct TiledWorldHandle(pub Handle<TiledWorld>);
 
 /// [TiledMapPlugin] [Plugin] global configuration.
 #[allow(dead_code)]
@@ -109,38 +79,9 @@ pub struct TiledMapPlugin(pub TiledMapPluginConfig);
 
 impl Plugin for TiledMapPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.init_asset::<TiledMap>()
-            .init_asset::<TiledWorld>()
-            .insert_resource(cache::TiledResourceCache::new())
-            .init_asset_loader::<TiledMapLoader>()
-            .init_asset_loader::<TiledWorldLoader>()
-            .add_systems(
-                Update,
-                (
-                    map::handle_map_events,
-                    map::process_loaded_maps,
-                    map::animate_tiled_sprites,
-                    world::handle_world_events,
-                    world::process_loaded_worlds,
-                    world::world_chunking,
-                ),
-            )
-            .insert_resource(self.0.clone())
-            .register_type::<TiledMapHandle>()
-            .register_type::<TiledMapPluginConfig>()
-            .register_type::<TiledMapSettings>()
-            .register_type::<TiledMapStorage>()
-            .register_type::<TiledAnimation>()
-            .register_type::<TiledWorldHandle>()
-            .register_type::<TiledWorldSettings>()
-            .register_type::<TiledWorldStorage>()
-            .add_event::<TiledWorldCreated>()
-            .add_event::<TiledMapCreated>()
-            .add_event::<TiledLayerCreated>()
-            .add_event::<TiledObjectCreated>()
-            .add_event::<TiledTileCreated>();
-
-        #[cfg(feature = "user_properties")]
-        app.add_systems(Startup, map::export_types);
+        app.insert_resource(cache::TiledResourceCache::new())
+            .insert_resource(self.0.clone());
+        map::build(app);
+        world::build(app);
     }
 }

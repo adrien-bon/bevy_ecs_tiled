@@ -12,14 +12,54 @@ pub mod prelude {
     pub use super::components::*;
     pub use super::events::*;
     pub use super::utils::*;
+    pub use super::TiledMapHandle;
 }
 
 use crate::{cache::TiledResourceCache, prelude::*};
 use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 use bevy_ecs_tilemap::prelude::*;
 
+/// Wrapper around the [Handle] to the `.tmx` file representing the [TiledMap].
+///
+/// This is the main [Component] that must be spawned to load a Tiled map.
+#[derive(Component, Reflect)]
+#[require(
+    TiledMapStorage,
+    TiledMapSettings,
+    TilemapRenderSettings,
+    Visibility,
+    Transform
+)]
+pub struct TiledMapHandle(pub Handle<TiledMap>);
+
+pub(crate) fn build(app: &mut bevy::prelude::App) {
+    app.init_asset::<TiledMap>()
+        .init_asset_loader::<TiledMapLoader>()
+        .register_type::<TiledMapHandle>()
+        .register_type::<TiledMapPluginConfig>()
+        .register_type::<TiledMapSettings>()
+        .register_type::<TiledMapStorage>()
+        .register_type::<TiledAnimation>()
+        .add_event::<TiledMapCreated>()
+        .add_event::<TiledLayerCreated>()
+        .add_event::<TiledObjectCreated>()
+        .add_event::<TiledTileCreated>()
+        .add_systems(
+            Update,
+            (
+                handle_map_events,
+                process_loaded_maps,
+                animate_tiled_sprites,
+            ),
+        )
+    ;
+
+    #[cfg(feature = "user_properties")]
+    app.add_systems(Startup, export_types);
+}
+
 #[cfg(feature = "user_properties")]
-pub(crate) fn export_types(reg: Res<AppTypeRegistry>, config: Res<TiledMapPluginConfig>) {
+fn export_types(reg: Res<AppTypeRegistry>, config: Res<TiledMapPluginConfig>) {
     use std::{fs::File, io::BufWriter, ops::Deref};
     if let Some(path) = &config.tiled_types_export_file {
         info!("Export Tiled types to '{:?}'", path);
@@ -33,7 +73,7 @@ pub(crate) fn export_types(reg: Res<AppTypeRegistry>, config: Res<TiledMapPlugin
 
 /// System to spawn a map once it has been fully loaded.
 #[allow(clippy::type_complexity)]
-pub(crate) fn process_loaded_maps(
+fn process_loaded_maps(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     maps: Res<Assets<TiledMap>>,
@@ -103,7 +143,7 @@ pub(crate) fn process_loaded_maps(
 }
 
 /// System to update maps as they are changed or removed.
-pub(crate) fn handle_map_events(
+fn handle_map_events(
     mut commands: Commands,
     mut map_events: EventReader<AssetEvent<TiledMap>>,
     map_query: Query<(Entity, &TiledMapHandle)>,
@@ -146,7 +186,7 @@ fn remove_layers(commands: &mut Commands, tiled_id_storage: &mut TiledMapStorage
     tiled_id_storage.tiles.clear();
 }
 
-pub(crate) fn animate_tiled_sprites(
+fn animate_tiled_sprites(
     time: Res<Time>,
     mut sprite_query: Query<(&mut TiledAnimation, &mut Sprite)>,
 ) {

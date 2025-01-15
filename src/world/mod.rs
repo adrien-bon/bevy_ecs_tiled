@@ -9,13 +9,41 @@ pub mod prelude {
     pub use super::asset::*;
     pub use super::components::*;
     pub use super::events::*;
+    pub use super::TiledWorldHandle;
 }
 
 use crate::prelude::*;
 use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 use bevy_ecs_tilemap::map::TilemapRenderSettings;
 
-pub(crate) fn world_chunking(
+/// Wrapper around the [Handle] to the `.world` file representing the [TiledWorld].
+///
+/// This is the main [Component] that must be spawned to load a Tiled world.
+#[derive(Component, Reflect)]
+#[require(
+    TiledWorldStorage,
+    TiledWorldSettings,
+    TiledMapSettings,
+    TilemapRenderSettings,
+    Visibility,
+    Transform
+)]
+pub struct TiledWorldHandle(pub Handle<TiledWorld>);
+
+pub(crate) fn build(app: &mut bevy::prelude::App) {
+    app.init_asset::<TiledWorld>()
+        .init_asset_loader::<TiledWorldLoader>()
+        .register_type::<TiledWorldHandle>()
+        .register_type::<TiledWorldSettings>()
+        .register_type::<TiledWorldStorage>()
+        .add_event::<TiledWorldCreated>()
+        .add_systems(
+            Update,
+            (handle_world_events, process_loaded_worlds, world_chunking),
+        );
+}
+
+fn world_chunking(
     camera_query: Query<&Transform, (With<Camera>, Changed<Transform>)>,
     worlds: Res<Assets<TiledWorld>>,
     asset_server: Res<AssetServer>,
@@ -140,7 +168,7 @@ pub(crate) fn world_chunking(
 
 /// System to spawn a world once it has been fully loaded.
 #[allow(clippy::type_complexity)]
-pub(crate) fn process_loaded_worlds(
+fn process_loaded_worlds(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     worlds: Res<Assets<TiledWorld>>,
@@ -226,7 +254,7 @@ pub(crate) fn process_loaded_worlds(
 }
 
 /// System to update worlds as they are changed or removed.
-pub(crate) fn handle_world_events(
+fn handle_world_events(
     mut commands: Commands,
     mut world_events: EventReader<AssetEvent<TiledWorld>>,
     world_query: Query<(Entity, &TiledWorldHandle)>,
