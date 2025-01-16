@@ -29,7 +29,7 @@ render = ["bevy_ecs_tilemap/render"]
 serde = ["bevy_ecs_tilemap/serde"]
 
 # Debug
-debug = ["bevy/bevy_gizmos"]
+debug = ["bevy/bevy_gizmos", "bevy/bevy_text"]
 
 # Physics
 physics = []
