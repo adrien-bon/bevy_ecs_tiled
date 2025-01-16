@@ -1,11 +1,9 @@
-//! This module contains some tools to help you debug your application.
-//!
-//! You need to enable the `debug` feature to use it.
-//!
+//! Debug plugin for objects
+
 use crate::prelude::*;
 use bevy::{color::palettes::css::RED, prelude::*};
 
-/// Debug [Gizmos] configuration
+/// Configuration for the [TiledDebugObjectsPlugin]
 ///
 /// Contains some settings to customize how the `arrow_2d` [Gizmos] will appear.
 #[derive(Resource, Clone)]
@@ -25,9 +23,9 @@ impl Default for TiledDebugObjectsConfig {
     }
 }
 
-/// `bevy_ecs_tiled` debug `Plugin`
+/// `bevy_ecs_tiled` debug `Plugin` for objects positions.
 ///
-/// In case you want to debug your application, you should add this plugin:
+/// In case you want to debug where your Tiled objects are actually spawned, you can use this plugin:
 /// ```rust,no_run
 /// use bevy::prelude::*;
 /// use bevy_ecs_tiled::prelude::*;
@@ -48,11 +46,11 @@ impl Plugin for TiledDebugObjectsPlugin {
 }
 
 fn draw_debug_arrow(
-    q_objects: Query<&GlobalTransform, With<TiledMapObject>>,
+    objects_query: Query<&GlobalTransform, With<TiledMapObject>>,
     config: Res<TiledDebugObjectsConfig>,
     mut gizmos: Gizmos,
 ) {
-    for transform in q_objects.iter() {
+    for transform in objects_query.iter() {
         let pos = Vec2::new(transform.translation().x, transform.translation().y);
         gizmos.arrow_2d(pos + config.arrow_length, pos, config.color);
     }
