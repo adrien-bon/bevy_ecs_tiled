@@ -13,7 +13,7 @@ pub struct TiledWorldSettings {
     /// If this value is None, we won't perform chunking: all maps from this world will just be loaded
     /// If this value is set, defines the area (in pixel) around each [Camera] where we should spawn a
     /// map if it overlaps with its associated [Rect].
-    pub chunking: Option<(u32, u32)>,
+    pub chunking: Option<Vec2>,
 }
 
 /// Marker [Component] for a Tiled world.

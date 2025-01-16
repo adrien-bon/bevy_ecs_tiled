@@ -43,7 +43,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
         TiledWorldSettings {
-            chunking: Some((200, 200)),
+            chunking: Some(Vec2::new(200., 200.)),
         },
     ));
 
@@ -51,14 +51,14 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn((
             Text::new("[W/A/S/D] Pan [Z/X] Zoom [+/-] Chunking: "),
             TextFont {
-                font_size: 24.0,
+                font_size: 24.,
                 ..default()
             },
         ))
         .with_child((
             TextSpan::default(),
             TextFont {
-                font_size: 24.0,
+                font_size: 24.,
                 ..default()
             },
             HelperText,
@@ -72,17 +72,23 @@ fn input(mut settings: Query<&mut TiledWorldSettings>, keys: Res<ButtonInput<Key
 
     if keys.pressed(KeyCode::Minus) {
         // Decrease the chunking size
-        if let Some((width, height)) = settings.chunking {
-            if (width as i32 - STEP_SIZE as i32) > 0 {
-                settings.chunking = Some((width - STEP_SIZE, height - STEP_SIZE));
+        if let Some(chunking) = settings.chunking {
+            if (chunking.x - STEP_SIZE as f32) > 0. {
+                settings.chunking = Some(Vec2::new(
+                    chunking.x - STEP_SIZE as f32,
+                    chunking.y - STEP_SIZE as f32,
+                ));
             }
         }
     }
 
     if keys.pressed(KeyCode::Equal) {
-        if let Some((width, height)) = settings.chunking {
-            if width < u32::MAX - STEP_SIZE {
-                settings.chunking = Some((width + STEP_SIZE, height + STEP_SIZE));
+        if let Some(chunking) = settings.chunking {
+            if chunking.x < f32::MAX - STEP_SIZE as f32 {
+                settings.chunking = Some(Vec2::new(
+                    chunking.x + STEP_SIZE as f32,
+                    chunking.y + STEP_SIZE as f32,
+                ));
             }
         }
     }
@@ -97,10 +103,8 @@ fn text_update_system(
     };
 
     for mut span in &mut query {
-        span.0 = settings
-            .chunking
-            .map_or(String::from("None"), |(width, height)| {
-                format!("{}x{}", width, height)
-            });
+        span.0 = settings.chunking.map_or(String::from("None"), |chunking| {
+            format!("{}x{}", chunking.x, chunking.y)
+        });
     }
 }

@@ -43,20 +43,24 @@ pub(crate) fn build(app: &mut bevy::prelude::App) {
         );
 }
 
+#[allow(clippy::type_complexity)]
 fn world_chunking(
     camera_query: Query<&Transform, (With<Camera>, Changed<Transform>)>,
     worlds: Res<Assets<TiledWorld>>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    mut world_query: Query<(
-        Entity,
-        &TiledWorldHandle,
-        &GlobalTransform,
-        &TiledWorldSettings,
-        &TiledMapSettings,
-        &TilemapRenderSettings,
-        &mut TiledWorldStorage,
-    )>,
+    mut world_query: Query<
+        (
+            Entity,
+            &TiledWorldHandle,
+            &GlobalTransform,
+            &TiledWorldSettings,
+            &TiledMapSettings,
+            &TilemapRenderSettings,
+            &mut TiledWorldStorage,
+        ),
+        With<TiledWorldMarker>,
+    >,
 ) {
     for (
         world_entity,
@@ -94,10 +98,10 @@ fn world_chunking(
             // Check which map is visible by testing them against each camera (if there are multiple)
             for camera_transform in camera_query.iter() {
                 let chunk_view = Rect::new(
-                    camera_transform.translation.x - chunking.0 as f32,
-                    camera_transform.translation.y - chunking.1 as f32,
-                    camera_transform.translation.x + chunking.0 as f32,
-                    camera_transform.translation.y + chunking.1 as f32,
+                    camera_transform.translation.x - chunking.x,
+                    camera_transform.translation.y - chunking.y,
+                    camera_transform.translation.x + chunking.x,
+                    camera_transform.translation.y + chunking.y,
                 );
                 for (idx, (rect, _)) in tiled_world.maps.iter().enumerate() {
                     // If map rect does not overlap at all with the chunk_view, it is not visible
