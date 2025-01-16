@@ -30,6 +30,6 @@ fn setup_help_text(mut commands: Commands) {
         .with_children(|builder| {
             builder.spawn(Text("Pan camera: [W/A/S/D]".to_string()));
             builder.spawn(Text("Zoom camera: [Z/X]".to_string()));
-            builder.spawn(Text("Rotate map: [Q/E]".to_string()));
+            builder.spawn(Text("Rotate map / world: [Q/E]".to_string()));
         });
 }
