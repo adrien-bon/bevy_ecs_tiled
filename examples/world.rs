@@ -52,7 +52,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands
         .spawn((
-            Text::new("[W/A/S/D] Pan [Z/X] Zoom [+/-] Chunking: "),
+            Text::new("[+/-] Chunking: "),
             TextFont {
                 font_size: 24.,
                 ..default()
