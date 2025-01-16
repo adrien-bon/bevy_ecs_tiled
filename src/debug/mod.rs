@@ -7,10 +7,12 @@ use bevy::app::{PluginGroup, PluginGroupBuilder};
 
 pub mod objects;
 pub mod tiles;
+pub mod world_chunk;
 
 pub mod prelude {
     pub use super::objects::*;
     pub use super::tiles::*;
+    pub use super::world_chunk::*;
     pub use super::TiledDebugPluginGroup;
 }
 
@@ -21,5 +23,6 @@ impl PluginGroup for TiledDebugPluginGroup {
         PluginGroupBuilder::start::<Self>()
             .add(objects::TiledDebugObjectsPlugin::default())
             .add(tiles::TiledDebugTilesPlugin::default())
+            .add(world_chunk::TiledDebugWorldChunkPlugin::default())
     }
 }

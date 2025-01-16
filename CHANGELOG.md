@@ -10,6 +10,7 @@
 - Properly spawn colliders for `TileOjbect`
 - Add a new debug plugin for tiles position
 - Create a `PluginGroup` to centralize all debug plugins
+- Add a new debug plugin to visualize world chunking
 
 ### Changed
 
