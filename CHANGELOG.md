@@ -10,7 +10,8 @@
 - Properly spawn colliders for `TileOjbect`
 - Add a new debug plugin for tiles position
 - Create a `PluginGroup` to centralize all debug plugins
-- Add a new debug plugin to visualize world chunking
+- Add a new debug plugin to visualize world chunking and map AABB
+- Properly handle world chunking with a non null rotation
 
 ### Changed
 

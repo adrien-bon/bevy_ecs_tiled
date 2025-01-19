@@ -13,7 +13,11 @@ pub mod prelude {
 }
 
 use crate::prelude::*;
-use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
+use bevy::{
+    asset::RecursiveDependencyLoadState,
+    math::bounding::{Aabb2d, IntersectsVolume},
+    prelude::*,
+};
 use bevy_ecs_tilemap::map::TilemapRenderSettings;
 
 /// Wrapper around the [Handle] to the `.world` file representing the [TiledWorld].
@@ -85,36 +89,29 @@ fn world_chunking(
             continue;
         };
 
-        let world_position = Vec2::new(
-            world_transform.translation().x,
-            world_transform.translation().y,
-        );
-
         let mut to_remove = Vec::new();
         let mut to_spawn = Vec::new();
 
         if let Some(chunking) = world_settings.chunking {
             let mut visible_maps = Vec::new();
+            let cameras: Vec<Aabb2d> = camera_query
+                .iter()
+                .map(|transform| {
+                    Aabb2d::new(
+                        Vec2::new(transform.translation.x, transform.translation.y),
+                        chunking,
+                    )
+                })
+                .collect();
             // Check which map is visible by testing them against each camera (if there are multiple)
-            for camera_transform in camera_query.iter() {
-                let chunk_view = Rect::new(
-                    camera_transform.translation.x - chunking.x,
-                    camera_transform.translation.y - chunking.y,
-                    camera_transform.translation.x + chunking.x,
-                    camera_transform.translation.y + chunking.y,
-                );
-                for (idx, (rect, _)) in tiled_world.maps.iter().enumerate() {
-                    // If map rect does not overlap at all with the chunk_view, it is not visible
-                    if rect.min.x + world_position.x > chunk_view.max.x
-                        || rect.min.y + world_position.y > chunk_view.max.y
-                        || rect.max.x + world_position.x < chunk_view.min.x
-                        || rect.max.y + world_position.y < chunk_view.min.y
-                    {
-                        continue;
+            // If map aabb overlaps with the camera_view, it is visible
+            for_each_map(tiled_world, world_transform, |idx, aabb| {
+                for c in cameras.iter() {
+                    if aabb.intersects(c) {
+                        visible_maps.push(idx);
                     }
-                    visible_maps.push(idx);
                 }
-            }
+            });
 
             // All the maps that are visible but not already spawned should be spawned
             for idx in visible_maps.iter() {
@@ -291,4 +288,31 @@ fn remove_maps(commands: &mut Commands, world_storage: &mut TiledWorldStorage) {
         commands.entity(*map_entity).despawn_recursive();
     }
     world_storage.spawned_maps.clear();
+}
+
+pub(crate) fn for_each_map<F: FnMut(usize, Aabb2d)>(
+    tiled_world: &TiledWorld,
+    world_transform: &GlobalTransform,
+    mut f: F,
+) {
+    let (_, r, t) = world_transform.to_scale_rotation_translation();
+    let (axis, mut angle) = r.to_axis_angle();
+    if axis.z < 0. {
+        angle = -angle;
+    }
+    let world_isometry = Isometry2d::new(Vec2::new(t.x, t.y), Rot2::radians(angle));
+    for (idx, (rect, _)) in tiled_world.maps.iter().enumerate() {
+        f(
+            idx,
+            Aabb2d::from_point_cloud(
+                Isometry2d::IDENTITY,
+                &[
+                    world_isometry.transform_point(Vec2::new(rect.min.x, rect.min.y)),
+                    world_isometry.transform_point(Vec2::new(rect.min.x, rect.max.y)),
+                    world_isometry.transform_point(Vec2::new(rect.max.x, rect.max.y)),
+                    world_isometry.transform_point(Vec2::new(rect.max.x, rect.min.y)),
+                ],
+            ),
+        );
+    }
 }
