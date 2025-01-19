@@ -44,14 +44,9 @@ pub(crate) fn build(app: &mut bevy::prelude::App) {
         .add_event::<TiledLayerCreated>()
         .add_event::<TiledObjectCreated>()
         .add_event::<TiledTileCreated>()
-        .add_systems(
-            Update,
-            (
-                handle_map_events,
-                process_loaded_maps,
-                animate_tiled_sprites,
-            ),
-        );
+        .add_systems(PreUpdate, process_loaded_maps)
+        .add_systems(Update, animate_tiled_sprites)
+        .add_systems(PostUpdate, handle_map_events);
 
     #[cfg(feature = "user_properties")]
     app.add_systems(Startup, export_types);
@@ -72,7 +67,7 @@ fn export_types(reg: Res<AppTypeRegistry>, config: Res<TiledMapPluginConfig>) {
 
 /// System to spawn a map once it has been fully loaded.
 #[allow(clippy::type_complexity)]
-fn process_loaded_maps(
+pub(crate) fn process_loaded_maps(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     maps: Res<Assets<TiledMap>>,

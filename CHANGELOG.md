@@ -12,6 +12,7 @@
 - Create a `PluginGroup` to centralize all debug plugins
 - Add a new debug plugin to visualize world chunking and map AABB
 - Properly handle world chunking with a non null rotation
+- Order plugin systems. Instead of doing everything in `Update`, schedule systems that spawn stuff in `PreUpdate` and systems that despawn stuff in `PostUpdate`
 
 ### Changed
 

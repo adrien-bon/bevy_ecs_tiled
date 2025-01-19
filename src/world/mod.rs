@@ -41,9 +41,13 @@ pub(crate) fn build(app: &mut bevy::prelude::App) {
         .register_type::<TiledWorldSettings>()
         .register_type::<TiledWorldStorage>()
         .add_event::<TiledWorldCreated>()
+        .add_systems(PreUpdate, process_loaded_worlds)
         .add_systems(
-            Update,
-            (handle_world_events, process_loaded_worlds, world_chunking),
+            PostUpdate,
+            (
+                world_chunking.before(handle_world_events),
+                handle_world_events,
+            ),
         );
 }
 

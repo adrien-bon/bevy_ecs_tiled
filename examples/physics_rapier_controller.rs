@@ -63,20 +63,28 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Text(
         "Move the ball using arrow keys or try to rotate the map!".to_string(),
     ));
-    commands.spawn(TiledMapHandle(
-        asset_server.load("multiple_layers_with_colliders.tmx"),
-    ));
-
-    // Spawn a simple player-controlled object
-    commands.spawn((
-        RigidBody::Dynamic,
-        PlayerMarker,
-        Name::new("PlayerControlledObject (Rapier physics)"),
-        Collider::ball(10.),
-        Velocity::zero(),
-        GravityScale(GRAVITY_SCALE),
-        Transform::from_xyz(150., 300., 0.0),
-    ));
+    commands
+        .spawn((
+            TiledMapHandle(
+                asset_server.load("multiple_layers_with_colliders.tmx"),
+            ),
+            TiledMapSettings {
+                layer_positioning: LayerPositioning::Centered,
+                ..Default::default()
+            },
+        ))
+        .observe(|_: Trigger<TiledMapCreated>, mut commands: Commands| {
+            // Spawn a simple player-controlled object
+            commands.spawn((
+                RigidBody::Dynamic,
+                PlayerMarker,
+                Name::new("PlayerControlledObject (Rapier physics)"),
+                Collider::ball(10.),
+                Velocity::zero(),
+                GravityScale(GRAVITY_SCALE),
+                Transform::default(),
+            ));
+        });
 }
 
 fn move_player(

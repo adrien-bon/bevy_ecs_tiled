@@ -96,8 +96,11 @@ pub struct TiledPhysicsPlugin<T: TiledPhysicsBackend>(std::marker::PhantomData<T
 impl<T: TiledPhysicsBackend> Plugin for TiledPhysicsPlugin<T> {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_systems(
-            Update,
-            (collider_from_tiles_layer::<T>, collider_from_object::<T>),
+            PreUpdate,
+            (
+                collider_from_tiles_layer::<T>.after(crate::map::process_loaded_maps),
+                collider_from_object::<T>.after(crate::map::process_loaded_maps),
+            ),
         )
         .register_type::<TiledPhysicsSettings<T>>();
     }
