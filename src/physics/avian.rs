@@ -66,19 +66,20 @@ impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
                             spawn_infos.push(TiledColliderSpawnInfos {
                                 name: "Avian[ComposedTile]".to_string(),
                                 entity: commands.spawn(collider).id(),
-                                position: Vec2::ZERO,
-                                rotation: 0.,
+                                transform: Transform::default(),
                             });
                         }
                         Some(spawn_infos)
                     }),
                     None => get_position_and_shape(&object.shape).map(|(pos, shared_shape, _)| {
                         let collider: Collider = shared_shape.into();
+                        let iso = Isometry3d::from_rotation(Quat::from_rotation_z(
+                            f32::to_radians(-object.rotation),
+                        )) * Isometry3d::from_xyz(pos.x, pos.y, 0.);
                         vec![TiledColliderSpawnInfos {
                             name: format!("Avian[Object={}]", object.name),
                             entity: commands.spawn(collider).id(),
-                            position: pos,
-                            rotation: -object.rotation,
+                            transform: Transform::from_isometry(iso),
                         }]
                     }),
                 }
@@ -106,8 +107,7 @@ impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
                     spawn_infos.push(TiledColliderSpawnInfos {
                         name: "Avian[ComposedTile]".to_string(),
                         entity: commands.spawn(collider).id(),
-                        position: Vec2::ZERO,
-                        rotation: 0.,
+                        transform: Transform::default(),
                     });
                 }
                 spawn_infos
@@ -121,7 +121,7 @@ fn compose_tiles(
     commands: &mut Commands,
     filter: &TiledNameFilter,
     object_layer_data: &ObjectLayerData,
-    origin: Vec2,
+    tile_offset: Vec2,
     tile_width: f32,
     tile_height: f32,
     composables: &mut Vec<(Isometry<Real>, SharedShape)>,
@@ -135,26 +135,30 @@ fn compose_tiles(
             x: object.x - tile_width / 2.,
             y: (tile_height - object.y) - tile_height / 2.,
         };
-        if let Some((mut position, shared_shape, is_composable)) =
+        if let Some((shape_offset, shared_shape, is_composable)) =
             get_position_and_shape(&object.shape)
         {
-            position += origin + object_position;
+            let mut position = tile_offset + object_position;
             position += Vec2 {
                 x: (tile_width) / 2.,
                 y: (tile_height) / 2.,
             };
             if is_composable {
                 composables.push((
-                    Isometry::<Real>::new(position.into(), f32::to_radians(-object.rotation)),
+                    Isometry::<Real>::new(position.into(), f32::to_radians(-object.rotation))
+                        * Isometry::<Real>::new(shape_offset.into(), 0.),
                     shared_shape,
                 ));
             } else {
                 let collider: Collider = shared_shape.into();
+                let iso = Isometry3d::from_xyz(position.x, position.y, 0.)
+                    * Isometry3d::from_rotation(Quat::from_rotation_z(f32::to_radians(
+                        -object.rotation,
+                    )));
                 spawn_infos.push(TiledColliderSpawnInfos {
                     name: "Avian[ComplexTile]".to_string(),
                     entity: commands.spawn(collider).id(),
-                    position,
-                    rotation: -object.rotation,
+                    transform: Transform::from_isometry(iso),
                 });
             }
         }

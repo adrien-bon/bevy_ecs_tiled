@@ -55,8 +55,7 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
                     entity: commands
                         .spawn(MyCustomPhysicsComponent(Color::from(PURPLE)))
                         .id(),
-                    position: Vec2::ZERO,
-                    rotation: 0.,
+                    transform: Transform::default(),
                 }]
             }
             TiledCollider::TilesLayer { layer_id: _ } => {
@@ -65,8 +64,7 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
                     entity: commands
                         .spawn(MyCustomPhysicsComponent(Color::from(RED)))
                         .id(),
-                    position: Vec2::ZERO,
-                    rotation: 0.,
+                    transform: Transform::default(),
                 }]
             }
         }

@@ -158,10 +158,8 @@ pub struct TiledColliderSpawnInfos {
     pub name: String,
     /// [Entity] of the spawned collider.
     pub entity: Entity,
-    /// Relative position of the collider from its parent [Entity].
-    pub position: Vec2,
-    /// Relative rotation of the collider from its parent [Entity].
-    pub rotation: f32,
+    /// Relative position and rotation of the collider from its parent [Entity].
+    pub transform: Transform,
 }
 
 pub(super) fn spawn_colliders<T: super::TiledPhysicsBackend>(
@@ -180,11 +178,7 @@ pub(super) fn spawn_colliders<T: super::TiledPhysicsBackend>(
             .insert((
                 TiledColliderMarker,
                 Name::new(format!("Collider: {}", spawn_infos.name)),
-                Transform {
-                    translation: Vec3::new(spawn_infos.position.x, spawn_infos.position.y, 0.),
-                    rotation: Quat::from_rotation_z(f32::to_radians(spawn_infos.rotation)),
-                    ..default()
-                },
+                spawn_infos.transform,
             ))
             .set_parent(parent);
     }
