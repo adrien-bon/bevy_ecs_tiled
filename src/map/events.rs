@@ -156,9 +156,11 @@ impl<'a> TiledTileCreated {
 
     /// Retrieve tile world position (origin = tile center) relative to its parent layer.
     pub fn world_position(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Option<Vec2> {
-        self.layer.map.get_map(map_asset).map(|map| {
+        self.layer.map.get_map_asset(map_asset).map(|tiled_map| {
+            let grid_size = get_grid_size(&tiled_map.map);
+            let tile_size = tile_size_from_grid(&grid_size);
             self.position
-                .center_in_world(&get_grid_size(map), &get_map_type(map))
+                .center_in_world(&tiled_map.tilemap_size, &grid_size, &tile_size, &get_map_type(&tiled_map.map), &tiled_map.anchor)
         })
     }
 }

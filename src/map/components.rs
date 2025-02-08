@@ -2,6 +2,7 @@
 
 use bevy::{prelude::*, utils::HashMap};
 use tiled::TileId;
+use bevy_ecs_tilemap::prelude::TilemapAnchor;
 
 /// Set the anchor point for associated map or world.
 ///
@@ -14,6 +15,7 @@ pub enum TiledMapAnchor {
     BottomLeft,
     /// Update layers position so map origin is translated to the center of the map.
     Center,
+    Anchor(TilemapAnchor),
 }
 
 /// Specificy the Z offset between two consecutives Tiled layers.

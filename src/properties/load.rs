@@ -660,6 +660,7 @@ fn hydrate(object: &mut dyn PartialReflect, obj_entity_map: &HashMap<u32, Entity
         ReflectMut::Set(_) => {}
         // we don't care about any of the other values
         ReflectMut::Opaque(_) => {}
+        ReflectMut::Function(_) => {}
     }
 }
 

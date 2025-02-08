@@ -18,7 +18,7 @@ use bevy::{
     math::bounding::{Aabb2d, IntersectsVolume},
     prelude::*,
 };
-use bevy_ecs_tilemap::map::TilemapRenderSettings;
+use bevy_ecs_tilemap::{prelude::TilemapAnchor, map::TilemapRenderSettings};
 
 /// Wrapper around the [Handle] to the `.world` file representing the [TiledWorld].
 ///
@@ -65,7 +65,7 @@ fn world_chunking(
             &TiledWorldHandle,
             &GlobalTransform,
             &TiledWorldChunking,
-            &TiledMapAnchor,
+            &TilemapAnchor,
             &TiledMapLayerZOffset,
             &TilemapRenderSettings,
             &mut TiledWorldStorage,
@@ -116,7 +116,7 @@ fn world_chunking(
                 .collect();
             // Check which map is visible by testing them against each camera (if there are multiple)
             // If map aabb overlaps with the camera_view, it is visible
-            for_each_map(tiled_world, world_transform, offset, |idx, aabb| {
+            for_each_map(tiled_world, world_transform, offset.extend(0.0), |idx, aabb| {
                 for c in cameras.iter() {
                     if aabb.intersects(c) {
                         visible_maps.push(idx);
@@ -160,7 +160,7 @@ fn world_chunking(
             let map_entity = commands
                 .spawn((
                     TiledMapHandle(handle.clone_weak()),
-                    Transform::from_translation(offset + Vec3::new(rect.min.x, rect.min.y, 0.0)),
+                    Transform::from_translation(offset.extend(0.0) + Vec3::new(rect.min.x, rect.min.y, 0.0)),
                     // Force map anchor to BottomLeft: everything is handled at world level
                     TiledMapAnchor::BottomLeft,
                     *layer_offset,

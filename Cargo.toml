@@ -144,3 +144,6 @@ name = "world_basic"
 [[example]]
 name = "world_chunking"
 required-features = ["debug"]
+
+[patch.crates-io]
+bevy_ecs_tilemap = { path = "../bevy_ecs_tilemap" }

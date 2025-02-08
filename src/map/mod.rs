@@ -70,17 +70,21 @@ pub(crate) fn build(app: &mut bevy::prelude::App) {
 }
 
 #[cfg(feature = "user_properties")]
-fn export_types(reg: Res<AppTypeRegistry>, config: Res<TiledMapPluginConfig>) {
-    use std::{fs::File, io::BufWriter, ops::Deref};
-    if let Some(path) = &config.tiled_types_export_file {
-        info!("Export Tiled types to '{:?}'", path);
-        let file = File::create(path).unwrap();
-        let writer = BufWriter::new(file);
-        let registry =
-            crate::properties::export::TypeExportRegistry::from_registry(reg.0.read().deref());
-        serde_json::to_writer_pretty(writer, &registry.to_vec()).unwrap();
-    }
+pub fn export_types(reg: &AppTypeRegistry, path: impl AsRef<Path>) {
+    export_types_filtered(reg, path, |_| true);
 }
+
+#[cfg(feature = "user_properties")]
+pub fn export_types_filtered(reg: &AppTypeRegistry, path: impl AsRef<Path>, pred: impl Fn(&str) -> bool) {
+    use std::{fs::File, io::BufWriter, ops::Deref};
+    let file = File::create(path).unwrap();
+    let writer = BufWriter::new(file);
+    let registry = properties::export::TypeExportRegistry::from_registry(reg.read().deref());
+    let mut list = registry.to_vec();
+    list.retain(|v| pred(&v.name));
+    serde_json::to_writer_pretty(writer, &list).unwrap();
+}
+
 
 /// System to spawn a map once it has been fully loaded.
 #[allow(clippy::type_complexity)]

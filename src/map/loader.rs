@@ -69,7 +69,14 @@ pub(crate) fn load_map(
     let mut offset_z = tiled_map.map.layers().len() as f32 * (-layer_offset.0);
 
     // Compute layer base Transform given provided TiledMapAnchor
-    let layer_transform = Transform::from_translation(tiled_map.offset(anchor));
+    let layer_transform = Transform::from_translation(tiled_map.offset().extend(0.0));
+
+    // let anchor_offset =
+    //     anchor.as_ref().map(|anchor| {
+    //         let tile_sizeish = &grid_size;
+    //         anchor.as_offset(&map_size, &grid_size, None, &map_type)
+    //             + Vec2::new(-tile_sizeish.x / 2.0, -tile_sizeish.y / 2.0)
+    //     }).unwrap_or(Vec2::ZERO);
 
     // Once materials have been created/added we need to then create the layers.
     for (layer_id, layer) in tiled_map.map.layers().enumerate() {
@@ -88,6 +95,7 @@ pub(crate) fn load_map(
                     true => Visibility::Inherited,
                     false => Visibility::Hidden,
                 },
+                tiled_map.anchor.clone(),
             ))
             .set_parent(map_entity)
             .id();
@@ -98,7 +106,7 @@ pub(crate) fn load_map(
             id: layer_id,
         };
 
-        match layer.layer_type() {
+ match layer.layer_type() {
             LayerType::Tiles(tile_layer) => {
                 commands.entity(layer_entity).insert((
                     Name::new(format!("TiledMapTileLayer({})", layer.name)),
@@ -264,9 +272,9 @@ fn load_tiles_layer(
                         x: tileset.spacing as f32,
                         y: tileset.spacing as f32,
                     },
-                    transform: Transform::from_xyz(grid_size.x / 2., grid_size.y / 2., 0.),
                     map_type: get_map_type(&tiled_map.map),
                     render_settings: *_render_settings,
+                    anchor: tiled_map.anchor.clone(),
                     ..default()
                 });
         }

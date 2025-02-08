@@ -2,6 +2,7 @@
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use tiled::{ChunkData, LayerTile, LayerTileData, Map, TileLayer};
+use crate::tile_size_from_grid;
 
 use super::TiledMap;
 
@@ -44,7 +45,10 @@ pub fn from_tiled_position_to_world_space(tiled_map: &TiledMap, tiled_position: 
     let map_size = tiled_map.tilemap_size;
     let map_height = tiled_map.rect.height();
     let grid_size = get_grid_size(&tiled_map.map);
-    match get_map_type(&tiled_map.map) {
+    let map_type = get_map_type(&tiled_map.map);
+    let tile_size = tile_size_from_grid(&grid_size);
+    let offset = tiled_map.anchor.as_offset(&map_size, &grid_size, &tile_size, &map_type);
+    offset + match map_type {
         TilemapType::Square => {
             tiled_map.tiled_offset
                 + Vec2 {

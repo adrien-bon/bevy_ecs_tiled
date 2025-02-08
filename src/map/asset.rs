@@ -24,8 +24,6 @@ use bevy::{
 
 use bevy_ecs_tilemap::prelude::*;
 
-use super::TiledMapAnchor;
-
 /// Tiled map [Asset].
 ///
 /// [Asset] holding Tiled map informations.
@@ -62,27 +60,33 @@ pub struct TiledMap {
     /// Map properties
     #[cfg(feature = "user_properties")]
     pub(crate) properties: DeserializedMapProperties,
+    /// Anchor
+    pub anchor: TilemapAnchor,
+}
+
+pub(crate) fn tile_size_from_grid(grid_size: &TilemapGridSize) -> TilemapTileSize {
+    // TODO: Do Tiled files have tile size and grid size in sync always?
+    TilemapTileSize { x: grid_size.x,
+                      y: grid_size.y }
 }
 
 impl TiledMap {
-    /// Offset that should be applied to map underlying layers to account for the [TiledMapAnchor]
-    pub fn offset(&self, anchor: &TiledMapAnchor) -> Vec3 {
+    /// Offset that should be applied to map underlying layers to account for the [TilemapAnchor]
+    pub fn offset(&self) -> Vec2 {
         let map_type = get_map_type(&self.map);
         let grid_size = get_grid_size(&self.map);
 
-        let mut offset = match anchor {
-            TiledMapAnchor::Center => Vec3 {
-                x: -self.rect.width() / 2.0,
-                y: -self.rect.height() / 2.0,
-                z: 0.0,
-            },
-            TiledMapAnchor::BottomLeft => Vec3::ZERO,
-        };
+        // TODO: Do Tiled files have tile size and grid size in sync always?
+        let tile_size = tile_size_from_grid(&grid_size);
+        let mut offset = self.anchor.as_offset(&self.tilemap_size,
+                                               &grid_size,
+                                               &tile_size,
+                                               &map_type);
 
         // Special case for isometric maps: bevy_ecs_tilemap start drawing
         // them from middle left instead of from bottom left
         if let TilemapType::Isometric(IsoCoordSystem::Diamond) = map_type {
-            offset += Vec3::new(0., self.tilemap_size.y as f32 * grid_size.y as f32 / 2., 0.);
+            offset += Vec2::new(0., self.tilemap_size.y as f32 * grid_size.y as f32 / 2.);
         }
 
         offset
@@ -385,6 +389,7 @@ impl AssetLoader for TiledMapLoader {
             tilesets,
             #[cfg(feature = "user_properties")]
             properties,
+            anchor: TilemapAnchor::None,
         };
         debug!(
             "Loaded map '{}': {:?}",
@@ -396,6 +401,47 @@ impl AssetLoader for TiledMapLoader {
 
     fn extensions(&self) -> &[&str] {
         static EXTENSIONS: &[&str] = &["tmx"];
+        EXTENSIONS
+    }
+}
+
+#[derive(TypePath, Asset, Debug)]
+pub struct TiledSet(pub tiled::Tileset);
+#[derive(Default, Debug, Clone, Copy)]
+pub struct TiledSetLoader;
+
+impl AssetLoader for TiledSetLoader {
+    type Asset = TiledSet;
+    type Settings = ();
+    type Error = TiledMapLoaderError;
+
+    async fn load(
+        &self,
+        reader: &mut dyn Reader,
+        _settings: &Self::Settings,
+        load_context: &mut LoadContext<'_>,
+    ) -> Result<Self::Asset, Self::Error> {
+        let mut bytes = Vec::new();
+        reader.read_to_end(&mut bytes).await?;
+
+        let tileset_path = load_context.path().to_path_buf();
+        let tileset = {
+            // Allow the loader to also load tileset images.
+            let mut loader = tiled::Loader::with_cache_and_reader(
+                tiled::DefaultResourceCache::new(),
+                BytesResourceReader::new(&bytes, load_context),
+            );
+            // Load the map and all tiles.
+            loader.load_tsx_tileset(&tileset_path).map_err(|e| {
+                std::io::Error::new(ErrorKind::Other, format!("Could not load TMX map: {e}"))
+            })?
+        };
+        Ok(TiledSet(tileset))
+
+    }
+
+    fn extensions(&self) -> &[&str] {
+        static EXTENSIONS: &[&str] = &["tms"];
         EXTENSIONS
     }
 }
