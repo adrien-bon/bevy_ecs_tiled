@@ -94,16 +94,14 @@ impl<'a> TiledObjectCreated {
 
     /// Retrieve object world position (origin = top left) relative to its parent layer.
     pub fn world_position(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Option<Vec2> {
-        self.layer.map.get_map(map_asset).and_then(|map| {
-            self.get_object(map_asset).map(|object| {
-                from_tiled_coords_to_bevy(
-                    Vec2::new(object.x, object.y),
-                    &get_map_type(map),
-                    &get_map_size(map),
-                    &get_grid_size(map),
-                )
+        self.layer
+            .map
+            .get_map_asset(map_asset)
+            .and_then(|tiled_map| {
+                self.get_object(map_asset).map(|object| {
+                    from_tiled_coords_to_bevy(tiled_map, Vec2::new(object.x, object.y))
+                })
             })
-        })
     }
 }
 

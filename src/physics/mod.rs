@@ -15,7 +15,6 @@ pub mod avian;
 use crate::prelude::*;
 use bevy::{prelude::*, reflect::Reflectable};
 use prelude::*;
-use tiled::Map;
 
 /// `bevy_ecs_tiled` physics public exports.
 pub mod prelude {
@@ -44,7 +43,7 @@ pub trait TiledPhysicsBackend:
     fn spawn_colliders(
         &self,
         commands: &mut Commands,
-        map: &Map,
+        tiled_map: &TiledMap,
         filter: &TiledNameFilter,
         collider: &TiledCollider,
     ) -> Vec<TiledColliderSpawnInfos>;
@@ -139,7 +138,7 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
 ) {
     for ev in layer_event.read() {
         let settings = get_physics_settings(ev.map.entity, &q_maps, &q_worlds);
-        let Some(map) = ev.map.get_map(&map_asset) else {
+        let Some(tiled_map) = ev.map.get_map_asset(&map_asset) else {
             return;
         };
         let Some(layer) = ev.get_layer(&map_asset) else {
@@ -154,7 +153,7 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
                 &settings.backend,
                 ev.entity,
                 &mut commands,
-                map,
+                tiled_map,
                 &settings.tiles_objects_filter,
                 &TiledCollider::from_tiles_layer(ev.id),
             );
@@ -172,7 +171,7 @@ fn collider_from_object<T: TiledPhysicsBackend>(
 ) {
     for ev in object_event.read() {
         let settings = get_physics_settings(ev.layer.map.entity, &q_maps, &q_worlds);
-        let Some(map) = ev.layer.map.get_map(&map_asset) else {
+        let Some(tiled_map) = ev.layer.map.get_map_asset(&map_asset) else {
             return;
         };
         let Some(layer) = ev.layer.get_layer(&map_asset) else {
@@ -189,7 +188,7 @@ fn collider_from_object<T: TiledPhysicsBackend>(
                 &settings.backend,
                 ev.entity,
                 &mut commands,
-                map,
+                tiled_map,
                 match object.get_tile() {
                     Some(_) => &settings.tiles_objects_filter,
                     None => &TiledName::All,

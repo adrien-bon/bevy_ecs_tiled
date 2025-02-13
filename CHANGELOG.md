@@ -37,6 +37,10 @@
 - Rework how we store tileset data in `TiledMap`
 - Add new examples to test 'infinite' maps and rework how we organize our assets
 
+### Bugfixes
+
+- Various fixes around infinite maps: we should now have proper location for objects and tile layer chunks
+
 ## v0.5.1
 
 ### Features

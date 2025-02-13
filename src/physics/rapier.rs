@@ -3,11 +3,12 @@
 //! Only available when the `rapier` feature is enabled.
 
 use bevy::prelude::*;
+use bevy_ecs_tilemap::map::TilemapGridSize;
 use bevy_rapier2d::{
     prelude::*,
     rapier::prelude::{Isometry, Real, SharedShape},
 };
-use tiled::{Map, ObjectLayerData, ObjectShape};
+use tiled::{ObjectLayerData, ObjectShape};
 
 use crate::prelude::*;
 
@@ -28,7 +29,7 @@ impl TiledPhysicsBackend for TiledPhysicsRapierBackend {
     fn spawn_colliders(
         &self,
         commands: &mut Commands,
-        map: &Map,
+        tiled_map: &TiledMap,
         filter: &TiledNameFilter,
         collider: &TiledCollider,
     ) -> Vec<TiledColliderSpawnInfos> {
@@ -37,7 +38,7 @@ impl TiledPhysicsBackend for TiledPhysicsRapierBackend {
                 layer_id: _,
                 object_id: _,
             } => {
-                let Some(object) = collider.get_object(map) else {
+                let Some(object) = collider.get_object(tiled_map) else {
                     return vec![];
                 };
 
@@ -53,8 +54,7 @@ impl TiledPhysicsBackend for TiledPhysicsRapierBackend {
                             filter,
                             object_layer_data,
                             Vec2::ZERO,
-                            map.tile_width as f32,
-                            map.tile_height as f32,
+                            get_grid_size(&tiled_map.map),
                             &mut composables,
                             &mut spawn_infos,
                         );
@@ -85,15 +85,14 @@ impl TiledPhysicsBackend for TiledPhysicsRapierBackend {
             TiledCollider::TilesLayer { layer_id: _ } => {
                 let mut composables = vec![];
                 let mut spawn_infos = vec![];
-                for (tile_position, tile) in collider.get_tiles(map) {
+                for (tile_position, tile) in collider.get_tiles(tiled_map) {
                     if let Some(collision) = &tile.collision {
                         compose_tiles(
                             commands,
                             filter,
                             collision,
                             tile_position,
-                            map.tile_width as f32,
-                            map.tile_height as f32,
+                            get_grid_size(&tiled_map.map),
                             &mut composables,
                             &mut spawn_infos,
                         );
@@ -119,8 +118,7 @@ fn compose_tiles(
     filter: &TiledNameFilter,
     object_layer_data: &ObjectLayerData,
     tile_offset: Vec2,
-    tile_width: f32,
-    tile_height: f32,
+    grid_size: TilemapGridSize,
     composables: &mut Vec<(Isometry<Real>, SharedShape)>,
     spawn_infos: &mut Vec<TiledColliderSpawnInfos>,
 ) {
@@ -129,16 +127,16 @@ fn compose_tiles(
             continue;
         }
         let object_position = Vec2 {
-            x: object.x - tile_width / 2.,
-            y: (tile_height - object.y) - tile_height / 2.,
+            x: object.x - grid_size.x / 2.,
+            y: (grid_size.y - object.y) - grid_size.y / 2.,
         };
         if let Some((shape_offset, shared_shape, is_composable)) =
             get_position_and_shape(&object.shape)
         {
             let mut position = tile_offset + object_position;
             position += Vec2 {
-                x: (tile_width) / 2.,
-                y: (tile_height) / 2.,
+                x: grid_size.x / 2.,
+                y: grid_size.y / 2.,
             };
             if is_composable {
                 composables.push((
