@@ -48,8 +48,7 @@ All child entities, like layers and tiles, will automatically be despawned.
 If you want to reload or respawn a map, you can of course despawn it then spawn it again.
 It's tedious, but it works.
 
-However, there is an easier way.
-You can instead insert the `RespawnTiledMap` component to the map entity:
+However, there is an easier way: you can insert the `RespawnTiledMap` component to the map entity:
 
 ```rust,no_run
 fn respawn_map(
@@ -62,13 +61,16 @@ fn respawn_map(
 }
 ```
 
-This will load the exact same map but using new entities for layers or tiles (map entity will be preserved).
-It means that if you updated some components (for instance, a tile color or an object position) they will be back as they were when you first loaded the map.
-It's useful to implement a level respawn for instance.
+This will load the exact same map but will despawn / spawn again new entities for layers, tiles and objects.
+Only the top-level map entity and its components will be persisted.
+
+It means that if you updated components on the children entities (for instance, a tile color or an object position) they will be back as they were when you first loaded the map.
+But map components such as `TiledMapSettings`, `TilemapRenderSettings` or `Transform` will be persisted through a respawn.
+
+It could be used to implement a level respawn for instance.
 
 Another use case is to load a new map over an existing one.
-An easy way to do that is to just spawn a new `TiledMapHandle` over an existing map.
-Note you can also reload the exact same map, which is equivalent to using the `RespawnTiledMap` component.
+An easy way to do that is to just spawn a new `TiledMapHandle` over an existing map:
 
 ```rust,no_run
 fn handle_reload(
@@ -85,4 +87,4 @@ fn handle_reload(
 }
 ```
 
-In both cases, note that map additional components such as `TiledMapSettings` or `TilemapRenderSettings` will be preserved.
+Note that loading the same map `Handle` is equivalent to insert the `RespawnTiledMap` component.

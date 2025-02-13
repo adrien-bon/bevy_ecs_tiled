@@ -33,7 +33,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut mgr = helper::assets::AssetsManager::new(&mut commands);
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "finite.tmx",
+        "maps/orthogonal/finite.tmx",
         "A finite orthogonal map with all colliders",
         |c| {
             c.insert(TiledMapSettings {
@@ -45,7 +45,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "infinite.tmx",
+        "maps/orthogonal/infinite.tmx",
         "An infinite orthogonal map with all colliders",
         |c| {
             c.insert(TiledMapSettings {
@@ -57,7 +57,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "finite.tmx",
+        "maps/orthogonal/finite.tmx",
         "A finite orthogonal map with only tiles colliders named 'collision'",
         |c| {
             c.insert(TiledMapSettings {
@@ -73,7 +73,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "finite.tmx",
+        "maps/orthogonal/finite.tmx",
         "A finite orthogonal map with only object colliders",
         |c| {
             c.insert(TiledMapSettings {

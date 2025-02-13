@@ -652,7 +652,7 @@ mod tests {
     #[test]
     fn print_all_properties() {
         let map = tiled::Loader::new()
-            .load_tmx_map("assets/hex_map_pointy_top_odd.tmx")
+            .load_tmx_map("assets/maps/hexagonal/finite_pointy_top_odd.tmx")
             .unwrap();
         println!("Found map: {:?}", map.properties);
         for layer in map.layers() {

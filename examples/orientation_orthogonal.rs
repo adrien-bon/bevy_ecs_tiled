@@ -36,25 +36,25 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut mgr = helper::assets::AssetsManager::new(&mut commands);
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "finite.tmx",
+        "maps/orthogonal/finite.tmx",
         "A finite orthogonal map with a single external tileset",
         default_callback,
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "finite_embedded.tmx",
+        "maps/orthogonal/finite_embedded.tmx",
         "A finite orthogonal map with a single embedded tileset",
         default_callback,
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "infinite.tmx",
+        "maps/orthogonal/infinite.tmx",
         "An infinite orthogonal map with a single external tileset",
         default_callback,
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "infinite_embedded.tmx",
+        "maps/orthogonal/infinite_embedded.tmx",
         "An infinite orthogonal map with a single embedded tileset",
         default_callback,
     ));
@@ -63,7 +63,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         // For simplicity sake, we use two tilesets which actually use the same images
         // However, we can verify with the inspector that the map actually use tiles
         // from both tilesets
-        "multiple_tilesets.tmx",
+        "maps/orthogonal/multiple_tilesets.tmx",
         "A finite orthogonal map with multiple external tilesets",
         default_callback,
     ));

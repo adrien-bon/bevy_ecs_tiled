@@ -36,7 +36,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     info!("Loading asset, will spawn a map in {}s ...", DELAY_VALUE_S);
     commands.insert_resource(MapSpawner {
-        map_handle: asset_server.load("finite.tmx"),
+        map_handle: asset_server.load("maps/orthogonal/finite.tmx"),
         timer: Timer::new(Duration::from_secs(DELAY_VALUE_S), TimerMode::Once),
     });
 }

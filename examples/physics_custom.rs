@@ -7,7 +7,6 @@ use bevy::{
 };
 use bevy_ecs_tiled::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
-use tiled::Map;
 
 mod helper;
 
@@ -29,7 +28,9 @@ fn main() {
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d);
-    commands.spawn(TiledMapHandle(asset_server.load("finite.tmx")));
+    commands.spawn(TiledMapHandle(
+        asset_server.load("maps/orthogonal/finite.tmx"),
+    ));
 }
 
 #[derive(Default, Clone, Reflect)]
@@ -41,7 +42,7 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
     fn spawn_colliders(
         &self,
         commands: &mut Commands,
-        _map: &Map,
+        _tiled_map: &TiledMap,
         _filter: &TiledNameFilter,
         collider: &TiledCollider,
     ) -> Vec<TiledColliderSpawnInfos> {

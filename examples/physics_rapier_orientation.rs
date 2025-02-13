@@ -44,50 +44,74 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut mgr = helper::assets::AssetsManager::new(&mut commands);
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "finite.tmx",
+        "maps/orthogonal/finite.tmx",
         "A finite orthogonal map",
         default_callback,
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "infinite.tmx",
+        "maps/orthogonal/infinite.tmx",
         "An infinite orthogonal map",
         default_callback,
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "hex_map_flat_top_even.tmx",
+        "maps/hexagonal/finite_flat_top_even.tmx",
         "A finite flat-top (stagger axis = X) hexagonal map with 'even' stagger index",
         default_callback,
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "hex_map_flat_top_odd.tmx",
+        "maps/hexagonal/finite_flat_top_odd.tmx",
         "A finite flat-top (stagger axis = X) hexagonal map with 'odd' stagger index",
         default_callback,
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "hex_map_pointy_top_even.tmx",
+        "maps/hexagonal/finite_pointy_top_even.tmx",
         "A finite pointy-top (stagger axis = Y) hexagonal map with 'even' stagger index",
         default_callback,
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "hex_map_pointy_top_odd.tmx",
+        "maps/hexagonal/finite_pointy_top_odd.tmx",
         "A finite pointy-top (stagger axis = Y) hexagonal map with 'odd' stagger index",
         default_callback,
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "isometric_diamond_map.tmx",
-        "A finite diamond isometric map",
+        "maps/hexagonal/infinite_flat_top_even.tmx",
+        "An infinite flat-top (stagger axis = X) hexagonal map with 'even' stagger index",
         default_callback,
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "isometric_staggered_map.tmx",
-        "A finite staggered isometric map",
+        "maps/hexagonal/infinite_flat_top_odd.tmx",
+        "An infinite flat-top (stagger axis = X) hexagonal map with 'odd' stagger index",
+        default_callback,
+    ));
+    mgr.add_map(helper::assets::MapInfos::new(
+        &asset_server,
+        "maps/hexagonal/infinite_pointy_top_even.tmx",
+        "An infinite pointy-top (stagger axis = Y) hexagonal map with 'even' stagger index",
+        default_callback,
+    ));
+    mgr.add_map(helper::assets::MapInfos::new(
+        &asset_server,
+        "maps/hexagonal/infinite_pointy_top_odd.tmx",
+        "An infinite pointy-top (stagger axis = Y) hexagonal map with 'odd' stagger index",
+        default_callback,
+    ));
+    mgr.add_map(helper::assets::MapInfos::new(
+        &asset_server,
+        "maps/isometric/finite_diamond.tmx",
+        "A finite 'diamond' isometric map",
+        default_callback,
+    ));
+    mgr.add_map(helper::assets::MapInfos::new(
+        &asset_server,
+        "maps/isometric/infinite_diamond.tmx",
+        "An infinite 'diamond' isometric map",
         default_callback,
     ));
     commands.insert_resource(mgr);

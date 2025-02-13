@@ -1,0 +1,181 @@
+{
+    "maps": [
+        {
+            "fileName": "basic/world_map001.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 0,
+            "y": 0
+        },
+        {
+            "fileName": "basic/world_map002.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 512,
+            "y": 0
+        },
+        {
+            "fileName": "basic/world_map003.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 1024,
+            "y": 0
+        },
+        {
+            "fileName": "basic/world_map004.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 1536,
+            "y": 0
+        },
+        {
+            "fileName": "basic/world_map005.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 2048,
+            "y": 0
+        },
+        {
+            "fileName": "basic/world_map006.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 0,
+            "y": 512
+        },
+        {
+            "fileName": "basic/world_map007.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 512,
+            "y": 512
+        },
+        {
+            "fileName": "basic/world_map008.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 1024,
+            "y": 512
+        },
+        {
+            "fileName": "basic/world_map009.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 1536,
+            "y": 512
+        },
+        {
+            "fileName": "basic/world_map010.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 2048,
+            "y": 512
+        },
+        {
+            "fileName": "basic/world_map011.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 0,
+            "y": 1024
+        },
+        {
+            "fileName": "basic/world_map012.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 512,
+            "y": 1024
+        },
+        {
+            "fileName": "basic/world_map013.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 1024,
+            "y": 1024
+        },
+        {
+            "fileName": "basic/world_map014.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 1536,
+            "y": 1024
+        },
+        {
+            "fileName": "basic/world_map015.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 2048,
+            "y": 1024
+        },
+        {
+            "fileName": "basic/world_map016.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 0,
+            "y": 1536
+        },
+        {
+            "fileName": "basic/world_map017.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 512,
+            "y": 1536
+        },
+        {
+            "fileName": "basic/world_map018.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 1024,
+            "y": 1536
+        },
+        {
+            "fileName": "basic/world_map019.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 1536,
+            "y": 1536
+        },
+        {
+            "fileName": "basic/world_map020.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 2048,
+            "y": 1536
+        },
+        {
+            "fileName": "basic/world_map021.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 0,
+            "y": 2048
+        },
+        {
+            "fileName": "basic/world_map022.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 512,
+            "y": 2048
+        },
+        {
+            "fileName": "basic/world_map023.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 1024,
+            "y": 2048
+        },
+        {
+            "fileName": "basic/world_map024.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 1536,
+            "y": 2048
+        },
+        {
+            "fileName": "basic/world_map025.tmx",
+            "height": 512,
+            "width": 512,
+            "x": 2048,
+            "y": 2048
+        }
+    ],
+    "onlyShowAdjacentMaps": false,
+    "type": "world"
+}

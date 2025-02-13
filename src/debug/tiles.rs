@@ -10,17 +10,16 @@ pub struct TiledDebugTilesConfig {
     pub color: Color,
     pub font: TextFont,
     pub z_offset: f32,
+    pub scale: Vec3,
 }
 
 impl Default for TiledDebugTilesConfig {
     fn default() -> Self {
         Self {
             color: bevy::prelude::Color::Srgba(FUCHSIA),
-            font: TextFont {
-                font_size: 10.0,
-                ..default()
-            },
+            font: TextFont::from_font_size(10.),
             z_offset: 500.,
+            scale: Vec3::splat(0.5),
         }
     }
 }
@@ -51,7 +50,11 @@ fn draw_tile_infos(
             TextColor(config.color),
             config.font.clone(),
             TextLayout::new_with_justify(JustifyText::Center),
-            Transform::from_translation(Vec3::new(pos.x, pos.y, config.z_offset)),
+            Transform {
+                translation: Vec3::new(pos.x, pos.y, config.z_offset),
+                scale: config.scale,
+                ..default()
+            },
         ));
     }
 }

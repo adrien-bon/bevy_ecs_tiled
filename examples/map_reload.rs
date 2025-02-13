@@ -39,7 +39,13 @@ fn startup(
         "U = Unload map by removing asset\nI = Unload map by despawning entity\nL = Load finite map\nK = Replace loaded map component without unloading\nR = Reload map using the RespawnTiledMap component",
     ));
 
-    commands.spawn(TiledMapHandle(asset_server.load("finite.tmx")));
+    commands.spawn((
+        TiledMapHandle(asset_server.load("maps/orthogonal/finite.tmx")),
+        TiledMapSettings {
+            layer_positioning: LayerPositioning::Centered,
+            ..default()
+        },
+    ));
     next_state.set(MapState::Loaded);
 }
 
@@ -58,7 +64,13 @@ fn handle_load(
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyL) {
         info!("Load map");
-        commands.spawn(TiledMapHandle(asset_server.load("finite.tmx")));
+        commands.spawn((
+            TiledMapHandle(asset_server.load("maps/orthogonal/finite.tmx")),
+            TiledMapSettings {
+                layer_positioning: LayerPositioning::Centered,
+                ..default()
+            },
+        ));
         next_state.set(MapState::Loaded);
     }
 }
@@ -75,9 +87,9 @@ fn handle_reload(
     if keyboard_input.just_pressed(KeyCode::KeyK) {
         if let Ok(entity) = maps_query.get_single() {
             info!("Reload map");
-            commands
-                .entity(entity)
-                .insert(TiledMapHandle(asset_server.load("infinite.tmx")));
+            commands.entity(entity).insert(TiledMapHandle(
+                asset_server.load("maps/orthogonal/infinite.tmx"),
+            ));
             next_state.set(MapState::Loaded);
         } else {
             warn!("Cannot reload: no map loaded ?");

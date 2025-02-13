@@ -23,7 +23,9 @@ fn main() {
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d);
     commands
-        .spawn(TiledMapHandle(asset_server.load("finite.tmx")))
+        .spawn(TiledMapHandle(
+            asset_server.load("maps/orthogonal/finite.tmx"),
+        ))
         // Add observers for map loading events
         .observe(map_created)
         .observe(layer_created)

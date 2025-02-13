@@ -39,7 +39,7 @@ fn main() {
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d);
     commands.spawn(TiledMapHandle(
-        asset_server.load("hex_map_pointy_top_odd.tmx"),
+        asset_server.load("maps/hexagonal/finite_pointy_top_odd.tmx"),
     ));
 }
 

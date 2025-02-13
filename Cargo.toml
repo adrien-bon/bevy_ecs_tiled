@@ -77,7 +77,10 @@ bevy = { version = "0.15", features = ["file_watcher"] }
 bevy-inspector-egui = "0.28"
 
 [[example]]
-name = "basic"
+name = "map_basic"
+
+[[example]]
+name = "map_demo"
 
 [[example]]
 name = "map_events"
@@ -92,7 +95,7 @@ name = "map_settings"
 name = "map_spawn_delay"
 
 [[example]]
-name = "orientation_orthogonal"
+name = "orientation_hexagonal"
 required-features = ["debug"]
 
 [[example]]
@@ -100,31 +103,15 @@ name = "orientation_isometric"
 required-features = ["debug"]
 
 [[example]]
-name = "orientation_hexagonal"
+name = "orientation_orthogonal"
 required-features = ["debug"]
 
 [[example]]
-name = "physics_custom"
-required-features = ["physics"]
-
-[[example]]
-name = "physics_rapier_settings"
-required-features = ["rapier_debug"]
-
-[[example]]
-name = "physics_rapier_orientation"
-required-features = ["rapier_debug"]
-
-[[example]]
-name = "physics_rapier_controller"
-required-features = ["rapier_debug"]
-
-[[example]]
-name = "physics_avian_settings"
+name = "physics_avian_controller"
 required-features = ["avian_debug"]
 
 [[example]]
-name = "physics_avian_controller"
+name = "physics_avian_settings"
 required-features = ["avian_debug"]
 
 [[example]]
@@ -132,9 +119,25 @@ name = "physics_avian_orientation"
 required-features = ["avian_debug"]
 
 [[example]]
+name = "physics_custom"
+required-features = ["physics"]
+
+[[example]]
+name = "physics_rapier_controller"
+required-features = ["rapier_debug"]
+
+[[example]]
+name = "physics_rapier_orientation"
+required-features = ["rapier_debug"]
+
+[[example]]
+name = "physics_rapier_settings"
+required-features = ["rapier_debug"]
+
+[[example]]
 name = "properties_basic"
 required-features = ["user_properties"]
 
 [[example]]
-name = "world"
+name = "world_basic"
 required-features = ["debug"]

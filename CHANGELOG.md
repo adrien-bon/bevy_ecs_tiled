@@ -35,6 +35,7 @@
 - Change the way we retrieve `PhysicsSettings` so we don't require to get the map event first
 - Replace global observers with an entity scoped observer + a global event writer
 - Rework how we store tileset data in `TiledMap`
+- Add new examples to test 'infinite' maps and rework how we organize our assets
 
 ## v0.5.1
 

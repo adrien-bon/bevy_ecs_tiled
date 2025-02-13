@@ -45,14 +45,14 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut mgr = helper::assets::AssetsManager::new(&mut commands);
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "isometric_diamond_map.tmx",
-        "A finite diamond isometric map",
+        "maps/isometric/finite_diamond.tmx",
+        "A finite 'diamond' isometric map",
         default_callback,
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "isometric_staggered_map.tmx",
-        "A finite staggered isometric map",
+        "maps/isometric/infinite_diamond.tmx",
+        "An infinite 'diamond' isometric map",
         default_callback,
     ));
     commands.insert_resource(mgr);

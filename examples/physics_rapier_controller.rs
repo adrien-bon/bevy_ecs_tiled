@@ -4,7 +4,6 @@ use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use bevy_rapier2d::prelude::*;
-use tiled::Map;
 
 mod helper;
 
@@ -24,11 +23,13 @@ impl TiledPhysicsBackend for MyCustomRapierPhysicsBackend {
     fn spawn_colliders(
         &self,
         commands: &mut Commands,
-        map: &Map,
+        tiled_map: &TiledMap,
         filter: &TiledNameFilter,
         collider: &TiledCollider,
     ) -> Vec<TiledColliderSpawnInfos> {
-        let colliders = self.0.spawn_colliders(commands, map, filter, collider);
+        let colliders = self
+            .0
+            .spawn_colliders(commands, tiled_map, filter, collider);
         for c in &colliders {
             commands
                 .entity(c.entity)
@@ -65,7 +66,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
     commands
         .spawn((
-            TiledMapHandle(asset_server.load("multiple_layers_with_colliders.tmx")),
+            TiledMapHandle(asset_server.load("maps/orthogonal/multiple_layers_with_colliders.tmx")),
             TiledMapSettings {
                 layer_positioning: LayerPositioning::Centered,
                 ..Default::default()

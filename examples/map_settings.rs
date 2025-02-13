@@ -27,13 +27,13 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut mgr = helper::assets::AssetsManager::new(&mut commands);
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "finite.tmx",
+        "maps/orthogonal/finite.tmx",
         "A map using default settings",
         |_| {},
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "finite.tmx",
+        "maps/orthogonal/finite.tmx",
         "A map using LayerPositioning::Centered",
         |c| {
             c.insert(TiledMapSettings {
@@ -44,7 +44,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "finite.tmx",
+        "maps/orthogonal/finite.tmx",
         "A map using LayerPositioning::TiledOffset",
         |c| {
             c.insert(TiledMapSettings {
@@ -55,7 +55,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "finite.tmx",
+        "maps/orthogonal/finite.tmx",
         "A map using an initial Transform (rotation = 45°)",
         |c| {
             // You can directly insert a Transform to the entity holding the map
@@ -64,7 +64,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
-        "finite.tmx",
+        "maps/orthogonal/finite.tmx",
         "A map using an initial Visibility (hidden)",
         |c| {
             // You can directly insert a Visibility to the entity holding the map

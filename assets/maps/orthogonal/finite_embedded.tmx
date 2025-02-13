@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="10" height="10" tilewidth="32" tileheight="32" infinite="0" nextlayerid="2" nextobjectid="1">
+ <tileset firstgid="1" name="Tile Set" tilewidth="32" tileheight="32" tilecount="7" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="7">
+   <image source="../../tiles/orthogonal/tile0.png" width="32" height="32"/>
+  </tile>
+  <tile id="8">
+   <image source="../../tiles/orthogonal/tile1.png" width="32" height="32"/>
+  </tile>
+  <tile id="9">
+   <image source="../../tiles/orthogonal/tile2.png" width="32" height="32"/>
+  </tile>
+  <tile id="10">
+   <image source="../../tiles/orthogonal/tile3.png" width="32" height="32"/>
+  </tile>
+  <tile id="11">
+   <image source="../../tiles/orthogonal/tile4.png" width="32" height="32"/>
+  </tile>
+  <tile id="12">
+   <image source="../../tiles/orthogonal/tile5.png" width="32" height="32"/>
+  </tile>
+  <tile id="13">
+   <image source="../../tiles/orthogonal/tile6.png" width="32" height="32"/>
+  </tile>
+ </tileset>
+ <layer id="1" name="Tile Layer 1" width="10" height="10">
+  <data encoding="csv">
+9,9,9,9,9,9,9,9,9,9,
+9,0,0,0,0,0,0,0,0,9,
+9,11,11,11,11,11,11,11,0,9,
+9,0,0,0,0,0,0,0,0,9,
+9,11,11,0,0,0,0,8,8,9,
+9,0,0,0,13,13,0,0,0,9,
+9,0,0,0,0,0,0,0,0,9,
+9,0,13,13,13,13,13,13,13,9,
+9,0,0,0,0,0,0,0,0,9,
+9,9,9,9,9,9,9,9,9,9
+</data>
+ </layer>
+</map>
