@@ -25,9 +25,6 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Load and spawn the map
     commands.spawn((
         TiledMapHandle(asset_server.load("maps/demo.tmx")),
-        TiledMapSettings {
-            layer_positioning: LayerPositioning::Centered,
-            ..default()
-        },
+        TiledMapSettings::with_layer_positioning(LayerPositioning::Centered),
     ));
 }

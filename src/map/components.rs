@@ -24,6 +24,22 @@ impl Default for TiledMapSettings {
     }
 }
 
+impl TiledMapSettings {
+    pub fn with_layer_positioning(layer_positioning: LayerPositioning) -> Self {
+        Self {
+            layer_positioning,
+            ..default()
+        }
+    }
+
+    pub fn with_layer_z_offset(layer_z_offset: f32) -> Self {
+        Self {
+            layer_z_offset,
+            ..default()
+        }
+    }
+}
+
 /// Controls layers positioning strategy.
 ///
 /// Based upon this setting, you can determine where your layers (ie. your map) will be rendered.

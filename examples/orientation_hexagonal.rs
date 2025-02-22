@@ -25,10 +25,9 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d);
 
     let default_callback: helper::assets::MapInfosCallback = |c| {
-        c.insert(TiledMapSettings {
-            layer_positioning: LayerPositioning::Centered,
-            ..default()
-        });
+        c.insert(TiledMapSettings::with_layer_positioning(
+            LayerPositioning::Centered,
+        ));
     };
 
     let mut mgr = helper::assets::AssetsManager::new(&mut commands);

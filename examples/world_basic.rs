@@ -39,10 +39,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // You can eventually add some extra settings to your world
     world_entity.insert((
-        TiledMapSettings {
-            layer_positioning: LayerPositioning::Centered,
-            ..default()
-        },
+        TiledMapSettings::with_layer_positioning(LayerPositioning::Centered),
         TiledWorldSettings {
             chunking: Some(Vec2::new(200., 200.)),
         },

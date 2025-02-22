@@ -34,10 +34,9 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         "maps/orthogonal/finite.tmx",
         "A map using LayerPositioning::Centered",
         |c| {
-            c.insert(TiledMapSettings {
-                layer_positioning: LayerPositioning::Centered,
-                ..default()
-            });
+            c.insert(TiledMapSettings::with_layer_positioning(
+                LayerPositioning::Centered,
+            ));
         },
     ));
     mgr.add_map(helper::assets::MapInfos::new(
@@ -45,10 +44,9 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         "maps/orthogonal/finite.tmx",
         "A map using LayerPositioning::BottomLeft",
         |c| {
-            c.insert(TiledMapSettings {
-                layer_positioning: LayerPositioning::BottomLeft,
-                ..default()
-            });
+            c.insert(TiledMapSettings::with_layer_positioning(
+                LayerPositioning::BottomLeft,
+            ));
         },
     ));
     mgr.add_map(helper::assets::MapInfos::new(

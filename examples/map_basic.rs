@@ -25,8 +25,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut map_entity = commands.spawn(TiledMapHandle(map_handle));
 
     // You can eventually add some extra settings to your map
-    map_entity.insert((TiledMapSettings {
-        layer_positioning: LayerPositioning::Centered,
-        ..default()
-    },));
+    map_entity.insert(TiledMapSettings::with_layer_positioning(
+        LayerPositioning::Centered,
+    ));
 }

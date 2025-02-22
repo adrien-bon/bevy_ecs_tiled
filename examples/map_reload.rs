@@ -39,10 +39,7 @@ fn startup(
 
     commands.spawn((
         TiledMapHandle(asset_server.load("maps/orthogonal/finite.tmx")),
-        TiledMapSettings {
-            layer_positioning: LayerPositioning::Centered,
-            ..default()
-        },
+        TiledMapSettings::with_layer_positioning(LayerPositioning::Centered),
     ));
     next_state.set(MapState::Loaded);
 }
@@ -64,10 +61,7 @@ fn handle_load(
         info!("Load map");
         commands.spawn((
             TiledMapHandle(asset_server.load("maps/orthogonal/finite.tmx")),
-            TiledMapSettings {
-                layer_positioning: LayerPositioning::Centered,
-                ..default()
-            },
+            TiledMapSettings::with_layer_positioning(LayerPositioning::Centered),
         ));
         next_state.set(MapState::Loaded);
     }

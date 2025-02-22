@@ -16,6 +16,7 @@
 - Properly use the `Visible` flag for objects
 - Properly react to components change: automatically respawn maps / worlds in case of update
 - Automatically register `bevy_ecs_tilemap::TilemapPlugin` plugin when registering `TiledMapPlugin`
+- Add convenience methods to easily initialize `TiledMapSettings`
 
 ### Changed
 

@@ -34,11 +34,10 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         "maps/orthogonal/finite.tmx",
         "A finite orthogonal map with all colliders",
         |c| {
-            c.insert(TiledMapSettings {
-                layer_positioning: LayerPositioning::Centered,
-                ..default()
-            });
-            c.insert(TiledPhysicsSettings::<TiledPhysicsAvianBackend>::default());
+            c.insert((
+                TiledMapSettings::with_layer_positioning(LayerPositioning::Centered),
+                TiledPhysicsSettings::<TiledPhysicsAvianBackend>::default(),
+            ));
         },
     ));
     mgr.add_map(helper::assets::MapInfos::new(
@@ -46,11 +45,10 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         "maps/orthogonal/infinite.tmx",
         "An infinite orthogonal map with all colliders",
         |c| {
-            c.insert(TiledMapSettings {
-                layer_positioning: LayerPositioning::Centered,
-                ..default()
-            });
-            c.insert(TiledPhysicsSettings::<TiledPhysicsAvianBackend>::default());
+            c.insert((
+                TiledMapSettings::with_layer_positioning(LayerPositioning::Centered),
+                TiledPhysicsSettings::<TiledPhysicsAvianBackend>::default(),
+            ));
         },
     ));
     mgr.add_map(helper::assets::MapInfos::new(
@@ -58,15 +56,14 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         "maps/orthogonal/finite.tmx",
         "A finite orthogonal map with only tiles colliders named 'collision'",
         |c| {
-            c.insert(TiledMapSettings {
-                layer_positioning: LayerPositioning::Centered,
-                ..default()
-            });
-            c.insert(TiledPhysicsSettings::<TiledPhysicsAvianBackend> {
-                objects_layer_filter: TiledName::None,
-                tiles_objects_filter: TiledName::Names(vec!["collision".to_string()]),
-                ..default()
-            });
+            c.insert((
+                TiledMapSettings::with_layer_positioning(LayerPositioning::Centered),
+                TiledPhysicsSettings::<TiledPhysicsAvianBackend> {
+                    objects_layer_filter: TiledName::None,
+                    tiles_objects_filter: TiledName::Names(vec!["collision".to_string()]),
+                    ..default()
+                },
+            ));
         },
     ));
     mgr.add_map(helper::assets::MapInfos::new(
@@ -74,15 +71,14 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         "maps/orthogonal/finite.tmx",
         "A finite orthogonal map with only object colliders",
         |c| {
-            c.insert(TiledMapSettings {
-                layer_positioning: LayerPositioning::Centered,
-                ..default()
-            });
-            c.insert(TiledPhysicsSettings::<TiledPhysicsAvianBackend> {
-                objects_layer_filter: TiledName::All,
-                tiles_objects_filter: TiledName::None,
-                ..default()
-            });
+            c.insert((
+                TiledMapSettings::with_layer_positioning(LayerPositioning::Centered),
+                TiledPhysicsSettings::<TiledPhysicsAvianBackend> {
+                    objects_layer_filter: TiledName::All,
+                    tiles_objects_filter: TiledName::None,
+                    ..default()
+                },
+            ));
         },
     ));
     commands.insert_resource(mgr);

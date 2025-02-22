@@ -26,19 +26,18 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d);
 
     let default_callback: helper::assets::MapInfosCallback = |c| {
-        c.insert(TiledMapSettings {
-            layer_positioning: LayerPositioning::Centered,
-            ..default()
-        });
-        // For isometric maps, it can be useful to tweak bevy_ecs_tilemap render settings.
-        // TilemapRenderSettings provide the 'y_sort' parameter to sort chunks using their y-axis
-        // position during rendering.
-        // However, it applies to whole chunks, not individual tile, so we have to force the chunk
-        // size to be exactly one tile
-        c.insert(TilemapRenderSettings {
-            render_chunk_size: UVec2::new(1, 1),
-            y_sort: true,
-        });
+        c.insert((
+            TiledMapSettings::with_layer_positioning(LayerPositioning::Centered),
+            // For isometric maps, it can be useful to tweak bevy_ecs_tilemap render settings.
+            // TilemapRenderSettings provide the 'y_sort' parameter to sort chunks using their y-axis
+            // position during rendering.
+            // However, it applies to whole chunks, not individual tile, so we have to force the chunk
+            // size to be exactly one tile
+            TilemapRenderSettings {
+                render_chunk_size: UVec2::new(1, 1),
+                y_sort: true,
+            },
+        ));
     };
 
     let mut mgr = helper::assets::AssetsManager::new(&mut commands);
