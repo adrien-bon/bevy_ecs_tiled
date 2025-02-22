@@ -389,6 +389,10 @@ fn load_objects_layer(
                 Name::new(format!("Object({})", object_data.name)),
                 TiledMapObject,
                 Transform::from_xyz(object_position.x, object_position.y, 0.),
+                match &object_data.visible {
+                    true => Visibility::Inherited,
+                    false => Visibility::Hidden,
+                },
             ))
             .set_parent(layer_event.entity)
             .id();
