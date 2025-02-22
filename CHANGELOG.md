@@ -45,6 +45,7 @@
 ### Bugfixes
 
 - Various fixes around infinite maps: we should now have proper location for objects and tile layer chunks
+- Fix `TilemapRenderSettings::chunk_size` value for isometric examples (#73)
 
 ## v0.5.1
 

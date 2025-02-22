@@ -32,9 +32,9 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             // TilemapRenderSettings provide the 'y_sort' parameter to sort chunks using their y-axis
             // position during rendering.
             // However, it applies to whole chunks, not individual tile, so we have to force the chunk
-            // size to be exactly one tile
+            // size to be exactly one tile along the y-axis
             TilemapRenderSettings {
-                render_chunk_size: UVec2::new(1, 1),
+                render_chunk_size: UVec2::new(64, 1),
                 y_sort: true,
             },
         ));
