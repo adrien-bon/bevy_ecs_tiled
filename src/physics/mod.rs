@@ -34,12 +34,12 @@ pub mod prelude {
 pub trait TiledPhysicsBackend:
     Default + Clone + 'static + std::marker::Sync + std::marker::Send + FromReflect + Reflectable
 {
-    /// Function responsible for spawning a physics collider
+    /// Function responsible for spawning physics colliders
     ///
-    /// This function should spawn an [Entity] representing a single physics
+    /// This function should spawn one or several [Entity] representing a physics
     /// collider and return informations about it.
-    /// In case the provided [TiledColliderSource] is not supported, it should
-    /// not spawn anything and return `None`.
+    /// In case the provided [TiledCollider] is not supported, it should
+    /// not spawn anything and return an empty [Vec].
     fn spawn_colliders(
         &self,
         commands: &mut Commands,
