@@ -97,35 +97,65 @@ impl<T: TiledPhysicsBackend> Plugin for TiledPhysicsPlugin<T> {
         app.add_systems(
             PreUpdate,
             (
-                collider_from_tiles_layer::<T>.after(crate::map::process_loaded_maps),
-                collider_from_object::<T>.after(crate::map::process_loaded_maps),
-            ),
+                initialize_settings_for_worlds::<T>,
+                initialize_settings_for_maps::<T>,
+                collider_from_tiles_layer::<T>,
+                collider_from_object::<T>,
+            )
+                .chain()
+                .after(crate::map::process_loaded_maps),
         )
+        .add_systems(PostUpdate, update_settings::<T>)
         .register_type::<TiledPhysicsSettings<T>>();
     }
 }
 
+fn initialize_settings_for_worlds<T: TiledPhysicsBackend>(
+    mut commands: Commands,
+    worlds_query: Query<Entity, (With<TiledWorldMarker>, Without<TiledPhysicsSettings<T>>)>,
+) {
+    for world in worlds_query.iter() {
+        commands
+            .entity(world)
+            .insert(TiledPhysicsSettings::<T>::default());
+    }
+}
+
 #[allow(clippy::type_complexity)]
-fn get_physics_settings<T: TiledPhysicsBackend>(
-    map_entity: Entity,
-    q_maps: &Query<(Option<&Parent>, Option<&TiledPhysicsSettings<T>>), With<TiledMapMarker>>,
-    q_worlds: &Query<Option<&TiledPhysicsSettings<T>>, With<TiledWorldMarker>>,
-) -> TiledPhysicsSettings<T> {
-    q_maps
-        .get(map_entity)
-        .ok()
-        .and_then(|(parent, settings)| {
-            if settings.is_some() {
-                // Try to use physics settings from the map
-                settings.cloned()
-            } else {
-                // Fallback on physics settings from the parent world
-                parent
-                    .and_then(|p| q_worlds.get(p.get()).ok())
-                    .and_then(|s| s.cloned())
-            }
-        })
-        .unwrap_or_default()
+fn initialize_settings_for_maps<T: TiledPhysicsBackend>(
+    mut commands: Commands,
+    maps_query: Query<
+        (Entity, Option<&Parent>),
+        (With<TiledMapMarker>, Without<TiledPhysicsSettings<T>>),
+    >,
+    worlds_query: Query<&TiledPhysicsSettings<T>, With<TiledWorldMarker>>,
+) {
+    for (map, parent) in maps_query.iter() {
+        commands.entity(map).insert(
+            parent
+                .and_then(|world| worlds_query.get(world.get()).ok())
+                .cloned()
+                .unwrap_or_default(),
+        );
+    }
+}
+
+fn update_settings<T: TiledPhysicsBackend>(
+    mut commands: Commands,
+    maps_query: Query<(Entity, Ref<TiledPhysicsSettings<T>>), With<TiledMapMarker>>,
+    worlds_query: Query<(Entity, Ref<TiledPhysicsSettings<T>>), With<TiledWorldMarker>>,
+) {
+    for (world, settings) in worlds_query.iter() {
+        if settings.is_changed() && !settings.is_added() {
+            commands.entity(world).insert(RespawnTiledWorld);
+        }
+    }
+
+    for (map, settings) in maps_query.iter() {
+        if settings.is_changed() && !settings.is_added() {
+            commands.entity(map).insert(RespawnTiledMap);
+        }
+    }
 }
 
 #[allow(clippy::type_complexity)]
@@ -133,11 +163,16 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
     mut layer_event: EventReader<TiledLayerCreated>,
     mut commands: Commands,
     map_asset: Res<Assets<TiledMap>>,
-    q_maps: Query<(Option<&Parent>, Option<&TiledPhysicsSettings<T>>), With<TiledMapMarker>>,
-    q_worlds: Query<Option<&TiledPhysicsSettings<T>>, With<TiledWorldMarker>>,
+    maps_query: Query<&TiledPhysicsSettings<T>, With<TiledMapMarker>>,
 ) {
     for ev in layer_event.read() {
-        let settings = get_physics_settings(ev.map.entity, &q_maps, &q_worlds);
+        debug!(
+            "map entity = {:?}, layer entity = {:?}",
+            ev.map.entity, ev.entity
+        );
+        let settings = maps_query
+            .get(ev.map.entity)
+            .expect("TiledPhysicsSettings<T> component should be on map entity");
         let Some(tiled_map) = ev.map.get_map_asset(&map_asset) else {
             return;
         };
@@ -166,11 +201,12 @@ fn collider_from_object<T: TiledPhysicsBackend>(
     mut object_event: EventReader<TiledObjectCreated>,
     mut commands: Commands,
     map_asset: Res<Assets<TiledMap>>,
-    q_maps: Query<(Option<&Parent>, Option<&TiledPhysicsSettings<T>>), With<TiledMapMarker>>,
-    q_worlds: Query<Option<&TiledPhysicsSettings<T>>, With<TiledWorldMarker>>,
+    maps_query: Query<&TiledPhysicsSettings<T>, With<TiledMapMarker>>,
 ) {
     for ev in object_event.read() {
-        let settings = get_physics_settings(ev.layer.map.entity, &q_maps, &q_worlds);
+        let settings = maps_query
+            .get(ev.layer.map.entity)
+            .expect("TiledPhysicsSettings<T> component should be on map entity");
         let Some(tiled_map) = ev.layer.map.get_map_asset(&map_asset) else {
             return;
         };

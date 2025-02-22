@@ -61,7 +61,10 @@ fn draw_camera_rect(
 }
 
 fn draw_maps_rect(
-    world_query: Query<(&TiledWorldHandle, &GlobalTransform), With<TiledWorldMarker>>,
+    world_query: Query<
+        (&TiledWorldHandle, &GlobalTransform, &TiledMapSettings),
+        With<TiledWorldMarker>,
+    >,
     world_assets: Res<Assets<TiledWorld>>,
     config: Res<TiledDebugWorldChunkConfig>,
     mut gizmos: Gizmos,
@@ -69,9 +72,10 @@ fn draw_maps_rect(
     if config.maps_colors_list.is_empty() {
         return;
     }
-    for (world_handle, world_transform) in world_query.iter() {
+    for (world_handle, world_transform, map_settings) in world_query.iter() {
         if let Some(tiled_world) = world_assets.get(world_handle.0.id()) {
-            crate::world::for_each_map(tiled_world, world_transform, |idx, aabb| {
+            let static_offset = tiled_world.static_offset(&map_settings.layer_positioning);
+            crate::world::for_each_map(tiled_world, world_transform, static_offset, |idx, aabb| {
                 gizmos.rect_2d(
                     Isometry2d::from_translation(aabb.center()),
                     aabb.half_size() * 2.,

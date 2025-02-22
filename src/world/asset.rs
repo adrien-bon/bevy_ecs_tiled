@@ -8,6 +8,8 @@ use std::io::ErrorKind;
 
 use crate::{cache::TiledResourceCache, reader::BytesResourceReader, TiledMap};
 
+use super::LayerPositioning;
+
 /// Tiled world `Asset`.
 ///
 /// `Asset` holding Tiled world informations.
@@ -19,6 +21,19 @@ pub struct TiledWorld {
     pub world_rect: Rect,
     /// List of all the maps contained in this world and their associated [Rect] boundary
     pub maps: Vec<(Rect, Handle<TiledMap>)>,
+}
+
+impl TiledWorld {
+    pub fn static_offset(&self, layer_positioning: &LayerPositioning) -> Vec3 {
+        match &layer_positioning {
+            LayerPositioning::Centered => Vec3 {
+                x: -self.world_rect.width() / 2.0,
+                y: -self.world_rect.height() / 2.0,
+                z: 0.0,
+            },
+            LayerPositioning::BottomLeft => Vec3::ZERO,
+        }
+    }
 }
 
 /// [TiledWorld] loading error.

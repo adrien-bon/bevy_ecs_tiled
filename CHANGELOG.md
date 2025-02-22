@@ -14,6 +14,7 @@
 - Properly handle world chunking with a non null rotation
 - Order plugin systems. Instead of doing everything in `Update`, schedule systems that spawn stuff in `PreUpdate` and systems that despawn stuff in `PostUpdate`
 - Properly use the `Visible` flag for objects
+- Properly react to components change: automatically respawn maps / worlds in case of update
 
 ### Changed
 

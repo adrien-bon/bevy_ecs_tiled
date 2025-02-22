@@ -79,7 +79,12 @@ pub(crate) fn process_loaded_maps(
             &TilemapRenderSettings,
             &TiledMapSettings,
         ),
-        Or<(Changed<TiledMapHandle>, With<RespawnTiledMap>)>,
+        Or<(
+            Changed<TiledMapHandle>,
+            Changed<TiledMapSettings>,
+            Changed<TilemapRenderSettings>,
+            With<RespawnTiledMap>,
+        )>,
     >,
     mut event_writers: TiledMapEventWriters,
 ) {

@@ -41,14 +41,11 @@ pub(crate) fn build(app: &mut bevy::prelude::App) {
         .register_type::<TiledWorldSettings>()
         .register_type::<TiledWorldStorage>()
         .add_event::<TiledWorldCreated>()
-        .add_systems(PreUpdate, process_loaded_worlds)
         .add_systems(
-            PostUpdate,
-            (
-                world_chunking.before(handle_world_events),
-                handle_world_events,
-            ),
-        );
+            PreUpdate,
+            process_loaded_worlds.after(crate::map::process_loaded_maps),
+        )
+        .add_systems(PostUpdate, (handle_world_events, world_chunking).chain());
 }
 
 #[allow(clippy::type_complexity)]
@@ -96,6 +93,9 @@ fn world_chunking(
         let mut to_remove = Vec::new();
         let mut to_spawn = Vec::new();
 
+        // Compute static offset based upon world settings
+        let static_offset = tiled_world.static_offset(&map_settings.layer_positioning);
+
         if let Some(chunking) = world_settings.chunking {
             let mut visible_maps = Vec::new();
             let cameras: Vec<Aabb2d> = camera_query
@@ -109,7 +109,7 @@ fn world_chunking(
                 .collect();
             // Check which map is visible by testing them against each camera (if there are multiple)
             // If map aabb overlaps with the camera_view, it is visible
-            for_each_map(tiled_world, world_transform, |idx, aabb| {
+            for_each_map(tiled_world, world_transform, static_offset, |idx, aabb| {
                 for c in cameras.iter() {
                     if aabb.intersects(c) {
                         visible_maps.push(idx);
@@ -153,7 +153,9 @@ fn world_chunking(
             let map_entity = commands
                 .spawn((
                     TiledMapHandle(handle.clone_weak()),
-                    Transform::from_translation(Vec3::new(rect.min.x, rect.min.y, 0.0)),
+                    Transform::from_translation(
+                        static_offset + Vec3::new(rect.min.x, rect.min.y, 0.0),
+                    ),
                     TiledMapSettings {
                         layer_positioning: LayerPositioning::BottomLeft,
                         ..*map_settings
@@ -178,20 +180,19 @@ fn process_loaded_worlds(
     mut commands: Commands,
     worlds: Res<Assets<TiledWorld>>,
     mut world_query: Query<
-        (
-            Entity,
-            &TiledWorldHandle,
-            &TiledMapSettings,
-            &mut Transform,
-            &mut TiledWorldStorage,
-        ),
-        Or<(Changed<TiledWorldHandle>, With<RespawnTiledWorld>)>,
+        (Entity, &TiledWorldHandle, &mut TiledWorldStorage),
+        Or<(
+            Changed<TiledWorldHandle>,
+            Changed<TiledMapSettings>,
+            Changed<TilemapRenderSettings>,
+            With<RespawnTiledWorld>,
+            // Not needed to react to changes on TiledWorldSettings:
+            // it is directly used in world_chunking function
+        )>,
     >,
     mut world_event: EventWriter<TiledWorldCreated>,
 ) {
-    for (world_entity, world_handle, map_settings, mut world_transform, mut world_storage) in
-        world_query.iter_mut()
-    {
+    for (world_entity, world_handle, mut world_storage) in world_query.iter_mut() {
         if let Some(load_state) = asset_server.get_recursive_dependency_load_state(&world_handle.0)
         {
             if !load_state.is_loaded() {
@@ -226,15 +227,6 @@ fn process_loaded_worlds(
 
             // Clean previous maps before trying to spawn the new ones
             remove_maps(&mut commands, &mut world_storage);
-
-            // Adjust world transform if needed
-            if let LayerPositioning::Centered = map_settings.layer_positioning {
-                world_transform.translation += Vec3::new(
-                    -tiled_world.world_rect.max.x / 2.0,
-                    -tiled_world.world_rect.max.y / 2.0,
-                    0.0,
-                );
-            }
 
             // Remove the 'Respawn' marker and insert additional components
             commands
@@ -297,9 +289,12 @@ fn remove_maps(commands: &mut Commands, world_storage: &mut TiledWorldStorage) {
 pub(crate) fn for_each_map<F: FnMut(usize, Aabb2d)>(
     tiled_world: &TiledWorld,
     world_transform: &GlobalTransform,
+    offset: Vec3,
     mut f: F,
 ) {
-    let (_, r, t) = world_transform.to_scale_rotation_translation();
+    let (_, r, t) = world_transform
+        .mul_transform(Transform::from_translation(offset))
+        .to_scale_rotation_translation();
     let (axis, mut angle) = r.to_axis_angle();
     if axis.z < 0. {
         angle = -angle;
