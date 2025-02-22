@@ -15,6 +15,7 @@
 - Order plugin systems. Instead of doing everything in `Update`, schedule systems that spawn stuff in `PreUpdate` and systems that despawn stuff in `PostUpdate`
 - Properly use the `Visible` flag for objects
 - Properly react to components change: automatically respawn maps / worlds in case of update
+- Automatically register `bevy_ecs_tilemap::TilemapPlugin` plugin when registering `TiledMapPlugin`
 
 ### Changed
 

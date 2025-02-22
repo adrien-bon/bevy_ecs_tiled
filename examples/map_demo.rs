@@ -2,7 +2,6 @@
 
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
-use bevy_ecs_tilemap::prelude::*;
 
 mod helper;
 
@@ -10,8 +9,7 @@ fn main() {
     App::new()
         // Bevy default plugins: prevent blur effect by changing default sampling
         .add_plugins(DefaultPlugins.build().set(ImagePlugin::default_nearest()))
-        // bevy_ecs_tilemap and bevy_ecs_tiled main plugins
-        .add_plugins(TilemapPlugin)
+        // bevy_ecs_tiled main plugin
         .add_plugins(TiledMapPlugin::default())
         // Examples helper plugins: for this example, will spawn inspector and handle camera
         .add_plugins(helper::HelperPlugin)

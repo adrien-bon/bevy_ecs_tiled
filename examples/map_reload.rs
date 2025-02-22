@@ -2,7 +2,6 @@
 
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
-use bevy_ecs_tilemap::prelude::*;
 
 mod helper;
 
@@ -12,8 +11,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         // Examples helper plugin (does not matter for this example)
         .add_plugins(helper::HelperPlugin)
-        // bevy_ecs_tilemap and bevy_ecs_tiled main plugins
-        .add_plugins(TilemapPlugin)
+        // bevy_ecs_tiled main plugin
         .add_plugins(TiledMapPlugin::default())
         // Add our systems and run the app!
         .init_state::<MapState>()

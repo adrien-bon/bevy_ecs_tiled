@@ -78,7 +78,10 @@ impl Default for TiledMapPluginConfig {
 pub struct TiledMapPlugin(pub TiledMapPluginConfig);
 
 impl Plugin for TiledMapPlugin {
-    fn build(&self, app: &mut bevy::prelude::App) {
+    fn build(&self, mut app: &mut bevy::prelude::App) {
+        if !app.is_plugin_added::<bevy_ecs_tilemap::TilemapPlugin>() {
+            app = app.add_plugins(bevy_ecs_tilemap::TilemapPlugin);
+        }
         app.insert_resource(cache::TiledResourceCache::new())
             .insert_resource(self.0.clone());
         map::build(app);

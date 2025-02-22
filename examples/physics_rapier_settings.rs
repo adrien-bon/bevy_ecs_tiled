@@ -2,7 +2,6 @@
 
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
-use bevy_ecs_tilemap::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 mod helper;
@@ -13,8 +12,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         // Examples helper plugins: for this example, contains the logic to switch between maps
         .add_plugins(helper::HelperPlugin)
-        // bevy_ecs_tilemap and bevy_ecs_tiled main plugins
-        .add_plugins(TilemapPlugin)
+        // bevy_ecs_tiled main plugin
         .add_plugins(TiledMapPlugin::default())
         // bevy_ecs_tiled physics plugin: this is where we select which physics backend to use
         .add_plugins(TiledPhysicsPlugin::<TiledPhysicsRapierBackend>::default())

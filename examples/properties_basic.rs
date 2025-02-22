@@ -19,8 +19,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         // Examples helper plugin (does not matter for this example)
         .add_plugins(helper::HelperPlugin)
-        // bevy_ecs_tilemap and bevy_ecs_tiled main plugins
-        .add_plugins(TilemapPlugin)
+        // bevy_ecs_tiled main plugin
         .add_plugins(TiledMapPlugin(TiledMapPluginConfig {
             // Note: if you set this setting to `None`
             // properties will still be translated

@@ -3,7 +3,6 @@
 
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
-use bevy_ecs_tilemap::prelude::*;
 
 mod helper;
 
@@ -13,8 +12,7 @@ fn main() {
     App::new()
         // Bevy default plugins
         .add_plugins(DefaultPlugins)
-        // bevy_ecs_tilemap and bevy_ecs_tiled main plugins
-        .add_plugins(TilemapPlugin)
+        // bevy_ecs_tiled main plugin
         .add_plugins(TiledMapPlugin::default())
         // Examples helper plugins: for this example, contains the logic to move the camera
         .add_plugins(helper::HelperPlugin)

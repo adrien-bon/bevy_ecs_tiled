@@ -66,8 +66,6 @@ fn main() {
     App::new()
         // Add Bevy default plugins
         .add_plugins(DefaultPlugins)
-        // Add bevy_ecs_tilemap plugin
-        .add_plugins(TilemapPlugin)
         // Add bevy_ecs_tiled plugin
         .add_plugins(TiledMapPlugin::default())
         // Add our startup function to the schedule and run the app
