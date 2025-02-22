@@ -31,7 +31,7 @@ impl Default for TiledMapSettings {
 pub enum LayerPositioning {
     #[default]
     /// Do not tweak layers position and keep original Tiled coordinate system so that Bevy (0, 0) is at the bottom-left of the map.
-    TiledOffset,
+    BottomLeft,
     /// Update layers position and mimic Bevy's coordinate system so that Bevy (0, 0) is at the center of the map.
     Centered,
 }

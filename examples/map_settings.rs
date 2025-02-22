@@ -45,10 +45,10 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
         "maps/orthogonal/finite.tmx",
-        "A map using LayerPositioning::TiledOffset",
+        "A map using LayerPositioning::BottomLeft",
         |c| {
             c.insert(TiledMapSettings {
-                layer_positioning: LayerPositioning::TiledOffset,
+                layer_positioning: LayerPositioning::BottomLeft,
                 ..default()
             });
         },

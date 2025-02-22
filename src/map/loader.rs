@@ -73,7 +73,7 @@ pub(crate) fn load_map(
 
     // Compute layer base Transform from LayerPositioning
     let layer_transform = match tiled_settings.layer_positioning {
-        LayerPositioning::TiledOffset => {
+        LayerPositioning::BottomLeft => {
             // Special case for isometric maps: bevy_ecs_tilemap start drawing
             // them from middle left instead of from bottom left
             if let TilemapType::Isometric(IsoCoordSystem::Diamond) = map_type {

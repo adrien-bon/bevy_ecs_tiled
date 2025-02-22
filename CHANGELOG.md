@@ -36,6 +36,7 @@
 - Replace global observers with an entity scoped observer + a global event writer
 - Rework how we store tileset data in `TiledMap`
 - Add new examples to test 'infinite' maps and rework how we organize our assets
+- Rename `LayerPositioning::TiledOffset` to `LayerPositioning::BottomLeft`
 
 ### Bugfixes
 

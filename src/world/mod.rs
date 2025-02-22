@@ -155,7 +155,7 @@ fn world_chunking(
                     TiledMapHandle(handle.clone_weak()),
                     Transform::from_translation(Vec3::new(rect.min.x, rect.min.y, 0.0)),
                     TiledMapSettings {
-                        layer_positioning: LayerPositioning::TiledOffset,
+                        layer_positioning: LayerPositioning::BottomLeft,
                         ..*map_settings
                     },
                     *render_settings,
