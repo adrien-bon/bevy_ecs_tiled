@@ -27,7 +27,8 @@ fn main() {
         }))
         // We need to register all the types we want to use
         .register_type::<BiomeInfos>()
-        .register_type::<SpawnInfos>()
+        .register_type::<SpawnType>()
+        .register_type::<ResourceType>()
         // Add our systems and run the app!
         .add_systems(Startup, startup)
         .add_systems(Update, display_custom_tiles)
@@ -43,7 +44,8 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 // You just have to define your Components and make sure they are properly registered and reflected.
-// They will be exported in the Tiled .json file so they can be loaded then used inside Tiled.
+// They will be exported in the Tiled .json file so they can be imported then used from Tiled.
+// Next time you load your map, they will be automatically added as components on tiles / objects / layers entities
 
 #[derive(Component, Default, Debug, Reflect)]
 #[reflect(Component, Default)]
@@ -52,13 +54,6 @@ struct BiomeInfos {
     block_line_of_sight: bool,
 }
 
-#[derive(Component, Default, Debug, Reflect)]
-#[reflect(Component, Default)]
-struct SpawnInfos {
-    ty: SpawnType,
-}
-
-// We can also define custom enums
 #[derive(Default, Reflect, Debug)]
 #[reflect(Default)]
 enum BiomeType {
@@ -71,8 +66,8 @@ enum BiomeType {
     Water,
 }
 
-#[derive(Default, Reflect, Debug)]
-#[reflect(Default)]
+#[derive(Component, Default, Debug, Reflect)]
+#[reflect(Component, Default)]
 enum SpawnType {
     #[default]
     Unknown,
@@ -81,20 +76,41 @@ enum SpawnType {
         id: u32,
     },
     Enemy(Color),
-    Friendly(u32),
+    Friendly,
 }
 
+#[derive(Component, Default, Debug, Reflect)]
+#[reflect(Component, Default)]
+enum ResourceType {
+    #[default]
+    Unknown,
+    Wheat,
+    Strawberry,
+    Wood,
+    Copper,
+    Gold,
+}
+
+// Marker component so we only print each entity once
 #[derive(Component)]
 struct DoNotPrint;
 
+#[allow(clippy::type_complexity)]
 fn display_custom_tiles(
     mut commands: Commands,
-    q_tile: Query<(Entity, &TilePos, Option<&BiomeInfos>), Without<DoNotPrint>>,
+    q_tile: Query<
+        (Entity, &TilePos, Option<&BiomeInfos>, Option<&ResourceType>),
+        Without<DoNotPrint>,
+    >,
 ) {
-    for (entity, position, biome_infos) in q_tile.iter() {
+    for (entity, position, biome_infos, resource_type) in q_tile.iter() {
         if let Some(i) = biome_infos {
             // Only print the first tile to avoid flooding the console
             info_once!("Found BiomeInfos [{:?} @ {:?}]", i, position);
+        }
+        if let Some(i) = resource_type {
+            // Only print the first tile to avoid flooding the console
+            info_once!("Found ResourceType [{:?} @ {:?}]", i, position);
         }
         commands.entity(entity).insert(DoNotPrint);
     }
@@ -102,12 +118,12 @@ fn display_custom_tiles(
 
 fn display_objects(
     mut commands: Commands,
-    q_object: Query<(Entity, &Transform, &SpawnInfos), Without<DoNotPrint>>,
+    q_object: Query<(Entity, &Transform, &SpawnType), Without<DoNotPrint>>,
 ) {
-    for (entity, transform, spawn_infos) in q_object.iter() {
+    for (entity, transform, spawn_type) in q_object.iter() {
         info!(
-            "Found SpawnInfos [{:?} @ {:?}]",
-            spawn_infos, transform.translation
+            "Found SpawnType [{:?} @ {:?}]",
+            spawn_type, transform.translation
         );
         commands.entity(entity).insert(DoNotPrint);
     }

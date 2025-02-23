@@ -31,23 +31,13 @@
  <objectgroup id="3" name="Object Layer ">
   <object id="1" name="Player spawn" x="98.0258" y="124.343" width="11.1064" height="7.24328">
    <properties>
-    <property name="SpawnInfos" type="class" propertytype="properties_basic::SpawnInfos">
+    <property name="SpawnType" type="class" propertytype="properties_basic::SpawnType">
      <properties>
-      <property name="ty" type="class" propertytype="properties_basic::SpawnType">
+      <property name=":variant" propertytype="properties_basic::SpawnType:::Variant" value="Player"/>
+      <property name="Player" type="class" propertytype="properties_basic::SpawnType::Player">
        <properties>
-        <property name=":variant" propertytype="properties_basic::SpawnType:::Variant" value="Player"/>
-        <property name="Friendly" type="class" propertytype="properties_basic::SpawnType::Friendly">
-         <properties>
-          <property name="0" type="int" value="12"/>
-         </properties>
-        </property>
-        <property name="Player" type="class" propertytype="properties_basic::SpawnType::Player">
-         <properties>
-          <property name="0" type="int" value="14"/>
-          <property name="color" type="color" value="#ff82d4e7"/>
-          <property name="id" type="int" value="23"/>
-         </properties>
-        </property>
+        <property name="color" type="color" value="#ffff157a"/>
+        <property name="id" type="int" value="42"/>
        </properties>
       </property>
      </properties>
@@ -56,21 +46,12 @@
   </object>
   <object id="4" name="Enemy spawn" x="180.358" y="147.522" width="9.89915" height="9.65771">
    <properties>
-    <property name="SpawnInfos" type="class" propertytype="properties_basic::SpawnInfos">
+    <property name="SpawnType" type="class" propertytype="properties_basic::SpawnType">
      <properties>
-      <property name="ty" type="class" propertytype="properties_basic::SpawnType">
+      <property name=":variant" propertytype="properties_basic::SpawnType:::Variant" value="Enemy"/>
+      <property name="Enemy" type="class" propertytype="properties_basic::SpawnType::Enemy">
        <properties>
-        <property name=":variant" propertytype="properties_basic::SpawnType:::Variant" value="Enemy"/>
-        <property name="Enemy" type="class" propertytype="properties_basic::SpawnType::Enemy">
-         <properties>
-          <property name="0" type="color" value="#ffec0527"/>
-         </properties>
-        </property>
-        <property name="Player" type="class" propertytype="properties_basic::SpawnType::Player">
-         <properties>
-          <property name="id" type="int" value="24"/>
-         </properties>
-        </property>
+        <property name="0" type="color" value="#ff06f702"/>
        </properties>
       </property>
      </properties>
@@ -80,23 +61,9 @@
   </object>
   <object id="5" name="Friendly village #1" x="177" y="123.375">
    <properties>
-    <property name="SpawnInfos" type="class" propertytype="properties_basic::SpawnInfos">
+    <property name="SpawnType" type="class" propertytype="properties_basic::SpawnType">
      <properties>
-      <property name="ty" type="class" propertytype="properties_basic::SpawnType">
-       <properties>
-        <property name=":variant" propertytype="properties_basic::SpawnType:::Variant" value="Friendly"/>
-        <property name="Friendly" type="class" propertytype="properties_basic::SpawnType::Friendly">
-         <properties>
-          <property name="0" type="int" value="45"/>
-         </properties>
-        </property>
-        <property name="Player" type="class" propertytype="properties_basic::SpawnType::Player">
-         <properties>
-          <property name="id" type="int" value="123"/>
-         </properties>
-        </property>
-       </properties>
-      </property>
+      <property name=":variant" propertytype="properties_basic::SpawnType:::Variant" value="Friendly"/>
      </properties>
     </property>
    </properties>
@@ -104,11 +71,12 @@
   </object>
   <object id="6" name="Friendly village #2" x="144.5" y="148.125">
    <properties>
-    <property name="SpawnInfos" type="class" propertytype="properties_basic::SpawnInfos">
+    <property name="SpawnType" type="class" propertytype="properties_basic::SpawnType">
      <properties>
-      <property name="ty" type="class" propertytype="properties_basic::SpawnType">
+      <property name=":variant" propertytype="properties_basic::SpawnType:::Variant" value="Friendly"/>
+      <property name="Friendly" type="class" propertytype="properties_basic::SpawnType::Friendly">
        <properties>
-        <property name=":variant" propertytype="properties_basic::SpawnType:::Variant" value="Friendly"/>
+        <property name="0" type="int" value="56"/>
        </properties>
       </property>
      </properties>
@@ -118,7 +86,7 @@
   </object>
   <object id="7" name="Unknown spawn" x="105.5" y="152.5">
    <properties>
-    <property name="SpawnInfos" type="class" propertytype="properties_basic::SpawnInfos"/>
+    <property name="SpawnType" type="class" propertytype="properties_basic::SpawnType"/>
    </properties>
    <point/>
   </object>

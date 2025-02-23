@@ -46,6 +46,7 @@
 
 - Various fixes around infinite maps: we should now have proper location for objects and tile layer chunks
 - Fix `TilemapRenderSettings::chunk_size` value for isometric examples (#73)
+- Properly load unit-variant enums as components without needing to encpasulate them in another component (#75)
 
 ## v0.5.1
 

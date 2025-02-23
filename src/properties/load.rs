@@ -136,24 +136,25 @@ impl DeserializedProperties {
         let mut props: Vec<Box<dyn PartialReflect>> = Vec::new();
 
         for (name, property) in properties.clone() {
-            let PropertyValue::ClassValue {
-                property_type,
-                properties: _,
-            } = &property
-            else {
-                if let PropertyValue::FileValue(file) = &property {
+            let (reg_name, reg) = match &property {
+                PropertyValue::ClassValue {
+                    property_type,
+                    properties: _,
+                } => (property_type, registry.get_with_type_path(property_type)),
+                PropertyValue::FileValue(file) => {
                     props.push(Box::new(load_cx.loader().with_unknown_type().load(file)));
                     continue;
                 }
-
-                bevy::log::warn!(
-                    "error deserializing property: unknown property `{name}`:`{property:?}`"
-                );
-                continue;
+                _ => {
+                    bevy::log::warn!(
+                        "error deserializing property: unknown property `{name}`:`{property:?}`"
+                    );
+                    continue;
+                }
             };
 
-            let Some(reg) = registry.get_with_type_path(property_type) else {
-                bevy::log::error!("error deserializing property: `{property_type}` is not registered in the TypeRegistry.");
+            let Some(reg) = reg else {
+                bevy::log::error!("error deserializing property `{name}`: `{reg_name}` is not registered in the TypeRegistry.");
                 continue;
             };
 
@@ -161,12 +162,12 @@ impl DeserializedProperties {
                 if reg.data::<ReflectResource>().is_some() {
                     if !resources_allowed {
                         bevy::log::warn!(
-                            "error deserializing property: Resources are only allowed as map properties"
+                            "error deserializing property `{name}`: Resources are only allowed as map properties"
                         );
                         continue;
                     }
                 } else {
-                    bevy::log::warn!("error deserializing property: type `{property_type}` is not registered as a Component, Bundle, or Resource");
+                    bevy::log::warn!("error deserializing property `{name}`: type `{reg_name}` is not registered as a Component, Bundle, or Resource");
                     continue;
                 }
             }
@@ -176,7 +177,7 @@ impl DeserializedProperties {
                     props.push(prop);
                 }
                 Err(e) => {
-                    bevy::log::error!("error deserializing property: {e}");
+                    bevy::log::error!("error deserializing property `{name}`: {e}");
                 }
             }
         }
@@ -465,11 +466,11 @@ impl DeserializedProperties {
                 }
 
                 if let Some(PV::StringValue(variant_name)) = properties.remove(":variant") {
-                    if let Some(PV::ClassValue { mut properties, .. }) =
-                        properties.remove(&variant_name)
-                    {
-                        let variant_out = match info.variant(&variant_name) {
-                            Some(VariantInfo::Struct(variant_info)) => {
+                    let variant_out = match info.variant(&variant_name) {
+                        Some(VariantInfo::Struct(variant_info)) => {
+                            if let Some(PV::ClassValue { mut properties, .. }) =
+                                properties.remove(&variant_name)
+                            {
                                 let mut out = DynamicStruct::default();
                                 for field in variant_info.iter() {
                                     let value = Self::deserialize_named_field(
@@ -482,10 +483,19 @@ impl DeserializedProperties {
                                     )?;
                                     out.insert_boxed(field.name(), value);
                                 }
-
                                 Ok(DynamicVariant::Struct(out))
+                            } else {
+                                Err(format!(
+                                    "`{}` enum does not contain `{}` variant data",
+                                    info.type_path(),
+                                    variant_name,
+                                ))
                             }
-                            Some(VariantInfo::Tuple(variant_info)) => {
+                        }
+                        Some(VariantInfo::Tuple(variant_info)) => {
+                            if let Some(PV::ClassValue { mut properties, .. }) =
+                                properties.remove(&variant_name)
+                            {
                                 let mut out = DynamicTuple::default();
                                 for field in variant_info.iter() {
                                     let value = Self::deserialize_unnamed_field(
@@ -498,24 +508,30 @@ impl DeserializedProperties {
                                     )?;
                                     out.insert_boxed(value);
                                 }
-
                                 Ok(DynamicVariant::Tuple(out))
+                            } else {
+                                Err(format!(
+                                    "`{}` enum does not contain `{}` variant data",
+                                    info.type_path(),
+                                    variant_name,
+                                ))
                             }
-                            Some(VariantInfo::Unit(_)) => Ok(DynamicVariant::Unit),
-                            None => Err(format!(
-                                "`{}` enum does not contain `{}` variant",
-                                info.type_path(),
-                                variant_name,
-                            )),
-                        }?;
-                        out.set_variant_with_index(
-                            info.index_of(&variant_name).unwrap(),
+                        }
+                        Some(VariantInfo::Unit(_)) => Ok(DynamicVariant::Unit),
+                        None => Err(format!(
+                            "`{}` enum does not contain `{}` variant",
+                            info.type_path(),
                             variant_name,
-                            variant_out,
-                        );
+                        )),
+                    }?;
 
-                        return Ok(Box::new(out));
-                    }
+                    out.set_variant_with_index(
+                        info.index_of(&variant_name).unwrap(),
+                        variant_name,
+                        variant_out,
+                    );
+
+                    return Ok(Box::new(out));
                 };
 
                 if let Some(default_value) = default_value {
@@ -540,7 +556,9 @@ impl DeserializedProperties {
                 Err("sets are currently unsupported".to_string())
             }
             // Note: ClassValue and TypeInfo::Value is not included
-            (a, b, _) => Err(format!("unable to deserialize `{a}` from {b:?}")),
+            (a, b, c) => Err(format!(
+                "unable to deserialize `{a}` from {b:?} (type_info = {c:?}"
+            )),
         }
     }
 

@@ -5,7 +5,11 @@
   <properties>
    <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
     <properties>
-     <property name="ty" propertytype="properties_basic::BiomeType" value="Plain"/>
+     <property name="ty" type="class" propertytype="properties_basic::BiomeType">
+      <properties>
+       <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Plain"/>
+      </properties>
+     </property>
     </properties>
    </property>
   </properties>
@@ -14,7 +18,16 @@
   <properties>
    <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
     <properties>
-     <property name="ty" propertytype="properties_basic::BiomeType" value="Forest"/>
+     <property name="ty" type="class" propertytype="properties_basic::BiomeType">
+      <properties>
+       <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Forest"/>
+      </properties>
+     </property>
+    </properties>
+   </property>
+   <property name="ResourceType" type="class" propertytype="properties_basic::ResourceType">
+    <properties>
+     <property name=":variant" propertytype="properties_basic::ResourceType:::Variant" value="Wood"/>
     </properties>
    </property>
   </properties>
@@ -26,8 +39,11 @@
   <properties>
    <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
     <properties>
-     <property name="block_line_of_sight" type="bool" value="true"/>
-     <property name="ty" propertytype="properties_basic::BiomeType" value="Mountain"/>
+     <property name="ty" type="class" propertytype="properties_basic::BiomeType">
+      <properties>
+       <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Mountain"/>
+      </properties>
+     </property>
     </properties>
    </property>
   </properties>
@@ -41,16 +57,21 @@
   <properties>
    <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
     <properties>
-     <property name="ty" propertytype="properties_basic::BiomeType" value="Water"/>
+     <property name="ty" type="class" propertytype="properties_basic::BiomeType">
+      <properties>
+       <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Water"/>
+      </properties>
+     </property>
     </properties>
    </property>
   </properties>
  </tile>
  <tile id="4">
   <properties>
-   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
+   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
+   <property name="ResourceType" type="class" propertytype="properties_basic::ResourceType">
     <properties>
-     <property name="ty" propertytype="properties_basic::BiomeType" value="Plain"/>
+     <property name=":variant" propertytype="properties_basic::ResourceType:::Variant" value="Strawberry"/>
     </properties>
    </property>
   </properties>
@@ -59,7 +80,11 @@
   <properties>
    <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
     <properties>
-     <property name="ty" propertytype="properties_basic::BiomeType" value="Desert"/>
+     <property name="ty" type="class" propertytype="properties_basic::BiomeType">
+      <properties>
+       <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Desert"/>
+      </properties>
+     </property>
     </properties>
    </property>
   </properties>
@@ -68,7 +93,11 @@
   <properties>
    <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
     <properties>
-     <property name="ty" propertytype="properties_basic::BiomeType" value="Water"/>
+     <property name="ty" type="class" propertytype="properties_basic::BiomeType">
+      <properties>
+       <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Water"/>
+      </properties>
+     </property>
     </properties>
    </property>
   </properties>
@@ -77,7 +106,11 @@
   <properties>
    <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
     <properties>
-     <property name="ty" propertytype="properties_basic::BiomeType" value="Water"/>
+     <property name="ty" type="class" propertytype="properties_basic::BiomeType">
+      <properties>
+       <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Water"/>
+      </properties>
+     </property>
     </properties>
    </property>
   </properties>
@@ -85,6 +118,11 @@
  <tile id="8">
   <properties>
    <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
+   <property name="ResourceType" type="class" propertytype="properties_basic::ResourceType">
+    <properties>
+     <property name=":variant" propertytype="properties_basic::ResourceType:::Variant" value="Wheat"/>
+    </properties>
+   </property>
   </properties>
  </tile>
  <tile id="9">

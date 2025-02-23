@@ -328,144 +328,129 @@ impl TypeExportRegistry {
         registry: &TypeRegistry,
         _use_as: Vec<UseAs>,
     ) -> ExportConversionResult {
-        let simple = info.iter().all(|s| matches!(s, VariantInfo::Unit(_)));
+        // Creates types for:
+        // Enum for the enum variant
+        // Class's for each non-unit variant
+        // Class to hold the variant + each non-unit variant.
 
-        if simple {
-            Ok(vec![TypeExport {
-                id: self.next_id(),
-                name: info.type_path().to_string(),
-                type_data: TypeData::Enum(Enum {
-                    storage_type: StorageType::String,
-                    values_as_flags: false,
-                    values: info.iter().map(|s| s.name().to_string()).collect(),
-                }),
-            }])
-        } else {
-            // Creates types for:
-            // Enum for the enum variant
-            // Class's for each non-unit variant
-            // Class to hold the variant + each non-unit variant.
+        // Note: extra `:` is done to not conflict with an enum variant named Variant
+        let variants_name = info.type_path().to_string() + ":::Variant";
 
-            // Note: extra `:` is done to not conflict with an enum variant named Variant
-            let variants_name = info.type_path().to_string() + ":::Variant";
+        let mut out = vec![TypeExport {
+            id: self.next_id(),
+            name: variants_name.clone(),
+            type_data: TypeData::Enum(Enum {
+                storage_type: StorageType::String,
+                values_as_flags: false,
+                values: info.iter().map(|s| s.name().to_string()).collect(),
+            }),
+        }];
 
-            let mut out = vec![TypeExport {
-                id: self.next_id(),
-                name: variants_name.clone(),
-                type_data: TypeData::Enum(Enum {
-                    storage_type: StorageType::String,
-                    values_as_flags: false,
-                    values: info.iter().map(|s| s.name().to_string()).collect(),
-                }),
-            }];
+        let mut root_members = Vec::with_capacity(2);
+        root_members.push(Member {
+            // `:` is to separate from an enum variant named `variant`
+            // and put it at the top of the fields (they are alphabetized in the editor)
+            name: ":variant".to_string(),
+            property_type: Some(variants_name),
+            type_field: FieldType::Class,
+            value: info
+                .iter()
+                .next()
+                .map(|s| serde_json::Value::String(s.name().to_string()))
+                .unwrap_or_default(),
+        });
 
-            let mut root_members = Vec::with_capacity(2);
-            root_members.push(Member {
-                // `:` is to separate from an enum variant named `variant`
-                // and put it at the top of the fields (they are alphabetized in the editor)
-                name: ":variant".to_string(),
-                property_type: Some(variants_name),
-                type_field: FieldType::Class,
-                value: info
-                    .iter()
-                    .next()
-                    .map(|s| serde_json::Value::String(s.name().to_string()))
-                    .unwrap_or_default(),
-            });
+        for variant in info.iter() {
+            match variant {
+                VariantInfo::Struct(s) => {
+                    let name = format!("{}::{}", info.type_path(), s.name());
+                    let import = TypeExport {
+                        id: self.next_id(),
+                        name: name.clone(),
+                        type_data: TypeData::Class(Class {
+                            use_as: USE_AS_PROPERTY.to_vec(),
+                            color: DEFAULT_COLOR.to_string(),
+                            draw_fill: true,
+                            members: s
+                                .iter()
+                                .map(|s| {
+                                    let (type_field, property_type) =
+                                        type_to_field(registry.get(s.type_id()).unwrap())?;
 
-            for variant in info.iter() {
-                match variant {
-                    VariantInfo::Struct(s) => {
-                        let name = format!("{}::{}", info.type_path(), s.name());
-                        let import = TypeExport {
-                            id: self.next_id(),
-                            name: name.clone(),
-                            type_data: TypeData::Class(Class {
-                                use_as: USE_AS_PROPERTY.to_vec(),
-                                color: DEFAULT_COLOR.to_string(),
-                                draw_fill: true,
-                                members: s
-                                    .iter()
-                                    .map(|s| {
-                                        let (type_field, property_type) =
-                                            type_to_field(registry.get(s.type_id()).unwrap())?;
-
-                                        Ok(Member {
-                                            name: s.name().to_string(),
-                                            property_type,
-                                            type_field,
-                                            value: Default::default(),
-                                        })
+                                    Ok(Member {
+                                        name: s.name().to_string(),
+                                        property_type,
+                                        type_field,
+                                        value: Default::default(),
                                     })
-                                    .collect::<Result<_, _>>()?,
-                            }),
-                        };
-                        out.push(import);
+                                })
+                                .collect::<Result<_, _>>()?,
+                        }),
+                    };
+                    out.push(import);
 
-                        let root_field = Member {
-                            name: s.name().to_string(),
-                            property_type: Some(name),
-                            type_field: FieldType::Class,
-                            value: Default::default(),
-                        };
+                    let root_field = Member {
+                        name: s.name().to_string(),
+                        property_type: Some(name),
+                        type_field: FieldType::Class,
+                        value: Default::default(),
+                    };
 
-                        root_members.push(root_field);
-                    }
-                    VariantInfo::Tuple(tuple) => {
-                        let name = format!("{}::{}", info.type_path(), tuple.name());
-                        let import = TypeExport {
-                            id: self.next_id(),
-                            name: name.clone(),
-                            type_data: TypeData::Class(Class {
-                                use_as: USE_AS_PROPERTY.to_vec(),
-                                color: DEFAULT_COLOR.to_string(),
-                                draw_fill: true,
-                                members: tuple
-                                    .iter()
-                                    .map(|s| {
-                                        let (type_field, property_type) =
-                                            type_to_field(registry.get(s.type_id()).unwrap())?;
-
-                                        Ok(Member {
-                                            name: s.index().to_string(),
-                                            property_type,
-                                            type_field,
-                                            value: Default::default(),
-                                        })
-                                    })
-                                    .collect::<Result<_, _>>()?,
-                            }),
-                        };
-                        out.push(import);
-
-                        let root_field = Member {
-                            name: tuple.name().to_string(),
-                            property_type: Some(name),
-                            type_field: FieldType::Class,
-                            value: Default::default(),
-                        };
-
-                        root_members.push(root_field);
-                    }
-                    VariantInfo::Unit(_) => continue,
+                    root_members.push(root_field);
                 }
+                VariantInfo::Tuple(tuple) => {
+                    let name = format!("{}::{}", info.type_path(), tuple.name());
+                    let import = TypeExport {
+                        id: self.next_id(),
+                        name: name.clone(),
+                        type_data: TypeData::Class(Class {
+                            use_as: USE_AS_PROPERTY.to_vec(),
+                            color: DEFAULT_COLOR.to_string(),
+                            draw_fill: true,
+                            members: tuple
+                                .iter()
+                                .map(|s| {
+                                    let (type_field, property_type) =
+                                        type_to_field(registry.get(s.type_id()).unwrap())?;
+
+                                    Ok(Member {
+                                        name: s.index().to_string(),
+                                        property_type,
+                                        type_field,
+                                        value: Default::default(),
+                                    })
+                                })
+                                .collect::<Result<_, _>>()?,
+                        }),
+                    };
+                    out.push(import);
+
+                    let root_field = Member {
+                        name: tuple.name().to_string(),
+                        property_type: Some(name),
+                        type_field: FieldType::Class,
+                        value: Default::default(),
+                    };
+
+                    root_members.push(root_field);
+                }
+                VariantInfo::Unit(_) => continue,
             }
-
-            let root = TypeExport {
-                id: self.next_id(),
-                name: info.type_path().to_string(),
-                type_data: TypeData::Class(Class {
-                    use_as: USE_AS_PROPERTY.to_vec(),
-                    color: DEFAULT_COLOR.to_string(),
-                    draw_fill: true,
-                    members: root_members,
-                }),
-            };
-
-            out.push(root);
-
-            Ok(out)
         }
+
+        let root = TypeExport {
+            id: self.next_id(),
+            name: info.type_path().to_string(),
+            type_data: TypeData::Class(Class {
+                use_as: USE_AS_PROPERTY.to_vec(),
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: root_members,
+            }),
+        };
+
+        out.push(root);
+        Ok(out)
     }
 }
 
@@ -762,14 +747,32 @@ mod tests {
 
         let exports = TypeExportRegistry::from_registry(&registry);
         let export_type = &exports.types.get(EnumComponent::type_path()).unwrap();
-        assert_eq!(export_type.length(), 1);
-        assert_eq!(export_type[0].name, EnumComponent::type_path().to_string());
+        assert_eq!(export_type.length(), 2);
+        assert_eq!(
+            export_type[0].name,
+            EnumComponent::type_path().to_string() + ":::Variant"
+        );
         assert_eq!(
             export_type[0].type_data,
             TypeData::Enum(Enum {
                 storage_type: StorageType::String,
                 values: vec!["VarA".to_string(), "VarB".to_string(), "VarC".to_string(),],
                 values_as_flags: false,
+            }),
+        );
+        assert_eq!(export_type[1].name, EnumComponent::type_path().to_string());
+        assert_eq!(
+            export_type[1].type_data,
+            TypeData::Class(Class {
+                use_as: USE_AS_PROPERTY.to_vec(),
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: vec![Member {
+                    name: ":variant".to_string(),
+                    property_type: Some(EnumComponent::type_path().to_string() + ":::Variant"),
+                    type_field: FieldType::Class,
+                    value: serde_json::json!("VarA"),
+                },],
             }),
         );
     }
