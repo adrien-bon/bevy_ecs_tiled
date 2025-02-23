@@ -29,7 +29,7 @@ For instance, on an "AZERTY" keyboard, you must use `A` instead of `Q` and `Z` i
 
 | Name | Required features | Description |
 |------|-------------------|-------------|
-| `map_basic` | None | This example shows the basic usage of the plugin. |
+| `map_basic` | None | This example shows the basic usage of the plugin to load a Tiled map. |
 | `map_demo` | None | This example shows the basic usage of the plugin but load a more complex / realistic map. |
 | `map_events` | None | This example shows how to use map loading events. |
 | `map_reload` | None | This example demonstrates how to load and unload maps. |
@@ -46,4 +46,5 @@ For instance, on an "AZERTY" keyboard, you must use `A` instead of `Q` and `Z` i
 | `physics_rapier_orientation` | `rapier_debug` | This example shows Rapier physics backend with various map orientation. |
 | `physics_rapier_settings` | `rapier_debug` | This example shows how to use Rapier physics backend. |
 | `properties_basic` | `user_properties` | This example shows how to map custom tiles and objects properties from Tiled to Bevy Components. |
-| `world_basic` | `debug` | This example shows how to load Tiled World files and demonstrates chunking the loaded maps |
+| `world_basic` | None | This example shows the basic usage of the plugin to load a Tiled world. |
+| `world_chunking` | `debug` | This example shows how to load Tiled World files and demonstrates chunking the loaded maps. |

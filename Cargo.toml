@@ -140,4 +140,7 @@ required-features = ["user_properties"]
 
 [[example]]
 name = "world_basic"
+
+[[example]]
+name = "world_chunking"
 required-features = ["debug"]
