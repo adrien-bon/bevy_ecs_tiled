@@ -18,6 +18,8 @@ pub mod prelude {
 use crate::{cache::TiledResourceCache, prelude::*};
 use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 use bevy_ecs_tilemap::prelude::*;
+#[cfg(feature = "user_properties")]
+use std::path::Path;
 
 /// Wrapper around the [Handle] to the `.tmx` file representing the [TiledMap].
 ///
@@ -79,7 +81,7 @@ pub fn export_types_filtered(reg: &AppTypeRegistry, path: impl AsRef<Path>, pred
     use std::{fs::File, io::BufWriter, ops::Deref};
     let file = File::create(path).unwrap();
     let writer = BufWriter::new(file);
-    let registry = properties::export::TypeExportRegistry::from_registry(reg.read().deref());
+    let registry = crate::properties::export::TypeExportRegistry::from_registry(reg.read().deref());
     let mut list = registry.to_vec();
     list.retain(|v| pred(&v.name));
     serde_json::to_writer_pretty(writer, &list).unwrap();
