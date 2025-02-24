@@ -146,4 +146,5 @@ name = "world_chunking"
 required-features = ["debug"]
 
 [patch.crates-io]
-bevy_ecs_tilemap = { path = "../bevy_ecs_tilemap" }
+# bevy_ecs_tilemap = { path = "../bevy_ecs_tilemap" }
+bevy_ecs_tilemap = { git = "https://github.com/shanecelis/bevy_ecs_tilemap.git", branch = "add-anchor" }
