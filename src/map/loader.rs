@@ -353,13 +353,6 @@ fn load_tiles(
 
             // Handle custom tiles (with user properties)
             if !tile.properties.is_empty() {
-                let key = (tile.tileset().name.clone(), layer_tile.id());
-                entity_map
-                    .entry(key)
-                    .and_modify(|entities| {
-                        entities.push(tile_entity);
-                    })
-                    .or_insert(vec![tile_entity]);
                 event_list.push(TiledTileCreated {
                     layer: *layer_event,
                     parent: layer_for_tileset_entity,
@@ -368,6 +361,17 @@ fn load_tiles(
                     position: tile_pos,
                 });
             }
+
+            // Update map storage with tile entity
+            let key = (tile.tileset().name.clone(), layer_tile.id());
+            entity_map
+                .entry(key)
+                .and_modify(|entities| {
+                    entities.push(tile_entity);
+                })
+                .or_insert(vec![tile_entity]);
+
+            // Add our tile to the bevy_ecs_tilemap::TileStorage
             tile_storage.set(&tile_pos, tile_entity);
         },
     );
