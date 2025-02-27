@@ -25,7 +25,8 @@ use bevy_ecs_tilemap::prelude::*;
 #[derive(Component, Reflect)]
 #[require(
     TiledMapStorage,
-    TiledMapSettings,
+    TiledMapAnchor,
+    TiledMapLayerZOffset,
     TilemapRenderSettings,
     Visibility,
     Transform
@@ -37,7 +38,8 @@ pub(crate) fn build(app: &mut bevy::prelude::App) {
         .init_asset_loader::<TiledMapLoader>()
         .register_type::<TiledMapHandle>()
         .register_type::<TiledMapPluginConfig>()
-        .register_type::<TiledMapSettings>()
+        .register_type::<TiledMapAnchor>()
+        .register_type::<TiledMapLayerZOffset>()
         .register_type::<TiledMapStorage>()
         .register_type::<TiledAnimation>()
         .add_event::<TiledMapCreated>()
@@ -77,18 +79,20 @@ pub(crate) fn process_loaded_maps(
             &TiledMapHandle,
             &mut TiledMapStorage,
             &TilemapRenderSettings,
-            &TiledMapSettings,
+            &TiledMapAnchor,
+            &TiledMapLayerZOffset,
         ),
         Or<(
             Changed<TiledMapHandle>,
-            Changed<TiledMapSettings>,
+            Changed<TiledMapAnchor>,
+            Changed<TiledMapLayerZOffset>,
             Changed<TilemapRenderSettings>,
             With<RespawnTiledMap>,
         )>,
     >,
     mut event_writers: TiledMapEventWriters,
 ) {
-    for (map_entity, map_handle, mut tiled_id_storage, render_settings, tiled_settings) in
+    for (map_entity, map_handle, mut tiled_id_storage, render_settings, anchor, layer_offset) in
         map_query.iter_mut()
     {
         if let Some(load_state) = asset_server.get_recursive_dependency_load_state(&map_handle.0) {
@@ -130,7 +134,8 @@ pub(crate) fn process_loaded_maps(
                 tiled_map,
                 &mut tiled_id_storage,
                 render_settings,
-                tiled_settings,
+                anchor,
+                layer_offset,
                 &asset_server,
                 &mut event_writers,
             );

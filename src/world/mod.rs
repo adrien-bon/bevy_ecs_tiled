@@ -26,9 +26,10 @@ use bevy_ecs_tilemap::map::TilemapRenderSettings;
 #[derive(Component, Reflect)]
 #[require(
     TiledWorldStorage,
-    TiledWorldSettings,
-    TiledMapSettings,
+    TiledMapAnchor,
+    TiledMapLayerZOffset,
     TilemapRenderSettings,
+    TiledWorldChunking,
     Visibility,
     Transform
 )]
@@ -38,7 +39,7 @@ pub(crate) fn build(app: &mut bevy::prelude::App) {
     app.init_asset::<TiledWorld>()
         .init_asset_loader::<TiledWorldLoader>()
         .register_type::<TiledWorldHandle>()
-        .register_type::<TiledWorldSettings>()
+        .register_type::<TiledWorldChunking>()
         .register_type::<TiledWorldStorage>()
         .add_event::<TiledWorldCreated>()
         .add_systems(
@@ -59,8 +60,9 @@ fn world_chunking(
             Entity,
             &TiledWorldHandle,
             &GlobalTransform,
-            &TiledWorldSettings,
-            &TiledMapSettings,
+            &TiledWorldChunking,
+            &TiledMapAnchor,
+            &TiledMapLayerZOffset,
             &TilemapRenderSettings,
             &mut TiledWorldStorage,
         ),
@@ -71,8 +73,9 @@ fn world_chunking(
         world_entity,
         world_handle,
         world_transform,
-        world_settings,
-        map_settings,
+        world_chunking,
+        anchor,
+        layer_offset,
         render_settings,
         mut storage,
     ) in world_query.iter_mut()
@@ -94,9 +97,9 @@ fn world_chunking(
         let mut to_spawn = Vec::new();
 
         // Compute static offset based upon world settings
-        let static_offset = tiled_world.static_offset(&map_settings.layer_positioning);
+        let static_offset = tiled_world.static_offset(anchor);
 
-        if let Some(chunking) = world_settings.chunking {
+        if let Some(chunking) = world_chunking.0 {
             let mut visible_maps = Vec::new();
             let cameras: Vec<Aabb2d> = camera_query
                 .iter()
@@ -156,10 +159,9 @@ fn world_chunking(
                     Transform::from_translation(
                         static_offset + Vec3::new(rect.min.x, rect.min.y, 0.0),
                     ),
-                    TiledMapSettings {
-                        layer_positioning: LayerPositioning::BottomLeft,
-                        ..*map_settings
-                    },
+                    // Force map anchor to BottomLeft: everything is handled at world level
+                    TiledMapAnchor::BottomLeft,
+                    *layer_offset,
                     *render_settings,
                 ))
                 .set_parent(world_entity)
@@ -183,11 +185,13 @@ fn process_loaded_worlds(
         (Entity, &TiledWorldHandle, &mut TiledWorldStorage),
         Or<(
             Changed<TiledWorldHandle>,
-            Changed<TiledMapSettings>,
+            // If a world settings change, force a respawn so they can be taken into account
+            Changed<TiledMapAnchor>,
+            Changed<TiledMapLayerZOffset>,
             Changed<TilemapRenderSettings>,
             With<RespawnTiledWorld>,
-            // Not needed to react to changes on TiledWorldSettings:
-            // it is directly used in world_chunking function
+            // Not needed to react to changes on TiledWorldChunking:
+            // it's read each frame by world_chunking() system
         )>,
     >,
     mut world_event: EventWriter<TiledWorldCreated>,

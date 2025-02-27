@@ -41,6 +41,7 @@
 - Rework how we store tileset data in `TiledMap`
 - Add new examples to test 'infinite' maps and rework how we organize our assets
 - Rename `LayerPositioning::TiledOffset` to `LayerPositioning::BottomLeft`
+- Split `TiledMapSettings` in `TiledMapAnchor` + `TiledMapLayerZOffset` and rename `TiledWorldSettings` into `TiledWorldChunking`
 
 ### Bugfixes
 

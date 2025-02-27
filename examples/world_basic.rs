@@ -29,10 +29,5 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut world_entity = commands.spawn(TiledWorldHandle(world_handle));
 
     // You can eventually add some extra settings to your world
-    world_entity.insert((
-        TiledMapSettings::with_layer_positioning(LayerPositioning::Centered),
-        TiledWorldSettings {
-            chunking: Some(Vec2::new(200., 200.)),
-        },
-    ));
+    world_entity.insert((TiledMapAnchor::Center, TiledWorldChunking::new(200., 200.)));
 }

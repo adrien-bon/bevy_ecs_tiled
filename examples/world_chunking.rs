@@ -33,10 +33,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Load and spawn the world
     commands.spawn((
         TiledWorldHandle(asset_server.load("worlds/orthogonal.world")),
-        TiledMapSettings::with_layer_positioning(LayerPositioning::Centered),
-        TiledWorldSettings {
-            chunking: Some(Vec2::new(200., 200.)),
-        },
+        TiledMapAnchor::Center,
+        TiledWorldChunking::new(200., 200.),
     ));
 
     // Add a helper text to display current chunking values
@@ -58,45 +56,45 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ));
 }
 
-fn input(mut settings: Query<&mut TiledWorldSettings>, keys: Res<ButtonInput<KeyCode>>) {
-    let Ok(mut settings) = settings.get_single_mut() else {
+fn input(mut chunking: Query<&mut TiledWorldChunking>, keys: Res<ButtonInput<KeyCode>>) {
+    let Ok(mut chunking) = chunking.get_single_mut() else {
         return;
     };
 
     if keys.pressed(KeyCode::Minus) {
         // Decrease the chunking size
-        if let Some(chunking) = settings.chunking {
-            if (chunking.x - STEP_SIZE as f32) > 0. {
-                settings.chunking = Some(Vec2::new(
-                    chunking.x - STEP_SIZE as f32,
-                    chunking.y - STEP_SIZE as f32,
-                ));
+        if let Some(c) = chunking.0 {
+            if (c.x - STEP_SIZE as f32) > 0. {
+                *chunking = TiledWorldChunking::new(
+                    c.x - STEP_SIZE as f32,
+                    c.y - STEP_SIZE as f32,
+                );
             }
         }
     }
 
     if keys.pressed(KeyCode::Equal) {
-        if let Some(chunking) = settings.chunking {
-            if chunking.x < f32::MAX - STEP_SIZE as f32 {
-                settings.chunking = Some(Vec2::new(
-                    chunking.x + STEP_SIZE as f32,
-                    chunking.y + STEP_SIZE as f32,
-                ));
+        if let Some(c) = chunking.0 {
+            if c.x < f32::MAX - STEP_SIZE as f32 {
+                *chunking = TiledWorldChunking::new(
+                    c.x + STEP_SIZE as f32,
+                    c.y + STEP_SIZE as f32,
+                );
             }
         }
     }
 }
 
 fn text_update_system(
-    settings: Query<&TiledWorldSettings>,
+    chunking: Query<&TiledWorldChunking>,
     mut query: Query<&mut TextSpan, With<HelperText>>,
 ) {
-    let Ok(settings) = settings.get_single() else {
+    let Ok(chunking) = chunking.get_single() else {
         return;
     };
 
     for mut span in &mut query {
-        span.0 = settings.chunking.map_or(String::from("None"), |chunking| {
+        span.0 = chunking.0.map_or(String::from("None"), |chunking| {
             format!("{}x{}", chunking.x, chunking.y)
         });
     }

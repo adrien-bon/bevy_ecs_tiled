@@ -44,7 +44,8 @@ pub(crate) fn load_map(
     tiled_map: &TiledMap,
     tiled_id_storage: &mut TiledMapStorage,
     render_settings: &TilemapRenderSettings,
-    tiled_settings: &TiledMapSettings,
+    anchor: &TiledMapAnchor,
+    layer_offset: &TiledMapLayerZOffset,
     asset_server: &Res<AssetServer>,
     event_writers: &mut TiledMapEventWriters,
 ) {
@@ -69,11 +70,11 @@ pub(crate) fn load_map(
     // Order of the differents layers in the .TMX file is important:
     // a layer appearing last in the .TMX should appear above previous layers
     // Start with a negative offset so in the end we end up with the top layer at Z-offset from settings
-    let mut offset_z = tiled_map.map.layers().len() as f32 * (-tiled_settings.layer_z_offset);
+    let mut offset_z = tiled_map.map.layers().len() as f32 * (-layer_offset.0);
 
     // Compute layer base Transform from LayerPositioning
-    let layer_transform = match tiled_settings.layer_positioning {
-        LayerPositioning::BottomLeft => {
+    let layer_transform = match anchor {
+        TiledMapAnchor::BottomLeft => {
             // Special case for isometric maps: bevy_ecs_tilemap start drawing
             // them from middle left instead of from bottom left
             if let TilemapType::Isometric(IsoCoordSystem::Diamond) = map_type {
@@ -82,7 +83,7 @@ pub(crate) fn load_map(
                 Transform::default()
             }
         }
-        LayerPositioning::Centered => {
+        TiledMapAnchor::Center => {
             get_tilemap_center_transform(&tilemap_size, &grid_size, &map_type, 0.)
         }
     };
@@ -90,7 +91,7 @@ pub(crate) fn load_map(
     // Once materials have been created/added we need to then create the layers.
     for (layer_id, layer) in tiled_map.map.layers().enumerate() {
         // Increment Z offset and compute layer transform offset
-        offset_z += tiled_settings.layer_z_offset;
+        offset_z += layer_offset.0;
         let offset_transform = Transform::from_xyz(layer.offset_x, -layer.offset_y, offset_z);
 
         // Spawn layer entity and attach it to the map entity

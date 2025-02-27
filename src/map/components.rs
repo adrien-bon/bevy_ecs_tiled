@@ -3,53 +3,28 @@
 use bevy::{prelude::*, utils::HashMap};
 use tiled::TileId;
 
-/// [Component] holding Tiled map related settings.
+/// Set the anchor point for associated map or world.
 ///
-/// Controls various settings related to the way we handle the Tiled map.
+/// Must be added to the [Entity] holding the map.
+#[derive(Component, Copy, Clone, Reflect, Default)]
+pub enum TiledMapAnchor {
+    /// Keep default layers position from Tiled, map origin is the bottom-left of the map.
+    #[default]
+    BottomLeft,
+    /// Update layers position so map origin is translated to the center of the map.
+    Center,
+}
+
+/// Specificy the Z offset between two consecutives Tiled layers.
+///
 /// Must be added to the [Entity] holding the map.
 #[derive(Component, Copy, Clone, Reflect)]
-pub struct TiledMapSettings {
-    /// Specify which layer positioning strategy should be applied to the map.
-    pub layer_positioning: LayerPositioning,
-    /// Z-offset between two consecutives layers.
-    pub layer_z_offset: f32,
-}
+pub struct TiledMapLayerZOffset(pub f32);
 
-impl Default for TiledMapSettings {
+impl Default for TiledMapLayerZOffset {
     fn default() -> Self {
-        Self {
-            layer_positioning: LayerPositioning::default(),
-            layer_z_offset: 100.,
-        }
+        Self(100.)
     }
-}
-
-impl TiledMapSettings {
-    pub fn with_layer_positioning(layer_positioning: LayerPositioning) -> Self {
-        Self {
-            layer_positioning,
-            ..default()
-        }
-    }
-
-    pub fn with_layer_z_offset(layer_z_offset: f32) -> Self {
-        Self {
-            layer_z_offset,
-            ..default()
-        }
-    }
-}
-
-/// Controls layers positioning strategy.
-///
-/// Based upon this setting, you can determine where your layers (ie. your map) will be rendered.
-#[derive(Default, Copy, Clone, Reflect)]
-pub enum LayerPositioning {
-    #[default]
-    /// Do not tweak layers position and keep original Tiled coordinate system so that Bevy (0, 0) is at the bottom-left of the map.
-    BottomLeft,
-    /// Update layers position and mimic Bevy's coordinate system so that Bevy (0, 0) is at the center of the map.
-    Centered,
 }
 
 /// Marker [Component] to trigger a map respawn.

@@ -8,7 +8,7 @@ use std::io::ErrorKind;
 
 use crate::{cache::TiledResourceCache, reader::BytesResourceReader, TiledMap};
 
-use super::LayerPositioning;
+use super::TiledMapAnchor;
 
 /// Tiled world `Asset`.
 ///
@@ -24,14 +24,14 @@ pub struct TiledWorld {
 }
 
 impl TiledWorld {
-    pub fn static_offset(&self, layer_positioning: &LayerPositioning) -> Vec3 {
+    pub fn static_offset(&self, layer_positioning: &TiledMapAnchor) -> Vec3 {
         match &layer_positioning {
-            LayerPositioning::Centered => Vec3 {
+            TiledMapAnchor::Center => Vec3 {
                 x: -self.world_rect.width() / 2.0,
                 y: -self.world_rect.height() / 2.0,
                 z: 0.0,
             },
-            LayerPositioning::BottomLeft => Vec3::ZERO,
+            TiledMapAnchor::BottomLeft => Vec3::ZERO,
         }
     }
 }

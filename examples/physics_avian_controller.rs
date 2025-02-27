@@ -65,7 +65,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn((
             TiledMapHandle(asset_server.load("maps/orthogonal/multiple_layers_with_colliders.tmx")),
-            TiledMapSettings::with_layer_positioning(LayerPositioning::Centered),
+            TiledMapAnchor::Center,
         ))
         .observe(|_: Trigger<TiledMapCreated>, mut commands: Commands| {
             // Spawn a simple player-controlled object

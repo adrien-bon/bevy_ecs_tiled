@@ -35,7 +35,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         "A finite orthogonal map with all colliders",
         |c| {
             c.insert((
-                TiledMapSettings::with_layer_positioning(LayerPositioning::Centered),
+                TiledMapAnchor::Center,
                 TiledPhysicsSettings::<TiledPhysicsAvianBackend>::default(),
             ));
         },
@@ -46,7 +46,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         "An infinite orthogonal map with all colliders",
         |c| {
             c.insert((
-                TiledMapSettings::with_layer_positioning(LayerPositioning::Centered),
+                TiledMapAnchor::Center,
                 TiledPhysicsSettings::<TiledPhysicsAvianBackend>::default(),
             ));
         },
@@ -57,7 +57,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         "A finite orthogonal map with only tiles colliders named 'collision'",
         |c| {
             c.insert((
-                TiledMapSettings::with_layer_positioning(LayerPositioning::Centered),
+                TiledMapAnchor::Center,
                 TiledPhysicsSettings::<TiledPhysicsAvianBackend> {
                     objects_layer_filter: TiledName::None,
                     tiles_objects_filter: TiledName::Names(vec!["collision".to_string()]),
@@ -72,7 +72,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         "A finite orthogonal map with only object colliders",
         |c| {
             c.insert((
-                TiledMapSettings::with_layer_positioning(LayerPositioning::Centered),
+                TiledMapAnchor::Center,
                 TiledPhysicsSettings::<TiledPhysicsAvianBackend> {
                     objects_layer_filter: TiledName::All,
                     tiles_objects_filter: TiledName::None,

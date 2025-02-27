@@ -2,18 +2,20 @@
 
 use bevy::{prelude::*, utils::HashMap};
 
-/// [Component] holding Tiled world related settings.
+/// [Component] holding Tiled world chunking configuration.
 ///
-/// Controls various settings related to the way we handle the Tiled world.
+/// If this value is None, we won't perform chunking: all maps from this world will just be loaded
+/// If this value is set, defines the area (in pixel) around each [Camera] where we should spawn a
+/// map if it overlaps with its associated [Rect].
+///
 /// Must be added to the [Entity] holding the world.
 #[derive(Component, Default, Reflect)]
-pub struct TiledWorldSettings {
-    /// World chunking configuration
-    ///
-    /// If this value is None, we won't perform chunking: all maps from this world will just be loaded
-    /// If this value is set, defines the area (in pixel) around each [Camera] where we should spawn a
-    /// map if it overlaps with its associated [Rect].
-    pub chunking: Option<Vec2>,
+pub struct TiledWorldChunking(pub Option<Vec2>);
+
+impl TiledWorldChunking {
+    pub fn new(width: f32, height: f32) -> Self {
+        Self(Some(Vec2::new(width, height)))
+    }
 }
 
 /// Marker [Component] for a Tiled world.

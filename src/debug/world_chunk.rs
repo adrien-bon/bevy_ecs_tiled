@@ -39,15 +39,15 @@ impl Plugin for TiledDebugWorldChunkPlugin {
 
 fn draw_camera_rect(
     camera_query: Query<&Transform, (With<Camera>, Changed<Transform>)>,
-    world_query: Query<&TiledWorldSettings, With<TiledWorldMarker>>,
+    world_query: Query<&TiledWorldChunking, With<TiledWorldMarker>>,
     config: Res<TiledDebugWorldChunkConfig>,
     mut gizmos: Gizmos,
 ) {
     let Some(color) = config.camera_color else {
         return;
     };
-    for world_settings in world_query.iter() {
-        let Some(chunking) = world_settings.chunking else {
+    for world_chunking in world_query.iter() {
+        let Some(chunking) = world_chunking.0 else {
             continue;
         };
         for camera_transform in camera_query.iter() {
@@ -62,7 +62,7 @@ fn draw_camera_rect(
 
 fn draw_maps_rect(
     world_query: Query<
-        (&TiledWorldHandle, &GlobalTransform, &TiledMapSettings),
+        (&TiledWorldHandle, &GlobalTransform, &TiledMapAnchor),
         With<TiledWorldMarker>,
     >,
     world_assets: Res<Assets<TiledWorld>>,
@@ -72,9 +72,9 @@ fn draw_maps_rect(
     if config.maps_colors_list.is_empty() {
         return;
     }
-    for (world_handle, world_transform, map_settings) in world_query.iter() {
+    for (world_handle, world_transform, anchor) in world_query.iter() {
         if let Some(tiled_world) = world_assets.get(world_handle.0.id()) {
-            let static_offset = tiled_world.static_offset(&map_settings.layer_positioning);
+            let static_offset = tiled_world.static_offset(anchor);
             crate::world::for_each_map(tiled_world, world_transform, static_offset, |idx, aabb| {
                 gizmos.rect_2d(
                     Isometry2d::from_translation(aabb.center()),
