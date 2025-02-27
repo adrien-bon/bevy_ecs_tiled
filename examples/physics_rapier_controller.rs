@@ -9,44 +9,15 @@ mod helper;
 const MOVE_SPEED: f32 = 200.;
 const GRAVITY_SCALE: f32 = 10.0;
 
-// A 'player' marker component
-#[derive(Default, Clone, Component)]
-pub struct PlayerMarker;
-
-// Define a custom physics collider which will use the TiledPhysicsRapierBackend
-// but add an extra RigidBody::KinematicPositionBased component on top of the colliders.
-#[derive(Default, Clone, Reflect)]
-struct MyCustomRapierPhysicsBackend(TiledPhysicsRapierBackend);
-
-impl TiledPhysicsBackend for MyCustomRapierPhysicsBackend {
-    fn spawn_colliders(
-        &self,
-        commands: &mut Commands,
-        tiled_map: &TiledMap,
-        filter: &TiledNameFilter,
-        collider: &TiledCollider,
-    ) -> Vec<TiledColliderSpawnInfos> {
-        let colliders = self
-            .0
-            .spawn_colliders(commands, tiled_map, filter, collider);
-        for c in &colliders {
-            commands
-                .entity(c.entity)
-                .insert(RigidBody::KinematicPositionBased);
-        }
-        colliders
-    }
-}
-
 fn main() {
     App::new()
-        // Bevy default plugins
-        .add_plugins(DefaultPlugins)
-        // Examples helper plugin: contains the controller logic for this example
-        .add_plugins(helper::HelperPlugin)
-        // bevy_ecs_tiled main plugin
+        // Bevy default plugins: prevent blur effect by changing default sampling
+        .add_plugins(DefaultPlugins.build().set(ImagePlugin::default_nearest()))
+        // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
+        // be automatically added as well if it's not already done
         .add_plugins(TiledMapPlugin::default())
         // bevy_ecs_tiled physics plugin: this is where we select which physics backend to use
+        // Here we use a custom backend (see below)
         .add_plugins(TiledPhysicsPlugin::<MyCustomRapierPhysicsBackend>::default())
         // Rapier physics plugins
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
@@ -67,8 +38,8 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             TiledMapHandle(asset_server.load("maps/orthogonal/multiple_layers_with_colliders.tmx")),
             TiledMapAnchor::Center,
         ))
+        // Wait for map loading to complete and spawn a simple player-controlled object
         .observe(|_: Trigger<TiledMapCreated>, mut commands: Commands| {
-            // Spawn a simple player-controlled object
             commands.spawn((
                 RigidBody::Dynamic,
                 PlayerMarker,
@@ -80,6 +51,10 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ));
         });
 }
+
+// A 'player' marker component
+#[derive(Default, Clone, Component)]
+pub struct PlayerMarker;
 
 fn move_player(
     keyboard_input: Res<ButtonInput<KeyCode>>,
@@ -109,5 +84,30 @@ fn move_player(
         }
 
         rb_vels.linvel = direction * MOVE_SPEED;
+    }
+}
+
+// Define a custom physics backend which will use the TiledPhysicsRapierBackend
+// but add an extra RigidBody::KinematicPositionBased component on top of the regular collider.
+#[derive(Default, Clone, Reflect)]
+struct MyCustomRapierPhysicsBackend(TiledPhysicsRapierBackend);
+
+impl TiledPhysicsBackend for MyCustomRapierPhysicsBackend {
+    fn spawn_colliders(
+        &self,
+        commands: &mut Commands,
+        tiled_map: &TiledMap,
+        filter: &TiledNameFilter,
+        collider: &TiledCollider,
+    ) -> Vec<TiledColliderSpawnInfos> {
+        let colliders = self
+            .0
+            .spawn_colliders(commands, tiled_map, filter, collider);
+        for c in &colliders {
+            commands
+                .entity(c.entity)
+                .insert(RigidBody::KinematicPositionBased);
+        }
+        colliders
     }
 }

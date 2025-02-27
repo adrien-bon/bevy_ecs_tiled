@@ -9,16 +9,18 @@ const STEP_SIZE: u32 = 8;
 
 fn main() {
     App::new()
-        // Bevy default plugins
-        .add_plugins(DefaultPlugins)
-        // bevy_ecs_tiled main plugin
+        // Bevy default plugins: prevent blur effect by changing default sampling
+        .add_plugins(DefaultPlugins.build().set(ImagePlugin::default_nearest()))
+        // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
+        // be automatically added as well if it's not already done
         .add_plugins(TiledMapPlugin::default())
-        // Examples helper plugins: for this example, contains the logic to move the camera
+        // Examples helper plugins, such as the logic to pan and zoom the camera
+        // This should not be used directly in your game (but you can always have a look)
         .add_plugins(helper::HelperPlugin)
-        // Enable debug informations
+        // Add bevy_ecs_tiled debug plugins
         .add_plugins(TiledDebugPluginGroup)
         // Add our systems and run the app!
-        .add_systems(Startup, setup)
+        .add_systems(Startup, startup)
         .add_systems(Update, (input, text_update_system))
         .run();
 }
@@ -26,7 +28,7 @@ fn main() {
 #[derive(Component, Debug)]
 struct HelperText;
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Spawn a 2D camera (required by Bevy)
     commands.spawn(Camera2d);
 
@@ -65,10 +67,7 @@ fn input(mut chunking: Query<&mut TiledWorldChunking>, keys: Res<ButtonInput<Key
         // Decrease the chunking size
         if let Some(c) = chunking.0 {
             if (c.x - STEP_SIZE as f32) > 0. {
-                *chunking = TiledWorldChunking::new(
-                    c.x - STEP_SIZE as f32,
-                    c.y - STEP_SIZE as f32,
-                );
+                *chunking = TiledWorldChunking::new(c.x - STEP_SIZE as f32, c.y - STEP_SIZE as f32);
             }
         }
     }
@@ -76,10 +75,7 @@ fn input(mut chunking: Query<&mut TiledWorldChunking>, keys: Res<ButtonInput<Key
     if keys.pressed(KeyCode::Equal) {
         if let Some(c) = chunking.0 {
             if c.x < f32::MAX - STEP_SIZE as f32 {
-                *chunking = TiledWorldChunking::new(
-                    c.x + STEP_SIZE as f32,
-                    c.y + STEP_SIZE as f32,
-                );
+                *chunking = TiledWorldChunking::new(c.x + STEP_SIZE as f32, c.y + STEP_SIZE as f32);
             }
         }
     }

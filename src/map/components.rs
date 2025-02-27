@@ -47,7 +47,8 @@ impl Default for TiledMapLayerZOffset {
 #[derive(Component)]
 pub struct RespawnTiledMap;
 
-/// [Component] storing maps to navigate from Tiled ID to Bevy [Entity].
+/// [Component] storing all the Tiled items composing this map.
+/// Makes the association between Tiled ID and corresponding Bevy [Entity].
 ///
 /// Should not be manually inserted but can be accessed from the map [Entity].
 #[derive(Component, Default, Reflect)]
@@ -59,7 +60,8 @@ pub struct TiledMapStorage {
     /// Map of tiles entities, using the name of the tileset
     /// they belongs to + the tile ID in this tileset as key.
     /// Note that we can have multiple entities (several instances)
-    /// of the same tile.
+    /// of the same tile since it references the tile on the tileset
+    /// and not the tile on the tilemap.
     pub tiles: HashMap<(String, TileId), Vec<Entity>>,
 }
 

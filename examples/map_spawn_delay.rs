@@ -9,12 +9,14 @@ mod helper;
 
 fn main() {
     App::new()
-        // Bevy default plugins
-        .add_plugins(DefaultPlugins)
-        // Examples helper plugin (does not matter for this example)
-        .add_plugins(helper::HelperPlugin)
-        // bevy_ecs_tiled main plugin
+        // Bevy default plugins: prevent blur effect by changing default sampling
+        .add_plugins(DefaultPlugins.build().set(ImagePlugin::default_nearest()))
+        // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
+        // be automatically added as well if it's not already done
         .add_plugins(TiledMapPlugin::default())
+        // Examples helper plugins, such as the logic to pan and zoom the camera
+        // This should not be used directly in your game (but you can always have a look)
+        .add_plugins(helper::HelperPlugin)
         // Add our systems and run the app!
         .add_systems(Startup, startup)
         .add_systems(Update, spawn_map)

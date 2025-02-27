@@ -28,10 +28,13 @@ pub struct TiledWorldMarker;
 #[derive(Component)]
 pub struct RespawnTiledWorld;
 
-/// [Component] storing informations about which maps are actually spawned
+/// [Component] storing all the Tiled maps that are composing this world.
+/// Makes the association between Tiled ID and corresponding Bevy [Entity].
+///
+/// Should not be manually inserted but can be accessed from the world [Entity].
 #[derive(Component, Default, Reflect)]
 pub struct TiledWorldStorage {
-    /// Map using the map index from [super::asset::TiledWorld] maps list as key.
-    /// It contains the map entity.
+    /// Map of maps entities, using the map index from [super::asset::TiledWorld]
+    /// maps list as key.
     pub spawned_maps: HashMap<usize, Entity>,
 }

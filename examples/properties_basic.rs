@@ -15,17 +15,21 @@ fn main() {
     path.push("my_tiled_export_file.json");
 
     App::new()
-        // Bevy default plugins
-        .add_plugins(DefaultPlugins)
-        // Examples helper plugin (does not matter for this example)
-        .add_plugins(helper::HelperPlugin)
-        // bevy_ecs_tiled main plugin
+        // Bevy default plugins: prevent blur effect by changing default sampling
+        .add_plugins(DefaultPlugins.build().set(ImagePlugin::default_nearest()))
+        // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
+        // be automatically added as well if it's not already done
+        // For demonstration purpose, provide a custom path where to export registered types
         .add_plugins(TiledMapPlugin(TiledMapPluginConfig {
             // Note: if you set this setting to `None`
-            // properties will still be translated
+            // properties won't be exported anymore but
+            // you will still be able to load them from the map
             tiled_types_export_file: Some(path),
         }))
-        // We need to register all the types we want to use
+        // Examples helper plugins, such as the logic to pan and zoom the camera
+        // This should not be used directly in your game (but you can always have a look)
+        .add_plugins(helper::HelperPlugin)
+        // We need to register all the custom types we want to use
         .register_type::<BiomeInfos>()
         .register_type::<SpawnType>()
         .register_type::<ResourceType>()
