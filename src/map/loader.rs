@@ -197,7 +197,7 @@ pub(crate) fn load_map(
         }
     }
 
-    // Send events
+    // Send events and trigger observers
     commands.trigger_targets(map_event, map_entity);
     event_writers.map_event.send(map_event);
     for e in layer_events {

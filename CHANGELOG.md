@@ -50,6 +50,10 @@
 - Fix `TilemapRenderSettings::chunk_size` value for isometric examples (#73)
 - Properly load unit-variant enums as components without needing to encpasulate them in another component (#75)
 
+### Documentation
+
+- Rework documentation and examples related to map events (#74)
+
 ## v0.5.1
 
 ### Features

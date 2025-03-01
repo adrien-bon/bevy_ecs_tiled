@@ -17,88 +17,111 @@ fn main() {
         .add_plugins(helper::HelperPlugin)
         // Add our systems and run the app!
         .add_systems(Startup, startup)
+        .add_systems(Update, (evt_map_created, evt_object_created))
         .run();
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d);
     commands
+        // Spawn a map and attach some observers on it.
+        // All events and observers will be fired _after_ the map has finished loading
         .spawn(TiledMapHandle(
             asset_server.load("maps/orthogonal/finite.tmx"),
         ))
-        // Add observers for map loading events
-        .observe(map_created)
-        .observe(layer_created)
-        .observe(object_created)
-        .observe(tile_created);
+        // Add an "in-line" observer to detect when the map has finished loading
+        .observe(
+            |trigger: Trigger<TiledMapCreated>, map_query: Query<&Name, With<TiledMapMarker>>| {
+                if let Ok(name) = map_query.get(trigger.event().entity) {
+                    info!(
+                        "=> Observer TiledMapCreated was triggered for map '{}'",
+                        name
+                    );
+                }
+            },
+        )
+        // And another one, with a dedicated function, to detect layer loading
+        .observe(obs_layer_created);
 }
 
-fn map_created(
-    trigger: Trigger<TiledMapCreated>,
-    q_map: Query<&Name, With<TiledMapMarker>>,
+// We fire both an observer and a regular event, so you can also use an [EventReader]
+fn evt_map_created(
+    mut map_events: EventReader<TiledMapCreated>,
+    map_query: Query<(&Name, &TiledMapStorage), With<TiledMapMarker>>,
     map_asset: Res<Assets<TiledMap>>,
 ) {
-    // We can either access the map components
-    if let Ok(name) = q_map.get(trigger.event().entity) {
-        info!("Received TiledMapCreated event for map '{}'", name);
-    }
+    for e in map_events.read() {
+        // We can either access the map components via a regular query
+        let Ok((name, storage)) = map_query.get(e.entity) else {
+            return;
+        };
 
-    // Or directly the underneath tiled Map data
-    let map = trigger.event().get_map(&map_asset);
-    info!("Loaded map: {:?}", map);
+        // Or directly the underneath tiled Map data
+        let Some(map) = e.get_map(&map_asset) else {
+            return;
+        };
+
+        info!("=> Received TiledMapCreated event for map '{}'", name);
+        info!("Loaded map: {:?}", map);
+
+        // Additionally, we can access Tiled items using the TiledMapStorage component from the map
+        // From there, it's easy to access their own components with another query
+        // This can be useful if you want for instance to create a resource based upon tiles or objects
+        // data but make it available only when the map is actually spawned
+        for (tiled_id, entity) in storage.objects.iter() {
+            info!(
+                "(map) Object ID {:?} was spawned as entity {:?}",
+                tiled_id, entity
+            );
+        }
+    }
 }
 
-fn layer_created(
+// Callback for our observer, will be triggered for every layer of the map
+fn obs_layer_created(
     trigger: Trigger<TiledLayerCreated>,
-    q_layer: Query<&Name, With<TiledMapLayer>>,
+    layer_query: Query<&Name, With<TiledMapLayer>>,
     map_asset: Res<Assets<TiledMap>>,
 ) {
-    // We can either access the layer components
-    if let Ok(name) = q_layer.get(trigger.event().entity) {
-        info!("Received TiledLayerCreated event for layer '{}'", name);
-    }
+    // We can either access the layer components via a regular query
+    let Ok(name) = layer_query.get(trigger.event().entity) else {
+        return;
+    };
 
-    // Or directly the underneath Map or Layer structures
-    let _map = trigger.event().map.get_map(&map_asset);
-    let layer = trigger.event().get_layer(&map_asset);
+    // Or directly the underneath tiled Layer data
+    let Some(layer) = trigger.event().get_layer(&map_asset) else {
+        return;
+    };
+
+    info!(
+        "=> Observer TiledLayerCreated was triggered for layer '{}'",
+        name
+    );
     info!("Loaded layer: {:?}", layer);
+
+    // Moreover, we can retrieve the TiledMapCreated event data from here
+    let _map = trigger.event().map.get_map(&map_asset);
 }
 
-fn object_created(
-    trigger: Trigger<TiledObjectCreated>,
-    q_object: Query<&Name, With<TiledMapObject>>,
-    map_asset: Res<Assets<TiledMap>>,
+// A typical usecase for regular events is to update components associated with tiles, objects or layers.
+// Here, we will add a small offset on the Z axis to our objects to prevent them
+// from Z-fighting if they are on the same layer (by default, all objects on a given layer have the same Z offset)
+fn evt_object_created(
+    mut object_events: EventReader<TiledObjectCreated>,
+    mut object_query: Query<(&Name, &mut Transform), With<TiledMapObject>>,
+    mut z_offset: Local<f32>,
 ) {
-    // We can either access the object components
-    if let Ok(name) = q_object.get(trigger.event().entity) {
-        info!("Received TiledObjectCreated event for object '{}'", name);
+    for e in object_events.read() {
+        let Ok((name, mut transform)) = object_query.get_mut(e.entity) else {
+            return;
+        };
+
+        info!("=> Received TiledObjectCreated event for object '{}'", name);
+
+        // Obviously, this is a very naive implementation and you would
+        // probably want to do something else in a real usecase
+        info!("Apply z-offset = {:?}", *z_offset);
+        transform.translation.z += *z_offset;
+        *z_offset += 0.01;
     }
-
-    // Or directly the underneath Map, Layer or Object structures
-    let _map = trigger.event().layer.map.get_map(&map_asset);
-    let _layer = trigger.event().layer.get_layer(&map_asset);
-    let object = trigger.event().get_object(&map_asset);
-    info!("Loaded object: {:?}", object);
-}
-
-// Note that only tiles which have custom properties will trigger this event,
-// even without the crate `user_properties` feature.
-// The Debug implementation for tiled::LayerTile does not display the actual
-// content of the properties field but it's there, go check the tileset if you
-// don't believe me :)
-fn tile_created(
-    trigger: Trigger<TiledTileCreated>,
-    q_tile: Query<&Name, With<TiledMapTile>>,
-    map_asset: Res<Assets<TiledMap>>,
-) {
-    // We can either access the tile components
-    if let Ok(name) = q_tile.get(trigger.event().entity) {
-        info!("Received TiledTileCreated event for tile '{}'", name);
-    }
-
-    // Or directly the underneath Map and Layer structures
-    let _map = trigger.event().layer.map.get_map(&map_asset);
-    let _layer = trigger.event().layer.get_layer(&map_asset);
-    let tile = trigger.event().get_tile(&map_asset);
-    info!("Loaded tile: {:?}", tile);
 }
