@@ -65,7 +65,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 TiledMapAnchor::Center,
                 TiledPhysicsSettings::<TiledPhysicsAvianBackend> {
                     objects_layer_filter: TiledName::None,
-                    tiles_objects_filter: TiledName::Names(vec!["collision".to_string()]),
+                    tiles_objects_filter: TiledName::Names(vec![String::from("collision")]),
                     ..default()
                 },
             ));

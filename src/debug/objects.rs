@@ -1,4 +1,6 @@
 //! Debug plugin for objects
+//!
+//! Display a Bevy [Gizmos] to indicate where Tiled objects are
 
 use crate::prelude::*;
 use bevy::{color::palettes::css::RED, prelude::*};
@@ -23,9 +25,10 @@ impl Default for TiledDebugObjectsConfig {
     }
 }
 
-/// `bevy_ecs_tiled` debug `Plugin` for objects positions.
+/// `bevy_ecs_tiled` debug [Plugin] for Tiled objects
 ///
-/// In case you want to debug where your Tiled objects are actually spawned, you can use this plugin:
+/// In case you want to debug where your Tiled objects are actually spawned, you can use this plugin :
+///
 /// ```rust,no_run
 /// use bevy::prelude::*;
 /// use bevy_ecs_tiled::prelude::*;

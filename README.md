@@ -10,7 +10,7 @@
 
 It relies upon the official [Tiled Rust bindings](https://github.com/mapeditor/rs-tiled) to parse and load Tiled map files and the [`bevy_ecs_tilemap` crate](https://github.com/StarArawn/bevy_ecs_tilemap) to perform rendering.
 
-It aims to provide a simple and ergonomic workflow by using Tiled as an editor when working on a Bevy 2D games.
+It aims to provide a simple and ergonomic workflow by using Tiled as an editor when working on Bevy 2D games.
 
 ![screenshot](./res/screenshot.gif)
 

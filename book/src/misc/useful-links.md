@@ -23,3 +23,4 @@ Feel free to suggest any other link!
 - [Unofficial Bevy Cheat Book](https://bevy-cheatbook.github.io/): one the best resource to learn Bevy
 - [Tiled official website](https://www.mapeditor.org/): to get the latest Tiled version and read associated documentation
 - [Red Blob Games](https://www.redblobgames.com/): collections of tutorials on various gamedev topics, especially the [hexagonal grids reference](https://www.redblobgames.com/grids/hexagons/)
+- [Some maths regarding isometric tiles](https://clintbellanger.net/articles/isometric_math/)

@@ -1,3 +1,7 @@
+//! Debug plugin for world chunking
+//!
+//! Display a Bevy [Gizmos] for each map boundary and world render chunk
+
 use crate::prelude::*;
 use bevy::{
     color::palettes::css::{BLUE, FUCHSIA, GREEN, LIME, RED, WHITE, YELLOW},
@@ -5,17 +9,26 @@ use bevy::{
     prelude::*,
 };
 
+/// Configuration for the [TiledDebugWorldChunkPlugin]
+///
+/// Contains some settings to customize how the `rect_2d` [Gizmos] will appear.
 #[derive(Resource, Clone)]
 pub struct TiledDebugWorldChunkConfig {
-    /// Color of the `arrow_2d` [Gizmos]
-    pub camera_color: Option<Color>,
+    /// [Color] of the `rect_2d` [Gizmos] for world rendering chunk
+    ///
+    /// If [None], will not display the world rendering chunk
+    pub world_chunk_color: Option<Color>,
+    /// List of [Color]s of the `rect_2d` [Gizmos] for maps boundary
+    ///
+    /// Will cycle through the [Vec] for each map, such as joint maps should not have the same [Color]
+    /// If the [Vec] is empty, will not display any map boundary
     pub maps_colors_list: Vec<Color>,
 }
 
 impl Default for TiledDebugWorldChunkConfig {
     fn default() -> Self {
         Self {
-            camera_color: Some(Color::from(RED)),
+            world_chunk_color: Some(Color::from(RED)),
             maps_colors_list: vec![
                 Color::from(FUCHSIA),
                 Color::from(WHITE),
@@ -28,6 +41,20 @@ impl Default for TiledDebugWorldChunkConfig {
     }
 }
 
+/// `bevy_ecs_tiled` debug [Plugin] for world chunking
+///
+/// You can use this plugin to debug how your worlds are rendered and to tweak their chunking parameter :
+///
+/// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
+/// App::new()
+///     .add_plugins(TiledDebugWorldChunkPlugin::default());
+/// ```
+///
+/// This will display a `rect_2d` [Gizmos] to highlight your maps boundary and another `rect_2d` for the world render chunk.
+///
 #[derive(Default, Clone)]
 pub struct TiledDebugWorldChunkPlugin(pub TiledDebugWorldChunkConfig);
 impl Plugin for TiledDebugWorldChunkPlugin {
@@ -43,7 +70,7 @@ fn draw_camera_rect(
     config: Res<TiledDebugWorldChunkConfig>,
     mut gizmos: Gizmos,
 ) {
-    let Some(color) = config.camera_color else {
+    let Some(color) = config.world_chunk_color else {
         return;
     };
     for world_chunking in world_query.iter() {

@@ -30,9 +30,9 @@ fn main() {
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d);
-    commands.spawn(Text(
-        "Move the ball using arrow keys or try to rotate the map!".to_string(),
-    ));
+    commands.spawn(Text(String::from(
+        "Move the ball using arrow keys or try to rotate the map!",
+    )));
     commands
         .spawn((
             TiledMapHandle(asset_server.load("maps/orthogonal/multiple_layers_with_colliders.tmx")),

@@ -53,7 +53,7 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
                 object_id: _,
             } => {
                 vec![TiledColliderSpawnInfos {
-                    name: "Custom[Object]".to_string(),
+                    name: String::from("Custom[Object]"),
                     entity: commands
                         .spawn(MyCustomPhysicsComponent(Color::from(PURPLE)))
                         .id(),
@@ -62,7 +62,7 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
             }
             TiledCollider::TilesLayer { layer_id: _ } => {
                 vec![TiledColliderSpawnInfos {
-                    name: "Custom[TilesLayer]".to_string(),
+                    name: String::from("Custom[TilesLayer]"),
                     entity: commands
                         .spawn(MyCustomPhysicsComponent(Color::from(RED)))
                         .id(),

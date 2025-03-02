@@ -1,6 +1,51 @@
 # Debug your project
 
-## `bevy-inspector-egui`
+## Logging
+
+Bevy uses the `tracing` crate for logging, which is very powerful in debugging and profiling, you can find more information in the [official documentation](https://docs.rs/tracing/).
+
+We recommend to enable the `trace` level in your application to get more informations about what's happening, just set the `RUST_LOG` environment variable to `trace`:
+
+```sh
+RUST_LOG=trace cargo run
+```
+
+But this will be very verbose, so you can also filter the logs to only display the informations you need:
+
+```sh
+RUST_LOG=bevy_ecs_tiled=trace cargo run
+```
+
+This will only display logs from the `bevy_ecs_tiled` crate in `trace` level.
+
+## `bevy_ecs_tiled` debug plugins
+
+When the `debug` feature is enabled, `bevy_ecs_tiled` provides several debug plugins.
+
+You can easily turn them all by adding the `TiledDebugPluginGroup` to your app :
+
+```rust,no_run
+use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn main() {
+    App::new()
+        .add_plugins(TiledDebugPluginGroup)
+        .run();
+}
+```
+
+Or add them individually :
+
+- [`TiledDebugObjectsPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/objects/index.html) : display a Bevy `Gizmos` to indicate where Tiled objects are
+- [`TiledDebugTilesPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/tiles/index.html) : display the `bevy_ecs_tilemap` index, ie. `Tilepos` on each tile
+- [`TiledDebugWorldChunkPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/world_chunk/index.html) : display a Bevy `Gizmos` for each map boundary and world render chunk
+
+More informations in the [API reference](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/index.html).
+
+## 3rdparty
+
+### `bevy-inspector-egui`
 
 This may be obvious but this plugin is a must have for debugging.
 
@@ -8,7 +53,7 @@ Just add the required dependency in `Cargo.toml`:
 
 ```toml
 [dependencies]
-bevy-inspector-egui = "0.25.2"
+bevy-inspector-egui = "0.30"
 ```
 
 Then add the `WorldInspectorPlugin` to your application:
@@ -28,26 +73,7 @@ Now, you can browse components from all entities spawned in your game.
 
 More informations on the project [github page](https://github.com/jakobhellermann/bevy-inspector-egui).
 
-## `TiledMapDebugPlugin`
-
-`bevy_ecs_tiled` provides a debug plugin that displays a gizmos where Tiled object are spawned.
-
-To use it, you just have to enable the `debug` feature and add the plugin to your application:
-
-```rust,no_run
-use bevy::prelude::*;
-use bevy_ecs_tiled::prelude::*;
-
-fn main() {
-    App::new()
-        .add_plugins(TiledMapDebugPlugin::default())
-        .run();
-}
-```
-
-More informations in the [API reference](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/index.html).
-
-## Physics
+### Physics plugins
 
 Both Avian and Rapier provide their own way of debugging.
 It can be very useful, especially when working with colliders.
@@ -86,21 +112,3 @@ fn main() {
 ```
 
 And you also need to enable either the `debug-render-2d` feature on `bevy_rapier2d` crate or the `rapier_debug` feature on `bevy_ecs_tiled`
-
-## Logging
-
-Bevy uses the `tracing` crate for logging, which is very powerful in debugging and profiling, you can find more information in the [official documentation](https://docs.rs/tracing/).
-
-We recommend to enable the `trace` level in your application to get more informations about what's happening, just set the `RUST_LOG` environment variable to `trace`:
-
-```sh
-RUST_LOG=trace cargo run
-```
-
-But this will be very verbose, so you can also filter the logs to only display the informations you need:
-
-```sh
-RUST_LOG=bevy_ecs_tiled=trace cargo run
-```
-
-This will only display logs from the `bevy_ecs_tiled` crate in `trace` level.

@@ -5,9 +5,9 @@
 
 # Design and explanation
 
-- [Why using Tiled ?](design/why-tiled.md)
-- [Entities tree and marker components](design/entities_tree.md)
-- [Layers Z-ordering](design/z_order.md)
+- [Why using Tiled ?](design/why_tiled.md)
+- [Entities hierarchy and marker components](design/entities_hierarchy.md)
+- [Z-ordering](design/z_order.md)
 - [Map loading events](design/map_events.md)
 - [Coordinates conversion between Tiled and Bevy]()
 

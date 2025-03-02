@@ -1,3 +1,7 @@
+//! Debug plugin for tiles
+//!
+//! Display the `bevy_ecs_tilemap` index, ie. [TilePos] on each tile
+
 use crate::prelude::*;
 use bevy::{color::palettes::css::FUCHSIA, prelude::*};
 use bevy_ecs_tilemap::{
@@ -5,11 +9,16 @@ use bevy_ecs_tilemap::{
     tiles::TilePos,
 };
 
+/// Configuration for the [TiledDebugTilesPlugin]
 #[derive(Resource, Clone)]
 pub struct TiledDebugTilesConfig {
+    /// [Color] of the tile index text
     pub color: Color,
+    /// [TextFont] of the tile index text
     pub font: TextFont,
+    /// Absolute Z-axis offset of the tile index text
     pub z_offset: f32,
+    /// Scale to apply on the tile index text
     pub scale: Vec3,
 }
 
@@ -24,6 +33,18 @@ impl Default for TiledDebugTilesConfig {
     }
 }
 
+/// `bevy_ecs_tiled` debug [Plugin] for tiles
+///
+/// Enabling this plugin will spawn a [Text2d] above every tile to display their [TilePos] :
+///
+/// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
+/// App::new()
+///     .add_plugins(TiledDebugTilesPlugin::default());
+/// ```
+///
 #[derive(Default, Clone)]
 pub struct TiledDebugTilesPlugin(pub TiledDebugTilesConfig);
 impl Plugin for TiledDebugTilesPlugin {
