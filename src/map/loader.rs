@@ -127,6 +127,7 @@ pub(crate) fn load_map(
                 commands.entity(layer_entity).insert((
                     Name::new(format!("TiledMapObjectLayer({})", layer.name)),
                     TiledMapObjectLayer,
+                    Transform::from_translation((Vec2::from(grid_size) / -2.0).extend(0.0)),
                 ));
                 load_objects_layer(
                     commands,
