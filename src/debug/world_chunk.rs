@@ -74,8 +74,8 @@ fn draw_maps_rect(
     }
     for (world_handle, world_transform, anchor) in world_query.iter() {
         if let Some(tiled_world) = world_assets.get(world_handle.0.id()) {
-            let static_offset = tiled_world.static_offset(anchor);
-            crate::world::for_each_map(tiled_world, world_transform, static_offset, |idx, aabb| {
+            let offset = tiled_world.offset(anchor);
+            crate::world::for_each_map(tiled_world, world_transform, offset, |idx, aabb| {
                 gizmos.rect_2d(
                     Isometry2d::from_translation(aabb.center()),
                     aabb.half_size() * 2.,

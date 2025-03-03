@@ -99,7 +99,7 @@ impl<'a> TiledObjectCreated {
             .get_map_asset(map_asset)
             .and_then(|tiled_map| {
                 self.get_object(map_asset).map(|object| {
-                    from_tiled_coords_to_bevy(tiled_map, Vec2::new(object.x, object.y))
+                    from_tiled_position_to_world_space(tiled_map, Vec2::new(object.x, object.y))
                 })
             })
     }

@@ -4,7 +4,7 @@ use bevy::{
     asset::{io::Reader, AssetLoader, AssetPath, LoadContext},
     prelude::*,
 };
-use std::io::ErrorKind;
+use std::{fmt, io::ErrorKind};
 
 use crate::{cache::TiledResourceCache, reader::BytesResourceReader, TiledMap};
 
@@ -17,22 +17,39 @@ use super::TiledMapAnchor;
 pub struct TiledWorld {
     /// The raw Tiled world data
     pub world: tiled::World,
-    /// The [Rect] boundary of our worlds ie. the sum of all the maps boundary it contains
-    pub world_rect: Rect,
-    /// List of all the maps contained in this world and their associated [Rect] boundary
+    /// World bounding box, unanchored
+    ///
+    /// Minimum is set at `(0., 0.)`
+    /// Maximum is set at `(world_size.x, world_size.y)`
+    pub rect: Rect,
+    /// List of all the maps contained in this world
+    ///
+    /// Contains both the [TiledMap] handle and its associated [Rect] boundary
+    /// as defined by the `.world` file.
+    /// Note that the actual map boundaries are not taken into account for world chunking.
     pub maps: Vec<(Rect, Handle<TiledMap>)>,
 }
 
 impl TiledWorld {
-    pub fn static_offset(&self, layer_positioning: &TiledMapAnchor) -> Vec3 {
-        match &layer_positioning {
+    /// Offset that should be applied to world underlying maps to account for the [TiledMapAnchor]
+    pub(crate) fn offset(&self, anchor: &TiledMapAnchor) -> Vec3 {
+        match anchor {
             TiledMapAnchor::Center => Vec3 {
-                x: -self.world_rect.width() / 2.0,
-                y: -self.world_rect.height() / 2.0,
+                x: -self.rect.width() / 2.0,
+                y: -self.rect.height() / 2.0,
                 z: 0.0,
             },
             TiledMapAnchor::BottomLeft => Vec3::ZERO,
         }
+    }
+}
+
+impl fmt::Debug for TiledWorld {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("TiledWorld")
+            .field("world.source", &self.world.source)
+            .field("rect", &self.rect)
+            .finish()
     }
 }
 
@@ -131,12 +148,19 @@ impl AssetLoader for TiledWorldLoader {
             ));
         }
 
-        debug!("Loaded world '{}'", load_context.path().display());
-        Ok(TiledWorld {
+        trace!(?maps, "maps");
+
+        let world = TiledWorld {
             world,
-            world_rect,
+            rect: world_rect,
             maps,
-        })
+        };
+        debug!(
+            "Loaded world '{}': {:?}",
+            load_context.path().display(),
+            world
+        );
+        Ok(world)
     }
 
     fn extensions(&self) -> &[&str] {

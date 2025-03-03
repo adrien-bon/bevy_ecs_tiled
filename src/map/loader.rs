@@ -63,30 +63,13 @@ pub(crate) fn load_map(
     let mut object_events: Vec<TiledObjectCreated> = Vec::new();
     let mut special_tile_events: Vec<TiledTileCreated> = Vec::new();
 
-    let tilemap_size = tiled_map.tilemap_size;
-    let map_type = get_map_type(&tiled_map.map);
-    let grid_size = get_grid_size(&tiled_map.map);
-
     // Order of the differents layers in the .TMX file is important:
     // a layer appearing last in the .TMX should appear above previous layers
     // Start with a negative offset so in the end we end up with the top layer at Z-offset from settings
     let mut offset_z = tiled_map.map.layers().len() as f32 * (-layer_offset.0);
 
-    // Compute layer base Transform from LayerPositioning
-    let layer_transform = match anchor {
-        TiledMapAnchor::BottomLeft => {
-            // Special case for isometric maps: bevy_ecs_tilemap start drawing
-            // them from middle left instead of from bottom left
-            if let TilemapType::Isometric(IsoCoordSystem::Diamond) = map_type {
-                Transform::from_xyz(0., tilemap_size.y as f32 * grid_size.y as f32 / 2., 0.)
-            } else {
-                Transform::default()
-            }
-        }
-        TiledMapAnchor::Center => {
-            get_tilemap_center_transform(&tilemap_size, &grid_size, &map_type, 0.)
-        }
-    };
+    // Compute layer base Transform given provided TiledMapAnchor
+    let layer_transform = Transform::from_translation(tiled_map.offset(anchor));
 
     // Once materials have been created/added we need to then create the layers.
     for (layer_id, layer) in tiled_map.map.layers().enumerate() {
@@ -388,7 +371,7 @@ fn load_objects_layer(
 ) {
     for (object_id, object_data) in object_layer.objects().enumerate() {
         let object_position =
-            from_tiled_coords_to_bevy(tiled_map, Vec2::new(object_data.x, object_data.y));
+            from_tiled_position_to_world_space(tiled_map, Vec2::new(object_data.x, object_data.y));
         let object_entity = commands
             .spawn((
                 Name::new(format!("Object({})", object_data.name)),
@@ -500,7 +483,7 @@ fn load_image_layer(
             }
             _ => Vec2::ZERO,
         };
-        let image_position = from_tiled_coords_to_bevy(tiled_map, image_position);
+        let image_position = from_tiled_position_to_world_space(tiled_map, image_position);
         commands
             .spawn((
                 Name::new(format!("Image({})", image.source.display())),

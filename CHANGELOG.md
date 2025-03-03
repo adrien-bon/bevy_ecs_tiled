@@ -43,6 +43,7 @@
 - Rename `LayerPositioning::TiledOffset` to `LayerPositioning::BottomLeft`
 - Split `TiledMapSettings` in `TiledMapAnchor` + `TiledMapLayerZOffset` and rename `TiledWorldSettings` into `TiledWorldChunking`
 - Store all tiles in `TiledMapStorage`, not just ones which have user properties
+- Renamed `from_tiled_coords_to_bevy` to `from_tiled_position_to_world_space`
 
 ### Bugfixes
 

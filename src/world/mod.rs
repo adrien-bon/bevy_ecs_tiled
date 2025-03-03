@@ -97,7 +97,7 @@ fn world_chunking(
         let mut to_spawn = Vec::new();
 
         // Compute static offset based upon world settings
-        let static_offset = tiled_world.static_offset(anchor);
+        let offset = tiled_world.offset(anchor);
 
         if let Some(chunking) = world_chunking.0 {
             let mut visible_maps = Vec::new();
@@ -112,7 +112,7 @@ fn world_chunking(
                 .collect();
             // Check which map is visible by testing them against each camera (if there are multiple)
             // If map aabb overlaps with the camera_view, it is visible
-            for_each_map(tiled_world, world_transform, static_offset, |idx, aabb| {
+            for_each_map(tiled_world, world_transform, offset, |idx, aabb| {
                 for c in cameras.iter() {
                     if aabb.intersects(c) {
                         visible_maps.push(idx);
@@ -143,7 +143,7 @@ fn world_chunking(
         // Despawn maps
         for idx in to_remove {
             if let Some(map_entity) = storage.spawned_maps.remove(&idx) {
-                debug!("Despawning map (entity = {:?})", map_entity);
+                debug!("Despawn map (index = {}, entity = {:?})", idx, map_entity);
                 commands.entity(map_entity).despawn_recursive();
             }
         }
@@ -156,9 +156,7 @@ fn world_chunking(
             let map_entity = commands
                 .spawn((
                     TiledMapHandle(handle.clone_weak()),
-                    Transform::from_translation(
-                        static_offset + Vec3::new(rect.min.x, rect.min.y, 0.0),
-                    ),
+                    Transform::from_translation(offset + Vec3::new(rect.min.x, rect.min.y, 0.0)),
                     // Force map anchor to BottomLeft: everything is handled at world level
                     TiledMapAnchor::BottomLeft,
                     *layer_offset,
@@ -167,8 +165,8 @@ fn world_chunking(
                 .set_parent(world_entity)
                 .id();
             debug!(
-                "Spawned map (handle = {:?} / entity = {:?})",
-                handle, map_entity
+                "Spawn map (index = {}, handle = {:?},  entity = {:?})",
+                idx, handle, map_entity
             );
             storage.spawned_maps.insert(idx, map_entity);
         }
@@ -225,8 +223,8 @@ fn process_loaded_worlds(
             };
 
             debug!(
-                "World has finished loading, spawn it (handle = {:?} / entity = {:?})",
-                world_handle.0, world_entity
+                "World has finished loading, spawn world maps (handle = {:?})",
+                world_handle.0
             );
 
             // Clean previous maps before trying to spawn the new ones

@@ -1,8 +1,8 @@
 //! This module contains all map [Asset]s definition.
 
-use std::io::ErrorKind;
 #[cfg(feature = "user_properties")]
 use std::ops::Deref;
+use std::{fmt, io::ErrorKind};
 
 #[cfg(feature = "user_properties")]
 use bevy::reflect::TypeRegistryArc;
@@ -24,56 +24,98 @@ use bevy::{
 
 use bevy_ecs_tilemap::prelude::*;
 
+use super::TiledMapAnchor;
+
 /// Tiled map [Asset].
 ///
 /// [Asset] holding Tiled map informations.
-#[derive(TypePath, Asset, Debug)]
+#[derive(TypePath, Asset)]
 pub struct TiledMap {
-    /// The raw Tiled map
+    /// The raw Tiled map data
     pub map: tiled::Map,
     /// Map size in tiles
     pub tilemap_size: TilemapSize,
+    /// Map bounding box, unanchored.
+    ///
+    /// Origin it map bottom-left.
+    /// Minimum is set at `(0., 0.)`
+    /// Maximum is set at `(map_size.x, map_size.y)`
+    pub rect: Rect,
     /// Offset to apply on Tiled coordinates when converting to Bevy coordinates
     ///
     /// Our computations for converting coordinates assume that Tiled origin (ie. point [0, 0])
-    /// is always in the top-left corner of the map. This is not always the case for infinite maps
-    /// and we need to apply this offset.
-    pub origin_offset: Vec2,
-    /// Bounding size of the map.
-    ///
-    /// Size of the rect englobing the map.
-    pub bounding_size: Vec2,
+    /// is always in the top-left corner of the map. This is not the case for infinite maps where
+    /// map origin is at the top-left corner of chunk (0, 0) and we can have chunk with negative indexes
+    pub(crate) tiled_offset: Vec2,
     /// Top-left chunk index
     ///
     /// For finite maps, always (0, 0)
-    pub topleft_chunk: (i32, i32),
+    pub(crate) topleft_chunk: (i32, i32),
     /// Bottom-right chunk index
     ///
     /// For finite maps, always (0, 0)
-    pub bottomright_chunk: (i32, i32),
-    /// HashMap of the map tilesets.
+    pub(crate) bottomright_chunk: (i32, i32),
+    /// HashMap of the map tilesets
     ///
-    /// Key is the Tiled tileset index.
-    pub tilesets: HashMap<usize, TiledMapTileset>,
+    /// Key is the Tiled tileset index
+    pub(crate) tilesets: HashMap<usize, TiledMapTileset>,
     /// Map properties
     #[cfg(feature = "user_properties")]
     pub(crate) properties: DeserializedMapProperties,
 }
 
+impl TiledMap {
+    /// Offset that should be applied to map underlying layers to account for the [TiledMapAnchor]
+    pub fn offset(&self, anchor: &TiledMapAnchor) -> Vec3 {
+        let map_type = get_map_type(&self.map);
+        let grid_size = get_grid_size(&self.map);
+
+        let mut offset = match anchor {
+            TiledMapAnchor::Center => Vec3 {
+                x: -self.rect.width() / 2.0,
+                y: -self.rect.height() / 2.0,
+                z: 0.0,
+            },
+            TiledMapAnchor::BottomLeft => Vec3::ZERO,
+        };
+
+        // Special case for isometric maps: bevy_ecs_tilemap start drawing
+        // them from middle left instead of from bottom left
+        if let TilemapType::Isometric(IsoCoordSystem::Diamond) = map_type {
+            offset += Vec3::new(0., self.tilemap_size.y as f32 * grid_size.y as f32 / 2., 0.);
+        }
+
+        offset
+    }
+}
+
+impl fmt::Debug for TiledMap {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("TiledMap")
+            .field("map", &self.map)
+            .field("tilemap_size", &self.tilemap_size)
+            .field("rect", &self.rect)
+            .field("tiled_offset", &self.tiled_offset)
+            .field("topleft_chunk", &self.topleft_chunk)
+            .field("bottomright_chunk", &self.bottomright_chunk)
+            .finish()
+    }
+}
+
 #[derive(Default, Debug)]
-pub struct TiledMapTileset {
+pub(crate) struct TiledMapTileset {
     /// Does this tileset can be used for tiles layer ?
     ///
     /// A tileset can be used for tiles layer only if all the images it contains have the
     /// same dimensions (restriction from bevy_ecs_tilemap).
-    pub usable_for_tiles_layer: bool,
+    pub(crate) usable_for_tiles_layer: bool,
     /// Tileset texture (ie. a single image or an images collection)
-    pub tilemap_texture: TilemapTexture,
+    pub(crate) tilemap_texture: TilemapTexture,
     /// The [TextureAtlasLayout] handle associated to each tileset, if any.
-    pub texture_atlas_layout_handle: Option<Handle<TextureAtlasLayout>>,
+    pub(crate) texture_atlas_layout_handle: Option<Handle<TextureAtlasLayout>>,
     /// The offset into the tileset_images for each tile id within each tileset.
     #[cfg(not(feature = "atlas"))]
-    pub tile_image_offsets: HashMap<tiled::TileId, u32>,
+    pub(crate) tile_image_offsets: HashMap<tiled::TileId, u32>,
 }
 
 pub(crate) struct TiledMapLoader {
@@ -154,17 +196,13 @@ impl AssetLoader for TiledMapLoader {
                         for (tile_id, tile) in tileset.tiles() {
                             if let Some(img) = &tile.image {
                                 let asset_path = AssetPath::from(img.source.clone());
-                                debug!("Loading tile image from {asset_path:?} as image ({tileset_index}, {tile_id})");
+                                trace!("Loading tile image from {asset_path:?} as image ({tileset_index}, {tile_id})");
                                 let texture: Handle<Image> = load_context.load(asset_path.clone());
                                 tile_image_offsets.insert(tile_id, tile_images.len() as u32);
                                 tile_images.push(texture.clone());
                                 if usable_for_tiles_layer {
                                     if let Some(image_size) = image_size {
                                         if img.width != image_size.0 || img.height != image_size.1 {
-                                            debug!(
-                                                "Tileset (index={:?}) have non constant image size and cannot be used for tiles layer",
-                                                tileset_index
-                                            );
                                             usable_for_tiles_layer = false;
                                         }
                                     } else {
@@ -172,6 +210,12 @@ impl AssetLoader for TiledMapLoader {
                                     }
                                 }
                             }
+                        }
+                        if !usable_for_tiles_layer {
+                            debug!(
+                                "Tileset (index={:?}) have non constant image size and cannot be used for tiles layer",
+                                tileset_index
+                            );
                         }
                         (usable_for_tiles_layer, TilemapTexture::Vector(tile_images))
                     }
@@ -239,7 +283,7 @@ impl AssetLoader for TiledMapLoader {
 
         let map_type = get_map_type(&map);
         let grid_size = get_grid_size(&map);
-        let (tilemap_size, origin_offset) = if infinite {
+        let (tilemap_size, tiled_offset) = if infinite {
             debug!(
                 "(infinite map) topleft = {:?}, bottomright = {:?}",
                 topleft, bottomright
@@ -251,22 +295,22 @@ impl AssetLoader for TiledMapLoader {
                 },
                 match map_type {
                     TilemapType::Square => Vec2 {
-                        x: topleft.0 as f32 * ChunkData::WIDTH as f32 * grid_size.x * -1.,
+                        x: -topleft.0 as f32 * ChunkData::WIDTH as f32 * grid_size.x,
                         y: topleft.1 as f32 * ChunkData::HEIGHT as f32 * grid_size.y,
                     },
                     TilemapType::Hexagon(HexCoordSystem::ColumnOdd)
                     | TilemapType::Hexagon(HexCoordSystem::ColumnEven) => Vec2 {
-                        x: topleft.0 as f32 * ChunkData::WIDTH as f32 * grid_size.x * -0.75,
+                        x: -topleft.0 as f32 * ChunkData::WIDTH as f32 * grid_size.x * 0.75,
                         y: topleft.1 as f32 * ChunkData::HEIGHT as f32 * grid_size.y,
                     },
                     TilemapType::Hexagon(HexCoordSystem::RowOdd)
                     | TilemapType::Hexagon(HexCoordSystem::RowEven) => Vec2 {
-                        x: topleft.0 as f32 * ChunkData::WIDTH as f32 * grid_size.x * -1.,
+                        x: -topleft.0 as f32 * ChunkData::WIDTH as f32 * grid_size.x,
                         y: topleft.1 as f32 * ChunkData::HEIGHT as f32 * grid_size.y * 0.75,
                     },
                     TilemapType::Isometric(IsoCoordSystem::Diamond) => Vec2 {
-                        x: topleft.0 as f32 * ChunkData::WIDTH as f32 * grid_size.y * -1.,
-                        y: topleft.1 as f32 * ChunkData::HEIGHT as f32 * grid_size.y * -1.,
+                        x: -topleft.0 as f32 * ChunkData::WIDTH as f32 * grid_size.y,
+                        y: -topleft.1 as f32 * ChunkData::HEIGHT as f32 * grid_size.y,
                     },
                     TilemapType::Isometric(IsoCoordSystem::Staggered) => {
                         panic!("Isometric (Staggered) map is not supported");
@@ -286,47 +330,41 @@ impl AssetLoader for TiledMapLoader {
             )
         };
 
-        // Compute map bounding size
-        let bounding_size = match map_type {
-            TilemapType::Square => Vec2 {
-                x: tilemap_size.x as f32 * grid_size.x,
-                y: tilemap_size.y as f32 * grid_size.y,
-            },
-            TilemapType::Hexagon(HexCoordSystem::ColumnOdd)
-            | TilemapType::Hexagon(HexCoordSystem::ColumnEven) => Vec2 {
-                x: tilemap_size.x as f32 * grid_size.x * 0.75,
-                y: tilemap_size.y as f32 * grid_size.y,
-            },
-            TilemapType::Hexagon(HexCoordSystem::RowOdd)
-            | TilemapType::Hexagon(HexCoordSystem::RowEven) => Vec2 {
-                x: tilemap_size.x as f32 * grid_size.x,
-                y: tilemap_size.y as f32 * grid_size.y * 0.75,
-            },
-            TilemapType::Isometric(IsoCoordSystem::Diamond) => {
-                let topright = Vec2 {
-                    x: tilemap_size.x as f32 * grid_size.y / 2.,
-                    y: tilemap_size.y as f32 * grid_size.y / -2.,
-                };
-                let topright = iso_projection(topright, &tilemap_size, &grid_size);
-                let topleft = Vec2 {
-                    x: tilemap_size.x as f32 * grid_size.y / -2.,
-                    y: tilemap_size.y as f32 * grid_size.y / 2.,
-                };
-                let topleft = iso_projection(topleft, &tilemap_size, &grid_size);
-                let bottomleft = Vec2 {
-                    x: tilemap_size.x as f32 * grid_size.y / 2.,
-                    y: tilemap_size.y as f32 * grid_size.y / 2.,
-                };
-                let bottomleft = iso_projection(bottomleft, &tilemap_size, &grid_size);
-                Vec2 {
-                    x: topright.x - topleft.x,
-                    y: bottomleft.y - topleft.y,
+        let rect = Rect {
+            min: Vec2::ZERO,
+            max: match map_type {
+                TilemapType::Square => Vec2 {
+                    x: tilemap_size.x as f32 * grid_size.x,
+                    y: tilemap_size.y as f32 * grid_size.y,
+                },
+                TilemapType::Hexagon(HexCoordSystem::ColumnOdd)
+                | TilemapType::Hexagon(HexCoordSystem::ColumnEven) => Vec2 {
+                    x: tilemap_size.x as f32 * grid_size.x * 0.75,
+                    y: tilemap_size.y as f32 * grid_size.y,
+                },
+                TilemapType::Hexagon(HexCoordSystem::RowOdd)
+                | TilemapType::Hexagon(HexCoordSystem::RowEven) => Vec2 {
+                    x: tilemap_size.x as f32 * grid_size.x,
+                    y: tilemap_size.y as f32 * grid_size.y * 0.75,
+                },
+                TilemapType::Isometric(IsoCoordSystem::Diamond) => {
+                    let topleft = iso_projection(Vec2::ZERO, &tilemap_size, &grid_size);
+                    let topright = iso_projection(
+                        Vec2 {
+                            x: tilemap_size.x as f32 * grid_size.y,
+                            y: 0.,
+                        },
+                        &tilemap_size,
+                        &grid_size,
+                    );
+
+                    2. * (topright - topleft)
                 }
-            }
-            TilemapType::Isometric(IsoCoordSystem::Staggered) => {
-                panic!("Isometric (Staggered) map is not supported");
-            }
-            _ => unreachable!(),
+                TilemapType::Isometric(IsoCoordSystem::Staggered) => {
+                    panic!("Isometric (Staggered) map is not supported");
+                }
+                _ => unreachable!(),
+            },
         };
 
         #[cfg(feature = "user_properties")]
@@ -336,28 +374,23 @@ impl AssetLoader for TiledMapLoader {
         #[cfg(feature = "user_properties")]
         trace!(?properties, "user properties");
         trace!(?tilesets, "tilesets");
-        debug!(
-            "Loaded map '{}': map_type = {:?}, tilemap_size = {:?}, origin_offset = {:?}, grid_size = {:?}, bounding_size = {:?}",
-            load_context.path().display(),
-            map_type,
-            tilemap_size,
-            origin_offset,
-            grid_size,
-            bounding_size,
-        );
 
         let asset_map = TiledMap {
             map,
             tilemap_size,
-            origin_offset,
-            bounding_size,
+            tiled_offset,
+            rect,
             topleft_chunk: topleft,
             bottomright_chunk: bottomright,
             tilesets,
             #[cfg(feature = "user_properties")]
             properties,
         };
-
+        debug!(
+            "Loaded map '{}': {:?}",
+            load_context.path().display(),
+            &asset_map,
+        );
         Ok(asset_map)
     }
 

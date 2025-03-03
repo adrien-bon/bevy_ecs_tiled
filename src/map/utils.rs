@@ -39,42 +39,42 @@ pub fn get_grid_size(map: &Map) -> TilemapGridSize {
     }
 }
 
-/// Convert a position from Tiled space to Bevy space.
-pub fn from_tiled_coords_to_bevy(tiled_map: &TiledMap, tiled_position: Vec2) -> Vec2 {
+/// Convert a position from Tiled space to world space.
+pub fn from_tiled_position_to_world_space(tiled_map: &TiledMap, tiled_position: Vec2) -> Vec2 {
     let map_size = tiled_map.tilemap_size;
-    let map_height = tiled_map.bounding_size.y;
+    let map_height = tiled_map.rect.height();
     let grid_size = get_grid_size(&tiled_map.map);
     match get_map_type(&tiled_map.map) {
         TilemapType::Square => {
-            tiled_map.origin_offset
+            tiled_map.tiled_offset
                 + Vec2 {
                     x: tiled_position.x,
                     y: map_height - tiled_position.y,
                 }
         }
         TilemapType::Hexagon(HexCoordSystem::ColumnOdd) => {
-            tiled_map.origin_offset
+            tiled_map.tiled_offset
                 + Vec2 {
                     x: tiled_position.x,
                     y: map_height + grid_size.y / 2. - tiled_position.y,
                 }
         }
         TilemapType::Hexagon(HexCoordSystem::ColumnEven) => {
-            tiled_map.origin_offset
+            tiled_map.tiled_offset
                 + Vec2 {
                     x: tiled_position.x,
                     y: map_height - tiled_position.y,
                 }
         }
         TilemapType::Hexagon(HexCoordSystem::RowOdd) => {
-            tiled_map.origin_offset
+            tiled_map.tiled_offset
                 + Vec2 {
                     x: tiled_position.x,
                     y: map_height + grid_size.y / 4. - tiled_position.y,
                 }
         }
         TilemapType::Hexagon(HexCoordSystem::RowEven) => {
-            tiled_map.origin_offset
+            tiled_map.tiled_offset
                 + Vec2 {
                     x: tiled_position.x - grid_size.x / 2.,
                     y: map_height + grid_size.y / 4. - tiled_position.y,
@@ -82,13 +82,13 @@ pub fn from_tiled_coords_to_bevy(tiled_map: &TiledMap, tiled_position: Vec2) -> 
         }
         TilemapType::Isometric(IsoCoordSystem::Diamond) => {
             let position = iso_projection(
-                tiled_position + tiled_map.origin_offset,
+                tiled_position + tiled_map.tiled_offset,
                 &map_size,
                 &grid_size,
             );
             Vec2 {
                 x: position.x,
-                y: map_height - grid_size.y / 2. - position.y,
+                y: map_height / 2. - grid_size.y / 2. - position.y,
             }
         }
         TilemapType::Isometric(IsoCoordSystem::Staggered) => {
