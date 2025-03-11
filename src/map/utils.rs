@@ -40,6 +40,14 @@ pub fn get_grid_size(map: &Map) -> TilemapGridSize {
     }
 }
 
+pub fn get_tile_size(map: &Map) -> TilemapTileSize {
+    // XXX: THIS IS WRONG.
+    TilemapTileSize {
+        x: map.tile_width as f32,
+        y: map.tile_height as f32,
+    }
+}
+
 /// Convert a position from Tiled space to world space.
 pub fn from_tiled_position_to_world_space(tiled_map: &TiledMap, tiled_position: Vec2) -> Vec2 {
     let map_size = tiled_map.tilemap_size;

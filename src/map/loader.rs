@@ -71,6 +71,7 @@ pub(crate) fn load_map(
     // Compute layer base Transform given provided TiledMapAnchor
     let layer_transform = Transform::from_translation(tiled_map.offset().extend(0.0));
 
+    let grid_size = get_grid_size(&tiled_map.map);
     // let anchor_offset =
     //     anchor.as_ref().map(|anchor| {
     //         let tile_sizeish = &grid_size;
@@ -106,7 +107,7 @@ pub(crate) fn load_map(
             id: layer_id,
         };
 
- match layer.layer_type() {
+        match layer.layer_type() {
             LayerType::Tiles(tile_layer) => {
                 commands.entity(layer_entity).insert((
                     Name::new(format!("TiledMapTileLayer({})", layer.name)),
