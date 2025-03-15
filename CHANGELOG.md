@@ -2,6 +2,8 @@
 
 ## [unreleased]
 
+## v0.6.0
+
 ### Features
 
 - Add Tiled .world file support (#55)

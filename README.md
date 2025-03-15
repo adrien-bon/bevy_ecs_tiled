@@ -54,7 +54,7 @@ Add required dependencies to your `Cargo.toml` file:
 ```toml
 [dependencies]
 bevy = "0.15"
-bevy_ecs_tiled = "0.5"
+bevy_ecs_tiled = "0.6"
 bevy_ecs_tilemap = "0.15"
 ```
 
@@ -127,7 +127,7 @@ You can browse the [examples](https://github.com/adrien-bon/bevy_ecs_tiled/tree/
 
 |bevy|bevy_ecs_tilemap|bevy_ecs_tiled|
 |---|---|---|
-|0.15|0.15|0.5|
+|0.15|0.15|0.5 - 0.6|
 |0.14|0.14|0.3 - 0.4|
 |0.13|main@e4f3cc6|branch 0.2|
 |0.12|0.12|0.1|
