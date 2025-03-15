@@ -23,7 +23,7 @@ pub struct TiledMapEventWriters<'w> {
     pub tile_event: EventWriter<'w, TiledTileCreated>,
 }
 
-impl<'w> fmt::Debug for TiledMapEventWriters<'w> {
+impl fmt::Debug for TiledMapEventWriters<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("TiledMapEventWriters").finish()
     }
