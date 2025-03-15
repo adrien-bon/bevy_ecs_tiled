@@ -47,8 +47,8 @@ fn startup(
 This simplistic example will load a map using default settings.
 You can tweak how to load the map by adding various components on the map entity, notably:
 
-- [`TiledMapAnchor`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/components/enum.TiledMapAnchor.html)
-- [`TiledMapLayerZOffset`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/components/struct.TiledMapLayerZOffset.html)
+- [`TiledMapAnchor`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/map/components/enum.TiledMapAnchor.html)
+- [`TiledMapLayerZOffset`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/map/components/struct.TiledMapLayerZOffset.html)
 - [`TilemapRenderSettings`](https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/map/struct.TilemapRenderSettings.html)
 - [`Transform`](https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html)
 - [`Visibility`](https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html)
