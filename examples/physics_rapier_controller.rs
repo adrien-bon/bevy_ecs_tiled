@@ -16,6 +16,9 @@ fn main() {
         // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
         // be automatically added as well if it's not already done
         .add_plugins(TiledMapPlugin::default())
+        // Examples helper plugins, such as the logic to pan and zoom the camera
+        // This should not be used directly in your game (but you can always have a look)
+        .add_plugins(helper::HelperPlugin)
         // bevy_ecs_tiled physics plugin: this is where we select which physics backend to use
         // Here we use a custom backend (see below)
         .add_plugins(TiledPhysicsPlugin::<MyCustomRapierPhysicsBackend>::default())
@@ -47,7 +50,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 Collider::ball(10.),
                 Velocity::zero(),
                 GravityScale(GRAVITY_SCALE),
-                Transform::default(),
+                Transform::from_xyz(0., -50., 0.),
             ));
         });
 }
