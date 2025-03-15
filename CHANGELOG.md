@@ -16,26 +16,22 @@
 - Properly use the `Visible` flag for objects
 - Properly react to components change: automatically respawn maps / worlds in case of update
 - Automatically register `bevy_ecs_tilemap::TilemapPlugin` plugin when registering `TiledMapPlugin`
-- Add convenience methods to easily initialize `TiledMapSettings`
 
 ### Changed
 
-- `TiledPhysicsBackend` now requires to implement the `Clone` and `Debug` traits
+- `TiledPhysicsBackend` now requires to implement the `Clone`, `Reflect` and `Debug` traits
 - Switched some map logs from `info!()` to `debug!()`
 - `TiledPhysicsBackend::spawn_collider()` is now expected to spawn several colliders in on call. To reflect that, now it returns a `Vec<TiledColliderSpawnInfos>` instead of an `Option<TiledColliderSpawnInfos>`
 - Remove the `TiledColliderSourceType::Tile` which is superseded by `TiledColliderSourceType::TilesLayer`
-- Remove the capacity to filter out tiles colliders using the collider object name
 - Update Map, World and Physics events to use safe methods for getting their inner data
 - Update Map and physics events to use `AsssetId` instead of a direct `Handle`
 - Update the `TiledMapLayer` marker component to not contains a reference to the map `AssetId`, we should instead query the map directly
 - Prevent mutating our Map and World asset for nothing: it was triggering an additionnal asset reload
 - Clear our tileset cache when we receive an `AssetEvent::Modified` (ie. the asset is reloaded from disk)
 - Rename `TiledIdStorage` component to `TiledMapStorage` to be consistent with the new world API
-- `TiledPhysicsBackend` trait now requires to derive `Reflect`
 - Rename `ObjectNameFilter` to `TiledNameFilter` since we also use it for layer name
 - Rework physics backend: remove collider spawn events, rename types so they are easier to use
-- Update TiledPhysicsBackend::spawn_colliders signature so it can now take an object name filter
-- Add back the possibility to filter out individual tile object colliders based upon their name
+- Update `TiledPhysicsBackend::spawn_colliders` signature so it can now take an object name filter
 - Change the way we retrieve `PhysicsSettings` so we don't require to get the map event first
 - Replace global observers with an entity scoped observer + a global event writer
 - Rework how we store tileset data in `TiledMap`
@@ -49,7 +45,7 @@
 
 - Various fixes around infinite maps: we should now have proper location for objects and tile layer chunks
 - Fix `TilemapRenderSettings::chunk_size` value for isometric examples (#73)
-- Properly load unit-variant enums as components without needing to encpasulate them in another component (#75)
+- Properly load unit-variant enums as components without needing to encapsulate them in another component (#75)
 
 ### Documentation
 
