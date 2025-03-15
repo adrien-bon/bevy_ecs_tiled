@@ -34,7 +34,8 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
 }
 
-#[derive(Default, Clone, Reflect)]
+#[derive(Default, Debug, Clone, Reflect)]
+#[reflect(Default, Debug)]
 struct MyCustomPhysicsBackend;
 
 // This simple example will just spawn an entity with a `MyCustomPhysicsComponent` Component,

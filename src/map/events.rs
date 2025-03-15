@@ -3,21 +3,35 @@
 //! These events will be fired after the whole map has loaded.
 //! More informations in the [dedicated example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/map_events.rs)
 
+use std::fmt;
+
 use crate::prelude::*;
 use bevy::{ecs::system::SystemParam, prelude::*};
 use bevy_ecs_tilemap::prelude::*;
 use tiled::{Layer, LayerTile, Map, Object};
 
+/// All event writers used when loading a map
 #[derive(SystemParam)]
 pub struct TiledMapEventWriters<'w> {
+    /// Map events writer
     pub map_event: EventWriter<'w, TiledMapCreated>,
+    /// Layer events writer
     pub layer_event: EventWriter<'w, TiledLayerCreated>,
+    /// Object events writer
     pub object_event: EventWriter<'w, TiledObjectCreated>,
+    /// Tile events writer
     pub tile_event: EventWriter<'w, TiledTileCreated>,
 }
 
+impl<'w> fmt::Debug for TiledMapEventWriters<'w> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("TiledMapEventWriters").finish()
+    }
+}
+
 /// Event sent when a map is spawned
-#[derive(Component, Clone, Debug, Copy)]
+#[derive(Component, Reflect, Clone, Debug, Copy)]
+#[reflect(Component, Debug)]
 pub struct TiledMapCreated {
     /// Spawned map [Entity]
     pub entity: Entity,
@@ -43,7 +57,8 @@ impl<'a> TiledMapCreated {
 }
 
 /// Event sent when a layer is spawned
-#[derive(Component, Clone, Debug, Copy)]
+#[derive(Component, Reflect, Clone, Debug, Copy)]
+#[reflect(Component, Debug)]
 pub struct TiledLayerCreated {
     /// Creation event of the map this layer belongs to
     pub map: TiledMapCreated,
@@ -68,7 +83,8 @@ impl<'a> TiledLayerCreated {
 }
 
 /// Event sent when an object is spawned
-#[derive(Component, Clone, Debug, Copy)]
+#[derive(Component, Reflect, Clone, Debug, Copy)]
+#[reflect(Component, Debug)]
 pub struct TiledObjectCreated {
     /// Creation event of the layer this object belongs to
     pub layer: TiledLayerCreated,
@@ -108,7 +124,8 @@ impl<'a> TiledObjectCreated {
 /// Event sent when a tile has finished loading
 ///
 /// This event is only sent for tiles which contain custom properties.
-#[derive(Component, Clone, Debug, Copy)]
+#[derive(Component, Reflect, Clone, Debug, Copy)]
+#[reflect(Component, Debug)]
 pub struct TiledTileCreated {
     /// Creation event of the layer this tile belongs to
     pub layer: TiledLayerCreated,

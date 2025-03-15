@@ -12,7 +12,8 @@ use bevy::{
 /// Configuration for the [TiledDebugWorldChunkPlugin]
 ///
 /// Contains some settings to customize how the `rect_2d` [Gizmos] will appear.
-#[derive(Resource, Clone)]
+#[derive(Resource, Reflect, Clone, Debug)]
+#[reflect(Resource, Debug)]
 pub struct TiledDebugWorldChunkConfig {
     /// [Color] of the `rect_2d` [Gizmos] for world rendering chunk
     ///
@@ -55,11 +56,12 @@ impl Default for TiledDebugWorldChunkConfig {
 ///
 /// This will display a `rect_2d` [Gizmos] to highlight your maps boundary and another `rect_2d` for the world render chunk.
 ///
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct TiledDebugWorldChunkPlugin(pub TiledDebugWorldChunkConfig);
 impl Plugin for TiledDebugWorldChunkPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.insert_resource(self.0.clone())
+        app.register_type::<TiledDebugWorldChunkConfig>()
+            .insert_resource(self.0.clone())
             .add_systems(Update, (draw_camera_rect, draw_maps_rect));
     }
 }

@@ -27,6 +27,7 @@ pub mod prelude {
 /// App::new()
 ///     .add_plugins(TiledDebugPluginGroup);
 /// ```
+#[derive(Default, Copy, Clone, Debug)]
 pub struct TiledDebugPluginGroup;
 
 impl PluginGroup for TiledDebugPluginGroup {

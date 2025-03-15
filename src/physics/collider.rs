@@ -4,13 +4,15 @@ use bevy::prelude::*;
 use tiled::{Layer, Object, Tile};
 
 /// Marker component for colliders
-#[derive(Component)]
+#[derive(Component, Default, Reflect, Copy, Clone, Debug)]
+#[reflect(Component, Default, Debug)]
 #[require(Transform)]
 pub struct TiledColliderMarker;
 
 /// Describe the type of the [TiledCollider].
 #[derive(Copy, Clone, Debug)]
 pub enum TiledCollider {
+    /// Collider is created by a tiles [Layer]
     TilesLayer {
         /// ID of the layer
         layer_id: usize,

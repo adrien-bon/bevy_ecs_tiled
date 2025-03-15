@@ -23,7 +23,8 @@ use bevy_ecs_tilemap::map::TilemapRenderSettings;
 /// Wrapper around the [Handle] to the `.world` file representing the [TiledWorld].
 ///
 /// This is the main [Component] that must be spawned to load a Tiled world.
-#[derive(Component, Reflect)]
+#[derive(Component, Reflect, Clone, Debug)]
+#[reflect(Component, Debug)]
 #[require(
     TiledWorldStorage,
     TiledMapAnchor,
@@ -40,8 +41,11 @@ pub(crate) fn build(app: &mut bevy::prelude::App) {
         .init_asset_loader::<TiledWorldLoader>()
         .register_type::<TiledWorldHandle>()
         .register_type::<TiledWorldChunking>()
+        .register_type::<TiledWorldMarker>()
+        .register_type::<RespawnTiledWorld>()
         .register_type::<TiledWorldStorage>()
         .add_event::<TiledWorldCreated>()
+        .register_type::<TiledWorldCreated>()
         .add_systems(
             PreUpdate,
             process_loaded_worlds.after(crate::map::process_loaded_maps),
@@ -246,7 +250,7 @@ fn process_loaded_worlds(
                 entity: world_entity,
                 asset_id: world_handle.0.id(),
             };
-            commands.trigger_targets(event.clone(), world_entity);
+            commands.trigger_targets(event, world_entity);
             world_event.send(event);
         }
     }

@@ -22,7 +22,8 @@ use bevy_ecs_tilemap::prelude::*;
 /// Wrapper around the [Handle] to the `.tmx` file representing the [TiledMap].
 ///
 /// This is the main [Component] that must be spawned to load a Tiled map.
-#[derive(Component, Reflect)]
+#[derive(Component, Reflect, Clone, Debug)]
+#[reflect(Component, Debug)]
 #[require(
     TiledMapStorage,
     TiledMapAnchor,
@@ -40,12 +41,26 @@ pub(crate) fn build(app: &mut bevy::prelude::App) {
         .register_type::<TiledMapPluginConfig>()
         .register_type::<TiledMapAnchor>()
         .register_type::<TiledMapLayerZOffset>()
+        .register_type::<RespawnTiledMap>()
         .register_type::<TiledMapStorage>()
+        .register_type::<TiledMapMarker>()
+        .register_type::<TiledMapLayer>()
+        .register_type::<TiledMapTileLayer>()
+        .register_type::<TiledMapTileLayerForTileset>()
+        .register_type::<TiledMapObjectLayer>()
+        .register_type::<TiledMapImageLayer>()
+        .register_type::<TiledMapTile>()
+        .register_type::<TiledMapObject>()
+        .register_type::<TiledMapImage>()
         .register_type::<TiledAnimation>()
         .add_event::<TiledMapCreated>()
+        .register_type::<TiledMapCreated>()
         .add_event::<TiledLayerCreated>()
+        .register_type::<TiledLayerCreated>()
         .add_event::<TiledObjectCreated>()
+        .register_type::<TiledObjectCreated>()
         .add_event::<TiledTileCreated>()
+        .register_type::<TiledTileCreated>()
         .add_systems(PreUpdate, process_loaded_maps)
         .add_systems(Update, animate_tiled_sprites)
         .add_systems(PostUpdate, handle_map_events);

@@ -20,7 +20,7 @@
 
 ### Changed
 
-- `TiledPhysicsBackend` now requires to implement the `Clone` trait
+- `TiledPhysicsBackend` now requires to implement the `Clone` and `Debug` traits
 - Switched some map logs from `info!()` to `debug!()`
 - `TiledPhysicsBackend::spawn_collider()` is now expected to spawn several colliders in on call. To reflect that, now it returns a `Vec<TiledColliderSpawnInfos>` instead of an `Option<TiledColliderSpawnInfos>`
 - Remove the `TiledColliderSourceType::Tile` which is superseded by `TiledColliderSourceType::TilesLayer`

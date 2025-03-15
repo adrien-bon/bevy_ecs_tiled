@@ -10,7 +10,8 @@ use bevy_ecs_tilemap::{
 };
 
 /// Configuration for the [TiledDebugTilesPlugin]
-#[derive(Resource, Clone)]
+#[derive(Resource, Reflect, Clone, Debug)]
+#[reflect(Resource, Debug)]
 pub struct TiledDebugTilesConfig {
     /// [Color] of the tile index text
     pub color: Color,
@@ -45,11 +46,12 @@ impl Default for TiledDebugTilesConfig {
 ///     .add_plugins(TiledDebugTilesPlugin::default());
 /// ```
 ///
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct TiledDebugTilesPlugin(pub TiledDebugTilesConfig);
 impl Plugin for TiledDebugTilesPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.insert_resource(self.0.clone())
+        app.register_type::<TiledDebugTilesConfig>()
+            .insert_resource(self.0.clone())
             .add_systems(Update, draw_tile_infos);
     }
 }

@@ -6,7 +6,8 @@ use crate::prelude::*;
 use bevy::prelude::*;
 
 /// Event sent when a Tiled world has finished loading.
-#[derive(Component, Clone, Debug)]
+#[derive(Component, Reflect, Copy, Clone, Debug)]
+#[reflect(Component, Debug)]
 pub struct TiledWorldCreated {
     /// Spawned world [Entity].
     pub entity: Entity,

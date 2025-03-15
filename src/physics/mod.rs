@@ -12,6 +12,8 @@ pub mod rapier;
 #[cfg(feature = "avian")]
 pub mod avian;
 
+use std::fmt;
+
 use crate::prelude::*;
 use bevy::{prelude::*, reflect::Reflectable};
 use prelude::*;
@@ -32,7 +34,14 @@ pub mod prelude {
 ///
 /// A custom physics backend should implement this trait.
 pub trait TiledPhysicsBackend:
-    Default + Clone + 'static + std::marker::Sync + std::marker::Send + FromReflect + Reflectable
+    Default
+    + Clone
+    + fmt::Debug
+    + 'static
+    + std::marker::Sync
+    + std::marker::Send
+    + FromReflect
+    + Reflectable
 {
     /// Function responsible for spawning physics colliders
     ///
@@ -50,7 +59,8 @@ pub trait TiledPhysicsBackend:
 }
 
 /// Physics related settings.
-#[derive(Clone, Component, Default, Reflect)]
+#[derive(Component, Default, Reflect, Clone, Debug)]
+#[reflect(Component, Default, Debug)]
 pub struct TiledPhysicsSettings<T: TiledPhysicsBackend> {
     /// Specify which Tiled object to add colliders for using their layer name.
     ///
@@ -89,24 +99,26 @@ pub struct TiledPhysicsSettings<T: TiledPhysicsBackend> {
 /// App::new()
 ///     .add_plugins(TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default());
 /// ```
-#[derive(Default)]
+#[derive(Default, Copy, Clone, Debug)]
 pub struct TiledPhysicsPlugin<T: TiledPhysicsBackend>(std::marker::PhantomData<T>);
 
 impl<T: TiledPhysicsBackend> Plugin for TiledPhysicsPlugin<T> {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_systems(
-            PreUpdate,
-            (
-                initialize_settings_for_worlds::<T>,
-                initialize_settings_for_maps::<T>,
-                collider_from_tiles_layer::<T>,
-                collider_from_object::<T>,
+        app.register_type::<TiledColliderMarker>()
+            .register_type::<T>()
+            .register_type::<TiledPhysicsSettings<T>>()
+            .add_systems(
+                PreUpdate,
+                (
+                    initialize_settings_for_worlds::<T>,
+                    initialize_settings_for_maps::<T>,
+                    collider_from_tiles_layer::<T>,
+                    collider_from_object::<T>,
+                )
+                    .chain()
+                    .after(crate::map::process_loaded_maps),
             )
-                .chain()
-                .after(crate::map::process_loaded_maps),
-        )
-        .add_systems(PostUpdate, update_settings::<T>)
-        .register_type::<TiledPhysicsSettings<T>>();
+            .add_systems(PostUpdate, update_settings::<T>);
     }
 }
 

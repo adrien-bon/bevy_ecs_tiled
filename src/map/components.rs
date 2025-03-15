@@ -6,7 +6,8 @@ use tiled::TileId;
 /// Set the anchor point for associated map or world.
 ///
 /// Must be added to the [Entity] holding the map.
-#[derive(Component, Copy, Clone, Reflect, Default)]
+#[derive(Component, Default, Reflect, Copy, Clone, Debug)]
+#[reflect(Component, Default, Debug)]
 pub enum TiledMapAnchor {
     /// Keep default layers position from Tiled, map origin is the bottom-left of the map.
     #[default]
@@ -18,7 +19,8 @@ pub enum TiledMapAnchor {
 /// Specificy the Z offset between two consecutives Tiled layers.
 ///
 /// Must be added to the [Entity] holding the map.
-#[derive(Component, Copy, Clone, Reflect)]
+#[derive(Component, Reflect, Copy, Clone, Debug)]
+#[reflect(Component, Default, Debug)]
 pub struct TiledMapLayerZOffset(pub f32);
 
 impl Default for TiledMapLayerZOffset {
@@ -44,14 +46,16 @@ impl Default for TiledMapLayerZOffset {
 ///     commands.entity(entity).insert(RespawnTiledMap);
 /// }
 /// ```
-#[derive(Component)]
+#[derive(Component, Default, Reflect, Copy, Clone, Debug)]
+#[reflect(Component, Default, Debug)]
 pub struct RespawnTiledMap;
 
 /// [Component] storing all the Tiled items composing this map.
 /// Makes the association between Tiled ID and corresponding Bevy [Entity].
 ///
 /// Should not be manually inserted but can be accessed from the map [Entity].
-#[derive(Component, Default, Reflect)]
+#[derive(Component, Default, Reflect, Clone, Debug)]
+#[reflect(Component, Default, Debug)]
 pub struct TiledMapStorage {
     /// Map of layers entities, using their Tiled ID as key
     pub layers: HashMap<u32, Entity>,
@@ -66,37 +70,44 @@ pub struct TiledMapStorage {
 }
 
 /// Marker [Component] for a Tiled map.
-#[derive(Component)]
+#[derive(Component, Default, Reflect, Copy, Clone, Debug)]
+#[reflect(Component, Default, Debug)]
 #[require(Visibility, Transform)]
 pub struct TiledMapMarker;
 
 /// Marker [Component] for a Tiled map layer.
-#[derive(Component)]
+#[derive(Component, Default, Reflect, Copy, Clone, Debug)]
+#[reflect(Component, Default, Debug)]
 #[require(Visibility, Transform)]
 pub struct TiledMapLayer;
 
 /// Marker [Component] for a Tiled map tile layer.
-#[derive(Component)]
+#[derive(Component, Default, Reflect, Copy, Clone, Debug)]
+#[reflect(Component, Default, Debug)]
 #[require(Visibility, Transform)]
 pub struct TiledMapTileLayer;
 
 /// Marker [Component] for a Tiled map tile layer for a given tileset.
-#[derive(Component)]
+#[derive(Component, Default, Reflect, Copy, Clone, Debug)]
+#[reflect(Component, Default, Debug)]
 #[require(Visibility, Transform)]
 pub struct TiledMapTileLayerForTileset;
 
 /// Marker [Component] for a Tiled map object layer.
-#[derive(Component)]
+#[derive(Component, Default, Reflect, Copy, Clone, Debug)]
+#[reflect(Component, Default, Debug)]
 #[require(Visibility, Transform)]
 pub struct TiledMapObjectLayer;
 
 /// Marker [Component] for a Tiled map group layer.
-#[derive(Component)]
+#[derive(Component, Default, Reflect, Copy, Clone, Debug)]
+#[reflect(Component, Default, Debug)]
 #[require(Visibility, Transform)]
 pub struct TiledMapGroupLayer;
 
 /// Marker [Component] for a Tiled map image layer.
-#[derive(Component)]
+#[derive(Component, Default, Reflect, Copy, Clone, Debug)]
+#[reflect(Component, Default, Debug)]
 #[require(Visibility, Transform)]
 pub struct TiledMapImageLayer;
 
@@ -106,22 +117,26 @@ pub struct TiledMapImageLayer;
 /// It would be useless to add these components to tile entities:
 /// - it will not do what you think: rendering is done at the [TiledMapTileLayerForTileset] level through `TilemapBundle` from `bevy_ecs_tilemap`
 /// - it could impact performances pretty badly since it would mean to compute both [GlobalTransform] and [InheritedVisibility] for all tiles
-#[derive(Component)]
+#[derive(Component, Default, Reflect, Copy, Clone, Debug)]
+#[reflect(Component, Default, Debug)]
 pub struct TiledMapTile;
 
 /// Marker [Component] for a Tiled map object.
-#[derive(Component)]
+#[derive(Component, Default, Reflect, Copy, Clone, Debug)]
+#[reflect(Component, Default, Debug)]
 #[require(Visibility, Transform)]
 pub struct TiledMapObject;
 
 /// Marker [Component] for the [Sprite] attached to an image layer.
-#[derive(Component)]
+#[derive(Component, Default, Reflect, Copy, Clone, Debug)]
+#[reflect(Component, Default, Debug)]
 #[require(Visibility, Transform)]
 pub struct TiledMapImage;
 
 /// This [Component] is used for animated objects.
 /// We will automatically update the Sprite index every time the timer fires.
-#[derive(Component, Reflect)]
+#[derive(Component, Default, Reflect, Clone, Debug)]
+#[reflect(Component, Default, Debug)]
 #[require(Visibility, Transform, Sprite)]
 pub struct TiledAnimation {
     /// First index of the animation

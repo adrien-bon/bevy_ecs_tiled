@@ -59,8 +59,10 @@ pub enum TiledWorldLoaderError {
     /// An [IO](std::io) Error
     #[error("Could not load Tiled file: {0}")]
     Io(#[from] std::io::Error),
+    /// No map was found in this world
     #[error("No map found in this world")]
     EmptyWorld,
+    /// Found an infinite map in this world which is not supported
     #[error("Infinite map found in this world (not supported)")]
     WorldWithInfiniteMap,
 }

@@ -93,7 +93,8 @@ fn move_player(
 
 // Define a custom physics backend which will use the TiledPhysicsAvianBackend
 // but add an extra RigidBody::Static component on top of the regular collider.
-#[derive(Default, Clone, Reflect)]
+#[derive(Default, Debug, Clone, Reflect)]
+#[reflect(Default, Debug)]
 struct MyCustomAvianPhysicsBackend(TiledPhysicsAvianBackend);
 
 impl TiledPhysicsBackend for MyCustomAvianPhysicsBackend {

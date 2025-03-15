@@ -89,7 +89,8 @@ fn move_player(
 
 // Define a custom physics backend which will use the TiledPhysicsRapierBackend
 // but add an extra RigidBody::KinematicPositionBased component on top of the regular collider.
-#[derive(Default, Clone, Reflect)]
+#[derive(Default, Debug, Clone, Reflect)]
+#[reflect(Default, Debug)]
 struct MyCustomRapierPhysicsBackend(TiledPhysicsRapierBackend);
 
 impl TiledPhysicsBackend for MyCustomRapierPhysicsBackend {

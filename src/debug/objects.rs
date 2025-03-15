@@ -8,7 +8,8 @@ use bevy::{color::palettes::css::RED, prelude::*};
 /// Configuration for the [TiledDebugObjectsPlugin]
 ///
 /// Contains some settings to customize how the `arrow_2d` [Gizmos] will appear.
-#[derive(Resource, Clone)]
+#[derive(Resource, Reflect, Copy, Clone, Debug)]
+#[reflect(Resource, Debug)]
 pub struct TiledDebugObjectsConfig {
     /// Color of the `arrow_2d` [Gizmos]
     pub color: Color,
@@ -39,11 +40,12 @@ impl Default for TiledDebugObjectsConfig {
 ///
 /// This will display an `arrow_2d` [Gizmos] where your objects are.
 ///
-#[derive(Default, Clone)]
+#[derive(Default, Copy, Clone, Debug)]
 pub struct TiledDebugObjectsPlugin(pub TiledDebugObjectsConfig);
 impl Plugin for TiledDebugObjectsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.insert_resource(self.0.clone())
+        app.register_type::<TiledDebugObjectsConfig>()
+            .insert_resource(self.0)
             .add_systems(Update, draw_debug_arrow);
     }
 }

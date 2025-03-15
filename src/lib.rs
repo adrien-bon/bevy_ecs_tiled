@@ -9,6 +9,11 @@
 //! ## Getting started
 //!
 #![doc = include_str!("../book/src/getting-started.md")]
+#![warn(missing_docs)]
+#![deny(rustdoc::broken_intra_doc_links)]
+#![deny(unsafe_code)]
+#![deny(missing_copy_implementations)]
+#![deny(missing_debug_implementations)]
 
 pub mod cache;
 pub mod map;
@@ -43,8 +48,8 @@ use bevy::prelude::*;
 use std::{env, path::PathBuf};
 
 /// [TiledMapPlugin] [Plugin] global configuration.
-#[allow(dead_code)]
-#[derive(Resource, Clone, Reflect)]
+#[derive(Resource, Reflect, Clone, Debug)]
+#[reflect(Resource, Debug)]
 pub struct TiledMapPluginConfig {
     /// Path to the Tiled types export file.
     ///
@@ -74,7 +79,7 @@ impl Default for TiledMapPluginConfig {
 /// App::new()
 ///     .add_plugins(TiledMapPlugin::default());
 /// ```
-#[derive(Default)]
+#[derive(Default, Clone, Debug)]
 pub struct TiledMapPlugin(pub TiledMapPluginConfig);
 
 impl Plugin for TiledMapPlugin {
@@ -83,7 +88,8 @@ impl Plugin for TiledMapPlugin {
             app = app.add_plugins(bevy_ecs_tilemap::TilemapPlugin);
         }
         app.insert_resource(cache::TiledResourceCache::new())
-            .insert_resource(self.0.clone());
+            .insert_resource(self.0.clone())
+            .register_type::<TiledMapPluginConfig>();
         map::build(app);
         world::build(app);
     }
