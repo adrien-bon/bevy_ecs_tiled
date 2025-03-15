@@ -12,7 +12,7 @@ It relies upon the official [Tiled Rust bindings](https://github.com/mapeditor/r
 
 It aims to provide a simple and ergonomic workflow by using Tiled as an editor when working on Bevy 2D games.
 
-![screenshot](./res/screenshot.gif)
+![screenshot](./res/overview.gif)
 
 ## Features
 
@@ -24,6 +24,16 @@ It aims to provide a simple and ergonomic workflow by using Tiled as an editor w
   - Automatically spawn [Rapier](https://rapier.rs/) or [Avian](https://github.com/Jondolf/avian) physics colliders on tiles or objects.
   - Use [Tiled custom properties](https://doc.mapeditor.org/en/stable/manual/custom-properties/) to automatically insert your own components on objects, tiles or layers.
 - Hot-reloading: work on your map in Tiled and see it update in Bevy without having to re-compile / restart your game.
+
+## Showcases
+
+Update your Bevy components directly from Tiled editor :
+
+![screenshot](./res/showcase_properties.gif)
+
+Use several maps to build a huge world :
+
+![screenshot](./res/showcase_world_chunking.gif)
 
 ## Documentation
 
