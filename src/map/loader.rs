@@ -463,6 +463,9 @@ fn load_objects_layer(
             }
             _ => {}
         }
+        if !object_data.visible && sprite.is_some() {
+            commands.entity(object_entity).insert(Visibility::Hidden);
+        }
 
         entity_map.insert(object_data.id(), object_entity);
         event_list.push(TiledObjectCreated {
