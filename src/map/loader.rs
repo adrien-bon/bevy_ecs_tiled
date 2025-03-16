@@ -454,16 +454,18 @@ fn load_objects_layer(
             }
         }
 
-        match (sprite, animation) {
+        let has_sprite = match (sprite, animation) {
             (Some(sprite), None) => {
                 commands.entity(object_entity).insert(sprite);
+                true
             }
             (Some(sprite), Some(animation)) => {
                 commands.entity(object_entity).insert((sprite, animation));
+                true
             }
-            _ => {}
-        }
-        if !object_data.visible && sprite.is_some() {
+            _ => false,
+        };
+        if has_sprite && !object_data.visible {
             commands.entity(object_entity).insert(Visibility::Hidden);
         }
 
