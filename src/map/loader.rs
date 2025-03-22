@@ -44,7 +44,6 @@ pub(crate) fn load_map(
     tiled_map: &TiledMap,
     tiled_id_storage: &mut TiledMapStorage,
     render_settings: &TilemapRenderSettings,
-    anchor: &TiledMapAnchor,
     layer_offset: &TiledMapLayerZOffset,
     asset_server: &Res<AssetServer>,
     event_writers: &mut TiledMapEventWriters,

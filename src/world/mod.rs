@@ -27,7 +27,7 @@ use bevy_ecs_tilemap::{prelude::TilemapAnchor, map::TilemapRenderSettings};
 #[reflect(Component, Debug)]
 #[require(
     TiledWorldStorage,
-    TiledMapAnchor,
+    TilemapAnchor,
     TiledMapLayerZOffset,
     TilemapRenderSettings,
     TiledWorldChunking,
@@ -162,7 +162,7 @@ fn world_chunking(
                     TiledMapHandle(handle.clone_weak()),
                     Transform::from_translation(offset.extend(0.0) + Vec3::new(rect.min.x, rect.min.y, 0.0)),
                     // Force map anchor to BottomLeft: everything is handled at world level
-                    TiledMapAnchor::BottomLeft,
+                    TilemapAnchor::None,
                     *layer_offset,
                     *render_settings,
                 ))
@@ -188,7 +188,7 @@ fn process_loaded_worlds(
         Or<(
             Changed<TiledWorldHandle>,
             // If a world settings change, force a respawn so they can be taken into account
-            Changed<TiledMapAnchor>,
+            Changed<TilemapAnchor>,
             Changed<TiledMapLayerZOffset>,
             Changed<TilemapRenderSettings>,
             With<RespawnTiledWorld>,

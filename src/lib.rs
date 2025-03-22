@@ -91,9 +91,8 @@ impl Plugin for TiledMapPlugin {
         }
         app.insert_resource(cache::TiledResourceCache::new())
             .insert_resource(self.0.clone())
-            .register_type::<TiledMapPluginConfig>();
-        map::build(app);
-        world::build(app);
+            .register_type::<TiledMapPluginConfig>()
+            .add_plugins((map::build, world::build));
         #[cfg(feature = "user_properties")]
         app.add_systems(Startup, |reg: Res<AppTypeRegistry>, config: Res<TiledMapPluginConfig>| {
             if let Some(path) = &config.tiled_types_export_file {

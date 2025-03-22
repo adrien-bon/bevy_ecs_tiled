@@ -9,8 +9,6 @@ use bevy_ecs_tilemap::prelude::TilemapAnchor;
 
 use crate::{cache::TiledResourceCache, reader::BytesResourceReader, TiledMap, get_map_type, get_grid_size, tile_size_from_grid};
 
-use super::TiledMapAnchor;
-
 /// Tiled world `Asset`.
 ///
 /// `Asset` holding Tiled world informations.

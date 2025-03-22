@@ -28,7 +28,6 @@ use std::path::Path;
 #[reflect(Component, Debug)]
 #[require(
     TiledMapStorage,
-    TiledMapAnchor,
     TiledMapLayerZOffset,
     TilemapRenderSettings,
     Visibility,
@@ -41,7 +40,6 @@ pub(crate) fn build(app: &mut bevy::prelude::App) {
         .init_asset_loader::<TiledMapLoader>()
         .register_type::<TiledMapHandle>()
         .register_type::<TiledMapPluginConfig>()
-        .register_type::<TiledMapAnchor>()
         .register_type::<TiledMapLayerZOffset>()
         .register_type::<RespawnTiledMap>()
         .register_type::<TiledMapStorage>()
@@ -100,12 +98,12 @@ pub(crate) fn process_loaded_maps(
             &TiledMapHandle,
             &mut TiledMapStorage,
             &TilemapRenderSettings,
-            &TiledMapAnchor,
+            &TilemapAnchor,
             &TiledMapLayerZOffset,
         ),
         Or<(
             Changed<TiledMapHandle>,
-            Changed<TiledMapAnchor>,
+            Changed<TilemapAnchor>,
             Changed<TiledMapLayerZOffset>,
             Changed<TilemapRenderSettings>,
             With<RespawnTiledMap>,
@@ -155,7 +153,6 @@ pub(crate) fn process_loaded_maps(
                 tiled_map,
                 &mut tiled_id_storage,
                 render_settings,
-                anchor,
                 layer_offset,
                 &asset_server,
                 &mut event_writers,
