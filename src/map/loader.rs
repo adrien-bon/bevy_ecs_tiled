@@ -454,21 +454,29 @@ fn load_objects_layer(
             }
         }
 
-        let has_sprite = match (sprite, animation) {
+        match (sprite, animation) {
             (Some(sprite), None) => {
-                commands.entity(object_entity).insert(sprite);
-                true
+                commands.entity(object_entity)
+                        .insert((sprite,
+                                 if object_data.visible {
+                                     Visibility::Inherited
+                                 } else {
+                                     Visibility::Hidden
+                                 }));
             }
             (Some(sprite), Some(animation)) => {
-                commands.entity(object_entity).insert((sprite, animation));
-                true
+                commands.entity(object_entity)
+                        .insert((sprite,
+                                 animation,
+                                 if object_data.visible {
+                                     Visibility::Inherited
+                                 } else {
+                                     Visibility::Hidden
+                                 }
+                        ));
             }
-            _ => false,
+            _ => {}
         };
-        if has_sprite && !object_data.visible {
-            commands.entity(object_entity).insert(Visibility::Hidden);
-        }
-
         entity_map.insert(object_data.id(), object_entity);
         event_list.push(TiledObjectCreated {
             layer: *layer_event,
