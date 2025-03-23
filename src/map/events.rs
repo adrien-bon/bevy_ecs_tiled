@@ -92,6 +92,7 @@ pub struct TiledObjectCreated {
     pub entity: Entity,
     /// ID of this object in the [tiled::ObjectLayer]
     pub id: usize,
+    pub anchor: TilemapAnchor,
 }
 
 impl Event for TiledObjectCreated {
@@ -115,7 +116,11 @@ impl<'a> TiledObjectCreated {
             .get_map_asset(map_asset)
             .and_then(|tiled_map| {
                 self.get_object(map_asset).map(|object| {
-                    from_tiled_position_to_world_space(tiled_map, Vec2::new(object.x, object.y))
+                    from_tiled_position_to_world_space(
+                        tiled_map,
+                        &self.anchor,
+                        Vec2::new(object.x, object.y),
+                    )
                 })
             })
     }
@@ -138,6 +143,8 @@ pub struct TiledTileCreated {
     pub index: IVec2,
     /// Tile position (bevy_ecs_tilemap referential)
     pub position: TilePos,
+    /// Tilemap anchor
+    pub anchor: TilemapAnchor,
 }
 
 impl Event for TiledTileCreated {
@@ -159,8 +166,13 @@ impl<'a> TiledTileCreated {
         self.layer.map.get_map_asset(map_asset).map(|tiled_map| {
             let grid_size = get_grid_size(&tiled_map.map);
             let tile_size = tile_size_from_grid(&grid_size);
-            self.position
-                .center_in_world(&tiled_map.tilemap_size, &grid_size, &tile_size, &get_map_type(&tiled_map.map), &tiled_map.anchor)
+            self.position.center_in_world(
+                &tiled_map.tilemap_size,
+                &grid_size,
+                &tile_size,
+                &get_map_type(&tiled_map.map),
+                &self.anchor,
+            )
         })
     }
 }

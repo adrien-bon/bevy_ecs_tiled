@@ -30,6 +30,7 @@ use std::path::Path;
     TiledMapStorage,
     TiledMapLayerZOffset,
     TilemapRenderSettings,
+    TilemapAnchor,
     Visibility,
     Transform
 )]
@@ -75,7 +76,11 @@ pub fn export_types(reg: &AppTypeRegistry, path: impl AsRef<Path>) {
 }
 
 #[cfg(feature = "user_properties")]
-pub fn export_types_filtered(reg: &AppTypeRegistry, path: impl AsRef<Path>, pred: impl Fn(&str) -> bool) {
+pub fn export_types_filtered(
+    reg: &AppTypeRegistry,
+    path: impl AsRef<Path>,
+    pred: impl Fn(&str) -> bool,
+) {
     use std::{fs::File, io::BufWriter, ops::Deref};
     let file = File::create(path).unwrap();
     let writer = BufWriter::new(file);
@@ -84,7 +89,6 @@ pub fn export_types_filtered(reg: &AppTypeRegistry, path: impl AsRef<Path>, pred
     list.retain(|v| pred(&v.name));
     serde_json::to_writer_pretty(writer, &list).unwrap();
 }
-
 
 /// System to spawn a map once it has been fully loaded.
 #[allow(clippy::type_complexity)]
@@ -156,6 +160,7 @@ pub(crate) fn process_loaded_maps(
                 layer_offset,
                 &asset_server,
                 &mut event_writers,
+                anchor,
             );
 
             // Remove the respawn marker

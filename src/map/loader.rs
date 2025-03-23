@@ -47,6 +47,7 @@ pub(crate) fn load_map(
     layer_offset: &TiledMapLayerZOffset,
     asset_server: &Res<AssetServer>,
     event_writers: &mut TiledMapEventWriters,
+    anchor: &TilemapAnchor,
 ) {
     commands.entity(map_entity).insert((
         Name::new(format!("TiledMap: {}", tiled_map.map.source.display())),
@@ -67,16 +68,7 @@ pub(crate) fn load_map(
     // Start with a negative offset so in the end we end up with the top layer at Z-offset from settings
     let mut offset_z = tiled_map.map.layers().len() as f32 * (-layer_offset.0);
 
-    // Compute layer base Transform given provided TiledMapAnchor
-    let layer_transform = Transform::from_translation(tiled_map.offset().extend(0.0));
-
     let grid_size = get_grid_size(&tiled_map.map);
-    // let anchor_offset =
-    //     anchor.as_ref().map(|anchor| {
-    //         let tile_sizeish = &grid_size;
-    //         anchor.as_offset(&map_size, &grid_size, None, &map_type)
-    //             + Vec2::new(-tile_sizeish.x / 2.0, -tile_sizeish.y / 2.0)
-    //     }).unwrap_or(Vec2::ZERO);
 
     // Once materials have been created/added we need to then create the layers.
     for (layer_id, layer) in tiled_map.map.layers().enumerate() {
@@ -89,13 +81,12 @@ pub(crate) fn load_map(
             .spawn((
                 TiledMapLayer,
                 // Apply layer Transform using both layer base Transform and Tiled offset
-                layer_transform * offset_transform,
+                offset_transform,
                 // Determine layer default visibility
                 match &layer.visible {
                     true => Visibility::Inherited,
                     false => Visibility::Hidden,
                 },
-                tiled_map.anchor.clone(),
             ))
             .set_parent(map_entity)
             .id();
@@ -121,13 +112,14 @@ pub(crate) fn load_map(
                     render_settings,
                     &mut tiled_id_storage.tiles,
                     &mut special_tile_events,
+                    anchor,
                 );
             }
             LayerType::Objects(object_layer) => {
                 commands.entity(layer_entity).insert((
                     Name::new(format!("TiledMapObjectLayer({})", layer.name)),
                     TiledMapObjectLayer,
-                    Transform::from_translation((Vec2::from(grid_size) / -2.0).extend(0.0)),
+                    //Transform::from_translation((Vec2::from(grid_size) / -2.0).extend(0.0)),
                 ));
                 load_objects_layer(
                     commands,
@@ -136,6 +128,7 @@ pub(crate) fn load_map(
                     object_layer,
                     &mut tiled_id_storage.objects,
                     &mut object_events,
+                    anchor,
                 );
             }
             LayerType::Group(_group_layer) => {
@@ -146,11 +139,24 @@ pub(crate) fn load_map(
                 warn!("Group layers are not yet implemented");
             }
             LayerType::Image(image_layer) => {
+                let pos = from_tiled_position_to_world_space(
+                    tiled_map,
+                    anchor,
+                    Vec2::new(layer.offset_x, layer.offset_y),
+                );
                 commands.entity(layer_entity).insert((
                     Name::new(format!("TiledMapImageLayer({})", layer.name)),
                     TiledMapImageLayer,
+                    Transform::from_translation(pos.extend(offset_z)),
                 ));
-                load_image_layer(commands, tiled_map, &layer_event, image_layer, asset_server);
+                load_image_layer(
+                    commands,
+                    tiled_map,
+                    &layer_event,
+                    image_layer,
+                    asset_server,
+                    anchor,
+                );
             }
         };
 
@@ -216,6 +222,7 @@ fn load_tiles_layer(
     _render_settings: &TilemapRenderSettings,
     entity_map: &mut HashMap<(String, TileId), Vec<Entity>>,
     event_list: &mut Vec<TiledTileCreated>,
+    anchor: &TilemapAnchor,
 ) {
     // The TilemapBundle requires that all tile images come exclusively from a single
     // tiled texture or from a Vec of independent per-tile images. Furthermore, all of
@@ -253,6 +260,7 @@ fn load_tiles_layer(
             &tiles_layer,
             entity_map,
             event_list,
+            anchor,
         );
 
         #[cfg(feature = "render")]
@@ -275,7 +283,7 @@ fn load_tiles_layer(
                     },
                     map_type: get_map_type(&tiled_map.map),
                     render_settings: *_render_settings,
-                    anchor: tiled_map.anchor.clone(),
+                    anchor: anchor.clone(),
                     ..default()
                 });
         }
@@ -293,6 +301,7 @@ fn load_tiles(
     tiles_layer: &TileLayer,
     entity_map: &mut HashMap<(String, TileId), Vec<Entity>>,
     event_list: &mut Vec<TiledTileCreated>,
+    anchor: &TilemapAnchor,
 ) -> TileStorage {
     let tilemap_size = tiled_map.tilemap_size;
     let mut tile_storage = TileStorage::empty(tilemap_size);
@@ -351,6 +360,7 @@ fn load_tiles(
                     entity: tile_entity,
                     index,
                     position: tile_pos,
+                    anchor: *anchor,
                 });
             }
 
@@ -377,10 +387,14 @@ fn load_objects_layer(
     object_layer: ObjectLayer,
     entity_map: &mut HashMap<u32, Entity>,
     event_list: &mut Vec<TiledObjectCreated>,
+    anchor: &TilemapAnchor,
 ) {
     for (object_id, object_data) in object_layer.objects().enumerate() {
-        let object_position =
-            from_tiled_position_to_world_space(tiled_map, Vec2::new(object_data.x, object_data.y));
+        let object_position = from_tiled_position_to_world_space(
+            tiled_map,
+            anchor,
+            Vec2::new(object_data.x, object_data.y),
+        );
         let object_entity = commands
             .spawn((
                 Name::new(format!("Object({})", object_data.name)),
@@ -455,24 +469,25 @@ fn load_objects_layer(
 
         match (sprite, animation) {
             (Some(sprite), None) => {
-                commands.entity(object_entity)
-                        .insert((sprite,
-                                 if object_data.visible {
-                                     Visibility::Inherited
-                                 } else {
-                                     Visibility::Hidden
-                                 }));
+                commands.entity(object_entity).insert((
+                    sprite,
+                    if object_data.visible {
+                        Visibility::Inherited
+                    } else {
+                        Visibility::Hidden
+                    },
+                ));
             }
             (Some(sprite), Some(animation)) => {
-                commands.entity(object_entity)
-                        .insert((sprite,
-                                 animation,
-                                 if object_data.visible {
-                                     Visibility::Inherited
-                                 } else {
-                                     Visibility::Hidden
-                                 }
-                        ));
+                commands.entity(object_entity).insert((
+                    sprite,
+                    animation,
+                    if object_data.visible {
+                        Visibility::Inherited
+                    } else {
+                        Visibility::Hidden
+                    },
+                ));
             }
             _ => {}
         };
@@ -481,6 +496,7 @@ fn load_objects_layer(
             layer: *layer_event,
             entity: object_entity,
             id: object_id,
+            anchor: *anchor,
         });
     }
 }
@@ -491,6 +507,7 @@ fn load_image_layer(
     layer_event: &TiledLayerCreated,
     image_layer: ImageLayer,
     asset_server: &Res<AssetServer>,
+    anchor: &TilemapAnchor,
 ) {
     if let Some(image) = &image_layer.image {
         let image_position = match get_map_type(&tiled_map.map) {
@@ -505,7 +522,6 @@ fn load_image_layer(
             }
             _ => Vec2::ZERO,
         };
-        let image_position = from_tiled_position_to_world_space(tiled_map, image_position);
         commands
             .spawn((
                 Name::new(format!("Image({})", image.source.display())),

@@ -4,10 +4,13 @@ use bevy::{
     asset::{io::Reader, AssetLoader, AssetPath, LoadContext},
     prelude::*,
 };
-use std::{fmt, io::ErrorKind};
 use bevy_ecs_tilemap::prelude::TilemapAnchor;
+use std::{fmt, io::ErrorKind};
 
-use crate::{cache::TiledResourceCache, reader::BytesResourceReader, TiledMap, get_map_type, get_grid_size, tile_size_from_grid};
+use crate::{
+    cache::TiledResourceCache, get_grid_size, get_map_type, reader::BytesResourceReader,
+    tile_size_from_grid, TiledMap,
+};
 
 /// Tiled world `Asset`.
 ///

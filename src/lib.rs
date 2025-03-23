@@ -41,6 +41,7 @@ pub mod prelude {
     pub use super::world::prelude::*;
     pub use crate::TiledMapPlugin;
     pub use crate::TiledMapPluginConfig;
+    pub use bevy_ecs_tilemap::prelude::TilemapAnchor;
 }
 
 use crate::prelude::*;
@@ -94,10 +95,13 @@ impl Plugin for TiledMapPlugin {
             .register_type::<TiledMapPluginConfig>()
             .add_plugins((map::build, world::build));
         #[cfg(feature = "user_properties")]
-        app.add_systems(Startup, |reg: Res<AppTypeRegistry>, config: Res<TiledMapPluginConfig>| {
-            if let Some(path) = &config.tiled_types_export_file {
-                map::export_types(&reg, path);
-            }
-        });
+        app.add_systems(
+            Startup,
+            |reg: Res<AppTypeRegistry>, config: Res<TiledMapPluginConfig>| {
+                if let Some(path) = &config.tiled_types_export_file {
+                    map::export_types(&reg, path);
+                }
+            },
+        );
     }
 }

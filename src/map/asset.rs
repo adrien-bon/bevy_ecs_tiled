@@ -60,28 +60,25 @@ pub struct TiledMap {
     /// Map properties
     #[cfg(feature = "user_properties")]
     pub(crate) properties: DeserializedMapProperties,
-    /// Anchor
-    pub anchor: TilemapAnchor,
 }
 
 pub(crate) fn tile_size_from_grid(grid_size: &TilemapGridSize) -> TilemapTileSize {
     // TODO: Do Tiled files have tile size and grid size in sync always?
-    TilemapTileSize { x: grid_size.x,
-                      y: grid_size.y }
+    TilemapTileSize {
+        x: grid_size.x,
+        y: grid_size.y,
+    }
 }
 
 impl TiledMap {
     /// Offset that should be applied to map underlying layers to account for the [TilemapAnchor]
-    pub fn offset(&self) -> Vec2 {
+    pub fn offset(&self, anchor: &TilemapAnchor) -> Vec2 {
         let map_type = get_map_type(&self.map);
         let grid_size = get_grid_size(&self.map);
 
         // TODO: Do Tiled files have tile size and grid size in sync always?
         let tile_size = tile_size_from_grid(&grid_size);
-        let mut offset = self.anchor.as_offset(&self.tilemap_size,
-                                               &grid_size,
-                                               &tile_size,
-                                               &map_type);
+        let mut offset = anchor.as_offset(&self.tilemap_size, &grid_size, &tile_size, &map_type);
 
         // Special case for isometric maps: bevy_ecs_tilemap start drawing
         // them from middle left instead of from bottom left
@@ -389,7 +386,6 @@ impl AssetLoader for TiledMapLoader {
             tilesets,
             #[cfg(feature = "user_properties")]
             properties,
-            anchor: TilemapAnchor::None,
         };
         debug!(
             "Loaded map '{}': {:?}",
@@ -437,7 +433,6 @@ impl AssetLoader for TiledSetLoader {
             })?
         };
         Ok(TiledSet(tileset))
-
     }
 
     fn extensions(&self) -> &[&str] {
