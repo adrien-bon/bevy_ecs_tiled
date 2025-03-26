@@ -31,7 +31,7 @@ fn setup_help_text(mut commands: Commands) {
             ..default()
         })
         .with_children(|builder| {
-            builder.spawn(Text(String::from("Toggle inspector: [Echap]")));
+            builder.spawn(Text(String::from("Toggle inspector: [Esc]")));
             builder.spawn(Text(String::from("Pan camera: [W/A/S/D]")));
             builder.spawn(Text(String::from("Zoom camera: [Z/X]")));
             builder.spawn(Text(String::from("Rotate map / world: [Q/E]")));
