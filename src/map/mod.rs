@@ -39,7 +39,6 @@ pub struct TiledMapHandle(pub Handle<TiledMap>);
 pub(crate) fn build(app: &mut bevy::prelude::App) {
     app.init_asset::<TiledMap>()
         .init_asset_loader::<TiledMapLoader>()
-        .init_asset_loader::<TiledSetLoader>()
         .register_type::<TiledMapHandle>()
         .register_type::<TiledMapPluginConfig>()
         .register_type::<TiledMapLayerZOffset>()
