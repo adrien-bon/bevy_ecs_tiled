@@ -166,10 +166,10 @@ fn world_chunking(
                 .spawn((
                     TiledMapHandle(handle.clone_weak()),
                     Transform::from_translation(
-                        offset.extend(0.0) + Vec3::new(rect.min.x, rect.min.y, 0.0),
+                        offset.extend(0.0) + Vec3::new(rect.min.x, rect.max.y, 0.0),
                     ),
                     // Force map anchor to BottomLeft: everything is handled at world level
-                    TilemapAnchor::None,
+                    TilemapAnchor::TopLeft,
                     *layer_offset,
                     *render_settings,
                 ))
