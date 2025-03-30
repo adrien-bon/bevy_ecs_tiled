@@ -66,7 +66,7 @@ impl AssetsManager {
 
         // Handle map update: despawn the map if it already exists
         if let Some(entity) = self.map_entity {
-            commands.entity(entity).despawn_recursive();
+            commands.entity(entity).despawn();
         }
 
         // Then spawn the new map
