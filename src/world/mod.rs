@@ -261,7 +261,7 @@ fn process_loaded_worlds(
                 asset_id: world_handle.0.id(),
             };
             commands.trigger_targets(event, world_entity);
-            world_event.send(event);
+            world_event.write(event);
         }
     }
 }

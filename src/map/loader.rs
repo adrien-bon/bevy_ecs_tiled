@@ -187,18 +187,18 @@ pub(crate) fn load_map(
 
     // Send events and trigger observers
     commands.trigger_targets(map_event, map_entity);
-    event_writers.map_event.send(map_event);
+    event_writers.map_event.write(map_event);
     for e in layer_events {
         commands.trigger_targets(e, map_entity);
-        event_writers.layer_event.send(e);
+        event_writers.layer_event.write(e);
     }
     for e in object_events {
         commands.trigger_targets(e, map_entity);
-        event_writers.object_event.send(e);
+        event_writers.object_event.write(e);
     }
     for e in special_tile_events {
         commands.trigger_targets(e, map_entity);
-        event_writers.tile_event.send(e);
+        event_writers.tile_event.write(e);
     }
 }
 
