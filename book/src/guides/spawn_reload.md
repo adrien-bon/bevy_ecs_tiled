@@ -36,7 +36,7 @@ pub fn despawn_map(
     // Iterate over entities with a TiledMapMarker component
     for map in q_maps.iter() {
         // Despawn these entities, as well as their child entities
-        commands.entity(map).despawn_recursive();
+        commands.entity(map).despawn();
     }
 }
 ```

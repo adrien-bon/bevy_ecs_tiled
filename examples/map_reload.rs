@@ -126,7 +126,7 @@ fn handle_unload(
         // Just remove the entities directly. This will also unload the map.
         info!("Remove map entities");
         for entity in maps_query.iter() {
-            commands.entity(entity).despawn_recursive();
+            commands.entity(entity).despawn();
         }
         next_state.set(MapState::Unloaded);
     }
