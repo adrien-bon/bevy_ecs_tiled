@@ -26,8 +26,8 @@ impl DeserializedMapProperties<false> {
     ) -> Self {
         let map_props = DeserializedProperties::load(&map.properties, registry, load_context, true);
 
-        let mut objects = HashMap::new();
-        let mut layers = HashMap::new();
+        let mut objects = HashMap::default();
+        let mut layers = HashMap::default();
         let mut to_process = Vec::from_iter(map.layers());
         while let Some(layer) = to_process.pop() {
             layers.insert(
