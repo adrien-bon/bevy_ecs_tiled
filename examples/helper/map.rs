@@ -8,7 +8,7 @@ pub fn rotate(
     time: Res<Time>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut world_or_map_query: Query<
-        (Option<&Parent>, Option<&TiledMapMarker>, &mut Transform),
+        (Option<&ChildOf>, Option<&TiledMapMarker>, &mut Transform),
         Or<(With<TiledMapMarker>, With<TiledWorldMarker>)>,
     >,
 ) {

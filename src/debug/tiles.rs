@@ -61,7 +61,7 @@ impl Plugin for TiledDebugTilesPlugin {
 fn draw_tile_infos(
     mut commands: Commands,
     config: Res<TiledDebugTilesConfig>,
-    tiles_query: Query<(Entity, &Parent, &TilePos), (With<TiledMapTile>, Without<Text2d>)>,
+    tiles_query: Query<(Entity, &ChildOf, &TilePos), (With<TiledMapTile>, Without<Text2d>)>,
     layer_query: Query<
         (
             &TilemapType,

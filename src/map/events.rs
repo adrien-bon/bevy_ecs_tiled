@@ -40,7 +40,7 @@ pub struct TiledMapCreated {
 }
 
 impl Event for TiledMapCreated {
-    type Traversal = &'static Parent;
+    type Traversal = &'static ChildOf;
     const AUTO_PROPAGATE: bool = true;
 }
 
@@ -69,7 +69,7 @@ pub struct TiledLayerCreated {
 }
 
 impl Event for TiledLayerCreated {
-    type Traversal = &'static Parent;
+    type Traversal = &'static ChildOf;
     const AUTO_PROPAGATE: bool = true;
 }
 
@@ -95,7 +95,7 @@ pub struct TiledObjectCreated {
 }
 
 impl Event for TiledObjectCreated {
-    type Traversal = &'static Parent;
+    type Traversal = &'static ChildOf;
     const AUTO_PROPAGATE: bool = true;
 }
 
@@ -149,7 +149,7 @@ pub struct TiledTileCreated {
 }
 
 impl Event for TiledTileCreated {
-    type Traversal = &'static Parent;
+    type Traversal = &'static ChildOf;
     const AUTO_PROPAGATE: bool = true;
 }
 

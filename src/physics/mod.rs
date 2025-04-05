@@ -138,7 +138,7 @@ fn initialize_settings_for_worlds<T: TiledPhysicsBackend>(
 fn initialize_settings_for_maps<T: TiledPhysicsBackend>(
     mut commands: Commands,
     maps_query: Query<
-        (Entity, Option<&Parent>),
+        (Entity, Option<&ChildOf>),
         (With<TiledMapMarker>, Without<TiledPhysicsSettings<T>>),
     >,
     worlds_query: Query<&TiledPhysicsSettings<T>, With<TiledWorldMarker>>,
