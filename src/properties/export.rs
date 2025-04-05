@@ -6,7 +6,7 @@ use bevy::reflect::{
     ArrayInfo, EnumInfo, NamedField, StructInfo, TupleInfo, TupleStructInfo, TypeInfo,
     TypeRegistration, TypeRegistry, UnnamedField, VariantInfo,
 };
-use bevy::utils::hashbrown::HashMap;
+use bevy::platform_support::collections::HashMap;
 use bevy::{prelude::*, reflect::ReflectRef};
 use std::borrow::Cow;
 use thiserror::Error;

@@ -19,7 +19,7 @@ use crate::{
 use bevy::{
     asset::{io::Reader, AssetLoader, AssetPath, LoadContext, LoadedAsset},
     prelude::*,
-    utils::HashMap,
+    platform_support::collections::HashMap,
 };
 
 use bevy_ecs_tilemap::prelude::*;

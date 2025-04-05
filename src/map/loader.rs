@@ -32,7 +32,7 @@
 use crate::properties::command::PropertiesCommandExt;
 
 use crate::prelude::*;
-use bevy::{prelude::*, sprite::Anchor, utils::HashMap};
+use bevy::{prelude::*, sprite::Anchor, platform_support::collections::HashMap};
 use bevy_ecs_tilemap::prelude::*;
 use tiled::{ImageLayer, Layer, LayerType, ObjectLayer, Tile, TileId, TileLayer, TilesetLocation};
 

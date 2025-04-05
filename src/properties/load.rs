@@ -6,7 +6,7 @@ use bevy::reflect::{
     NamedField, Reflect, ReflectMut, ReflectRef, TypeInfo, TypeRegistration, TypeRegistry,
     UnnamedField, VariantInfo, VariantType,
 };
-use bevy::utils::HashMap;
+use bevy::platform_support::collections::HashMap;
 use std::path::PathBuf;
 use tiled::{LayerType, Properties, PropertyValue, TileId};
 
