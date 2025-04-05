@@ -17,7 +17,9 @@ use crate::{
 };
 
 use bevy::{
-    asset::{io::Reader, AssetLoader, AssetPath, LoadContext}, platform_support::collections::HashMap, prelude::*
+    asset::{io::Reader, AssetLoader, AssetPath, LoadContext},
+    platform_support::collections::HashMap,
+    prelude::*,
 };
 
 use bevy_ecs_tilemap::prelude::*;
@@ -226,9 +228,8 @@ impl AssetLoader for TiledMapLoader {
                     let columns = (img.width as u32 - tileset.margin + tileset.spacing)
                         / (tileset.tile_width + tileset.spacing);
                     if columns > 0 {
-                        texture_atlas_layout_handle = Some(load_context.labeled_asset_scope(
-                            tileset.name.clone(),
-                            |_| {
+                        texture_atlas_layout_handle =
+                            Some(load_context.labeled_asset_scope(tileset.name.clone(), |_| {
                                 TextureAtlasLayout::from_grid(
                                     UVec2::new(tileset.tile_width, tileset.tile_height),
                                     columns,
@@ -239,8 +240,7 @@ impl AssetLoader for TiledMapLoader {
                                         tileset.offset_y as u32 + tileset.margin,
                                     )),
                                 )
-                            }
-                        ));
+                            }));
                     }
 
                     (true, TilemapTexture::Single(texture.clone()))

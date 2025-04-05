@@ -1,12 +1,12 @@
 use bevy::asset::LoadContext;
 use bevy::ecs::reflect::ReflectBundle;
+use bevy::platform_support::collections::HashMap;
 use bevy::prelude::*;
 use bevy::reflect::{
     DynamicArray, DynamicEnum, DynamicStruct, DynamicTuple, DynamicTupleStruct, DynamicVariant,
     NamedField, Reflect, ReflectMut, ReflectRef, TypeInfo, TypeRegistration, TypeRegistry,
     UnnamedField, VariantInfo, VariantType,
 };
-use bevy::platform_support::collections::HashMap;
 use std::path::PathBuf;
 use tiled::{LayerType, Properties, PropertyValue, TileId};
 

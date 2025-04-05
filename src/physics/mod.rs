@@ -145,7 +145,7 @@ fn initialize_settings_for_maps<T: TiledPhysicsBackend>(
 ) {
     for (map, child_of) in maps_query.iter() {
         commands.entity(map).insert(
-            child_of 
+            child_of
                 .and_then(|child_of| worlds_query.get(child_of.parent).ok())
                 .cloned()
                 .unwrap_or_default(),

@@ -32,7 +32,7 @@
 use crate::properties::command::PropertiesCommandExt;
 
 use crate::prelude::*;
-use bevy::{prelude::*, sprite::Anchor, platform_support::collections::HashMap};
+use bevy::{platform_support::collections::HashMap, prelude::*, sprite::Anchor};
 use bevy_ecs_tilemap::prelude::*;
 use tiled::{ImageLayer, Layer, LayerType, ObjectLayer, Tile, TileId, TileLayer, TilesetLocation};
 
@@ -78,9 +78,7 @@ pub(crate) fn load_map(
         let layer_entity = commands
             .spawn((
                 TiledMapLayer,
-                ChildOf {
-                    parent: map_entity,
-                },
+                ChildOf { parent: map_entity },
                 // Apply layer Transform using both layer base Transform and Tiled offset
                 offset_transform,
                 // Determine layer default visibility

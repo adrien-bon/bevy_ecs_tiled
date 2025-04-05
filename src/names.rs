@@ -1,5 +1,5 @@
 //! This module contains utilities to work with Tiled names.
-use bevy::{prelude::*, platform_support::collections::HashSet};
+use bevy::{platform_support::collections::HashSet, prelude::*};
 
 /// A struct to specify names when using [TiledNameFilter]
 ///

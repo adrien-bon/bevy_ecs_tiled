@@ -1,6 +1,6 @@
 //! This module contains all map [Component]s definition.
 
-use bevy::{prelude::*, platform_support::collections::HashMap};
+use bevy::{platform_support::collections::HashMap, prelude::*};
 
 /// [Component] holding Tiled world chunking configuration.
 ///
