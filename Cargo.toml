@@ -46,8 +46,9 @@ user_properties = ["dep:serde", "dep:serde_json"]
 
 [dependencies]
 # Main dependencies
-bevy = { version = "0.16.0-rc.2", default-features = false }
-bevy_ecs_tilemap = { version = "0.15", default-features = false }
+bevy = { version = "0.16.0-rc.3", default-features = false }
+#bevy_ecs_tilemap = { version = "0.15", default-features = false }
+bevy_ecs_tilemap = { git = "https://github.com/cpetzold/bevy_ecs_tilemap.git", branch = "bevy-0.16", default-features = false }
 tiled = { version = "0.14", features = ["world"] }
 
 # Utilities
@@ -58,7 +59,8 @@ thiserror = "2.0"
 # Optional dependencies, enabled via features.
 #bevy_rapier2d = { version = "0.29", optional = true }
 bevy_rapier2d = { git = "https://github.com/mnmaita/bevy_rapier.git", branch = "mnmaita/bevy-0.16", optional = true }
-avian2d = { version = "0.2", optional = true }
+#avian2d = { version = "0.2", optional = true }
+avian2d = { git = "https://github.com/Jondolf/avian.git", branch = "main", optional = true }
 serde = { version = "1.0", optional = true, features = ["derive"] }
 serde_json = { version = "1.0", optional = true }
 
@@ -74,7 +76,7 @@ max_combination_size = 3
 denylist = ["png", "bmp", "jpeg", "gif"]
 
 [dev-dependencies]
-bevy = { version = "0.16.0-rc.2", features = ["file_watcher"] }
+bevy = { version = "0.16.0-rc.3", features = ["file_watcher"] }
 #bevy-inspector-egui = "0.30"
 bevy-inspector-egui = { git = "https://github.com/slyedoc/bevy-inspector-egui.git", branch = "bevy_0.16" }
 
