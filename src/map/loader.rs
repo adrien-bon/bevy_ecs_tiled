@@ -78,6 +78,9 @@ pub(crate) fn load_map(
         let layer_entity = commands
             .spawn((
                 TiledMapLayer,
+                ChildOf {
+                    parent: map_entity,
+                },
                 // Apply layer Transform using both layer base Transform and Tiled offset
                 offset_transform,
                 // Determine layer default visibility
@@ -86,7 +89,6 @@ pub(crate) fn load_map(
                     false => Visibility::Hidden,
                 },
             ))
-            .set_parent(map_entity)
             .id();
 
         let layer_event = TiledLayerCreated {
@@ -236,8 +238,10 @@ fn load_tiles_layer(
                     layer.name, tileset.name
                 )),
                 TiledMapTileLayerForTileset,
+                ChildOf {
+                    parent: layer_event.entity,
+                },
             ))
-            .set_parent(layer_event.entity)
             .id();
 
         let _tile_storage = load_tiles(
@@ -331,8 +335,10 @@ fn load_tiles(
                     },
                     Name::new(format!("TiledMapTile({},{})", tile_pos.x, tile_pos.y)),
                     TiledMapTile,
+                    ChildOf {
+                        parent: layer_for_tileset_entity,
+                    },
                 ))
-                .set_parent(layer_for_tileset_entity)
                 .id();
 
             // Handle animated tiles
@@ -386,13 +392,15 @@ fn load_objects_layer(
             .spawn((
                 Name::new(format!("Object({})", object_data.name)),
                 TiledMapObject,
+                ChildOf {
+                    parent: layer_event.entity,
+                },
                 Transform::from_xyz(object_position.x, object_position.y, 0.),
                 match &object_data.visible {
                     true => Visibility::Inherited,
                     false => Visibility::Hidden,
                 },
             ))
-            .set_parent(layer_event.entity)
             .id();
 
         let mut sprite = None;
@@ -511,14 +519,16 @@ fn load_image_layer(
             .spawn((
                 Name::new(format!("Image({})", image.source.display())),
                 TiledMapImage,
+                ChildOf {
+                    parent: layer_event.entity,
+                },
                 Sprite {
                     image: asset_server.load(image.source.clone()),
                     anchor: Anchor::TopLeft,
                     ..default()
                 },
                 Transform::from_xyz(image_position.x, image_position.y, 0.),
-            ))
-            .set_parent(layer_event.entity);
+            ));
     }
 }
 

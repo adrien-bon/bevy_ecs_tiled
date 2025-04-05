@@ -164,6 +164,9 @@ fn world_chunking(
             };
             let map_entity = commands
                 .spawn((
+                    ChildOf {
+                        parent: world_entity,
+                    },
                     TiledMapHandle(handle.clone_weak()),
                     Transform::from_translation(
                         offset.extend(0.0) + Vec3::new(rect.min.x, rect.max.y, 0.0),
@@ -176,7 +179,6 @@ fn world_chunking(
                     *layer_offset,
                     *render_settings,
                 ))
-                .set_parent(world_entity)
                 .id();
             debug!(
                 "Spawn map (index = {}, handle = {:?},  entity = {:?})",
