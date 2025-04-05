@@ -73,8 +73,8 @@ fn draw_tile_infos(
         With<TiledMapTileLayerForTileset>,
     >,
 ) {
-    for (entity, parent, tile_pos) in tiles_query.iter() {
-        let Ok((map_type, map_size, tile_size, grid_size, anchor)) = layer_query.get(parent.get())
+    for (entity, Child_of, tile_pos) in tiles_query.iter() {
+        let Ok((map_type, map_size, tile_size, grid_size, anchor)) = layer_query.get(child_of.get())
         else {
             continue;
         };
