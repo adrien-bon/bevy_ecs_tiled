@@ -79,9 +79,14 @@ impl<'a> TiledCollider {
                     let mut out = vec![];
                     for_each_tile(tiled_map, &layer, |layer_tile, _, tile_pos, _| {
                         if let Some(tile) = layer_tile.get_tile() {
+                            let grid_size = get_grid_size(&tiled_map.map);
+                            let tile_size = tile_size_from_grid(&grid_size);
                             let tile_coords = tile_pos.center_in_world(
-                                &get_grid_size(&tiled_map.map),
+                                &tiled_map.tilemap_size,
+                                &grid_size,
+                                &tile_size,
                                 &get_map_type(&tiled_map.map),
+                                todo!("How should this get the anchor?"),
                             );
                             out.push((tile_coords, tile));
                         }
