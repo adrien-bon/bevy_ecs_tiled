@@ -2,6 +2,9 @@
 
 ## [unreleased]
 
+### Features
+- Add support for `bevy_ecs_tilemap::TilemapAnchor`.
+
 ## v0.6.0
 
 ### Features
