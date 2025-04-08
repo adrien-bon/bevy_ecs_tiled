@@ -7,11 +7,7 @@ use bevy::{
 use bevy_ecs_tilemap::prelude::TilemapAnchor;
 use std::{fmt, io::ErrorKind};
 
-use crate::{
-    cache::TiledResourceCache,
-    reader::BytesResourceReader,
-    TiledMap,
-};
+use crate::{cache::TiledResourceCache, reader::BytesResourceReader, TiledMap};
 
 /// Tiled world `Asset`.
 ///

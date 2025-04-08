@@ -7,15 +7,15 @@ mod helper;
 
 fn main() {
     App::new()
-    // Bevy default plugins: prevent blur effect by changing default sampling.
+        // Bevy default plugins: prevent blur effect by changing default sampling.
         .add_plugins(DefaultPlugins.build().set(ImagePlugin::default_nearest()))
-    // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
-    // be automatically added as well if it's not already done.
+        // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
+        // be automatically added as well if it's not already done.
         .add_plugins(TiledMapPlugin::default())
-    // Examples helper plugins, such as the logic to pan and zoom the camera
-    // This should not be used directly in your game (but you can always have a look).
+        // Examples helper plugins, such as the logic to pan and zoom the camera
+        // This should not be used directly in your game (but you can always have a look).
         .add_plugins(helper::HelperPlugin)
-    // Add our systems and run the app!
+        // Add our systems and run the app!
         .add_systems(Startup, startup)
         .add_systems(Update, origin_axes)
         .add_systems(Update, change_anchor)
@@ -40,8 +40,10 @@ fn origin_axes(mut gizmos: Gizmos) {
     gizmos.axes_2d(Transform::IDENTITY, 1000.0);
 }
 
-fn change_anchor(mut anchor: Single<&mut TilemapAnchor, With<TiledMapHandle>>,
-                 key: Res<ButtonInput<KeyCode>>) {
+fn change_anchor(
+    mut anchor: Single<&mut TilemapAnchor, With<TiledMapHandle>>,
+    key: Res<ButtonInput<KeyCode>>,
+) {
     if key.just_pressed(KeyCode::Space) {
         **anchor = rotate_right(&*anchor);
     }

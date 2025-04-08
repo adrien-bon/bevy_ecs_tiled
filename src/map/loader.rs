@@ -146,13 +146,7 @@ pub(crate) fn load_map(
                     TiledMapImageLayer,
                     Transform::from_translation(pos.extend(offset_z)),
                 ));
-                load_image_layer(
-                    commands,
-                    tiled_map,
-                    &layer_event,
-                    image_layer,
-                    asset_server,
-                );
+                load_image_layer(commands, tiled_map, &layer_event, image_layer, asset_server);
             }
         };
 
