@@ -5,9 +5,9 @@
 use crate::prelude::*;
 use bevy::{color::palettes::css::FUCHSIA, prelude::*};
 use bevy_ecs_tilemap::{
-    map::{TilemapGridSize, TilemapTileSize, TilemapType, TilemapSize},
-    tiles::TilePos,
+    map::{TilemapGridSize, TilemapSize, TilemapTileSize, TilemapType},
     prelude::TilemapAnchor,
+    tiles::TilePos,
 };
 
 /// Configuration for the [TiledDebugTilesPlugin]
@@ -62,10 +62,20 @@ fn draw_tile_infos(
     mut commands: Commands,
     config: Res<TiledDebugTilesConfig>,
     tiles_query: Query<(Entity, &Parent, &TilePos), (With<TiledMapTile>, Without<Text2d>)>,
-    layer_query: Query<(&TilemapType, &TilemapSize, &TilemapTileSize, &TilemapGridSize, &TilemapAnchor), With<TiledMapTileLayerForTileset>>,
+    layer_query: Query<
+        (
+            &TilemapType,
+            &TilemapSize,
+            &TilemapTileSize,
+            &TilemapGridSize,
+            &TilemapAnchor,
+        ),
+        With<TiledMapTileLayerForTileset>,
+    >,
 ) {
     for (entity, parent, tile_pos) in tiles_query.iter() {
-        let Ok((map_type, map_size, tile_size, grid_size, anchor)) = layer_query.get(parent.get()) else {
+        let Ok((map_type, map_size, tile_size, grid_size, anchor)) = layer_query.get(parent.get())
+        else {
             continue;
         };
         let pos = tile_pos.center_in_world(map_size, grid_size, tile_size, map_type, anchor);
