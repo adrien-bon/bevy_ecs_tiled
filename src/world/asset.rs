@@ -8,8 +8,9 @@ use bevy_ecs_tilemap::prelude::TilemapAnchor;
 use std::{fmt, io::ErrorKind};
 
 use crate::{
-    cache::TiledResourceCache, get_grid_size, get_map_type, reader::BytesResourceReader,
-    tile_size_from_grid, TiledMap,
+    cache::TiledResourceCache,
+    reader::BytesResourceReader,
+    TiledMap,
 };
 
 /// Tiled world `Asset`.

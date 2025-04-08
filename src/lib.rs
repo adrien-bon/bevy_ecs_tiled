@@ -48,8 +48,6 @@ use crate::prelude::*;
 use bevy::prelude::*;
 use std::{env, path::PathBuf};
 
-#[cfg(feature = "user_properties")]
-use std::path::Path;
 /// [TiledMapPlugin] [Plugin] global configuration.
 #[derive(Resource, Reflect, Clone, Debug)]
 #[reflect(Resource, Debug)]
@@ -99,6 +97,7 @@ impl Plugin for TiledMapPlugin {
             Startup,
             |reg: Res<AppTypeRegistry>, config: Res<TiledMapPluginConfig>| {
                 if let Some(path) = &config.tiled_types_export_file {
+                    info!("Export Tiled types to '{:?}'", &path);
                     map::export_types(&reg, path);
                 }
             },

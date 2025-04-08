@@ -76,7 +76,7 @@ impl TiledMap {
         let map_type = get_map_type(&self.map);
         let grid_size = get_grid_size(&self.map);
 
-        // TODO: Do Tiled files have tile size and grid size in sync always?
+        // TODO: Do Tiled files have tile size and grid size in sync always? We assume so.
         let tile_size = tile_size_from_grid(&grid_size);
         let mut offset = anchor.as_offset(&self.tilemap_size, &grid_size, &tile_size, &map_type);
 

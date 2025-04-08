@@ -1,7 +1,6 @@
 //! This module contains all map [Component]s definition.
 
 use bevy::{prelude::*, utils::HashMap};
-use bevy_ecs_tilemap::prelude::TilemapAnchor;
 use tiled::TileId;
 
 /// Specificy the Z offset between two consecutives Tiled layers.

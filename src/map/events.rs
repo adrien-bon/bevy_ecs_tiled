@@ -92,6 +92,7 @@ pub struct TiledObjectCreated {
     pub entity: Entity,
     /// ID of this object in the [tiled::ObjectLayer]
     pub id: usize,
+    /// Anchor of the object created.
     pub anchor: TilemapAnchor,
 }
 

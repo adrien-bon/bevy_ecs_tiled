@@ -65,16 +65,15 @@ pub(crate) fn build(app: &mut bevy::prelude::App) {
         .add_systems(PreUpdate, process_loaded_maps)
         .add_systems(Update, animate_tiled_sprites)
         .add_systems(PostUpdate, handle_map_events);
-
-    #[cfg(feature = "user_properties")]
-    app.add_systems(Startup, export_types);
 }
 
+/// Export all Tiled types to the given path.
 #[cfg(feature = "user_properties")]
 pub fn export_types(reg: &AppTypeRegistry, path: impl AsRef<Path>) {
     export_types_filtered(reg, path, |_| true);
 }
 
+/// Export a Tiled types that match the predicate to the given path.
 #[cfg(feature = "user_properties")]
 pub fn export_types_filtered(
     reg: &AppTypeRegistry,

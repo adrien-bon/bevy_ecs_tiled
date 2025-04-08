@@ -68,8 +68,6 @@ pub(crate) fn load_map(
     // Start with a negative offset so in the end we end up with the top layer at Z-offset from settings
     let mut offset_z = tiled_map.map.layers().len() as f32 * (-layer_offset.0);
 
-    let grid_size = get_grid_size(&tiled_map.map);
-
     // Once materials have been created/added we need to then create the layers.
     for (layer_id, layer) in tiled_map.map.layers().enumerate() {
         // Increment Z offset and compute layer transform offset
@@ -119,7 +117,6 @@ pub(crate) fn load_map(
                 commands.entity(layer_entity).insert((
                     Name::new(format!("TiledMapObjectLayer({})", layer.name)),
                     TiledMapObjectLayer,
-                    //Transform::from_translation((Vec2::from(grid_size) / -2.0).extend(0.0)),
                 ));
                 load_objects_layer(
                     commands,
@@ -155,7 +152,6 @@ pub(crate) fn load_map(
                     &layer_event,
                     image_layer,
                     asset_server,
-                    anchor,
                 );
             }
         };
@@ -507,7 +503,6 @@ fn load_image_layer(
     layer_event: &TiledLayerCreated,
     image_layer: ImageLayer,
     asset_server: &Res<AssetServer>,
-    anchor: &TilemapAnchor,
 ) {
     if let Some(image) = &image_layer.image {
         let image_position = match get_map_type(&tiled_map.map) {

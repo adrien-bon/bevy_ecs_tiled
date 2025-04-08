@@ -40,8 +40,13 @@ pub fn get_grid_size(map: &Map) -> TilemapGridSize {
     }
 }
 
+/// Convert a [Map]'s grid size to a [TilemapTileSize].
+///
+/// The width and height will be the same as those given by [get_grid_size].
+///
+/// NOTE: `bevy_ecs_tiled` ASSUMES tile_size and grid_size have same values;
+/// `bevy_ecs_tilemap` permits them to be different.
 pub fn get_tile_size(map: &Map) -> TilemapTileSize {
-    // XXX: THIS IS WRONG.
     TilemapTileSize {
         x: map.tile_width as f32,
         y: map.tile_height as f32,
@@ -65,7 +70,6 @@ pub fn from_tiled_position_to_world_space(
     offset
         + match map_type {
             TilemapType::Square => {
-                // Vec2::ZERO
                 tiled_map.tiled_offset
                     + Vec2 {
                         x: tiled_position.x,
