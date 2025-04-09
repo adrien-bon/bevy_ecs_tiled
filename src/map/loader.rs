@@ -350,7 +350,6 @@ fn load_tiles(
                     entity: tile_entity,
                     index,
                     position: tile_pos,
-                    anchor: *anchor,
                 });
             }
 
@@ -486,7 +485,6 @@ fn load_objects_layer(
             layer: *layer_event,
             entity: object_entity,
             id: object_id,
-            anchor: *anchor,
         });
     }
 }
