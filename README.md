@@ -97,7 +97,7 @@ fn startup(
 This simplistic example will load a map using default settings.
 You can tweak how to load the map by adding various components on the map entity, notably:
 
-- [`TiledMapAnchor`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/map/components/enum.TiledMapAnchor.html)
+- [`TilemapAnchor`](https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/anchor/enum.TilemapAnchor.html)
 - [`TiledMapLayerZOffset`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/map/components/struct.TiledMapLayerZOffset.html)
 - [`TilemapRenderSettings`](https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/map/struct.TilemapRenderSettings.html)
 - [`Transform`](https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html)
@@ -116,7 +116,7 @@ fn spawn_map(
     // You can also spawn your map and associated settings as a single bundle
     commands.spawn((
       TiledMapHandle(asset_server.load("map.tmx")),
-      TiledMapAnchor::Center,
+      TilemapAnchor::Center,
     ));
 }
 ```

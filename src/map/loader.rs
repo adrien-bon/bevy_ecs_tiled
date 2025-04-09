@@ -273,7 +273,7 @@ fn load_tiles_layer(
                     },
                     map_type: get_map_type(&tiled_map.map),
                     render_settings: *_render_settings,
-                    anchor: anchor.clone(),
+                    anchor: *anchor,
                     ..default()
                 });
         }

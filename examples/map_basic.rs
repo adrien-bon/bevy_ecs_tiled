@@ -30,6 +30,6 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         TiledMapHandle(asset_server.load("maps/orthogonal/finite.tmx")),
         // But you can add extra components to change the defaults settings and how
         // your map is actually displayed
-        TiledMapAnchor::Center,
+        TilemapAnchor::Center,
     ));
 }

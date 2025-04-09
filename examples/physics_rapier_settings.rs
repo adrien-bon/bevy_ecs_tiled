@@ -40,7 +40,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         "A finite orthogonal map with all colliders",
         |c| {
             c.insert((
-                TiledMapAnchor::Center,
+                TilemapAnchor::Center,
                 TiledPhysicsSettings::<TiledPhysicsRapierBackend>::default(),
             ));
         },
@@ -51,7 +51,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         "An infinite orthogonal map with all colliders",
         |c| {
             c.insert((
-                TiledMapAnchor::Center,
+                TilemapAnchor::Center,
                 TiledPhysicsSettings::<TiledPhysicsRapierBackend>::default(),
             ));
         },
@@ -62,7 +62,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         "A finite orthogonal map with only tiles colliders named 'collision'",
         |c| {
             c.insert((
-                TiledMapAnchor::Center,
+                TilemapAnchor::Center,
                 TiledPhysicsSettings::<TiledPhysicsRapierBackend> {
                     objects_layer_filter: TiledName::None,
                     tiles_objects_filter: TiledName::Names(vec![String::from("collision")]),
@@ -77,7 +77,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         "A finite orthogonal map with only object colliders",
         |c| {
             c.insert((
-                TiledMapAnchor::Center,
+                TilemapAnchor::Center,
                 TiledPhysicsSettings::<TiledPhysicsRapierBackend> {
                     objects_layer_filter: TiledName::All,
                     tiles_objects_filter: TiledName::None,

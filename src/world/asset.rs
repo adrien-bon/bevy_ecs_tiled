@@ -30,7 +30,7 @@ pub struct TiledWorld {
 }
 
 impl TiledWorld {
-    /// Offset that should be applied to world underlying maps to account for the [TiledMapAnchor]
+    /// Offset that should be applied to world underlying maps to account for the [TilemapAnchor]
     pub(crate) fn offset(&self, anchor: &TilemapAnchor) -> Vec2 {
         let min = &self.rect.min;
         let max = &self.rect.max;

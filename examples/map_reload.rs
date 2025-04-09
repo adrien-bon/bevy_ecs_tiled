@@ -42,7 +42,7 @@ fn startup(
 
     commands.spawn((
         TiledMapHandle(asset_server.load("maps/orthogonal/finite.tmx")),
-        TiledMapAnchor::Center,
+        TilemapAnchor::Center,
     ));
     next_state.set(MapState::Loaded);
 }
@@ -64,7 +64,7 @@ fn handle_load(
         info!("Load map");
         commands.spawn((
             TiledMapHandle(asset_server.load("maps/orthogonal/finite.tmx")),
-            TiledMapAnchor::Center,
+            TilemapAnchor::Center,
         ));
         next_state.set(MapState::Loaded);
     }
