@@ -212,7 +212,7 @@ fn load_tiles_layer(
     _render_settings: &TilemapRenderSettings,
     entity_map: &mut HashMap<(String, TileId), Vec<Entity>>,
     event_list: &mut Vec<TiledTileCreated>,
-    anchor: &TilemapAnchor,
+    _anchor: &TilemapAnchor,
 ) {
     // The TilemapBundle requires that all tile images come exclusively from a single
     // tiled texture or from a Vec of independent per-tile images. Furthermore, all of
@@ -272,7 +272,7 @@ fn load_tiles_layer(
                     },
                     map_type: get_map_type(&tiled_map.map),
                     render_settings: *_render_settings,
-                    anchor: *anchor,
+                    anchor: *_anchor,
                     ..default()
                 });
         }
