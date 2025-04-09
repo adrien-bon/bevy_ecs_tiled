@@ -250,7 +250,6 @@ fn load_tiles_layer(
             &tiles_layer,
             entity_map,
             event_list,
-            anchor,
         );
 
         #[cfg(feature = "render")]
@@ -291,7 +290,6 @@ fn load_tiles(
     tiles_layer: &TileLayer,
     entity_map: &mut HashMap<(String, TileId), Vec<Entity>>,
     event_list: &mut Vec<TiledTileCreated>,
-    anchor: &TilemapAnchor,
 ) -> TileStorage {
     let tilemap_size = tiled_map.tilemap_size;
     let mut tile_storage = TileStorage::empty(tilemap_size);
