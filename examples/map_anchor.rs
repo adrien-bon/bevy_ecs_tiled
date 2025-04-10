@@ -1,4 +1,4 @@
-//! This example shows the basic usage of the plugin.
+//! This example shows the basic usage of `TilemapAnchor`.
 
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
