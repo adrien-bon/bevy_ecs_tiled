@@ -5,6 +5,9 @@ use bevy_ecs_tiled::prelude::*;
 
 mod helper;
 
+#[derive(Component)]
+struct AnchorLabel;
+
 fn main() {
     App::new()
         // Bevy default plugins: prevent blur effect by changing default sampling.
@@ -12,8 +15,9 @@ fn main() {
         // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
         // be automatically added as well if it's not already done.
         .add_plugins(TiledMapPlugin::default())
-        // Examples helper plugins, such as the logic to pan and zoom the camera
-        // This should not be used directly in your game (but you can always have a look).
+        // Examples helper plugins, such as the logic to pan and zoom the
+        // camera. This should not be used directly in your game (but you can
+        // always have a look).
         .add_plugins(helper::HelperPlugin)
         // Add our systems and run the app!
         .add_systems(Startup, startup)
@@ -34,6 +38,27 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         // your map is actually displayed.
         TilemapAnchor::Center,
     ));
+
+    let font_size = 20.0;
+    commands
+        .spawn((
+            Text::new("Anchor (SPACE): "),
+            TextFont {
+                font_size,
+                ..default()
+            },
+            TextLayout::new_with_justify(JustifyText::Left),
+            AnchorLabel,
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                TextSpan::new(format!("{:?}", TilemapAnchor::Center)),
+                TextFont {
+                    font_size,
+                    ..default()
+                },
+            ));
+        });
 }
 
 fn origin_axes(mut gizmos: Gizmos) {
@@ -42,10 +67,14 @@ fn origin_axes(mut gizmos: Gizmos) {
 
 fn change_anchor(
     mut anchor: Single<&mut TilemapAnchor, With<TiledMapHandle>>,
+    label: Single<Entity, With<AnchorLabel>>,
+    mut writer: TextUiWriter,
     key: Res<ButtonInput<KeyCode>>,
 ) {
     if key.just_pressed(KeyCode::Space) {
-        **anchor = rotate_right(&*anchor);
+        let new_anchor = rotate_right(&anchor);
+        *writer.text(*label, 1) = format!("{:?}", &new_anchor);
+        **anchor = new_anchor;
     }
 }
 
