@@ -33,6 +33,7 @@ impl TiledPhysicsBackend for TiledPhysicsRapierBackend {
         tiled_map: &TiledMap,
         filter: &TiledNameFilter,
         collider: &TiledCollider,
+        anchor: &TilemapAnchor,
     ) -> Vec<TiledColliderSpawnInfos> {
         match collider {
             TiledCollider::Object {
@@ -86,7 +87,7 @@ impl TiledPhysicsBackend for TiledPhysicsRapierBackend {
             TiledCollider::TilesLayer { layer_id: _ } => {
                 let mut composables = vec![];
                 let mut spawn_infos = vec![];
-                for (tile_position, tile) in collider.get_tiles(tiled_map) {
+                for (tile_position, tile) in collider.get_tiles(tiled_map, anchor) {
                     if let Some(collision) = &tile.collision {
                         compose_tiles(
                             commands,
