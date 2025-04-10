@@ -67,25 +67,22 @@ pub(crate) fn build(app: &mut bevy::prelude::App) {
         .add_systems(PostUpdate, handle_map_events);
 }
 
-/// Export all Tiled types to the given path.
+/// Export a Tiled types to the given path.
+///
+/// The predicate determines whether a symbol is exported. To export all
+/// symbols, one can provide a blanket yes predicate, e.g. `|_| true`.
 #[cfg(feature = "user_properties")]
-pub fn export_types(reg: &AppTypeRegistry, path: impl AsRef<Path>) {
-    export_types_filtered(reg, path, |_| true);
-}
-
-/// Export a Tiled types that match the predicate to the given path.
-#[cfg(feature = "user_properties")]
-pub fn export_types_filtered(
+pub fn export_types(
     reg: &AppTypeRegistry,
     path: impl AsRef<Path>,
-    pred: impl Fn(&str) -> bool,
+    predicate: impl Fn(&str) -> bool,
 ) {
     use std::{fs::File, io::BufWriter, ops::Deref};
     let file = File::create(path).unwrap();
     let writer = BufWriter::new(file);
     let registry = crate::properties::export::TypeExportRegistry::from_registry(reg.read().deref());
     let mut list = registry.to_vec();
-    list.retain(|v| pred(&v.name));
+    list.retain(|v| predicate(&v.name));
     serde_json::to_writer_pretty(writer, &list).unwrap();
 }
 

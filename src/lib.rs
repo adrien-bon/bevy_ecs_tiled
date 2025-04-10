@@ -98,7 +98,7 @@ impl Plugin for TiledMapPlugin {
             |reg: Res<AppTypeRegistry>, config: Res<TiledMapPluginConfig>| {
                 if let Some(path) = &config.tiled_types_export_file {
                     info!("Export Tiled types to '{:?}'", &path);
-                    map::export_types(&reg, path);
+                    map::export_types(&reg, path, |_| true);
                 }
             },
         );
