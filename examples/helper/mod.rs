@@ -4,6 +4,7 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 #[allow(dead_code)]
 pub mod assets;
+pub mod anchor;
 
 mod camera;
 mod map;

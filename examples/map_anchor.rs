@@ -19,9 +19,9 @@ fn main() {
         // camera. This should not be used directly in your game (but you can
         // always have a look).
         .add_plugins(helper::HelperPlugin)
+        .add_plugins(helper::anchor::TiledAxisDebugPlugin)
         // Add our systems and run the app!
         .add_systems(Startup, startup)
-        .add_systems(Update, origin_axes)
         .add_systems(Update, change_anchor)
         .run();
 }
@@ -61,10 +61,6 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         });
 }
 
-fn origin_axes(mut gizmos: Gizmos) {
-    gizmos.axes_2d(Transform::IDENTITY, 1000.0);
-}
-
 fn change_anchor(
     mut anchor: Single<&mut TilemapAnchor, With<TiledMapHandle>>,
     label: Single<Entity, With<AnchorLabel>>,
@@ -72,25 +68,9 @@ fn change_anchor(
     key: Res<ButtonInput<KeyCode>>,
 ) {
     if key.just_pressed(KeyCode::Space) {
-        let new_anchor = rotate_right(&anchor);
+        let new_anchor = helper::anchor::rotate_right(&anchor);
         *writer.text(*label, 1) = format!("{:?}", &new_anchor);
         **anchor = new_anchor;
     }
 }
 
-fn rotate_right(anchor: &TilemapAnchor) -> TilemapAnchor {
-    use TilemapAnchor::*;
-    match anchor {
-        TopLeft => TopCenter,
-        TopCenter => TopRight,
-        TopRight => CenterRight,
-        CenterRight => BottomRight,
-        BottomRight => BottomCenter,
-        BottomCenter => BottomLeft,
-        BottomLeft => CenterLeft,
-        CenterLeft => Center,
-        Center => Custom(Vec2::splat(0.25)),
-        Custom(_) => None,
-        None => TopLeft,
-    }
-}
