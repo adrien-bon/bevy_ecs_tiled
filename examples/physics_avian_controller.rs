@@ -104,10 +104,11 @@ impl TiledPhysicsBackend for MyCustomAvianPhysicsBackend {
         tiled_map: &TiledMap,
         filter: &TiledNameFilter,
         collider: &TiledCollider,
+        anchor: &TilemapAnchor,
     ) -> Vec<TiledColliderSpawnInfos> {
         let colliders = self
             .0
-            .spawn_colliders(commands, tiled_map, filter, collider);
+            .spawn_colliders(commands, tiled_map, filter, collider, anchor);
         for c in &colliders {
             commands.entity(c.entity).insert(RigidBody::Static);
         }
