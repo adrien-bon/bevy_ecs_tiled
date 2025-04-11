@@ -73,4 +73,3 @@ fn change_anchor(
         **anchor = new_anchor;
     }
 }
-
