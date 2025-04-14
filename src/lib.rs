@@ -41,7 +41,7 @@ pub mod prelude {
     pub use super::world::prelude::*;
     pub use crate::TiledMapPlugin;
     pub use crate::TiledMapPluginConfig;
-    pub use bevy_ecs_tilemap::prelude::TilemapAnchor;
+    pub use bevy_ecs_tilemap::prelude::{TilemapAnchor, TilePos, TilemapGridSize, TilemapSize};
 }
 
 use crate::prelude::*;
