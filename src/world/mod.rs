@@ -168,7 +168,10 @@ fn world_chunking(
                     Transform::from_translation(
                         offset.extend(0.0) + Vec3::new(rect.min.x, rect.max.y, 0.0),
                     ),
-                    // Force map anchor to BottomLeft: everything is handled at world level
+                    // Force map anchor to TopLeft: everything is handled at
+                    // world level. This makes it so each map's
+                    // `Transform.translation` will have the same values for `x`
+                    // and `y` that Tiled uses in its FILE.world.
                     TilemapAnchor::TopLeft,
                     *layer_offset,
                     *render_settings,
