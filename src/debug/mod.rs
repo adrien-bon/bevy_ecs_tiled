@@ -8,6 +8,7 @@ use bevy::app::{PluginGroup, PluginGroupBuilder};
 pub mod objects;
 pub mod tiles;
 pub mod world_chunk;
+pub mod anchor;
 
 /// `bevy_ecs_tiled` debug exports.
 pub mod prelude {
@@ -15,6 +16,7 @@ pub mod prelude {
     pub use super::tiles::*;
     pub use super::world_chunk::*;
     pub use super::TiledDebugPluginGroup;
+    pub use super::anchor::*;
 }
 
 /// This [PluginGroup] contains all debug plugins from `bevy_ecs_tiled`.
@@ -36,5 +38,6 @@ impl PluginGroup for TiledDebugPluginGroup {
             .add(objects::TiledDebugObjectsPlugin::default())
             .add(tiles::TiledDebugTilesPlugin::default())
             .add(world_chunk::TiledDebugWorldChunkPlugin::default())
+            .add(anchor::TiledAxisDebugPlugin)
     }
 }
