@@ -3,7 +3,7 @@
 //! Shows the origin
 use bevy::prelude::*;
 
-#[derive(Debug, Copy)]
+#[derive(Debug, Clone, Copy)]
 /// Show the origin with axes.
 pub struct TiledAxisDebugPlugin;
 
