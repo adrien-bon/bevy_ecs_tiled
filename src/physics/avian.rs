@@ -131,18 +131,15 @@ fn compose_tiles(
         if !filter.contains(&object.name) {
             continue;
         }
-        let object_position = Vec2 {
-            x: object.x - grid_size.x / 2.,
-            y: (grid_size.y - object.y) - grid_size.y / 2.,
-        };
+        let position = tile_offset
+            // Object position
+            + Vec2 {
+                x: object.x - grid_size.x / 2.,
+                y: (grid_size.y - object.y) - grid_size.y / 2.,
+            };
         if let Some((shape_offset, shared_shape, is_composable)) =
             get_position_and_shape(&object.shape)
         {
-            let mut position = tile_offset + object_position;
-            position += Vec2 {
-                x: grid_size.x / 2.,
-                y: grid_size.y / 2.,
-            };
             if is_composable {
                 composables.push((
                     Isometry::<Real>::new(position.into(), f32::to_radians(-object.rotation))
