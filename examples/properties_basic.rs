@@ -4,7 +4,6 @@ use std::env;
 
 use bevy::prelude::*;
 use bevy_ecs_tiled::{prelude::*, TiledMapPluginConfig};
-use bevy_ecs_tilemap::prelude::*;
 
 mod helper;
 
