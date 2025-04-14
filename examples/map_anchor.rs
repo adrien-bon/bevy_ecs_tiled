@@ -42,7 +42,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font_size = 20.0;
     commands
         .spawn((
-            Text::new("Anchor (SPACE): "),
+            Text::new("[Space] Anchor: "),
             TextFont {
                 font_size,
                 ..default()
