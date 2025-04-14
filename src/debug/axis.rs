@@ -1,5 +1,9 @@
+//! Axis debug
+//!
+//! Shows the origin
 use bevy::prelude::*;
 
+#[derive(Debug, Copy)]
 /// Show the origin with axes.
 pub struct TiledAxisDebugPlugin;
 

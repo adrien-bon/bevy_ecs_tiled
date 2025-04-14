@@ -9,7 +9,8 @@ mod helper;
 struct AnchorLabel;
 
 fn main() {
-    App::new()
+    let mut app = App::new();
+    app
         // Bevy default plugins: prevent blur effect by changing default sampling.
         .add_plugins(DefaultPlugins.build().set(ImagePlugin::default_nearest()))
         // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
@@ -19,11 +20,12 @@ fn main() {
         // camera. This should not be used directly in your game (but you can
         // always have a look).
         .add_plugins(helper::HelperPlugin)
-        .add_plugins(helper::anchor::TiledAxisDebugPlugin)
         // Add our systems and run the app!
         .add_systems(Startup, startup)
-        .add_systems(Update, change_anchor)
-        .run();
+        .add_systems(Update, change_anchor);
+    #[cfg(feature = "debug")]
+    app.add_plugins(bevy_ecs_tiled::debug::axis::TiledAxisDebugPlugin);
+    app.run();
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
