@@ -40,6 +40,7 @@ Or add them individually :
 - [`TiledDebugObjectsPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/objects/index.html) : display a Bevy `Gizmos` to indicate where Tiled objects are
 - [`TiledDebugTilesPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/tiles/index.html) : display the `bevy_ecs_tilemap` index, ie. `Tilepos` on each tile
 - [`TiledDebugWorldChunkPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/world_chunk/index.html) : display a Bevy `Gizmos` for each map boundary and world render chunk
+- [`TiledDebugAxiskPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/axis/index.html) : display a Bevy `Gizmos` to localize the origin
 
 More informations in the [API reference](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/index.html).
 

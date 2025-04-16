@@ -29,6 +29,7 @@ For instance, on an "AZERTY" keyboard, you must use `A` instead of `Q` and `Z` i
 
 | Name | Required features | Description |
 |------|-------------------|-------------|
+| `map_anchor` | `debug` | This example shows the basic usage of `TilemapAnchor`. |
 | `map_basic` | None | This example shows the basic usage of the plugin to load a Tiled map. |
 | `map_demo` | None | This example shows the basic usage of the plugin but load a more complex / realistic map. |
 | `map_events` | None | This example shows how to use map loading events. |

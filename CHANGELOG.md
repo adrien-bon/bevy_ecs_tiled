@@ -3,9 +3,10 @@
 ## [unreleased]
 
 ### Features
+
 - Add support for `bevy_ecs_tilemap::TilemapAnchor`
 - Make `export_types()`and `export_types_filtered()` public
-- Add `Visibility::Hidden` to objects marked not visible in Tiled 
+- Add `Visibility::Hidden` to objects marked not visible in Tiled
 
 ## v0.6.0
 
