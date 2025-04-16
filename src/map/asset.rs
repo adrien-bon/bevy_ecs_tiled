@@ -18,7 +18,7 @@ use crate::{
 
 use bevy::{
     asset::{io::Reader, AssetLoader, AssetPath, LoadContext},
-    platform_support::collections::HashMap,
+    platform::collections::HashMap,
     prelude::*,
 };
 
