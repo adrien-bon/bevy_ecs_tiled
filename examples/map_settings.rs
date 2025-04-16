@@ -36,17 +36,17 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
         "maps/orthogonal/finite.tmx",
-        "A map using TiledMapAnchor::Center",
+        "A map using TilemapAnchor::Center",
         |c| {
-            c.insert(TiledMapAnchor::Center);
+            c.insert(TilemapAnchor::Center);
         },
     ));
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
         "maps/orthogonal/finite.tmx",
-        "A map using TiledMapAnchor::BottomLeft",
+        "A map using TilemapAnchor::BottomLeft",
         |c| {
-            c.insert(TiledMapAnchor::BottomLeft);
+            c.insert(TilemapAnchor::BottomLeft);
         },
     ));
     mgr.add_map(helper::assets::MapInfos::new(

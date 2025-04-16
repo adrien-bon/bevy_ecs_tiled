@@ -27,7 +27,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d);
 
     let default_callback: helper::assets::MapInfosCallback = |c| {
-        c.insert(TiledMapAnchor::Center);
+        c.insert(TilemapAnchor::Center);
     };
 
     // The `helper::AssetsManager` struct is an helper to easily switch between maps in examples.

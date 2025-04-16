@@ -39,7 +39,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn((
             TiledMapHandle(asset_server.load("maps/orthogonal/multiple_layers_with_colliders.tmx")),
-            TiledMapAnchor::Center,
+            TilemapAnchor::Center,
         ))
         // Wait for map loading to complete and spawn a simple player-controlled object
         .observe(|_: Trigger<TiledMapCreated>, mut commands: Commands| {
@@ -103,10 +103,11 @@ impl TiledPhysicsBackend for MyCustomRapierPhysicsBackend {
         tiled_map: &TiledMap,
         filter: &TiledNameFilter,
         collider: &TiledCollider,
+        anchor: &TilemapAnchor,
     ) -> Vec<TiledColliderSpawnInfos> {
         let colliders = self
             .0
-            .spawn_colliders(commands, tiled_map, filter, collider);
+            .spawn_colliders(commands, tiled_map, filter, collider, anchor);
         for c in &colliders {
             commands
                 .entity(c.entity)

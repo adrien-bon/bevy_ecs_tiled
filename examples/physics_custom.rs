@@ -47,6 +47,7 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
         _tiled_map: &TiledMap,
         _filter: &TiledNameFilter,
         collider: &TiledCollider,
+        _anchor: &TilemapAnchor,
     ) -> Vec<TiledColliderSpawnInfos> {
         match collider {
             TiledCollider::Object {

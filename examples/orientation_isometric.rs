@@ -29,7 +29,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     let default_callback: helper::assets::MapInfosCallback = |c| {
         c.insert((
-            TiledMapAnchor::Center,
+            TilemapAnchor::Center,
             // For isometric maps, it can be useful to tweak `bevy_ecs_tilemap` render settings.
             // [TilemapRenderSettings] provides the `y_sort`` parameter to sort chunks using their y-axis
             // position during rendering.

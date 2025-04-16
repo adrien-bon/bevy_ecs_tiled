@@ -1,4 +1,5 @@
 //! This module contains utilities functions.
+use crate::tile_size_from_grid;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use tiled::{ChunkData, LayerTile, LayerTileData, Map, TileLayer};
@@ -39,63 +40,86 @@ pub fn get_grid_size(map: &Map) -> TilemapGridSize {
     }
 }
 
+/// Convert a [Map]'s grid size to a [TilemapTileSize].
+///
+/// The width and height will be the same as those given by [get_grid_size].
+///
+/// NOTE: `bevy_ecs_tiled` ASSUMES tile_size and grid_size have same values;
+/// `bevy_ecs_tilemap` permits them to be different.
+pub fn get_tile_size(map: &Map) -> TilemapTileSize {
+    TilemapTileSize {
+        x: map.tile_width as f32,
+        y: map.tile_height as f32,
+    }
+}
+
 /// Convert a position from Tiled space to world space.
-pub fn from_tiled_position_to_world_space(tiled_map: &TiledMap, tiled_position: Vec2) -> Vec2 {
+pub fn from_tiled_position_to_world_space(
+    tiled_map: &TiledMap,
+    anchor: &TilemapAnchor,
+    tiled_position: Vec2,
+) -> Vec2 {
     let map_size = tiled_map.tilemap_size;
     let map_height = tiled_map.rect.height();
     let grid_size = get_grid_size(&tiled_map.map);
-    match get_map_type(&tiled_map.map) {
-        TilemapType::Square => {
-            tiled_map.tiled_offset
-                + Vec2 {
-                    x: tiled_position.x,
-                    y: map_height - tiled_position.y,
-                }
-        }
-        TilemapType::Hexagon(HexCoordSystem::ColumnOdd) => {
-            tiled_map.tiled_offset
-                + Vec2 {
-                    x: tiled_position.x,
-                    y: map_height + grid_size.y / 2. - tiled_position.y,
-                }
-        }
-        TilemapType::Hexagon(HexCoordSystem::ColumnEven) => {
-            tiled_map.tiled_offset
-                + Vec2 {
-                    x: tiled_position.x,
-                    y: map_height - tiled_position.y,
-                }
-        }
-        TilemapType::Hexagon(HexCoordSystem::RowOdd) => {
-            tiled_map.tiled_offset
-                + Vec2 {
-                    x: tiled_position.x,
-                    y: map_height + grid_size.y / 4. - tiled_position.y,
-                }
-        }
-        TilemapType::Hexagon(HexCoordSystem::RowEven) => {
-            tiled_map.tiled_offset
-                + Vec2 {
-                    x: tiled_position.x - grid_size.x / 2.,
-                    y: map_height + grid_size.y / 4. - tiled_position.y,
-                }
-        }
-        TilemapType::Isometric(IsoCoordSystem::Diamond) => {
-            let position = iso_projection(
-                tiled_position + tiled_map.tiled_offset,
-                &map_size,
-                &grid_size,
-            );
-            Vec2 {
-                x: position.x,
-                y: map_height / 2. - grid_size.y / 2. - position.y,
+    let map_type = get_map_type(&tiled_map.map);
+    let tile_size = tile_size_from_grid(&grid_size);
+    let mut offset = anchor.as_offset(&map_size, &grid_size, &tile_size, &map_type);
+    offset.x -= grid_size.x / 2.0;
+    offset.y -= grid_size.y / 2.0;
+    offset
+        + match map_type {
+            TilemapType::Square => {
+                tiled_map.tiled_offset
+                    + Vec2 {
+                        x: tiled_position.x,
+                        y: map_height - tiled_position.y,
+                    }
             }
+            TilemapType::Hexagon(HexCoordSystem::ColumnOdd) => {
+                tiled_map.tiled_offset
+                    + Vec2 {
+                        x: tiled_position.x,
+                        y: map_height + grid_size.y / 2. - tiled_position.y,
+                    }
+            }
+            TilemapType::Hexagon(HexCoordSystem::ColumnEven) => {
+                tiled_map.tiled_offset
+                    + Vec2 {
+                        x: tiled_position.x,
+                        y: map_height - tiled_position.y,
+                    }
+            }
+            TilemapType::Hexagon(HexCoordSystem::RowOdd) => {
+                tiled_map.tiled_offset
+                    + Vec2 {
+                        x: tiled_position.x,
+                        y: map_height + grid_size.y / 4. - tiled_position.y,
+                    }
+            }
+            TilemapType::Hexagon(HexCoordSystem::RowEven) => {
+                tiled_map.tiled_offset
+                    + Vec2 {
+                        x: tiled_position.x - grid_size.x / 2.,
+                        y: map_height + grid_size.y / 4. - tiled_position.y,
+                    }
+            }
+            TilemapType::Isometric(IsoCoordSystem::Diamond) => {
+                let position = iso_projection(
+                    tiled_position + tiled_map.tiled_offset,
+                    &map_size,
+                    &grid_size,
+                );
+                Vec2 {
+                    x: position.x,
+                    y: map_height / 2. - grid_size.y / 2. - position.y,
+                }
+            }
+            TilemapType::Isometric(IsoCoordSystem::Staggered) => {
+                panic!("Isometric (Staggered) map is not supported");
+            }
+            _ => unreachable!(),
         }
-        TilemapType::Isometric(IsoCoordSystem::Staggered) => {
-            panic!("Isometric (Staggered) map is not supported");
-        }
-        _ => unreachable!(),
-    }
 }
 
 /// Iterate over all tiles from the given [TileLayer]

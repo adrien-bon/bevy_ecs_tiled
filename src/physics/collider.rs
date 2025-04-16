@@ -69,7 +69,11 @@ impl<'a> TiledCollider {
     }
 
     /// Get a vector containing tiles in this layer as well as their relative position to their parent tileset layer.
-    pub fn get_tiles(&self, tiled_map: &'a TiledMap) -> Vec<(Vec2, Tile<'a>)> {
+    pub fn get_tiles(
+        &self,
+        tiled_map: &'a TiledMap,
+        anchor: &TilemapAnchor,
+    ) -> Vec<(Vec2, Tile<'a>)> {
         match self {
             TiledCollider::TilesLayer { layer_id } => tiled_map
                 .map
@@ -79,9 +83,14 @@ impl<'a> TiledCollider {
                     let mut out = vec![];
                     for_each_tile(tiled_map, &layer, |layer_tile, _, tile_pos, _| {
                         if let Some(tile) = layer_tile.get_tile() {
+                            let grid_size = get_grid_size(&tiled_map.map);
+                            let tile_size = tile_size_from_grid(&grid_size);
                             let tile_coords = tile_pos.center_in_world(
-                                &get_grid_size(&tiled_map.map),
+                                &tiled_map.tilemap_size,
+                                &grid_size,
+                                &tile_size,
                                 &get_map_type(&tiled_map.map),
+                                anchor,
                             );
                             out.push((tile_coords, tile));
                         }
@@ -112,10 +121,15 @@ pub(super) fn spawn_colliders<T: super::TiledPhysicsBackend>(
     tiled_map: &TiledMap,
     names: &TiledName,
     collider: &TiledCollider,
+    anchor: &TilemapAnchor,
 ) {
-    for spawn_infos in
-        backend.spawn_colliders(commands, tiled_map, &TiledNameFilter::from(names), collider)
-    {
+    for spawn_infos in backend.spawn_colliders(
+        commands,
+        tiled_map,
+        &TiledNameFilter::from(names),
+        collider,
+        anchor,
+    ) {
         commands
             .entity(spawn_infos.entity)
             .insert((

@@ -109,13 +109,21 @@ impl<'a> TiledObjectCreated {
     }
 
     /// Retrieve object world position (origin = top left) relative to its parent layer.
-    pub fn world_position(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Option<Vec2> {
+    pub fn world_position(
+        &self,
+        map_asset: &'a Res<Assets<TiledMap>>,
+        anchor: &TilemapAnchor,
+    ) -> Option<Vec2> {
         self.layer
             .map
             .get_map_asset(map_asset)
             .and_then(|tiled_map| {
                 self.get_object(map_asset).map(|object| {
-                    from_tiled_position_to_world_space(tiled_map, Vec2::new(object.x, object.y))
+                    from_tiled_position_to_world_space(
+                        tiled_map,
+                        anchor,
+                        Vec2::new(object.x, object.y),
+                    )
                 })
             })
     }
@@ -155,10 +163,21 @@ impl<'a> TiledTileCreated {
     }
 
     /// Retrieve tile world position (origin = tile center) relative to its parent layer.
-    pub fn world_position(&self, map_asset: &'a Res<Assets<TiledMap>>) -> Option<Vec2> {
-        self.layer.map.get_map(map_asset).map(|map| {
-            self.position
-                .center_in_world(&get_grid_size(map), &get_map_type(map))
+    pub fn world_position(
+        &self,
+        map_asset: &'a Res<Assets<TiledMap>>,
+        anchor: &TilemapAnchor,
+    ) -> Option<Vec2> {
+        self.layer.map.get_map_asset(map_asset).map(|tiled_map| {
+            let grid_size = get_grid_size(&tiled_map.map);
+            let tile_size = tile_size_from_grid(&grid_size);
+            self.position.center_in_world(
+                &tiled_map.tilemap_size,
+                &grid_size,
+                &tile_size,
+                &get_map_type(&tiled_map.map),
+                anchor,
+            )
         })
     }
 }

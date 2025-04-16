@@ -35,7 +35,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Load and spawn the world
     commands.spawn((
         TiledWorldHandle(asset_server.load("worlds/orthogonal.world")),
-        TiledMapAnchor::Center,
+        TilemapAnchor::Center,
         TiledWorldChunking::new(200., 200.),
     ));
 

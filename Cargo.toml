@@ -95,6 +95,9 @@ name = "map_settings"
 name = "map_spawn_delay"
 
 [[example]]
+name = "map_anchor"
+
+[[example]]
 name = "orientation_hexagonal"
 required-features = ["debug"]
 
@@ -144,3 +147,6 @@ name = "world_basic"
 [[example]]
 name = "world_chunking"
 required-features = ["debug"]
+
+[patch.crates-io]
+bevy_ecs_tilemap = { git = "https://github.com/shanecelis/bevy_ecs_tilemap.git", branch = "add-pivot" }

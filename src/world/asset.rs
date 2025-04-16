@@ -4,11 +4,10 @@ use bevy::{
     asset::{io::Reader, AssetLoader, AssetPath, LoadContext},
     prelude::*,
 };
+use bevy_ecs_tilemap::prelude::TilemapAnchor;
 use std::{fmt, io::ErrorKind};
 
 use crate::{cache::TiledResourceCache, reader::BytesResourceReader, TiledMap};
-
-use super::TiledMapAnchor;
 
 /// Tiled world `Asset`.
 ///
@@ -31,15 +30,25 @@ pub struct TiledWorld {
 }
 
 impl TiledWorld {
-    /// Offset that should be applied to world underlying maps to account for the [TiledMapAnchor]
-    pub(crate) fn offset(&self, anchor: &TiledMapAnchor) -> Vec3 {
+    /// Offset that should be applied to world underlying maps to account for the [TilemapAnchor]
+    pub(crate) fn offset(&self, anchor: &TilemapAnchor) -> Vec2 {
+        let min = &self.rect.min;
+        let max = &self.rect.max;
         match anchor {
-            TiledMapAnchor::Center => Vec3 {
-                x: -self.rect.width() / 2.0,
-                y: -self.rect.height() / 2.0,
-                z: 0.0,
-            },
-            TiledMapAnchor::BottomLeft => Vec3::ZERO,
+            TilemapAnchor::None => Vec2::ZERO,
+            TilemapAnchor::TopLeft => Vec2::new(-min.x, -max.y),
+            TilemapAnchor::TopRight => Vec2::new(-max.x, -max.y),
+            TilemapAnchor::TopCenter => Vec2::new(-(max.x + min.x) / 2.0, -max.y),
+            TilemapAnchor::CenterRight => Vec2::new(-max.x, -(max.y + min.y) / 2.0),
+            TilemapAnchor::CenterLeft => Vec2::new(-min.x, -(max.y + min.y) / 2.0),
+            TilemapAnchor::BottomLeft => Vec2::new(-min.x, -min.y),
+            TilemapAnchor::BottomRight => Vec2::new(-max.x, -min.y),
+            TilemapAnchor::BottomCenter => Vec2::new(-(max.x + min.x) / 2.0, -min.y),
+            TilemapAnchor::Center => Vec2::new(-(max.x + min.x) / 2.0, -(max.y + min.y) / 2.0),
+            TilemapAnchor::Custom(v) => Vec2::new(
+                (-0.5 - v.x) * (max.x - min.x) - min.x,
+                (-0.5 - v.y) * (max.y - min.y) - min.y,
+            ),
         }
     }
 }

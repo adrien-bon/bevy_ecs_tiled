@@ -18,6 +18,8 @@ pub mod prelude {
 use crate::{cache::TiledResourceCache, prelude::*};
 use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 use bevy_ecs_tilemap::prelude::*;
+#[cfg(feature = "user_properties")]
+use std::path::Path;
 
 /// Wrapper around the [Handle] to the `.tmx` file representing the [TiledMap].
 ///
@@ -26,9 +28,9 @@ use bevy_ecs_tilemap::prelude::*;
 #[reflect(Component, Debug)]
 #[require(
     TiledMapStorage,
-    TiledMapAnchor,
     TiledMapLayerZOffset,
     TilemapRenderSettings,
+    TilemapAnchor,
     Visibility,
     Transform
 )]
@@ -39,7 +41,6 @@ pub(crate) fn build(app: &mut bevy::prelude::App) {
         .init_asset_loader::<TiledMapLoader>()
         .register_type::<TiledMapHandle>()
         .register_type::<TiledMapPluginConfig>()
-        .register_type::<TiledMapAnchor>()
         .register_type::<TiledMapLayerZOffset>()
         .register_type::<RespawnTiledMap>()
         .register_type::<TiledMapStorage>()
@@ -64,22 +65,25 @@ pub(crate) fn build(app: &mut bevy::prelude::App) {
         .add_systems(PreUpdate, process_loaded_maps)
         .add_systems(Update, animate_tiled_sprites)
         .add_systems(PostUpdate, handle_map_events);
-
-    #[cfg(feature = "user_properties")]
-    app.add_systems(Startup, export_types);
 }
 
+/// Export a Tiled types to the given path.
+///
+/// The predicate determines whether a symbol is exported. To export all
+/// symbols, one can provide a blanket yes predicate, e.g. `|_| true`.
 #[cfg(feature = "user_properties")]
-fn export_types(reg: Res<AppTypeRegistry>, config: Res<TiledMapPluginConfig>) {
+pub fn export_types(
+    reg: &AppTypeRegistry,
+    path: impl AsRef<Path>,
+    predicate: impl Fn(&str) -> bool,
+) {
     use std::{fs::File, io::BufWriter, ops::Deref};
-    if let Some(path) = &config.tiled_types_export_file {
-        info!("Export Tiled types to '{:?}'", path);
-        let file = File::create(path).unwrap();
-        let writer = BufWriter::new(file);
-        let registry =
-            crate::properties::export::TypeExportRegistry::from_registry(reg.0.read().deref());
-        serde_json::to_writer_pretty(writer, &registry.to_vec()).unwrap();
-    }
+    let file = File::create(path).unwrap();
+    let writer = BufWriter::new(file);
+    let registry = crate::properties::export::TypeExportRegistry::from_registry(reg.read().deref());
+    let mut list = registry.to_vec();
+    list.retain(|v| predicate(&v.name));
+    serde_json::to_writer_pretty(writer, &list).unwrap();
 }
 
 /// System to spawn a map once it has been fully loaded.
@@ -94,12 +98,12 @@ pub(crate) fn process_loaded_maps(
             &TiledMapHandle,
             &mut TiledMapStorage,
             &TilemapRenderSettings,
-            &TiledMapAnchor,
+            &TilemapAnchor,
             &TiledMapLayerZOffset,
         ),
         Or<(
             Changed<TiledMapHandle>,
-            Changed<TiledMapAnchor>,
+            Changed<TilemapAnchor>,
             Changed<TiledMapLayerZOffset>,
             Changed<TilemapRenderSettings>,
             With<RespawnTiledMap>,
@@ -149,10 +153,10 @@ pub(crate) fn process_loaded_maps(
                 tiled_map,
                 &mut tiled_id_storage,
                 render_settings,
-                anchor,
                 layer_offset,
                 &asset_server,
                 &mut event_writers,
+                anchor,
             );
 
             // Remove the respawn marker

@@ -8,6 +8,7 @@ use bevy::{
     math::bounding::BoundingVolume,
     prelude::*,
 };
+use bevy_ecs_tilemap::prelude::TilemapAnchor;
 
 /// Configuration for the [TiledDebugWorldChunkPlugin]
 ///
@@ -91,7 +92,7 @@ fn draw_camera_rect(
 
 fn draw_maps_rect(
     world_query: Query<
-        (&TiledWorldHandle, &GlobalTransform, &TiledMapAnchor),
+        (&TiledWorldHandle, &GlobalTransform, &TilemapAnchor),
         With<TiledWorldMarker>,
     >,
     world_assets: Res<Assets<TiledWorld>>,
@@ -104,13 +105,18 @@ fn draw_maps_rect(
     for (world_handle, world_transform, anchor) in world_query.iter() {
         if let Some(tiled_world) = world_assets.get(world_handle.0.id()) {
             let offset = tiled_world.offset(anchor);
-            crate::world::for_each_map(tiled_world, world_transform, offset, |idx, aabb| {
-                gizmos.rect_2d(
-                    Isometry2d::from_translation(aabb.center()),
-                    aabb.half_size() * 2.,
-                    config.maps_colors_list[idx % config.maps_colors_list.len()],
-                );
-            });
+            crate::world::for_each_map(
+                tiled_world,
+                world_transform,
+                offset.extend(0.0),
+                |idx, aabb| {
+                    gizmos.rect_2d(
+                        Isometry2d::from_translation(aabb.center()),
+                        aabb.half_size() * 2.,
+                        config.maps_colors_list[idx % config.maps_colors_list.len()],
+                    );
+                },
+            );
         }
     }
 }

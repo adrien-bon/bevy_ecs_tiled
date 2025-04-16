@@ -24,8 +24,6 @@ use bevy::{
 
 use bevy_ecs_tilemap::prelude::*;
 
-use super::TiledMapAnchor;
-
 /// Tiled map [Asset].
 ///
 /// [Asset] holding Tiled map informations.
@@ -64,25 +62,28 @@ pub struct TiledMap {
     pub(crate) properties: DeserializedMapProperties,
 }
 
+pub(crate) fn tile_size_from_grid(grid_size: &TilemapGridSize) -> TilemapTileSize {
+    // TODO: Do Tiled files have tile size and grid size in sync always?
+    TilemapTileSize {
+        x: grid_size.x,
+        y: grid_size.y,
+    }
+}
+
 impl TiledMap {
-    /// Offset that should be applied to map underlying layers to account for the [TiledMapAnchor]
-    pub fn offset(&self, anchor: &TiledMapAnchor) -> Vec3 {
+    /// Offset that should be applied to map underlying layers to account for the [TilemapAnchor]
+    pub fn offset(&self, anchor: &TilemapAnchor) -> Vec2 {
         let map_type = get_map_type(&self.map);
         let grid_size = get_grid_size(&self.map);
 
-        let mut offset = match anchor {
-            TiledMapAnchor::Center => Vec3 {
-                x: -self.rect.width() / 2.0,
-                y: -self.rect.height() / 2.0,
-                z: 0.0,
-            },
-            TiledMapAnchor::BottomLeft => Vec3::ZERO,
-        };
+        // TODO: Do Tiled files have tile size and grid size in sync always? We assume so.
+        let tile_size = tile_size_from_grid(&grid_size);
+        let mut offset = anchor.as_offset(&self.tilemap_size, &grid_size, &tile_size, &map_type);
 
         // Special case for isometric maps: bevy_ecs_tilemap start drawing
         // them from middle left instead of from bottom left
         if let TilemapType::Isometric(IsoCoordSystem::Diamond) = map_type {
-            offset += Vec3::new(0., self.tilemap_size.y as f32 * grid_size.y as f32 / 2., 0.);
+            offset += Vec2::new(0., self.tilemap_size.y as f32 * grid_size.y as f32 / 2.);
         }
 
         offset

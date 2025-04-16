@@ -18,7 +18,7 @@ use bevy::{
     math::bounding::{Aabb2d, IntersectsVolume},
     prelude::*,
 };
-use bevy_ecs_tilemap::map::TilemapRenderSettings;
+use bevy_ecs_tilemap::{map::TilemapRenderSettings, prelude::TilemapAnchor};
 
 /// Wrapper around the [Handle] to the `.world` file representing the [TiledWorld].
 ///
@@ -27,7 +27,7 @@ use bevy_ecs_tilemap::map::TilemapRenderSettings;
 #[reflect(Component, Debug)]
 #[require(
     TiledWorldStorage,
-    TiledMapAnchor,
+    TilemapAnchor,
     TiledMapLayerZOffset,
     TilemapRenderSettings,
     TiledWorldChunking,
@@ -65,7 +65,7 @@ fn world_chunking(
             &TiledWorldHandle,
             &GlobalTransform,
             &TiledWorldChunking,
-            &TiledMapAnchor,
+            &TilemapAnchor,
             &TiledMapLayerZOffset,
             &TilemapRenderSettings,
             &mut TiledWorldStorage,
@@ -116,13 +116,18 @@ fn world_chunking(
                 .collect();
             // Check which map is visible by testing them against each camera (if there are multiple)
             // If map aabb overlaps with the camera_view, it is visible
-            for_each_map(tiled_world, world_transform, offset, |idx, aabb| {
-                for c in cameras.iter() {
-                    if aabb.intersects(c) {
-                        visible_maps.push(idx);
+            for_each_map(
+                tiled_world,
+                world_transform,
+                offset.extend(0.0),
+                |idx, aabb| {
+                    for c in cameras.iter() {
+                        if aabb.intersects(c) {
+                            visible_maps.push(idx);
+                        }
                     }
-                }
-            });
+                },
+            );
 
             // All the maps that are visible but not already spawned should be spawned
             for idx in visible_maps.iter() {
@@ -160,9 +165,14 @@ fn world_chunking(
             let map_entity = commands
                 .spawn((
                     TiledMapHandle(handle.clone_weak()),
-                    Transform::from_translation(offset + Vec3::new(rect.min.x, rect.min.y, 0.0)),
-                    // Force map anchor to BottomLeft: everything is handled at world level
-                    TiledMapAnchor::BottomLeft,
+                    Transform::from_translation(
+                        offset.extend(0.0) + Vec3::new(rect.min.x, rect.max.y, 0.0),
+                    ),
+                    // Force map anchor to TopLeft: everything is handled at
+                    // world level. This makes it so each map's
+                    // `Transform.translation` will have the same values for `x`
+                    // and `y` that Tiled uses in its FILE.world.
+                    TilemapAnchor::TopLeft,
                     *layer_offset,
                     *render_settings,
                 ))
@@ -188,7 +198,7 @@ fn process_loaded_worlds(
         Or<(
             Changed<TiledWorldHandle>,
             // If a world settings change, force a respawn so they can be taken into account
-            Changed<TiledMapAnchor>,
+            Changed<TilemapAnchor>,
             Changed<TiledMapLayerZOffset>,
             Changed<TilemapRenderSettings>,
             With<RespawnTiledWorld>,

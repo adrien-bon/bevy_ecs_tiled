@@ -30,7 +30,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         TiledWorldHandle(asset_server.load("worlds/orthogonal.world")),
         // But you can add extra components to change the defaults settings and how
         // your world is actually displayed
-        TiledMapAnchor::Center,
+        TilemapAnchor::Center,
         TiledWorldChunking::new(200., 200.),
     ));
 }
