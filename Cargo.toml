@@ -46,9 +46,8 @@ user_properties = ["dep:serde", "dep:serde_json"]
 
 [dependencies]
 # Main dependencies
-bevy = { version = "0.16.0-rc.3", default-features = false }
-#bevy_ecs_tilemap = { version = "0.15", default-features = false }
-bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap.git", branch = "main", default-features = false }
+bevy = { version = "0.16.0-rc.5", default-features = false }
+bevy_ecs_tilemap = { version = "0.16.0-rc.2", default-features = false }
 tiled = { version = "0.14", features = ["world"] }
 
 # Utilities
@@ -76,7 +75,7 @@ max_combination_size = 3
 denylist = ["png", "bmp", "jpeg", "gif"]
 
 [dev-dependencies]
-bevy = { version = "0.16.0-rc.3", features = ["file_watcher"] }
+bevy = { version = "0.16.0-rc.5", features = ["file_watcher"] }
 #bevy-inspector-egui = "0.30"
 bevy-inspector-egui = { git = "https://github.com/slyedoc/bevy-inspector-egui.git", branch = "bevy_0.16" }
 
@@ -152,6 +151,3 @@ name = "world_basic"
 [[example]]
 name = "world_chunking"
 required-features = ["debug"]
-
-[patch.crates-io]
-bevy_ecs_tilemap = { git = "https://github.com/shanecelis/bevy_ecs_tilemap.git", branch = "add-pivot" }
