@@ -5,9 +5,9 @@ use bevy::prelude::*;
 
 #[derive(Debug, Clone, Copy)]
 /// Show the origin with axes.
-pub struct TiledAxisDebugPlugin;
+pub struct TiledDebugAxisPlugin;
 
-impl Plugin for TiledAxisDebugPlugin {
+impl Plugin for TiledDebugAxisPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, origin_axes);
     }

@@ -96,6 +96,7 @@ name = "map_spawn_delay"
 
 [[example]]
 name = "map_anchor"
+required-features = ["debug"]
 
 [[example]]
 name = "orientation_hexagonal"

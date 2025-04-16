@@ -38,6 +38,6 @@ impl PluginGroup for TiledDebugPluginGroup {
             .add(objects::TiledDebugObjectsPlugin::default())
             .add(tiles::TiledDebugTilesPlugin::default())
             .add(world_chunk::TiledDebugWorldChunkPlugin::default())
-            .add(axis::TiledAxisDebugPlugin)
+            .add(axis::TiledDebugAxisPlugin)
     }
 }
