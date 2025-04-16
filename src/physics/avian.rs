@@ -3,6 +3,7 @@
 //! Only available when the `avian` feature is enabled.
 
 use avian2d::{
+    collision::collider::EllipseColliderShape,
     parry::{
         math::{Isometry, Real},
         shape::SharedShape,
