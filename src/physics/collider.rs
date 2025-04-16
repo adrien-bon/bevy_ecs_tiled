@@ -130,13 +130,11 @@ pub(super) fn spawn_colliders<T: super::TiledPhysicsBackend>(
         collider,
         anchor,
     ) {
-        commands
-            .entity(spawn_infos.entity)
-            .insert((
-                TiledColliderMarker,
-                Name::new(format!("Collider: {}", spawn_infos.name)),
-                ChildOf { parent },
-                spawn_infos.transform,
-            ));
+        commands.entity(spawn_infos.entity).insert((
+            TiledColliderMarker,
+            Name::new(format!("Collider: {}", spawn_infos.name)),
+            ChildOf(parent),
+            spawn_infos.transform,
+        ));
     }
 }

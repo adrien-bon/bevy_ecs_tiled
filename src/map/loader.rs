@@ -78,7 +78,7 @@ pub(crate) fn load_map(
         let layer_entity = commands
             .spawn((
                 TiledMapLayer,
-                ChildOf { parent: map_entity },
+                ChildOf(map_entity),
                 // Apply layer Transform using both layer base Transform and Tiled offset
                 offset_transform,
                 // Determine layer default visibility
@@ -236,9 +236,7 @@ fn load_tiles_layer(
                     layer.name, tileset.name
                 )),
                 TiledMapTileLayerForTileset,
-                ChildOf {
-                    parent: layer_event.entity,
-                },
+                ChildOf(layer_event.entity),
             ))
             .id();
 
@@ -333,9 +331,7 @@ fn load_tiles(
                     },
                     Name::new(format!("TiledMapTile({},{})", tile_pos.x, tile_pos.y)),
                     TiledMapTile,
-                    ChildOf {
-                        parent: layer_for_tileset_entity,
-                    },
+                    ChildOf(layer_for_tileset_entity),
                 ))
                 .id();
 
@@ -390,9 +386,7 @@ fn load_objects_layer(
             .spawn((
                 Name::new(format!("Object({})", object_data.name)),
                 TiledMapObject,
-                ChildOf {
-                    parent: layer_event.entity,
-                },
+                ChildOf(layer_event.entity),
                 Transform::from_xyz(object_position.x, object_position.y, 0.),
                 match &object_data.visible {
                     true => Visibility::Inherited,
@@ -513,20 +507,17 @@ fn load_image_layer(
             }
             _ => Vec2::ZERO,
         };
-        commands
-            .spawn((
-                Name::new(format!("Image({})", image.source.display())),
-                TiledMapImage,
-                ChildOf {
-                    parent: layer_event.entity,
-                },
-                Sprite {
-                    image: asset_server.load(image.source.clone()),
-                    anchor: Anchor::TopLeft,
-                    ..default()
-                },
-                Transform::from_xyz(image_position.x, image_position.y, 0.),
-            ));
+        commands.spawn((
+            Name::new(format!("Image({})", image.source.display())),
+            TiledMapImage,
+            ChildOf(layer_event.entity),
+            Sprite {
+                image: asset_server.load(image.source.clone()),
+                anchor: Anchor::TopLeft,
+                ..default()
+            },
+            Transform::from_xyz(image_position.x, image_position.y, 0.),
+        ));
     }
 }
 
