@@ -2,7 +2,7 @@ use crate::properties::types_json::{
     Class, Enum, FieldType, Member, StorageType, TypeData, TypeExport, UseAs,
 };
 use bevy::ecs::reflect::ReflectBundle;
-use bevy::platform_support::collections::HashMap;
+use bevy::platform::collections::HashMap;
 use bevy::reflect::{
     ArrayInfo, EnumInfo, NamedField, StructInfo, TupleInfo, TupleStructInfo, TypeInfo,
     TypeRegistration, TypeRegistry, UnnamedField, VariantInfo,

@@ -1,6 +1,6 @@
 use bevy::asset::LoadContext;
 use bevy::ecs::reflect::ReflectBundle;
-use bevy::platform_support::collections::HashMap;
+use bevy::platform::collections::HashMap;
 use bevy::prelude::*;
 use bevy::reflect::{
     DynamicArray, DynamicEnum, DynamicStruct, DynamicTuple, DynamicTupleStruct, DynamicVariant,
