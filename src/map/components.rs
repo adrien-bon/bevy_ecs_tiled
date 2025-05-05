@@ -27,10 +27,11 @@ impl Default for TiledMapLayerZOffset {
 ///
 /// fn handle_respawn(
 ///     mut commands: Commands,
-///     map_query: Query<(Entity, &TiledMapHandle)>,
+///     map_query: Query<Entity, With<TiledMapMarker>>,
 /// ) {
-///     let (entity, _) = map_query.single();
-///     commands.entity(entity).insert(RespawnTiledMap);
+///     if let Ok(entity) = map_query.single() {
+///         commands.entity(entity).insert(RespawnTiledMap);
+///     }
 /// }
 /// ```
 #[derive(Component, Default, Reflect, Copy, Clone, Debug)]
