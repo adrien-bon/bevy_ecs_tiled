@@ -1,5 +1,6 @@
 use bevy::input::common_conditions::input_toggle_active;
 use bevy::prelude::*;
+use bevy_inspector_egui::bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 pub mod anchor;
@@ -14,9 +15,12 @@ pub struct HelperPlugin;
 
 impl Plugin for HelperPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_plugins(
+        app.add_plugins((
+            EguiPlugin {
+                enable_multipass_for_primary_context: true,
+            },
             WorldInspectorPlugin::default().run_if(input_toggle_active(false, KeyCode::Escape)),
-        );
+        ));
         app.add_systems(Update, camera::movement);
         app.add_systems(Update, map::rotate);
         app.add_systems(Startup, setup_help_text);
