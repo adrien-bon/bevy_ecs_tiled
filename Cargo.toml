@@ -26,7 +26,7 @@ gif = ["bevy/gif"]
 # Expose features of the bevy_ecs_tilemap crate.
 atlas = ["bevy_ecs_tilemap/atlas"]
 render = ["bevy_ecs_tilemap/render"]
-serde = ["bevy_ecs_tilemap/serde"]
+serde = ["bevy_ecs_tilemap/serde", "bevy/serialize"]
 
 # Debug
 debug = ["bevy/bevy_gizmos", "bevy/bevy_text"]
