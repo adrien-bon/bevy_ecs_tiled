@@ -2,7 +2,7 @@
 
 use bevy::{
     color::palettes::css::{PURPLE, RED},
-    ecs::{component::ComponentId, world::DeferredWorld},
+    ecs::{component::HookContext, world::DeferredWorld},
     prelude::*,
 };
 use bevy_ecs_tiled::prelude::*;
@@ -80,7 +80,7 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
 #[component(on_add = on_physics_component_added)]
 struct MyCustomPhysicsComponent(pub Color);
 
-fn on_physics_component_added(mut world: DeferredWorld, entity: Entity, _: ComponentId) {
+fn on_physics_component_added(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
     let color = world.get::<MyCustomPhysicsComponent>(entity).unwrap().0;
     let mesh = world
         .resource_mut::<Assets<Mesh>>()
