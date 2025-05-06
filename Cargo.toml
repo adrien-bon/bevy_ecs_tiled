@@ -26,7 +26,7 @@ gif = ["bevy/gif"]
 # Expose features of the bevy_ecs_tilemap crate.
 atlas = ["bevy_ecs_tilemap/atlas"]
 render = ["bevy_ecs_tilemap/render"]
-serde = ["bevy_ecs_tilemap/serde", "bevy/serialize"]
+serde = ["bevy_ecs_tilemap/serde"]
 
 # Debug
 debug = ["bevy/bevy_gizmos", "bevy/bevy_text"]
@@ -150,6 +150,6 @@ name = "world_chunking"
 required-features = ["debug"]
 
 [patch.crates-io]
-bevy_ecs_tilemap = { git = "https://github.com/miketwenty1/bevy_ecs_tilemap.git", rev = "e04b9226bed033e421830e847e5f59dfc8ee57f2" }
+bevy_ecs_tilemap = { git = "https://github.com/adrien-bon/bevy_ecs_tilemap.git", rev = "ddd71f53dde2cfc30d1b2b78adca5358ec7f703e" }
 avian2d = { git = "https://github.com/Jondolf/avian.git", rev = "c505c9d66d165576f649457f09c9804e09ced8a8" }
 bevy_rapier2d = { git = "https://github.com/dimforge/bevy_rapier.git", rev = "7ecb59737be6a52ad41fb88061a32e706f507aaf" }
