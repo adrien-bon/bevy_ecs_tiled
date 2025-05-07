@@ -34,10 +34,13 @@ const MINIMUM_SCALE: f32 = 0.1;
 pub fn movement(
     time: Res<Time>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Transform, &mut OrthographicProjection), With<Camera>>,
+    mut query: Query<(&mut Transform, &mut Projection), With<Camera>>,
 ) {
-    for (mut transform, mut ortho) in query.iter_mut() {
+    for (mut transform, mut projection) in query.iter_mut() {
         let mut direction = Vec3::ZERO;
+        let Projection::Orthographic(ref mut ortho) = *projection else {
+            continue;
+        };
 
         if keyboard_input.pressed(KeyCode::KeyA) {
             direction -= Vec3::new(1.0, 0.0, 0.0);

@@ -121,7 +121,7 @@ pub(crate) fn process_loaded_maps(
                         "Map failed to load, despawn it (handle = {:?})",
                         map_handle.0
                     );
-                    commands.entity(map_entity).despawn_recursive();
+                    commands.entity(map_entity).despawn();
                 } else {
                     debug!(
                         "Map is not fully loaded yet, will try again next frame (handle = {:?})",
@@ -135,7 +135,7 @@ pub(crate) fn process_loaded_maps(
             // Map should be loaded at this point
             let Some(tiled_map) = maps.get(&map_handle.0) else {
                 error!("Cannot get a valid TiledMap out of Handle<TiledMap>: has the last strong reference to the asset been dropped ? (handle = {:?})", map_handle.0);
-                commands.entity(map_entity).despawn_recursive();
+                commands.entity(map_entity).despawn();
                 continue;
             };
 
@@ -191,7 +191,7 @@ fn handle_map_events(
                 info!("Map removed: {id}");
                 for (map_entity, map_handle) in map_query.iter() {
                     if map_handle.0.id() == *id {
-                        commands.entity(map_entity).despawn_recursive();
+                        commands.entity(map_entity).despawn();
                     }
                 }
             }
@@ -202,7 +202,7 @@ fn handle_map_events(
 
 fn remove_layers(commands: &mut Commands, tiled_id_storage: &mut TiledMapStorage) {
     for layer_entity in tiled_id_storage.layers.values() {
-        commands.entity(*layer_entity).despawn_recursive();
+        commands.entity(*layer_entity).despawn();
     }
     tiled_id_storage.layers.clear();
     tiled_id_storage.objects.clear();

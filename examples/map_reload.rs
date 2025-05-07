@@ -80,7 +80,7 @@ fn handle_reload(
     // Reload the map by inserting a map asset on an existing map entity
     // Note that you can use the same map asset or a different one
     if keyboard_input.just_pressed(KeyCode::KeyK) {
-        if let Ok(entity) = maps_query.get_single() {
+        if let Ok(entity) = maps_query.single() {
             info!("Reload map");
             commands.entity(entity).insert(TiledMapHandle(
                 asset_server.load("maps/orthogonal/infinite.tmx"),
@@ -93,7 +93,7 @@ fn handle_reload(
 
     // Reload the same map by pushing the RespawnTiledMap component on it
     if keyboard_input.just_pressed(KeyCode::KeyR) {
-        if let Ok(entity) = maps_query.get_single() {
+        if let Ok(entity) = maps_query.single() {
             info!("Respawn map");
             commands.entity(entity).insert(RespawnTiledMap);
             next_state.set(MapState::Loaded);
@@ -126,7 +126,7 @@ fn handle_unload(
         // Just remove the entities directly. This will also unload the map.
         info!("Remove map entities");
         for entity in maps_query.iter() {
-            commands.entity(entity).despawn_recursive();
+            commands.entity(entity).despawn();
         }
         next_state.set(MapState::Unloaded);
     }

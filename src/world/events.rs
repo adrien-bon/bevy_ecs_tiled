@@ -16,7 +16,7 @@ pub struct TiledWorldCreated {
 }
 
 impl Event for TiledWorldCreated {
-    type Traversal = &'static Parent;
+    type Traversal = &'static ChildOf;
     const AUTO_PROPAGATE: bool = true;
 }
 

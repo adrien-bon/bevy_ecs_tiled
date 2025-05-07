@@ -1,8 +1,7 @@
 use super::load::DeserializedProperties;
 use bevy::ecs::reflect::ReflectBundle;
 use bevy::ecs::system::EntityCommands;
-use bevy::ecs::world::Command;
-use bevy::prelude::{AppTypeRegistry, Entity, ReflectComponent, ReflectResource, World};
+use bevy::prelude::{AppTypeRegistry, Command, Entity, ReflectComponent, ReflectResource, World};
 use bevy::reflect::{PartialReflect, TypeRegistry};
 use std::ops::Deref;
 

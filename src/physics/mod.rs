@@ -138,15 +138,15 @@ fn initialize_settings_for_worlds<T: TiledPhysicsBackend>(
 fn initialize_settings_for_maps<T: TiledPhysicsBackend>(
     mut commands: Commands,
     maps_query: Query<
-        (Entity, Option<&Parent>),
+        (Entity, Option<&ChildOf>),
         (With<TiledMapMarker>, Without<TiledPhysicsSettings<T>>),
     >,
     worlds_query: Query<&TiledPhysicsSettings<T>, With<TiledWorldMarker>>,
 ) {
-    for (map, parent) in maps_query.iter() {
+    for (map, child_of) in maps_query.iter() {
         commands.entity(map).insert(
-            parent
-                .and_then(|world| worlds_query.get(world.get()).ok())
+            child_of
+                .and_then(|child_of| worlds_query.get(child_of.parent()).ok())
                 .cloned()
                 .unwrap_or_default(),
         );

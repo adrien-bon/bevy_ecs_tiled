@@ -59,7 +59,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn input(mut chunking: Query<&mut TiledWorldChunking>, keys: Res<ButtonInput<KeyCode>>) {
-    let Ok(mut chunking) = chunking.get_single_mut() else {
+    let Ok(mut chunking) = chunking.single_mut() else {
         return;
     };
 
@@ -85,7 +85,7 @@ fn text_update_system(
     chunking: Query<&TiledWorldChunking>,
     mut query: Query<&mut TextSpan, With<HelperText>>,
 ) {
-    let Ok(chunking) = chunking.get_single() else {
+    let Ok(chunking) = chunking.single() else {
         return;
     };
 

@@ -17,9 +17,9 @@ use crate::{
 };
 
 use bevy::{
-    asset::{io::Reader, AssetLoader, AssetPath, LoadContext, LoadedAsset},
+    asset::{io::Reader, AssetLoader, AssetPath, LoadContext},
+    platform::collections::HashMap,
     prelude::*,
-    utils::HashMap,
 };
 
 use bevy_ecs_tilemap::prelude::*;
@@ -228,20 +228,19 @@ impl AssetLoader for TiledMapLoader {
                     let columns = (img.width as u32 - tileset.margin + tileset.spacing)
                         / (tileset.tile_width + tileset.spacing);
                     if columns > 0 {
-                        let layout = TextureAtlasLayout::from_grid(
-                            UVec2::new(tileset.tile_width, tileset.tile_height),
-                            columns,
-                            tileset.tilecount / columns,
-                            Some(UVec2::new(tileset.spacing, tileset.spacing)),
-                            Some(UVec2::new(
-                                tileset.offset_x as u32 + tileset.margin,
-                                tileset.offset_y as u32 + tileset.margin,
-                            )),
-                        );
-                        texture_atlas_layout_handle = Some(load_context.add_loaded_labeled_asset(
-                            tileset.name.clone(),
-                            LoadedAsset::from(layout),
-                        ));
+                        texture_atlas_layout_handle =
+                            Some(load_context.labeled_asset_scope(tileset.name.clone(), |_| {
+                                TextureAtlasLayout::from_grid(
+                                    UVec2::new(tileset.tile_width, tileset.tile_height),
+                                    columns,
+                                    tileset.tilecount / columns,
+                                    Some(UVec2::new(tileset.spacing, tileset.spacing)),
+                                    Some(UVec2::new(
+                                        tileset.offset_x as u32 + tileset.margin,
+                                        tileset.offset_y as u32 + tileset.margin,
+                                    )),
+                                )
+                            }));
                     }
 
                     (true, TilemapTexture::Single(texture.clone()))

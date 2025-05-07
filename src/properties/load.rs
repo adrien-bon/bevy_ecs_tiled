@@ -1,12 +1,12 @@
 use bevy::asset::LoadContext;
 use bevy::ecs::reflect::ReflectBundle;
+use bevy::platform::collections::HashMap;
 use bevy::prelude::*;
 use bevy::reflect::{
     DynamicArray, DynamicEnum, DynamicStruct, DynamicTuple, DynamicTupleStruct, DynamicVariant,
     NamedField, Reflect, ReflectMut, ReflectRef, TypeInfo, TypeRegistration, TypeRegistry,
     UnnamedField, VariantInfo, VariantType,
 };
-use bevy::utils::HashMap;
 use std::path::PathBuf;
 use tiled::{LayerType, Properties, PropertyValue, TileId};
 
@@ -26,8 +26,8 @@ impl DeserializedMapProperties<false> {
     ) -> Self {
         let map_props = DeserializedProperties::load(&map.properties, registry, load_context, true);
 
-        let mut objects = HashMap::new();
-        let mut layers = HashMap::new();
+        let mut objects = HashMap::default();
+        let mut layers = HashMap::default();
         let mut to_process = Vec::from_iter(map.layers());
         while let Some(layer) = to_process.pop() {
             layers.insert(
@@ -121,7 +121,7 @@ pub(crate) struct DeserializedProperties {
 impl Clone for DeserializedProperties {
     fn clone(&self) -> Self {
         Self {
-            properties: self.properties.iter().map(|r| r.clone_value()).collect(),
+            properties: self.properties.iter().map(|r| r.to_dynamic()).collect(),
         }
     }
 }
@@ -209,7 +209,7 @@ impl DeserializedProperties {
             value = Self::deserialize_property(pv, reg, registry, load_cx, default_value)?;
         } else if let Some(def) = default_value {
             // If a default value from parent is provided, use it
-            value = def.clone_value().into_partial_reflect();
+            value = def.to_dynamic().into_partial_reflect();
         } else if let Some(def) = default_value_from_type_path(registry, field.type_path()) {
             // If no default value from parent is not provided, try to use type default()
             value = def.into_partial_reflect();
@@ -250,7 +250,7 @@ impl DeserializedProperties {
             value = Self::deserialize_property(pv, reg, registry, load_cx, default_value)?;
         } else if let Some(def) = default_value {
             // If a default value from parent is provided, use it
-            value = def.clone_value().into_partial_reflect();
+            value = def.to_dynamic().into_partial_reflect();
         } else if let Some(default_value) =
             default_value_from_type_path(registry, field.type_path())
         {
@@ -536,7 +536,7 @@ impl DeserializedProperties {
 
                 if let Some(default_value) = default_value {
                     if let ReflectRef::Enum(e) = default_value.reflect_ref() {
-                        out = e.clone_dynamic();
+                        out = e.to_dynamic_enum();
                         return Ok(Box::new(out));
                     }
                 }
@@ -580,7 +580,7 @@ fn object_ref(
     obj_entity_map: &HashMap<u32, Entity>,
 ) -> Option<Box<dyn PartialReflect>> {
     if obj.represents::<Entity>() {
-        let obj = Entity::take_from_reflect(obj.clone_value()).unwrap();
+        let obj = Entity::take_from_reflect(obj.to_dynamic()).unwrap();
         if let Some(&e) = obj_entity_map.get(&obj.index()) {
             Some(Box::new(e))
         } else {
@@ -592,7 +592,7 @@ fn object_ref(
     } else if obj.represents::<Option<Entity>>() {
         // maybe the map get should panic actually
         Some(Box::new(
-            Option::<Entity>::take_from_reflect(obj.clone_value())
+            Option::<Entity>::take_from_reflect(obj.to_dynamic())
                 .unwrap()
                 .and_then(|obj| obj_entity_map.get(&obj.index()).copied()),
         ))

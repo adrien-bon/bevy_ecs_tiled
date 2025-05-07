@@ -32,7 +32,7 @@
 use crate::properties::command::PropertiesCommandExt;
 
 use crate::prelude::*;
-use bevy::{prelude::*, sprite::Anchor, utils::HashMap};
+use bevy::{platform::collections::HashMap, prelude::*, sprite::Anchor};
 use bevy_ecs_tilemap::prelude::*;
 use tiled::{ImageLayer, Layer, LayerType, ObjectLayer, Tile, TileId, TileLayer, TilesetLocation};
 
@@ -78,6 +78,7 @@ pub(crate) fn load_map(
         let layer_entity = commands
             .spawn((
                 TiledMapLayer,
+                ChildOf(map_entity),
                 // Apply layer Transform using both layer base Transform and Tiled offset
                 offset_transform,
                 // Determine layer default visibility
@@ -86,7 +87,6 @@ pub(crate) fn load_map(
                     false => Visibility::Hidden,
                 },
             ))
-            .set_parent(map_entity)
             .id();
 
         let layer_event = TiledLayerCreated {
@@ -187,18 +187,18 @@ pub(crate) fn load_map(
 
     // Send events and trigger observers
     commands.trigger_targets(map_event, map_entity);
-    event_writers.map_event.send(map_event);
+    event_writers.map_event.write(map_event);
     for e in layer_events {
         commands.trigger_targets(e, map_entity);
-        event_writers.layer_event.send(e);
+        event_writers.layer_event.write(e);
     }
     for e in object_events {
         commands.trigger_targets(e, map_entity);
-        event_writers.object_event.send(e);
+        event_writers.object_event.write(e);
     }
     for e in special_tile_events {
         commands.trigger_targets(e, map_entity);
-        event_writers.tile_event.send(e);
+        event_writers.tile_event.write(e);
     }
 }
 
@@ -236,8 +236,8 @@ fn load_tiles_layer(
                     layer.name, tileset.name
                 )),
                 TiledMapTileLayerForTileset,
+                ChildOf(layer_event.entity),
             ))
-            .set_parent(layer_event.entity)
             .id();
 
         let _tile_storage = load_tiles(
@@ -331,8 +331,8 @@ fn load_tiles(
                     },
                     Name::new(format!("TiledMapTile({},{})", tile_pos.x, tile_pos.y)),
                     TiledMapTile,
+                    ChildOf(layer_for_tileset_entity),
                 ))
-                .set_parent(layer_for_tileset_entity)
                 .id();
 
             // Handle animated tiles
@@ -386,13 +386,13 @@ fn load_objects_layer(
             .spawn((
                 Name::new(format!("Object({})", object_data.name)),
                 TiledMapObject,
+                ChildOf(layer_event.entity),
                 Transform::from_xyz(object_position.x, object_position.y, 0.),
                 match &object_data.visible {
                     true => Visibility::Inherited,
                     false => Visibility::Hidden,
                 },
             ))
-            .set_parent(layer_event.entity)
             .id();
 
         let mut sprite = None;
@@ -507,18 +507,17 @@ fn load_image_layer(
             }
             _ => Vec2::ZERO,
         };
-        commands
-            .spawn((
-                Name::new(format!("Image({})", image.source.display())),
-                TiledMapImage,
-                Sprite {
-                    image: asset_server.load(image.source.clone()),
-                    anchor: Anchor::TopLeft,
-                    ..default()
-                },
-                Transform::from_xyz(image_position.x, image_position.y, 0.),
-            ))
-            .set_parent(layer_event.entity);
+        commands.spawn((
+            Name::new(format!("Image({})", image.source.display())),
+            TiledMapImage,
+            ChildOf(layer_event.entity),
+            Sprite {
+                image: asset_server.load(image.source.clone()),
+                anchor: Anchor::TopLeft,
+                ..default()
+            },
+            Transform::from_xyz(image_position.x, image_position.y, 0.),
+        ));
     }
 }
 
