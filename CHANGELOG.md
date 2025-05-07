@@ -2,8 +2,13 @@
 
 ## [unreleased]
 
+**BREAKING CHANGES**
+This version brings breaking changes.
+A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_7.html) is available to help adapt to these.
+
 ### Features
 
+- Update for Bevy v0.16
 - Add support for `bevy_ecs_tilemap::TilemapAnchor`
 - Make `export_types()`and `export_types_filtered()` public
 - Add `Visibility::Hidden` to objects marked not visible in Tiled

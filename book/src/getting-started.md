@@ -3,9 +3,9 @@ Add required dependencies to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-bevy = "0.15"
-bevy_ecs_tiled = "0.6"
-bevy_ecs_tilemap = "0.15"
+bevy = "0.16"
+bevy_ecs_tiled = "0.7"
+bevy_ecs_tilemap = "0.16"
 ```
 
 Then add the plugin to your app and spawn a map.
