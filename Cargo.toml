@@ -47,7 +47,7 @@ user_properties = ["dep:serde", "dep:serde_json"]
 [dependencies]
 # Main dependencies
 bevy = { version = "0.16", default-features = false }
-bevy_ecs_tilemap = { version = "0.16.0-rc.2", default-features = false }
+bevy_ecs_tilemap = { version = "0.16", default-features = false }
 tiled = { version = "0.14", features = ["world"] }
 
 # Utilities
@@ -150,6 +150,5 @@ name = "world_chunking"
 required-features = ["debug"]
 
 [patch.crates-io]
-bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap.git", rev = "c2c1d076bd70d132edb6410e835a2ba6bdbaab5c" }
 avian2d = { git = "https://github.com/Jondolf/avian.git", rev = "c505c9d66d165576f649457f09c9804e09ced8a8" }
 bevy_rapier2d = { git = "https://github.com/dimforge/bevy_rapier.git", rev = "7ecb59737be6a52ad41fb88061a32e706f507aaf" }
