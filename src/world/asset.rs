@@ -5,7 +5,7 @@ use bevy::{
     prelude::*,
 };
 use bevy_ecs_tilemap::prelude::TilemapAnchor;
-use std::{fmt, io::ErrorKind};
+use std::fmt;
 
 use crate::{cache::TiledResourceCache, reader::BytesResourceReader, TiledMap};
 
@@ -111,9 +111,9 @@ impl AssetLoader for TiledWorldLoader {
                 self.cache.clone(),
                 BytesResourceReader::new(&bytes, load_context),
             );
-            loader.load_world(&world_path).map_err(|e| {
-                std::io::Error::new(ErrorKind::Other, format!("Could not load Tiled world: {e}"))
-            })?
+            loader
+                .load_world(&world_path)
+                .map_err(|e| std::io::Error::other(format!("Could not load Tiled world: {e}")))?
         };
 
         if world.maps.is_empty() {

@@ -1,8 +1,8 @@
 //! This module contains all map [Asset]s definition.
 
+use std::fmt;
 #[cfg(feature = "user_properties")]
 use std::ops::Deref;
-use std::{fmt, io::ErrorKind};
 
 #[cfg(feature = "user_properties")]
 use bevy::reflect::TypeRegistryArc;
@@ -167,9 +167,9 @@ impl AssetLoader for TiledMapLoader {
                 BytesResourceReader::new(&bytes, load_context),
             );
             // Load the map and all tiles.
-            loader.load_tmx_map(&map_path).map_err(|e| {
-                std::io::Error::new(ErrorKind::Other, format!("Could not load TMX map: {e}"))
-            })?
+            loader
+                .load_tmx_map(&map_path)
+                .map_err(|e| std::io::Error::other(format!("Could not load TMX map: {e}")))?
         };
 
         let mut tilesets = HashMap::default();
