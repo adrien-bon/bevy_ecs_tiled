@@ -1,4 +1,4 @@
-//! This example cycles through map created with different tilesets that use spacing and margin.
+//! This example cycles through maps created with different tilesets that use spacings and margins.
 
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
@@ -33,18 +33,18 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // You should NOT use it directly in your games.
     let mut mgr = helper::assets::AssetsManager::new(&mut commands);
 
-    mgr.add_map(helper::assets::MapInfos::new(
-        &asset_server,
-        "maps/spacing/no-spacing.tmx",
-        "Tileset without spacing and margins",
-        default_callback,
-    ));
-
     // Spacing and margin are read from the tsx file and applied automatically.
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
+        "maps/spacing/no-spacing.tmx",
+        "Tileset without spacing and margin",
+        default_callback,
+    ));
+
+    mgr.add_map(helper::assets::MapInfos::new(
+        &asset_server,
         "maps/spacing/8px-spacing-8px-margin.tmx",
-        "Tileset with 8px spacing and 8px margins",
+        "Tileset with 8px spacing and 8px margin",
         default_callback,
     ));
     
@@ -52,7 +52,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
         "maps/spacing/8px-spacing.tmx",
-        "Tileset with 8px spacing and no margins",
+        "Tileset with 8px spacing and no margin",
         default_callback,
     ));
 
