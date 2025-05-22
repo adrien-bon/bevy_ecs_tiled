@@ -24,6 +24,11 @@ fn main() {
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d);
 
+    let default_callback: helper::assets::MapInfosCallback = |c| {
+        c.insert(TilemapAnchor::Center);
+    };
+
+
     // The `helper::AssetsManager` struct is an helper to easily switch between maps in examples.
     // You should NOT use it directly in your games.
     let mut mgr = helper::assets::AssetsManager::new(&mut commands);
@@ -32,7 +37,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         &asset_server,
         "maps/spacing/no-spacing.tmx",
         "Tileset without spacing and margins",
-        |_| {},
+        default_callback,
     ));
 
     // Spacing and margin are read from the tsx file and applied automatically.
@@ -40,8 +45,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         &asset_server,
         "maps/spacing/8px-spacing-8px-margin.tmx",
         "Tileset with 8px spacing and 8px margins",
-        |_| {
-        },
+        default_callback,
     ));
     
     // Issues arise when spacing and margins differ.
@@ -49,16 +53,14 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         &asset_server,
         "maps/spacing/8px-spacing.tmx",
         "Tileset with 8px spacing and no margins",
-        |_| {
-        },
+        default_callback,
     ));
 
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
         "maps/spacing/8px-margin.tmx",
         "Tileset with 8px margin an no spacing",
-        |_| {
-        },
+        default_callback,
     ));
     commands.insert_resource(mgr);
 }
