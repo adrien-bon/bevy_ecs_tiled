@@ -28,7 +28,6 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         c.insert(TilemapAnchor::Center);
     };
 
-
     // The `helper::AssetsManager` struct is an helper to easily switch between maps in examples.
     // You should NOT use it directly in your games.
     let mut mgr = helper::assets::AssetsManager::new(&mut commands);
@@ -47,7 +46,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         "Tileset with 8px spacing and 8px margin",
         default_callback,
     ));
-    
+
     // Issues arise when spacing and margins differ.
     mgr.add_map(helper::assets::MapInfos::new(
         &asset_server,
