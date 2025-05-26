@@ -114,6 +114,23 @@ pub struct TiledColliderSpawnInfos {
     pub transform: Transform,
 }
 
+/// Event sent when a new collider is created
+#[derive(Event, Component, Reflect, Clone, Debug, Copy)]
+#[event(auto_propagate, traversal = &'static ChildOf)]
+#[reflect(Component, Debug)]
+pub struct TiledColliderCreated {
+    /// [Entity] of the spawned collider.
+    pub entity: Entity,
+}
+
+impl TiledColliderCreated {
+    /// Create a new event
+    pub fn new(entity: Entity) -> Self {
+        Self { entity }
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
 pub(super) fn spawn_colliders<T: super::TiledPhysicsBackend>(
     backend: &T,
     parent: Entity,
@@ -122,6 +139,7 @@ pub(super) fn spawn_colliders<T: super::TiledPhysicsBackend>(
     names: &TiledName,
     collider: &TiledCollider,
     anchor: &TilemapAnchor,
+    event_writer: &mut EventWriter<TiledColliderCreated>,
 ) {
     for spawn_infos in backend.spawn_colliders(
         commands,
@@ -130,11 +148,16 @@ pub(super) fn spawn_colliders<T: super::TiledPhysicsBackend>(
         collider,
         anchor,
     ) {
+        // Spawn collider
         commands.entity(spawn_infos.entity).insert((
             TiledColliderMarker,
             Name::new(format!("Collider: {}", spawn_infos.name)),
             ChildOf(parent),
             spawn_infos.transform,
         ));
+        // Send corresponding event
+        let event = TiledColliderCreated::new(spawn_infos.entity);
+        commands.trigger_targets(event, parent);
+        event_writer.write(event);
     }
 }

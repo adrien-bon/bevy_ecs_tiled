@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Features
+
+- Add a new `TiledColliderCreated` event and an associated observer, when a new collider is spawned.
+
 ## v0.7.0
 
 **BREAKING CHANGES**

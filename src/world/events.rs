@@ -6,18 +6,14 @@ use crate::prelude::*;
 use bevy::prelude::*;
 
 /// Event sent when a Tiled world has finished loading.
-#[derive(Component, Reflect, Copy, Clone, Debug)]
+#[derive(Event, Component, Reflect, Copy, Clone, Debug)]
+#[event(auto_propagate, traversal = &'static ChildOf)]
 #[reflect(Component, Debug)]
 pub struct TiledWorldCreated {
     /// Spawned world [Entity].
     pub entity: Entity,
     /// [AssetId] of the corresponding [super::asset::TiledWorld] asset.
     pub asset_id: AssetId<TiledWorld>,
-}
-
-impl Event for TiledWorldCreated {
-    type Traversal = &'static ChildOf;
-    const AUTO_PROPAGATE: bool = true;
 }
 
 impl<'a> TiledWorldCreated {
