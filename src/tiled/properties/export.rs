@@ -1,4 +1,4 @@
-use crate::properties::types_json::{
+use crate::tiled::properties::types_json::{
     Class, Enum, FieldType, Member, StorageType, TypeData, TypeExport, UseAs,
 };
 use bevy::ecs::reflect::ReflectBundle;

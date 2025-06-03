@@ -19,3 +19,6 @@ target/
 
 # Ignore local .devcontainer configuration
 .devcontainer
+
+# Ignore local tiled types export files
+tiled_types_export.json

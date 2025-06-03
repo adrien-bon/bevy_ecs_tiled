@@ -1,6 +1,6 @@
 #![doc = include_str!("../book/src/intro.md")]
 //!
-//! ## API reference
+//! ## Documentation
 //!
 //! As the name implies, this API reference purpose is to describe the API provided by `bevy_ecs_tiled`.
 //!
@@ -14,12 +14,11 @@
 #![deny(unsafe_code)]
 #![deny(missing_copy_implementations)]
 #![deny(missing_debug_implementations)]
+#![allow(clippy::too_many_arguments)]
+#![allow(clippy::type_complexity)]
 
-pub mod cache;
-pub mod map;
 pub mod names;
-pub mod reader;
-pub mod world;
+pub mod tiled;
 
 #[cfg(feature = "debug")]
 pub mod debug;
@@ -27,80 +26,53 @@ pub mod debug;
 #[cfg(feature = "physics")]
 pub mod physics;
 
-#[cfg(feature = "user_properties")]
-pub mod properties;
-
 /// `bevy_ecs_tiled` public exports.
 pub mod prelude {
     #[cfg(feature = "debug")]
-    pub use super::debug::prelude::*;
-    pub use super::map::prelude::*;
-    pub use super::names::*;
+    pub use super::debug::{
+        axis::TiledDebugAxisPlugin,
+        objects::{TiledDebugObjectsConfig, TiledDebugObjectsPlugin},
+        tiles::{TiledDebugTilesConfig, TiledDebugTilesPlugin},
+        world_chunk::{TiledDebugWorldChunkConfig, TiledDebugWorldChunkPlugin},
+        TiledDebugPluginGroup,
+    };
+    pub use super::names::{TiledName, TiledNameFilter};
+    #[cfg(feature = "avian")]
+    pub use super::physics::backend::avian::TiledPhysicsAvianBackend;
+    #[cfg(feature = "rapier")]
+    pub use super::physics::backend::rapier::TiledPhysicsRapierBackend;
     #[cfg(feature = "physics")]
-    pub use super::physics::prelude::*;
-    pub use super::world::prelude::*;
-    pub use crate::TiledMapPlugin;
-    pub use crate::TiledMapPluginConfig;
+    pub use super::physics::{
+        backend::TiledPhysicsBackend,
+        collider::{ColliderCreated, TiledCollider},
+        settings::TiledPhysicsSettings,
+        TiledPhysicsPlugin,
+    };
+    pub use super::tiled::{
+        animation::TiledAnimation,
+        event::{LayerCreated, MapCreated, ObjectCreated, TileCreated, TiledEvent, TilemapCreated},
+        helpers::{
+            get_layer_from_map, get_object_from_map, get_tile_from_map, get_tileset_from_map,
+            grid_size_from_map, tile_size_from_grid_size, tile_size_from_map,
+        },
+        image::TiledImage,
+        layer::TiledLayer,
+        map::{
+            asset::TiledMapAsset, loader::TiledMapLoaderError, storage::TiledMapStorage,
+            RespawnTiledMap, TiledMap, TiledMapLayerZOffset,
+        },
+        object::TiledObject,
+        sets::{TiledPostUpdateSystems, TiledPreUpdateSystems, TiledUpdateSystems},
+        tile::{TiledTile, TiledTilemap},
+        world::{
+            asset::TiledWorldAsset, chunking::TiledWorldChunking, loader::TiledWorldLoaderError,
+            storage::TiledWorldStorage, RespawnTiledWorld, TiledWorld,
+        },
+        TiledPlugin, TiledPluginConfig,
+    };
+
+    // Re-exports from `bevy_ecs_tilemap`
     pub use bevy_ecs_tilemap::prelude::{TilePos, TilemapAnchor, TilemapGridSize, TilemapSize};
-}
-
-use crate::prelude::*;
-use bevy::prelude::*;
-use std::{env, path::PathBuf};
-
-/// [TiledMapPlugin] [Plugin] global configuration.
-#[derive(Resource, Reflect, Clone, Debug)]
-#[reflect(Resource, Debug)]
-pub struct TiledMapPluginConfig {
-    /// Path to the Tiled types export file.
-    ///
-    /// If [None], will not export Tiled types at startup.
-    pub tiled_types_export_file: Option<PathBuf>,
-}
-
-impl Default for TiledMapPluginConfig {
-    fn default() -> Self {
-        let mut path = env::current_dir().unwrap();
-        path.push("tiled_types_export.json");
-        Self {
-            tiled_types_export_file: Some(path),
-        }
-    }
-}
-
-/// `bevy_ecs_tiled` main `Plugin`.
-///
-/// This [Plugin] should be added to your application to actually be able to load a Tiled map.
-///
-/// Example:
-/// ```rust,no_run
-/// use bevy::prelude::*;
-/// use bevy_ecs_tiled::prelude::*;
-///
-/// App::new()
-///     .add_plugins(TiledMapPlugin::default());
-/// ```
-#[derive(Default, Clone, Debug)]
-pub struct TiledMapPlugin(pub TiledMapPluginConfig);
-
-impl Plugin for TiledMapPlugin {
-    fn build(&self, mut app: &mut App) {
-        if !app.is_plugin_added::<bevy_ecs_tilemap::TilemapPlugin>() {
-            app = app.add_plugins(bevy_ecs_tilemap::TilemapPlugin);
-        }
-        app.insert_resource(cache::TiledResourceCache::new())
-            .insert_resource(self.0.clone())
-            .register_type::<TiledMapPluginConfig>()
-            .add_plugins((map::build, world::build));
-        #[cfg(feature = "user_properties")]
-        app.add_systems(
-            Startup,
-            |reg: Res<AppTypeRegistry>, config: Res<TiledMapPluginConfig>| {
-                if let Some(path) = &config.tiled_types_export_file {
-                    info!("Export Tiled types to '{:?}'", &path);
-                    map::export_types(&reg, path, |_| true);
-                }
-            },
-        );
-    }
+    // Re-exports from `tiled`
+    pub use tiled::{Layer, Tile, TileId};
 }

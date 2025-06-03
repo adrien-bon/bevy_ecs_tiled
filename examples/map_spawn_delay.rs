@@ -13,7 +13,7 @@ fn main() {
         .add_plugins(DefaultPlugins.build().set(ImagePlugin::default_nearest()))
         // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
         // be automatically added as well if it's not already done
-        .add_plugins(TiledMapPlugin::default())
+        .add_plugins(TiledPlugin::default())
         // Examples helper plugins, such as the logic to pan and zoom the camera
         // This should not be used directly in your game (but you can always have a look)
         .add_plugins(helper::HelperPlugin)
@@ -25,7 +25,7 @@ fn main() {
 
 #[derive(Resource)]
 struct MapSpawner {
-    map_handle: Handle<TiledMap>,
+    map_handle: Handle<TiledMapAsset>,
     timer: Timer,
 }
 
@@ -45,6 +45,6 @@ fn spawn_map(mut commands: Commands, mut spawner: ResMut<MapSpawner>, time: Res<
     spawner.timer.tick(time.delta());
     if spawner.timer.just_finished() {
         info!("Timer finished, spawn the map !");
-        commands.spawn(TiledMapHandle(spawner.map_handle.clone()));
+        commands.spawn(TiledMap(spawner.map_handle.clone()));
     }
 }
