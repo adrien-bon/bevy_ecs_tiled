@@ -21,7 +21,7 @@ fn main() {
         .add_plugins(helper::HelperPlugin)
         // bevy_ecs_tiled physics plugin: this is where we select which physics backend to use
         // Here we use a custom backend (see below)
-        .add_plugins(TiledPhysicsPlugin::<MyCustomRapierPhysicsBackend>::default())
+        .add_plugins(TiledPhysicsPlugin::<TiledPhysicsRapierBackend>::default())
         // Rapier physics plugins
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
         .add_plugins(RapierDebugRenderPlugin::default())
@@ -52,13 +52,20 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 GravityScale(GRAVITY_SCALE),
                 Transform::from_xyz(0., -50., 0.),
             ));
-        });
+        })
+        // Automatically insert a `RigidBody::Fixed` component on all the colliders entities from the map
+        .observe(
+            |trigger: Trigger<TiledColliderCreated>, mut commands: Commands| {
+                commands.entity(trigger.entity).insert(RigidBody::Fixed);
+            },
+        );
 }
 
 // A 'player' marker component
 #[derive(Default, Clone, Component)]
 pub struct PlayerMarker;
 
+// A simplistic controller
 fn move_player(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut player: Query<&mut Velocity, With<PlayerMarker>>,
@@ -87,32 +94,5 @@ fn move_player(
         }
 
         rb_vels.linvel = direction * MOVE_SPEED;
-    }
-}
-
-// Define a custom physics backend which will use the TiledPhysicsRapierBackend
-// but add an extra RigidBody::KinematicPositionBased component on top of the regular collider.
-#[derive(Default, Debug, Clone, Reflect)]
-#[reflect(Default, Debug)]
-struct MyCustomRapierPhysicsBackend(TiledPhysicsRapierBackend);
-
-impl TiledPhysicsBackend for MyCustomRapierPhysicsBackend {
-    fn spawn_colliders(
-        &self,
-        commands: &mut Commands,
-        tiled_map: &TiledMap,
-        filter: &TiledNameFilter,
-        collider: &TiledCollider,
-        anchor: &TilemapAnchor,
-    ) -> Vec<TiledColliderSpawnInfos> {
-        let colliders = self
-            .0
-            .spawn_colliders(commands, tiled_map, filter, collider, anchor);
-        for c in &colliders {
-            commands
-                .entity(c.entity)
-                .insert(RigidBody::KinematicPositionBased);
-        }
-        colliders
     }
 }

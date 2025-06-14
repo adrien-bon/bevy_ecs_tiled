@@ -108,6 +108,8 @@ impl<T: TiledPhysicsBackend> Plugin for TiledPhysicsPlugin<T> {
         app.register_type::<TiledColliderMarker>()
             .register_type::<T>()
             .register_type::<TiledPhysicsSettings<T>>()
+            .register_type::<TiledColliderCreated>()
+            .add_event::<TiledColliderCreated>()
             .add_systems(
                 PreUpdate,
                 (
@@ -177,6 +179,7 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
     mut commands: Commands,
     map_asset: Res<Assets<TiledMap>>,
     maps_query: Query<(&TiledPhysicsSettings<T>, &TilemapAnchor), With<TiledMapMarker>>,
+    mut event_writer: EventWriter<TiledColliderCreated>,
 ) {
     for ev in layer_event.read() {
         debug!(
@@ -205,6 +208,7 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
                 &settings.tiles_objects_filter,
                 &TiledCollider::from_tiles_layer(ev.id),
                 anchor,
+                &mut event_writer,
             );
         }
     }
@@ -216,6 +220,7 @@ fn collider_from_object<T: TiledPhysicsBackend>(
     mut commands: Commands,
     map_asset: Res<Assets<TiledMap>>,
     maps_query: Query<(&TiledPhysicsSettings<T>, &TilemapAnchor), With<TiledMapMarker>>,
+    mut event_writer: EventWriter<TiledColliderCreated>,
 ) {
     for ev in object_event.read() {
         let (settings, anchor) = maps_query
@@ -245,6 +250,7 @@ fn collider_from_object<T: TiledPhysicsBackend>(
                 },
                 &TiledCollider::from_object(ev.layer.id, ev.id),
                 anchor,
+                &mut event_writer,
             );
         }
     }

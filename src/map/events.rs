@@ -30,18 +30,14 @@ impl fmt::Debug for TiledMapEventWriters<'_> {
 }
 
 /// Event sent when a map is spawned
-#[derive(Component, Reflect, Clone, Debug, Copy)]
+#[derive(Event, Component, Reflect, Clone, Debug, Copy)]
+#[event(auto_propagate, traversal = &'static ChildOf)]
 #[reflect(Component, Debug)]
 pub struct TiledMapCreated {
     /// Spawned map [Entity]
     pub entity: Entity,
     /// [AssetId] of the [TiledMap]
     pub asset_id: AssetId<TiledMap>,
-}
-
-impl Event for TiledMapCreated {
-    type Traversal = &'static ChildOf;
-    const AUTO_PROPAGATE: bool = true;
 }
 
 impl<'a> TiledMapCreated {
@@ -57,7 +53,8 @@ impl<'a> TiledMapCreated {
 }
 
 /// Event sent when a layer is spawned
-#[derive(Component, Reflect, Clone, Debug, Copy)]
+#[derive(Event, Component, Reflect, Clone, Debug, Copy)]
+#[event(auto_propagate, traversal = &'static ChildOf)]
 #[reflect(Component, Debug)]
 pub struct TiledLayerCreated {
     /// Creation event of the map this layer belongs to
@@ -66,11 +63,6 @@ pub struct TiledLayerCreated {
     pub entity: Entity,
     /// ID of this layer in the [Map]
     pub id: usize,
-}
-
-impl Event for TiledLayerCreated {
-    type Traversal = &'static ChildOf;
-    const AUTO_PROPAGATE: bool = true;
 }
 
 impl<'a> TiledLayerCreated {
@@ -83,7 +75,8 @@ impl<'a> TiledLayerCreated {
 }
 
 /// Event sent when an object is spawned
-#[derive(Component, Reflect, Clone, Debug, Copy)]
+#[derive(Event, Component, Reflect, Clone, Debug, Copy)]
+#[event(auto_propagate, traversal = &'static ChildOf)]
 #[reflect(Component, Debug)]
 pub struct TiledObjectCreated {
     /// Creation event of the layer this object belongs to
@@ -92,11 +85,6 @@ pub struct TiledObjectCreated {
     pub entity: Entity,
     /// ID of this object in the [tiled::ObjectLayer]
     pub id: usize,
-}
-
-impl Event for TiledObjectCreated {
-    type Traversal = &'static ChildOf;
-    const AUTO_PROPAGATE: bool = true;
 }
 
 impl<'a> TiledObjectCreated {
@@ -132,7 +120,8 @@ impl<'a> TiledObjectCreated {
 /// Event sent when a tile has finished loading
 ///
 /// This event is only sent for tiles which contain custom properties.
-#[derive(Component, Reflect, Clone, Debug, Copy)]
+#[derive(Event, Component, Reflect, Clone, Debug, Copy)]
+#[event(auto_propagate, traversal = &'static ChildOf)]
 #[reflect(Component, Debug)]
 pub struct TiledTileCreated {
     /// Creation event of the layer this tile belongs to
@@ -146,11 +135,6 @@ pub struct TiledTileCreated {
     pub index: IVec2,
     /// Tile position (bevy_ecs_tilemap referential)
     pub position: TilePos,
-}
-
-impl Event for TiledTileCreated {
-    type Traversal = &'static ChildOf;
-    const AUTO_PROPAGATE: bool = true;
 }
 
 impl<'a> TiledTileCreated {
