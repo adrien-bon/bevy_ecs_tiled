@@ -55,7 +55,7 @@ pub(crate) fn build(app: &mut bevy::prelude::App) {
 
 #[allow(clippy::type_complexity)]
 fn world_chunking(
-    camera_query: Query<&Transform, (With<Camera>, Changed<Transform>)>,
+    camera_query: Query<&Transform, With<Camera>>,
     worlds: Res<Assets<TiledWorld>>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
