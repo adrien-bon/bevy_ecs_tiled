@@ -31,6 +31,5 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         // But you can add extra components to change the defaults settings and how
         // your world is actually displayed
         TilemapAnchor::Center,
-        TiledWorldChunking::new(200., 200.),
     ));
 }
