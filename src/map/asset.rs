@@ -1,12 +1,12 @@
 //! This module contains all map [Asset]s definition.
 
-use std::fmt;
+use std::{fmt, sync::Arc};
 #[cfg(feature = "user_properties")]
 use std::ops::Deref;
 
 #[cfg(feature = "user_properties")]
 use bevy::reflect::TypeRegistryArc;
-use tiled::ChunkData;
+use tiled::{ChunkData, LayerType, Tileset, TilesetLocation};
 
 #[cfg(feature = "user_properties")]
 use crate::properties::load::DeserializedMapProperties;
@@ -56,7 +56,8 @@ pub struct TiledMap {
     /// HashMap of the map tilesets
     ///
     /// Key is the Tiled tileset index
-    pub(crate) tilesets: HashMap<usize, TiledMapTileset>,
+    pub(crate) tilesets: HashMap<String, TiledMapTileset>,
+    pub(crate) tilesets_path_by_index: HashMap<usize, String>,
     /// Map properties
     #[cfg(feature = "user_properties")]
     pub(crate) properties: DeserializedMapProperties,
@@ -173,89 +174,63 @@ impl AssetLoader for TiledMapLoader {
         };
 
         let mut tilesets = HashMap::default();
+        let mut tilesets_path_by_index = HashMap::<usize, String>::default();
         for (tileset_index, tileset) in map.tilesets().iter().enumerate() {
             debug!(
                 "Loading tileset (index={:?} name={:?}) from {:?}",
                 tileset_index, tileset.name, tileset.source
             );
-            let mut texture_atlas_layout_handle = None;
-            #[cfg(not(feature = "atlas"))]
-            let mut tile_image_offsets = HashMap::default();
-            let (usable_for_tiles_layer, tilemap_texture) = match &tileset.image {
-                None => {
-                    #[cfg(feature = "atlas")]
-                    {
-                        info!("Skipping image collection tileset '{}' which is incompatible with atlas feature", tileset.name);
-                        continue;
-                    }
 
-                    #[cfg(not(feature = "atlas"))]
-                    {
-                        let mut usable_for_tiles_layer = true;
-                        let mut image_size: Option<(i32, i32)> = None;
-                        let mut tile_images: Vec<Handle<Image>> = Vec::new();
-                        for (tile_id, tile) in tileset.tiles() {
-                            if let Some(img) = &tile.image {
-                                let asset_path = AssetPath::from(img.source.clone());
-                                trace!("Loading tile image from {asset_path:?} as image ({tileset_index}, {tile_id})");
-                                let texture: Handle<Image> = load_context.load(asset_path.clone());
-                                tile_image_offsets.insert(tile_id, tile_images.len() as u32);
-                                tile_images.push(texture.clone());
-                                if usable_for_tiles_layer {
-                                    if let Some(image_size) = image_size {
-                                        if img.width != image_size.0 || img.height != image_size.1 {
-                                            usable_for_tiles_layer = false;
-                                        }
-                                    } else {
-                                        image_size = Some((img.width, img.height));
-                                    }
-                                }
-                            }
-                        }
-                        if !usable_for_tiles_layer {
-                            debug!(
-                                "Tileset (index={:?}) have non constant image size and cannot be used for tiles layer",
-                                tileset_index
-                            );
-                        }
-                        (usable_for_tiles_layer, TilemapTexture::Vector(tile_images))
-                    }
-                }
-                Some(img) => {
-                    let asset_path = AssetPath::from(img.source.clone());
-                    let texture: Handle<Image> = load_context.load(asset_path.clone());
-
-                    let columns = (img.width as u32 - tileset.margin + tileset.spacing)
-                        / (tileset.tile_width + tileset.spacing);
-                    if columns > 0 {
-                        texture_atlas_layout_handle =
-                            Some(load_context.labeled_asset_scope(tileset.name.clone(), |_| {
-                                TextureAtlasLayout::from_grid(
-                                    UVec2::new(tileset.tile_width, tileset.tile_height),
-                                    columns,
-                                    tileset.tilecount / columns,
-                                    Some(UVec2::new(tileset.spacing, tileset.spacing)),
-                                    Some(UVec2::new(
-                                        tileset.offset_x as u32 + tileset.margin,
-                                        tileset.offset_y as u32 + tileset.margin,
-                                    )),
-                                )
-                            }));
-                    }
-
-                    (true, TilemapTexture::Single(texture.clone()))
-                }
+            let Some(path) = tileset.source.to_str() else {
+                continue;
             };
-            tilesets.insert(
+
+            let Some(tiled_map_tileset) = tileset_to_tiled_map_tileset(tileset.clone(), load_context) else {
+                continue;
+            };
+
+            tilesets_path_by_index.insert(
                 tileset_index,
-                TiledMapTileset {
-                    usable_for_tiles_layer,
-                    tilemap_texture,
-                    texture_atlas_layout_handle,
-                    #[cfg(not(feature = "atlas"))]
-                    tile_image_offsets,
-                },
+                path.to_owned(),
             );
+
+            tilesets.insert(
+                path.to_owned(),
+                tiled_map_tileset
+            );
+        }
+
+        for layer in map.layers() {
+            let LayerType::Objects(object_layer) = layer.layer_type() else {
+                continue;
+            };
+
+            for object_data in object_layer.objects() {
+                let Some(tile) = object_data.get_tile() else {
+                    continue;
+                };
+
+                let TilesetLocation::Template(tileset) = tile.tileset_location() else {
+                    continue;
+                };
+
+                let Some(path) = tileset.source.to_str() else {
+                    continue;
+                };
+
+                if tilesets.contains_key(&path.to_owned()) {
+                    continue;
+                }
+
+                let Some(tiled_map_tileset) = tileset_to_tiled_map_tileset(tileset.clone(), load_context) else {
+                    continue;
+                };
+
+                tilesets.insert(
+                    path.to_owned(),
+                    tiled_map_tileset
+                );
+            }
         }
 
         let mut infinite = false;
@@ -383,6 +358,7 @@ impl AssetLoader for TiledMapLoader {
             topleft_chunk: topleft,
             bottomright_chunk: bottomright,
             tilesets,
+            tilesets_path_by_index,
             #[cfg(feature = "user_properties")]
             properties,
         };
@@ -398,4 +374,90 @@ impl AssetLoader for TiledMapLoader {
         static EXTENSIONS: &[&str] = &["tmx"];
         EXTENSIONS
     }
+}
+
+fn tileset_to_tiled_map_tileset(
+    tileset: Arc<Tileset>,
+    load_context: &mut LoadContext<'_>
+) -> Option<TiledMapTileset>{
+    let Some(tileset_path) = tileset.source.to_str() else {
+        return None;
+    };
+
+    let mut texture_atlas_layout_handle = None;
+    #[cfg(not(feature = "atlas"))]
+    let mut tile_image_offsets = HashMap::default();
+    let (usable_for_tiles_layer, tilemap_texture) = match &tileset.image {
+        None => {
+            #[cfg(feature = "atlas")]
+            {
+                info!("Skipping image collection tileset '{}' which is incompatible with atlas feature", tileset.name);
+                continue;
+            }
+
+            #[cfg(not(feature = "atlas"))]
+            {
+                let mut usable_for_tiles_layer = true;
+                let mut image_size: Option<(i32, i32)> = None;
+                let mut tile_images: Vec<Handle<Image>> = Vec::new();
+                for (tile_id, tile) in tileset.tiles() {
+                    if let Some(img) = &tile.image {
+                        let asset_path = AssetPath::from(img.source.clone());
+                        trace!("Loading tile image from {asset_path:?} as image ({tileset_path}, {tile_id})");
+                        let texture: Handle<Image> = load_context.load(asset_path.clone());
+                        tile_image_offsets.insert(tile_id, tile_images.len() as u32);
+                        tile_images.push(texture.clone());
+                        if usable_for_tiles_layer {
+                            if let Some(image_size) = image_size {
+                                if img.width != image_size.0 || img.height != image_size.1 {
+                                    usable_for_tiles_layer = false;
+                                }
+                            } else {
+                                image_size = Some((img.width, img.height));
+                            }
+                        }
+                    }
+                }
+                if !usable_for_tiles_layer {
+                    debug!(
+                        "Tileset (path={:?}) have non constant image size and cannot be used for tiles layer",
+                        tileset_path
+                    );
+                }
+                (usable_for_tiles_layer, TilemapTexture::Vector(tile_images))
+            }
+        }
+        Some(img) => {
+            let asset_path = AssetPath::from(img.source.clone());
+            let texture: Handle<Image> = load_context.load(asset_path.clone());
+
+            let columns = (img.width as u32 - tileset.margin + tileset.spacing)
+                / (tileset.tile_width + tileset.spacing);
+            if columns > 0 {
+                texture_atlas_layout_handle =
+                    Some(load_context.labeled_asset_scope(tileset.name.clone(), |_| {
+                        TextureAtlasLayout::from_grid(
+                            UVec2::new(tileset.tile_width, tileset.tile_height),
+                            columns,
+                            tileset.tilecount / columns,
+                            Some(UVec2::new(tileset.spacing, tileset.spacing)),
+                            Some(UVec2::new(
+                                tileset.offset_x as u32 + tileset.margin,
+                                tileset.offset_y as u32 + tileset.margin,
+                            )),
+                        )
+                    }));
+            }
+
+            (true, TilemapTexture::Single(texture.clone()))
+        }
+    };
+
+    return Some(TiledMapTileset {
+        usable_for_tiles_layer,
+        tilemap_texture,
+        texture_atlas_layout_handle,
+        #[cfg(not(feature = "atlas"))]
+        tile_image_offsets,
+    });
 }
