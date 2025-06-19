@@ -2,6 +2,12 @@
 
 ## [unreleased]
 
+## v0.7.2
+
+### Bugfixes
+
+- Properly spawn all maps from a world when not using chunking, we were missing the last one (#96)
+
 ## v0.7.1
 
 ### Features
