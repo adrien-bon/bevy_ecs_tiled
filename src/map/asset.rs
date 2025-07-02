@@ -1,8 +1,8 @@
 //! This module contains all map [Asset]s definition.
 
-use std::{fmt, sync::Arc};
 #[cfg(feature = "user_properties")]
 use std::ops::Deref;
+use std::{fmt, sync::Arc};
 
 #[cfg(feature = "user_properties")]
 use bevy::reflect::TypeRegistryArc;
@@ -188,19 +188,15 @@ impl AssetLoader for TiledMapLoader {
                 continue;
             };
 
-            let Some(tiled_map_tileset) = tileset_to_tiled_map_tileset(tileset.clone(), load_context) else {
+            let Some(tiled_map_tileset) =
+                tileset_to_tiled_map_tileset(tileset.clone(), load_context)
+            else {
                 continue;
             };
 
-            tilesets_path_by_index.insert(
-                tileset_index,
-                path.to_owned(),
-            );
+            tilesets_path_by_index.insert(tileset_index, path.to_owned());
 
-            tilesets.insert(
-                path.to_owned(),
-                tiled_map_tileset
-            );
+            tilesets.insert(path.to_owned(), tiled_map_tileset);
         }
 
         for layer in map.layers() {
@@ -225,14 +221,13 @@ impl AssetLoader for TiledMapLoader {
                     continue;
                 }
 
-                let Some(tiled_map_tileset) = tileset_to_tiled_map_tileset(tileset.clone(), load_context) else {
+                let Some(tiled_map_tileset) =
+                    tileset_to_tiled_map_tileset(tileset.clone(), load_context)
+                else {
                     continue;
                 };
 
-                tilesets.insert(
-                    path.to_owned(),
-                    tiled_map_tileset
-                );
+                tilesets.insert(path.to_owned(), tiled_map_tileset);
             }
         }
 
@@ -381,8 +376,8 @@ impl AssetLoader for TiledMapLoader {
 
 fn tileset_to_tiled_map_tileset(
     tileset: Arc<Tileset>,
-    load_context: &mut LoadContext<'_>
-) -> Option<TiledMapTileset>{
+    load_context: &mut LoadContext<'_>,
+) -> Option<TiledMapTileset> {
     #[cfg(not(feature = "atlas"))]
     let Some(tileset_path) = tileset.source.to_str() else {
         return None;
@@ -457,11 +452,11 @@ fn tileset_to_tiled_map_tileset(
         }
     };
 
-    return Some(TiledMapTileset {
+    Some(TiledMapTileset {
         usable_for_tiles_layer,
         tilemap_texture,
         texture_atlas_layout_handle,
         #[cfg(not(feature = "atlas"))]
         tile_image_offsets,
-    });
+    })
 }

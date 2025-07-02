@@ -462,18 +462,17 @@ fn load_objects_layer(
             });
 
             // Handle the case of an animated tile
-            animation =
-                tile.get_tile()
-                    .and_then(|t| get_animated_tile(&t))
-                    .map(|animation| TiledAnimation {
-                        start: animation.start as usize,
-                        end: animation.end as usize,
-                        timer: Timer::from_seconds(
-                            1. / (animation.speed
-                                * (animation.end - animation.start) as f32),
-                            TimerMode::Repeating,
-                        ),
-                    });
+            animation = tile
+                .get_tile()
+                .and_then(|t| get_animated_tile(&t))
+                .map(|animation| TiledAnimation {
+                    start: animation.start as usize,
+                    end: animation.end as usize,
+                    timer: Timer::from_seconds(
+                        1. / (animation.speed * (animation.end - animation.start) as f32),
+                        TimerMode::Repeating,
+                    ),
+                });
         }
 
         match (sprite, animation) {
