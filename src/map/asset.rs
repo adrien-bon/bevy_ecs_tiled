@@ -55,8 +55,11 @@ pub struct TiledMap {
     pub(crate) bottomright_chunk: (i32, i32),
     /// HashMap of the map tilesets
     ///
-    /// Key is the Tiled tileset index
+    /// Key is the path to the Tiled tileset
     pub(crate) tilesets: HashMap<String, TiledMapTileset>,
+    /// HashMap of the paths to tilesets
+    ///
+    /// Key is the Tiled tileset index
     pub(crate) tilesets_path_by_index: HashMap<usize, String>,
     /// Map properties
     #[cfg(feature = "user_properties")]
@@ -380,6 +383,7 @@ fn tileset_to_tiled_map_tileset(
     tileset: Arc<Tileset>,
     load_context: &mut LoadContext<'_>
 ) -> Option<TiledMapTileset>{
+    #[cfg(not(feature = "atlas"))]
     let Some(tileset_path) = tileset.source.to_str() else {
         return None;
     };
