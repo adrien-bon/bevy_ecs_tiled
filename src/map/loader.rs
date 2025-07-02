@@ -310,6 +310,7 @@ fn load_tiles(
                 return;
             }
 
+            #[cfg(not(feature = "atlas"))]
             let Some(path) = tiled_map.tilesets_path_by_index.get(&tileset_index) else {
                 return;
             };
