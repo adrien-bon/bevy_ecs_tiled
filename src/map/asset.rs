@@ -379,9 +379,7 @@ fn tileset_to_tiled_map_tileset(
     load_context: &mut LoadContext<'_>,
 ) -> Option<TiledMapTileset> {
     #[cfg(not(feature = "atlas"))]
-    let Some(tileset_path) = tileset.source.to_str() else {
-        return None;
-    };
+    let tileset_path = tileset.source.to_str()?;
 
     let mut texture_atlas_layout_handle = None;
     #[cfg(not(feature = "atlas"))]

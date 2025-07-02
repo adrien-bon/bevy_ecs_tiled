@@ -23,7 +23,7 @@ pub fn rotate(
         }
 
         if keyboard_input.pressed(KeyCode::KeyE) {
-            transform.rotate_z(f32::to_radians(ROTATION_SPEED * time.delta_secs() * -1.));
+            transform.rotate_z(f32::to_radians(-(ROTATION_SPEED * time.delta_secs())));
         }
     }
 }

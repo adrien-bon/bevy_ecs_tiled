@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Features
+
+- Add support for object templates files (.tx) (#98)
+
 ## v0.7.2
 
 ### Bugfixes

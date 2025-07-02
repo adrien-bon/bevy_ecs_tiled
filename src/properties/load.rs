@@ -325,13 +325,12 @@ impl DeserializedProperties {
             }
             (_, PV::StringValue(s), TypeInfo::Enum(info)) => {
                 let Some(variant) = info.variant(&s) else {
-                    return Err(format!("no variant `{}` for `{}`", s, info.type_path()));
+                    return Err(format!("no variant `{s}` for `{}`", info.type_path()));
                 };
 
                 let VariantInfo::Unit(unit_info) = variant else {
                     return Err(format!(
-                        "variant `{}` is not a unit variant of `{}`",
-                        s,
+                        "variant `{s}` is not a unit variant of `{}`",
                         info.type_path()
                     ));
                 };
@@ -433,12 +432,8 @@ impl DeserializedProperties {
                 };
 
                 for i in 0..array.capacity() {
-                    let Some(pv) = properties.remove(&format!("[{}]", i)) else {
-                        return Err(format!(
-                            "missing property on `{}`: `{}`",
-                            info.type_path(),
-                            i
-                        ));
+                    let Some(pv) = properties.remove(&format!("[{i}]")) else {
+                        return Err(format!("missing property on `{}`: `{i}`", info.type_path(),));
                     };
 
                     let value =
@@ -486,9 +481,8 @@ impl DeserializedProperties {
                                 Ok(DynamicVariant::Struct(out))
                             } else {
                                 Err(format!(
-                                    "`{}` enum does not contain `{}` variant data",
+                                    "`{}` enum does not contain `{variant_name}` variant data",
                                     info.type_path(),
-                                    variant_name,
                                 ))
                             }
                         }
@@ -511,17 +505,15 @@ impl DeserializedProperties {
                                 Ok(DynamicVariant::Tuple(out))
                             } else {
                                 Err(format!(
-                                    "`{}` enum does not contain `{}` variant data",
+                                    "`{}` enum does not contain `{variant_name}` variant data",
                                     info.type_path(),
-                                    variant_name,
                                 ))
                             }
                         }
                         Some(VariantInfo::Unit(_)) => Ok(DynamicVariant::Unit),
                         None => Err(format!(
-                            "`{}` enum does not contain `{}` variant",
+                            "`{}` enum does not contain `{variant_name}` variant",
                             info.type_path(),
-                            variant_name,
                         )),
                     }?;
 
