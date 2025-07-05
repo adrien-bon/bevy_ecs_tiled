@@ -74,9 +74,9 @@ pub struct TiledPhysicsBackendOutput {
     pub transform: Transform,
 }
 
-pub(crate) fn plugin(app: &mut App) {
+pub(crate) fn plugin(_app: &mut App) {
     #[cfg(feature = "avian")]
-    app.register_type::<avian::TiledPhysicsAvianBackend>();
+    _app.register_type::<avian::TiledPhysicsAvianBackend>();
     #[cfg(feature = "rapier")]
-    app.register_type::<rapier::TiledPhysicsRapierBackend>();
+    _app.register_type::<rapier::TiledPhysicsRapierBackend>();
 }

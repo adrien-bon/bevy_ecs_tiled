@@ -91,7 +91,7 @@ impl<'a> TiledMapStorage {
     pub fn get_tile_id(&self, entity: Entity) -> Option<(u32, TileId)> {
         self.tiles
             .iter()
-            .find(|(_, v)| v.iter().any(|&e| e == entity))
+            .find(|(_, v)| v.contains(&entity))
             .map(|(&id, _)| id)
     }
 
