@@ -1,7 +1,7 @@
 [package]
 edition = "2021"
 name = "bevy_ecs_tiled"
-version = "0.7.2"
+version = "0.7.3"
 
 authors = ["Steve Pryde <steve@stevepryde.com>", "Adrien Bon"]
 description = "A Bevy plugin for loading Tiled maps"
