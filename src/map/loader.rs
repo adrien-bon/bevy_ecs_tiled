@@ -220,7 +220,12 @@ fn load_tiles_layer(
     // tilesets on each layer and allows differently-sized tile images in each tileset,
     // this means we need to load each combination of tileset and layer separately.
     for (tileset_index, tileset) in tiled_map.map.tilesets().iter().enumerate() {
-        let Some(t) = tiled_map.tilesets.get(&tileset_index) else {
+        let Some(path) = tiled_map.tilesets_path_by_index.get(&tileset_index) else {
+            log::warn!("Skipped creating layer with missing tilemap textures.");
+            continue;
+        };
+
+        let Some(t) = tiled_map.tilesets.get(path) else {
             log::warn!("Skipped creating layer with missing tilemap textures.");
             continue;
         };
@@ -300,15 +305,22 @@ fn load_tiles(
             let Some(tile) = layer_tile.get_tile() else {
                 return;
             };
+
             if tileset_index != layer_tile.tileset_index() {
                 return;
             }
+
+            #[cfg(not(feature = "atlas"))]
+            let Some(path) = tiled_map.tilesets_path_by_index.get(&tileset_index) else {
+                return;
+            };
+
             let texture_index = match tilemap_texture {
                 TilemapTexture::Single(_) => layer_tile.id(),
                 #[cfg(not(feature = "atlas"))]
                 TilemapTexture::Vector(_) => *tiled_map
                     .tilesets
-                    .get(&tileset_index)
+                    .get(path)
                     .and_then(|t| t.tile_image_offsets.get(&layer_tile.id()))
                     .expect(
                         "The offset into to image vector should have been saved during the initial load.",
@@ -400,58 +412,67 @@ fn load_objects_layer(
 
         // Handle objects containing tile data: we want to add a Sprite component to the object with the tile image
         if let Some(tile) = object_data.get_tile() {
-            match tile.tileset_location() {
+            let path = match tile.tileset_location() {
                 TilesetLocation::Map(tileset_index) => {
-                    sprite = tiled_map.tilesets.get(tileset_index).and_then(|t| {
-                        match &t.tilemap_texture {
-                            TilemapTexture::Single(single) => {
-                                t.texture_atlas_layout_handle.as_ref().map(|handle| {
-                                    Sprite {
-                                        image: single.clone(),
-                                        texture_atlas: Some(TextureAtlas {
-                                            layout: handle.clone(),
-                                            index: tile.id() as usize,
-                                        }),
-                                        anchor: Anchor::BottomLeft,
-                                        ..default()
-                                    }
-                                })
-                            },
-                            #[cfg(not(feature = "atlas"))]
-                            TilemapTexture::Vector(vector) => {
-                                let index = *t.tile_image_offsets.get(&tile.id())
-                                    .expect("The offset into to image vector should have been saved during the initial load.");
-                                vector.get(index as usize).map(|image| {
-                                    Sprite {
-                                        image: image.clone(),
-                                        anchor: Anchor::BottomLeft,
-                                        ..default()
-                                    }
-                                })
-                            }
-                            #[cfg(not(feature = "atlas"))]
-                            _ => unreachable!(),
-                        }
-                    });
+                    let Some(path) = tiled_map.tilesets_path_by_index.get(tileset_index) else {
+                        continue;
+                    };
 
-                    // Handle the case of an animated tile
-                    animation =
-                        tile.get_tile()
-                            .and_then(|t| get_animated_tile(&t))
-                            .map(|animation| TiledAnimation {
-                                start: animation.start as usize,
-                                end: animation.end as usize,
-                                timer: Timer::from_seconds(
-                                    1. / (animation.speed
-                                        * (animation.end - animation.start) as f32),
-                                    TimerMode::Repeating,
-                                ),
-                            });
+                    path
                 }
-                TilesetLocation::Template(_) => {
-                    log::warn!("Objects from template are not yet supported");
+                TilesetLocation::Template(tileset) => {
+                    let Some(path) = tileset.source.to_str() else {
+                        continue;
+                    };
+
+                    &path.to_owned()
                 }
-            }
+            };
+
+            sprite = tiled_map.tilesets.get(path).and_then(|t| {
+                match &t.tilemap_texture {
+                    TilemapTexture::Single(single) => {
+                        t.texture_atlas_layout_handle.as_ref().map(|handle| {
+                            Sprite {
+                                image: single.clone(),
+                                texture_atlas: Some(TextureAtlas {
+                                    layout: handle.clone(),
+                                    index: tile.id() as usize,
+                                }),
+                                anchor: Anchor::BottomLeft,
+                                ..default()
+                            }
+                        })
+                    },
+                    #[cfg(not(feature = "atlas"))]
+                    TilemapTexture::Vector(vector) => {
+                        let index = *t.tile_image_offsets.get(&tile.id())
+                            .expect("The offset into to image vector should have been saved during the initial load.");
+                        vector.get(index as usize).map(|image| {
+                            Sprite {
+                                image: image.clone(),
+                                anchor: Anchor::BottomLeft,
+                                ..default()
+                            }
+                        })
+                    }
+                    #[cfg(not(feature = "atlas"))]
+                    _ => unreachable!(),
+                }
+            });
+
+            // Handle the case of an animated tile
+            animation = tile
+                .get_tile()
+                .and_then(|t| get_animated_tile(&t))
+                .map(|animation| TiledAnimation {
+                    start: animation.start as usize,
+                    end: animation.end as usize,
+                    timer: Timer::from_seconds(
+                        1. / (animation.speed * (animation.end - animation.start) as f32),
+                        TimerMode::Repeating,
+                    ),
+                });
         }
 
         match (sprite, animation) {
