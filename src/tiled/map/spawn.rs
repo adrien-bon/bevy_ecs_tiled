@@ -220,7 +220,9 @@ fn spawn_tiles_layer(
         };
 
         let Some(t) = tiled_map.tilesets.get(path) else {
-            log::warn!("Skipped creating layer with missing tilemap textures (path {path:?} not found).");
+            log::warn!(
+                "Skipped creating layer with missing tilemap textures (path {path:?} not found)."
+            );
             continue;
         };
 
