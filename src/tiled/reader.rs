@@ -45,7 +45,7 @@ impl<'a> tiled::ResourceReader for BytesResourceReader<'a, '_> {
     /// using Bevy's asset system. Otherwise, it returns the embedded bytes.
     fn read_from(&mut self, path: &Path) -> std::result::Result<Self::Resource, Self::Error> {
         if let Some(extension) = path.extension() {
-            if extension == "tsx" {
+            if extension == "tsx" || extension == "tx" {
                 let future = self.context.read_asset_bytes(path.to_path_buf());
                 let data = futures_lite::future::block_on(future)
                     .map_err(|err| IoError::new(ErrorKind::NotFound, err))?;

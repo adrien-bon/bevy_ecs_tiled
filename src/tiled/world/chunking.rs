@@ -121,7 +121,7 @@ fn handle_world_chunking(
             }
         } else if storage.maps.is_empty() {
             // No chunking and we don't have spawned any map yet: just spawn all maps
-            for idx in 0..tiled_world.maps.len() - 1 {
+            for idx in 0..tiled_world.maps.len() {
                 to_spawn.push(idx as u32);
             }
         }

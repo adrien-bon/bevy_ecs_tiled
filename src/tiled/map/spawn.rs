@@ -215,12 +215,12 @@ fn spawn_tiles_layer(
     for (tileset_index, tileset) in tiled_map.map.tilesets().iter().enumerate() {
         let tileset_index = tileset_index as u32;
         let Some(path) = tiled_map.tilesets_path_by_index.get(&tileset_index) else {
-            log::warn!("Skipped creating layer with missing tilemap textures.");
+            log::warn!("Skipped creating layer with missing tilemap textures (index {tileset_index} not found).");
             continue;
         };
 
         let Some(t) = tiled_map.tilesets.get(path) else {
-            log::warn!("Skipped creating layer with missing tilemap textures.");
+            log::warn!("Skipped creating layer with missing tilemap textures (path {path:?} not found).");
             continue;
         };
 
