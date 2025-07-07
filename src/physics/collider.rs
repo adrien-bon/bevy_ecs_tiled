@@ -4,15 +4,8 @@
 //! It provides types to distinguish between colliders created from tile layers and object layers,
 //! as well as utilities for extracting tile data relevant to collider generation.
 
+use crate::prelude::*;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::anchor::TilemapAnchor;
-use tiled::Tile;
-
-use crate::tiled::{
-    event::TiledEvent,
-    helpers::{grid_size_from_map, tile_size_from_grid_size, tilemap_type_from_map},
-    map::asset::TiledMapAsset,
-};
 
 /// Marker component for colliders
 ///

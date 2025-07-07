@@ -2,13 +2,14 @@
 //!
 //! This module defines the asset loader implementation for importing Tiled worlds into Bevy's asset system.
 
-use crate::tiled::{cache::TiledResourceCache, reader::BytesResourceReader};
+use crate::{
+    prelude::*,
+    tiled::{cache::TiledResourceCache, reader::BytesResourceReader},
+};
 use bevy::{
     asset::{io::Reader, AssetLoader, AssetPath, LoadContext},
     prelude::*,
 };
-
-use super::asset::TiledWorldAsset;
 
 /// [`TiledWorldAsset`] loading error.
 #[derive(Debug, thiserror::Error)]

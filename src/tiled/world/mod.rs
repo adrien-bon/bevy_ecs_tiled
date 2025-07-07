@@ -9,18 +9,8 @@ pub mod chunking;
 pub mod loader;
 pub mod storage;
 
-use asset::TiledWorldAsset;
+use crate::{prelude::*, tiled::event::TiledEventWriters};
 use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
-use bevy_ecs_tilemap::{map::TilemapRenderSettings, prelude::TilemapAnchor};
-use chunking::TiledWorldChunking;
-use storage::TiledWorldStorage;
-
-use crate::tiled::{
-    event::{TiledEvent, TiledEventWriters, WorldCreated},
-    map::TiledMapLayerZOffset,
-};
-
-use super::sets::{TiledPostUpdateSystems, TiledPreUpdateSystems};
 
 /// Wrapper around the [`Handle`] to the `.world` file representing the [`TiledWorld`].
 ///

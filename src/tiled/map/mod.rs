@@ -10,13 +10,11 @@ pub mod loader;
 pub(crate) mod spawn;
 pub mod storage;
 
-use crate::tiled::{cache::TiledResourceCache, event::TiledEventWriters};
-use asset::TiledMapAsset;
+use crate::{
+    prelude::*,
+    tiled::{cache::TiledResourceCache, event::TiledEventWriters},
+};
 use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
-use bevy_ecs_tilemap::prelude::*;
-use storage::TiledMapStorage;
-
-use super::sets::{TiledPostUpdateSystems, TiledPreUpdateSystems};
 
 /// The component representing our Tiled map.
 ///

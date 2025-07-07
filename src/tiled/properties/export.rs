@@ -1,13 +1,12 @@
-use crate::tiled::properties::types_json::{
-    Class, Enum, FieldType, Member, StorageType, TypeData, TypeExport, UseAs,
+use crate::{prelude::*, tiled::properties::types_json::*};
+use bevy::{
+    ecs::reflect::ReflectBundle,
+    prelude::*,
+    reflect::{
+        ArrayInfo, EnumInfo, NamedField, ReflectRef, StructInfo, TupleInfo, TupleStructInfo,
+        TypeInfo, TypeRegistration, TypeRegistry, UnnamedField, VariantInfo,
+    },
 };
-use bevy::ecs::reflect::ReflectBundle;
-use bevy::platform::collections::HashMap;
-use bevy::reflect::{
-    ArrayInfo, EnumInfo, NamedField, StructInfo, TupleInfo, TupleStructInfo, TypeInfo,
-    TypeRegistration, TypeRegistry, UnnamedField, VariantInfo,
-};
-use bevy::{prelude::*, reflect::ReflectRef};
 use std::borrow::Cow;
 use thiserror::Error;
 

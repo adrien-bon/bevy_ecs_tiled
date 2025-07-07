@@ -13,9 +13,8 @@ use std::{
     sync::Arc,
 };
 
+use crate::prelude::*;
 use bevy::{ecs::system::SystemParam, prelude::*};
-use bevy_ecs_tilemap::tiles::TilePos;
-use tiled::{Layer, Map, Object, Tile, TileId, Tileset, World};
 
 #[allow(unused_imports)]
 use crate::tiled::{
@@ -145,7 +144,7 @@ where
     }
 
     /// Retrieve the [`World`] associated with this [`TiledEvent`]
-    pub fn get_world(&self, assets: &'a Res<Assets<TiledWorldAsset>>) -> Option<&'a World> {
+    pub fn get_world(&self, assets: &'a Res<Assets<TiledWorldAsset>>) -> Option<&'a TiledRawWorld> {
         self.get_world_asset(assets).map(|w| &w.world)
     }
 

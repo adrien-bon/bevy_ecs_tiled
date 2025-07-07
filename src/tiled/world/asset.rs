@@ -1,10 +1,8 @@
 //! This module contains all world [`Asset`]s definition.
 
-use bevy::{math::bounding::Aabb2d, prelude::*};
-use bevy_ecs_tilemap::anchor::TilemapAnchor;
+use crate::prelude::*;
+use bevy::prelude::*;
 use std::fmt;
-
-use crate::tiled::map::asset::TiledMapAsset;
 
 /// Tiled world `Asset`.
 ///
