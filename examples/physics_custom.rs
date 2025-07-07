@@ -5,7 +5,7 @@ use bevy::{
     ecs::{component::HookContext, world::DeferredWorld},
     prelude::*,
 };
-use bevy_ecs_tiled::prelude::*;
+use bevy_ecs_tiled::{physics::backend::TiledPhysicsBackendOutput, prelude::*};
 
 mod helper;
 
@@ -15,7 +15,7 @@ fn main() {
         .add_plugins(DefaultPlugins.build().set(ImagePlugin::default_nearest()))
         // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
         // be automatically added as well if it's not already done
-        .add_plugins(TiledMapPlugin::default())
+        .add_plugins(TiledPlugin::default())
         // Examples helper plugins, such as the logic to pan and zoom the camera
         // This should not be used directly in your game (but you can always have a look)
         .add_plugins(helper::HelperPlugin)
@@ -29,9 +29,7 @@ fn main() {
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d);
-    commands.spawn(TiledMapHandle(
-        asset_server.load("maps/orthogonal/finite.tmx"),
-    ));
+    commands.spawn(TiledMap(asset_server.load("maps/orthogonal/finite.tmx")));
 }
 
 #[derive(Default, Debug, Clone, Reflect)]
@@ -44,17 +42,14 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
     fn spawn_colliders(
         &self,
         commands: &mut Commands,
-        _tiled_map: &TiledMap,
-        _filter: &TiledNameFilter,
-        collider: &TiledCollider,
+        _assets: &Res<Assets<TiledMapAsset>>,
         _anchor: &TilemapAnchor,
-    ) -> Vec<TiledColliderSpawnInfos> {
-        match collider {
-            TiledCollider::Object {
-                layer_id: _,
-                object_id: _,
-            } => {
-                vec![TiledColliderSpawnInfos {
+        _filter: &TiledNameFilter,
+        source: &TiledEvent<ColliderCreated>,
+    ) -> Vec<TiledPhysicsBackendOutput> {
+        match source.event.0 {
+            TiledCollider::Object => {
+                vec![TiledPhysicsBackendOutput {
                     name: String::from("Custom[Object]"),
                     entity: commands
                         .spawn(MyCustomPhysicsComponent(Color::from(PURPLE)))
@@ -62,8 +57,8 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
                     transform: Transform::default(),
                 }]
             }
-            TiledCollider::TilesLayer { layer_id: _ } => {
-                vec![TiledColliderSpawnInfos {
+            TiledCollider::TilesLayer => {
+                vec![TiledPhysicsBackendOutput {
                     name: String::from("Custom[TilesLayer]"),
                     entity: commands
                         .spawn(MyCustomPhysicsComponent(Color::from(RED)))

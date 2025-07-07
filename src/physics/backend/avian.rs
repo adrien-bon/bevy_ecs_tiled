@@ -1,6 +1,17 @@
-//! Avian physics backend.
+//! Avian physics backend for bevy_ecs_tiled.
 //!
-//! Only available when the `avian` feature is enabled.
+//! This module provides an implementation of the [`TiledPhysicsBackend`] trait using the Avian 2D physics engine.
+//! This backend is only available when the `avian` feature is enabled.
+//!
+//! # Example
+//!
+//! ```rust,no_run
+//! use bevy::prelude::*;
+//! use bevy_ecs_tiled::prelude::*;
+//!
+//! App::new()
+//!     .add_plugins(TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default());
+//! ```
 
 use avian2d::{
     collision::collider::EllipseColliderShape,
@@ -11,21 +22,18 @@ use avian2d::{
     prelude::*,
 };
 use bevy::prelude::*;
-use bevy_ecs_tilemap::map::TilemapGridSize;
+use bevy_ecs_tilemap::{anchor::TilemapAnchor, map::TilemapGridSize};
 use tiled::{ObjectLayerData, ObjectShape};
 
-use crate::prelude::*;
+use crate::{
+    names::TiledNameFilter,
+    physics::collider::{ColliderCreated, TiledCollider},
+    tiled::{event::TiledEvent, helpers::grid_size_from_map, map::asset::TiledMapAsset},
+};
 
-/// The actual Avian physics backend to use when instantiating the physics plugin.
-///
-/// Example:
-/// ```rust,no_run
-/// use bevy::prelude::*;
-/// use bevy_ecs_tiled::prelude::*;
-///
-/// App::new()
-///     .add_plugins(TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default());
-/// ```
+use super::{TiledPhysicsBackend, TiledPhysicsBackendOutput};
+
+/// The [`TiledPhysicsBackend`] to use for Avian 2D integration.
 #[derive(Default, Reflect, Copy, Clone, Debug)]
 #[reflect(Default, Debug)]
 pub struct TiledPhysicsAvianBackend;
@@ -34,17 +42,18 @@ impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
     fn spawn_colliders(
         &self,
         commands: &mut Commands,
-        tiled_map: &TiledMap,
-        filter: &TiledNameFilter,
-        collider: &TiledCollider,
+        assets: &Res<Assets<TiledMapAsset>>,
         anchor: &TilemapAnchor,
-    ) -> Vec<TiledColliderSpawnInfos> {
-        match collider {
-            TiledCollider::Object {
-                layer_id: _,
-                object_id: _,
-            } => {
-                let Some(object) = collider.get_object(tiled_map) else {
+        filter: &TiledNameFilter,
+        source: &TiledEvent<ColliderCreated>,
+    ) -> Vec<TiledPhysicsBackendOutput> {
+        let Some(map_asset) = source.get_map_asset(assets) else {
+            return vec![];
+        };
+        let grid_size = grid_size_from_map(&map_asset.map);
+        match source.event.0 {
+            TiledCollider::Object => {
+                let Some(object) = source.get_object(assets) else {
                     return vec![];
                 };
 
@@ -60,13 +69,13 @@ impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
                             filter,
                             object_layer_data,
                             Vec2::ZERO,
-                            get_grid_size(&tiled_map.map),
+                            grid_size,
                             &mut composables,
                             &mut spawn_infos,
                         );
                         if !composables.is_empty() {
                             let collider: Collider = SharedShape::compound(composables).into();
-                            spawn_infos.push(TiledColliderSpawnInfos {
+                            spawn_infos.push(TiledPhysicsBackendOutput {
                                 name: "Avian[ComposedTile]".to_string(),
                                 entity: commands.spawn(collider).id(),
                                 transform: Transform::default(),
@@ -79,7 +88,7 @@ impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
                         let iso = Isometry3d::from_rotation(Quat::from_rotation_z(
                             f32::to_radians(-object.rotation),
                         )) * Isometry3d::from_xyz(pos.x, pos.y, 0.);
-                        vec![TiledColliderSpawnInfos {
+                        vec![TiledPhysicsBackendOutput {
                             name: format!("Avian[Object={}]", object.name),
                             entity: commands.spawn(collider).id(),
                             transform: Transform::from_isometry(iso),
@@ -88,17 +97,17 @@ impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
                 }
                 .unwrap_or_default()
             }
-            TiledCollider::TilesLayer { layer_id: _ } => {
+            TiledCollider::TilesLayer => {
                 let mut composables = vec![];
                 let mut spawn_infos = vec![];
-                for (tile_position, tile) in collider.get_tiles(tiled_map, anchor) {
+                for (tile_position, tile) in source.get_tiles(assets, anchor) {
                     if let Some(collision) = &tile.collision {
                         compose_tiles(
                             commands,
                             filter,
                             collision,
                             tile_position,
-                            get_grid_size(&tiled_map.map),
+                            grid_size,
                             &mut composables,
                             &mut spawn_infos,
                         );
@@ -106,7 +115,7 @@ impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
                 }
                 if !composables.is_empty() {
                     let collider: Collider = SharedShape::compound(composables).into();
-                    spawn_infos.push(TiledColliderSpawnInfos {
+                    spawn_infos.push(TiledPhysicsBackendOutput {
                         name: "Avian[ComposedTile]".to_string(),
                         entity: commands.spawn(collider).id(),
                         transform: Transform::default(),
@@ -126,7 +135,7 @@ fn compose_tiles(
     tile_offset: Vec2,
     grid_size: TilemapGridSize,
     composables: &mut Vec<(Isometry<Real>, SharedShape)>,
-    spawn_infos: &mut Vec<TiledColliderSpawnInfos>,
+    spawn_infos: &mut Vec<TiledPhysicsBackendOutput>,
 ) {
     for object in object_layer_data.object_data() {
         if !filter.contains(&object.name) {
@@ -153,7 +162,7 @@ fn compose_tiles(
                     * Isometry3d::from_rotation(Quat::from_rotation_z(f32::to_radians(
                         -object.rotation,
                     )));
-                spawn_infos.push(TiledColliderSpawnInfos {
+                spawn_infos.push(TiledPhysicsBackendOutput {
                     name: "Avian[ComplexTile]".to_string(),
                     entity: commands.spawn(collider).id(),
                     transform: Transform::from_isometry(iso),

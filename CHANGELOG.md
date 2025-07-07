@@ -2,6 +2,21 @@
 
 ## [unreleased]
 
+**BREAKING CHANGES**
+This version brings breaking changes.
+A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_8.html) is available to help adapt to these.
+
+### Features
+
+- Explicit `SystemSet` to allow systems ordering for user applications.
+
+### Changed
+
+- Several types or functions have been renamed to better reflect what they actually do.
+- Rework the `Event` APi and provide an unified way to handle events and access underlying Tiled data.
+- Add helpers functions to the `TiledMapStorage` component so it's easier to work with.
+- Several files have been moved around or renamed.
+
 ## v0.7.3
 
 ### Features

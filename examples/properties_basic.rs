@@ -3,7 +3,7 @@
 use std::env;
 
 use bevy::prelude::*;
-use bevy_ecs_tiled::{prelude::*, TiledMapPluginConfig};
+use bevy_ecs_tiled::prelude::*;
 
 mod helper;
 
@@ -19,7 +19,7 @@ fn main() {
         // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
         // be automatically added as well if it's not already done
         // For demonstration purpose, provide a custom path where to export registered types
-        .add_plugins(TiledMapPlugin(TiledMapPluginConfig {
+        .add_plugins(TiledPlugin(TiledPluginConfig {
             // Note: if you set this setting to `None`
             // properties won't be exported anymore but
             // you will still be able to load them from the map
@@ -41,7 +41,7 @@ fn main() {
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d);
-    commands.spawn(TiledMapHandle(
+    commands.spawn(TiledMap(
         asset_server.load("maps/hexagonal/finite_pointy_top_odd.tmx"),
     ));
 }

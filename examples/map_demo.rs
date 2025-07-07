@@ -11,7 +11,7 @@ fn main() {
         .add_plugins(DefaultPlugins.build().set(ImagePlugin::default_nearest()))
         // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
         // be automatically added as well if it's not already done
-        .add_plugins(TiledMapPlugin::default())
+        .add_plugins(TiledPlugin::default())
         // Examples helper plugins, such as the logic to pan and zoom the camera
         // This should not be used directly in your game (but you can always have a look)
         .add_plugins(helper::HelperPlugin)
@@ -26,7 +26,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // Load and spawn the map
     commands.spawn((
-        TiledMapHandle(asset_server.load("maps/demo.tmx")),
+        TiledMap(asset_server.load("maps/demo.tmx")),
         TilemapAnchor::Center,
     ));
 }

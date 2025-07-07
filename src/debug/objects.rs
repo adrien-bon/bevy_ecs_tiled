@@ -1,19 +1,24 @@
-//! Debug plugin for objects
+//! Debug plugin for visualizing Tiled objects in Bevy.
 //!
-//! Display a Bevy [Gizmos] to indicate where Tiled objects are
+//! This module provides a plugin and configuration for displaying Bevy [`Gizmos`] at the positions of Tiled objects.
+//! It is useful for debugging object placement, orientation, and map integration in your Tiled maps.
+//!
+//! When enabled, the plugin draws a 2D arrow gizmo at each Tiled object's position, allowing you to easily
+//! verify where objects are spawned in your world.
 
-use crate::prelude::*;
 use bevy::{color::palettes::css::RED, prelude::*};
 
-/// Configuration for the [TiledDebugObjectsPlugin]
+use crate::tiled::object::TiledObject;
+
+/// Configuration for the [`TiledDebugObjectsPlugin`].
 ///
-/// Contains some settings to customize how the `arrow_2d` [Gizmos] will appear.
+/// Contains settings to customize how the `arrow_2d` [`Gizmos`] will appear for each Tiled object.
 #[derive(Resource, Reflect, Copy, Clone, Debug)]
 #[reflect(Resource, Debug)]
 pub struct TiledDebugObjectsConfig {
-    /// Color of the `arrow_2d` [Gizmos]
+    /// Color of the `arrow_2d` [`Gizmos`].
     pub color: Color,
-    /// Length of the `arrow_2d` [Gizmos]
+    /// Length and direction of the `arrow_2d` [`Gizmos`].
     pub arrow_length: Vec2,
 }
 
@@ -26,10 +31,12 @@ impl Default for TiledDebugObjectsConfig {
     }
 }
 
-/// `bevy_ecs_tiled` debug [Plugin] for Tiled objects
+/// Debug [`Plugin`] for visualizing Tiled objects in Bevy.
 ///
-/// In case you want to debug where your Tiled objects are actually spawned, you can use this plugin :
+/// Add this plugin to your app to display a 2D arrow gizmo at the position of each [`TiledObject`] entity.
+/// This is helpful for debugging and verifying object placement in your Tiled maps.
 ///
+/// # Example
 /// ```rust,no_run
 /// use bevy::prelude::*;
 /// use bevy_ecs_tiled::prelude::*;
@@ -38,10 +45,10 @@ impl Default for TiledDebugObjectsConfig {
 ///     .add_plugins(TiledDebugObjectsPlugin::default());
 /// ```
 ///
-/// This will display an `arrow_2d` [Gizmos] where your objects are.
-///
+/// This will display an `arrow_2d` [`Gizmos`] at each Tiled object's position.
 #[derive(Default, Copy, Clone, Debug)]
 pub struct TiledDebugObjectsPlugin(pub TiledDebugObjectsConfig);
+
 impl Plugin for TiledDebugObjectsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.register_type::<TiledDebugObjectsConfig>()
@@ -51,7 +58,7 @@ impl Plugin for TiledDebugObjectsPlugin {
 }
 
 fn draw_debug_arrow(
-    objects_query: Query<&GlobalTransform, With<TiledMapObject>>,
+    objects_query: Query<&GlobalTransform, With<TiledObject>>,
     config: Res<TiledDebugObjectsConfig>,
     mut gizmos: Gizmos,
 ) {

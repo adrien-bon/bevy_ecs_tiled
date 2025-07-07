@@ -4,92 +4,28 @@
 //!
 //! See the [dedicated book section](https://adrien-bon.github.io/bevy_ecs_tiled/guides/physics.html) for more information.
 
+pub mod backend;
 pub mod collider;
+pub mod settings;
 
-#[cfg(feature = "rapier")]
-pub mod rapier;
+use backend::TiledPhysicsBackend;
+use bevy::prelude::*;
+use bevy_ecs_tilemap::anchor::TilemapAnchor;
+use collider::{ColliderCreated, TiledCollider};
+use settings::TiledPhysicsSettings;
 
-#[cfg(feature = "avian")]
-pub mod avian;
-
-use std::fmt;
-
-use crate::prelude::*;
-use bevy::{prelude::*, reflect::Reflectable};
-use prelude::*;
-
-/// `bevy_ecs_tiled` physics public exports.
-pub mod prelude {
-    #[cfg(feature = "avian")]
-    pub use super::avian::*;
-    pub use super::collider::*;
-    #[cfg(feature = "rapier")]
-    pub use super::rapier::*;
-    pub use super::TiledPhysicsBackend;
-    pub use super::TiledPhysicsPlugin;
-    pub use super::TiledPhysicsSettings;
-}
-
-/// Physics backend public trait.
-///
-/// A custom physics backend should implement this trait.
-pub trait TiledPhysicsBackend:
-    Default
-    + Clone
-    + fmt::Debug
-    + 'static
-    + std::marker::Sync
-    + std::marker::Send
-    + FromReflect
-    + Reflectable
-{
-    /// Function responsible for spawning physics colliders
-    ///
-    /// This function should spawn one or several [Entity] representing a physics
-    /// collider and return informations about it.
-    /// In case the provided [TiledCollider] is not supported, it should
-    /// not spawn anything and return an empty [Vec].
-    fn spawn_colliders(
-        &self,
-        commands: &mut Commands,
-        tiled_map: &TiledMap,
-        filter: &TiledNameFilter,
-        collider: &TiledCollider,
-        anchor: &TilemapAnchor,
-    ) -> Vec<TiledColliderSpawnInfos>;
-}
-
-/// Physics related settings.
-#[derive(Component, Default, Reflect, Clone, Debug)]
-#[reflect(Component, Default, Debug)]
-pub struct TiledPhysicsSettings<T: TiledPhysicsBackend> {
-    /// Specify which Tiled object to add colliders for using their layer name.
-    ///
-    /// Colliders will be automatically added for all objects whose containing layer name matches this filter.
-    /// By default, we add colliders for all objects.
-    pub objects_layer_filter: TiledName,
-    /// Specify which Tiled object to add colliders for using their name.
-    ///
-    /// Colliders will be automatically added for all objects whose name matches this filter.
-    /// By default, we add colliders for all objects.
-    pub objects_filter: TiledName,
-    /// Specify which tiles collision object to add colliders for using their layer name.
-    ///
-    /// Colliders will be automatically added for all tiles collision objects whose layer name matches this filter.
-    /// By default, we add colliders for all collision objects.
-    pub tiles_layer_filter: TiledName,
-    /// Specify which tiles collision object to add colliders for using their name.
-    ///
-    /// Colliders will be automatically added for all tiles collision objects whose name matches this filter.
-    /// By default, we add colliders for all collision objects.
-    pub tiles_objects_filter: TiledName,
-    /// Physics backend to use for adding colliders.
-    pub backend: T,
-}
+use crate::{
+    names::{TiledName, TiledNameFilter},
+    tiled::{
+        event::{LayerCreated, ObjectCreated, TiledEvent},
+        map::{asset::TiledMapAsset, TiledMap},
+        sets::TiledPreUpdateSystems,
+    },
+};
 
 /// Physics plugin.
 ///
-/// Must be added to your app in order to automatically spawn physics colliders using the provided [TiledPhysicsBackend].
+/// Must be added to your app in order to automatically spawn physics colliders using the provided [`TiledPhysicsBackend`].
 ///
 /// Example:
 /// ```rust,no_run
@@ -105,153 +41,121 @@ pub struct TiledPhysicsPlugin<T: TiledPhysicsBackend>(std::marker::PhantomData<T
 
 impl<T: TiledPhysicsBackend> Plugin for TiledPhysicsPlugin<T> {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.register_type::<TiledColliderMarker>()
-            .register_type::<T>()
-            .register_type::<TiledPhysicsSettings<T>>()
-            .register_type::<TiledColliderCreated>()
-            .add_event::<TiledColliderCreated>()
-            .add_systems(
-                PreUpdate,
-                (
-                    initialize_settings_for_worlds::<T>,
-                    initialize_settings_for_maps::<T>,
-                    collider_from_tiles_layer::<T>,
-                    collider_from_object::<T>,
-                )
-                    .chain()
-                    .after(crate::map::process_loaded_maps),
-            )
-            .add_systems(PostUpdate, update_settings::<T>);
-    }
-}
-
-fn initialize_settings_for_worlds<T: TiledPhysicsBackend>(
-    mut commands: Commands,
-    worlds_query: Query<Entity, (With<TiledWorldMarker>, Without<TiledPhysicsSettings<T>>)>,
-) {
-    for world in worlds_query.iter() {
-        commands
-            .entity(world)
-            .insert(TiledPhysicsSettings::<T>::default());
-    }
-}
-
-#[allow(clippy::type_complexity)]
-fn initialize_settings_for_maps<T: TiledPhysicsBackend>(
-    mut commands: Commands,
-    maps_query: Query<
-        (Entity, Option<&ChildOf>),
-        (With<TiledMapMarker>, Without<TiledPhysicsSettings<T>>),
-    >,
-    worlds_query: Query<&TiledPhysicsSettings<T>, With<TiledWorldMarker>>,
-) {
-    for (map, child_of) in maps_query.iter() {
-        commands.entity(map).insert(
-            child_of
-                .and_then(|child_of| worlds_query.get(child_of.parent()).ok())
-                .cloned()
-                .unwrap_or_default(),
+        app.register_type::<T>();
+        app.add_systems(
+            PreUpdate,
+            (collider_from_tiles_layer::<T>, collider_from_object::<T>)
+                .chain()
+                .in_set(TiledPreUpdateSystems::SpawnPhysicsColliders),
         );
+        app.add_plugins((backend::plugin, collider::plugin, settings::plugin::<T>));
     }
 }
 
-fn update_settings<T: TiledPhysicsBackend>(
-    mut commands: Commands,
-    maps_query: Query<(Entity, Ref<TiledPhysicsSettings<T>>), With<TiledMapMarker>>,
-    worlds_query: Query<(Entity, Ref<TiledPhysicsSettings<T>>), With<TiledWorldMarker>>,
-) {
-    for (world, settings) in worlds_query.iter() {
-        if settings.is_changed() && !settings.is_added() {
-            commands.entity(world).insert(RespawnTiledWorld);
-        }
-    }
-
-    for (map, settings) in maps_query.iter() {
-        if settings.is_changed() && !settings.is_added() {
-            commands.entity(map).insert(RespawnTiledMap);
-        }
-    }
-}
-
-#[allow(clippy::type_complexity)]
 fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
-    mut layer_event: EventReader<TiledLayerCreated>,
+    mut layer_event: EventReader<TiledEvent<LayerCreated>>,
     mut commands: Commands,
-    map_asset: Res<Assets<TiledMap>>,
-    maps_query: Query<(&TiledPhysicsSettings<T>, &TilemapAnchor), With<TiledMapMarker>>,
-    mut event_writer: EventWriter<TiledColliderCreated>,
+    assets: Res<Assets<TiledMapAsset>>,
+    maps_query: Query<(&TiledPhysicsSettings<T>, &TilemapAnchor), With<TiledMap>>,
+    mut event_writer: EventWriter<TiledEvent<ColliderCreated>>,
 ) {
     for ev in layer_event.read() {
-        debug!(
-            "map entity = {:?}, layer entity = {:?}",
-            ev.map.entity, ev.entity
-        );
-        let (settings, anchor) = maps_query
-            .get(ev.map.entity)
+        let (settings, anchor) = ev
+            .get_map_entity()
+            .and_then(|e| maps_query.get(e).ok())
             .expect("TiledPhysicsSettings<T> component should be on map entity");
-        let Some(tiled_map) = ev.map.get_map_asset(&map_asset) else {
-            return;
+
+        let Some(layer) = ev.get_layer(&assets) else {
+            continue;
         };
-        let Some(layer) = ev.get_layer(&map_asset) else {
-            return;
-        };
+
         let tiled::LayerType::Tiles(_) = layer.layer_type() else {
-            return;
+            continue;
         };
 
         if TiledNameFilter::from(&settings.tiles_layer_filter).contains(&layer.name) {
-            collider::spawn_colliders(
+            spawn_colliders::<T>(
                 &settings.backend,
-                ev.entity,
                 &mut commands,
-                tiled_map,
-                &settings.tiles_objects_filter,
-                &TiledCollider::from_tiles_layer(ev.id),
+                &assets,
                 anchor,
+                &settings.tiles_objects_filter,
+                ev.transmute(None, ColliderCreated(TiledCollider::TilesLayer)),
+                ev.target,
                 &mut event_writer,
             );
         }
     }
 }
 
-#[allow(clippy::type_complexity)]
 fn collider_from_object<T: TiledPhysicsBackend>(
-    mut object_event: EventReader<TiledObjectCreated>,
+    mut object_event: EventReader<TiledEvent<ObjectCreated>>,
     mut commands: Commands,
-    map_asset: Res<Assets<TiledMap>>,
-    maps_query: Query<(&TiledPhysicsSettings<T>, &TilemapAnchor), With<TiledMapMarker>>,
-    mut event_writer: EventWriter<TiledColliderCreated>,
+    assets: Res<Assets<TiledMapAsset>>,
+    maps_query: Query<(&TiledPhysicsSettings<T>, &TilemapAnchor), With<TiledMap>>,
+    mut event_writer: EventWriter<TiledEvent<ColliderCreated>>,
 ) {
     for ev in object_event.read() {
-        let (settings, anchor) = maps_query
-            .get(ev.layer.map.entity)
+        let (settings, anchor) = ev
+            .get_map_entity()
+            .and_then(|e| maps_query.get(e).ok())
             .expect("TiledPhysicsSettings<T> component should be on map entity");
-        let Some(tiled_map) = ev.layer.map.get_map_asset(&map_asset) else {
-            return;
+
+        let Some(layer) = ev.get_layer(&assets) else {
+            continue;
         };
-        let Some(layer) = ev.layer.get_layer(&map_asset) else {
-            return;
-        };
-        let Some(object) = ev.get_object(&map_asset) else {
-            return;
+
+        let Some(object) = ev.get_object(&assets) else {
+            continue;
         };
 
         if TiledNameFilter::from(&settings.objects_layer_filter).contains(&layer.name)
             && TiledNameFilter::from(&settings.objects_filter).contains(&object.name)
         {
-            collider::spawn_colliders(
+            spawn_colliders::<T>(
                 &settings.backend,
-                ev.entity,
                 &mut commands,
-                tiled_map,
+                &assets,
+                anchor,
                 match object.get_tile() {
                     Some(_) => &settings.tiles_objects_filter,
                     None => &TiledName::All,
                 },
-                &TiledCollider::from_object(ev.layer.id, ev.id),
-                anchor,
+                ev.transmute(None, ColliderCreated(TiledCollider::Object)),
+                ev.target,
                 &mut event_writer,
             );
         }
+    }
+}
+
+fn spawn_colliders<T: TiledPhysicsBackend>(
+    backend: &T,
+    commands: &mut Commands,
+    assets: &Res<Assets<TiledMapAsset>>,
+    anchor: &TilemapAnchor,
+    name_filter: &TiledName,
+    source_event: TiledEvent<ColliderCreated>,
+    parent: Entity,
+    event_writer: &mut EventWriter<TiledEvent<ColliderCreated>>,
+) {
+    for output in backend.spawn_colliders(
+        commands,
+        assets,
+        anchor,
+        &TiledNameFilter::from(name_filter),
+        &source_event,
+    ) {
+        // Attach collider to its parent
+        commands.entity(output.entity).insert((
+            source_event.event.0,
+            Name::new(format!("Collider: {}", output.name)),
+            ChildOf(parent),
+            output.transform,
+        ));
+        // Send collider event
+        let mut event = source_event;
+        event.target = output.entity;
+        event.send(commands, event_writer);
     }
 }

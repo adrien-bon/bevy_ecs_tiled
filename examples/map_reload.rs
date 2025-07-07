@@ -11,7 +11,7 @@ fn main() {
         .add_plugins(DefaultPlugins.build().set(ImagePlugin::default_nearest()))
         // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
         // be automatically added as well if it's not already done
-        .add_plugins(TiledMapPlugin::default())
+        .add_plugins(TiledPlugin::default())
         // Examples helper plugins, such as the logic to pan and zoom the camera
         // This should not be used directly in your game (but you can always have a look)
         .add_plugins(helper::HelperPlugin)
@@ -41,7 +41,7 @@ fn startup(
     ));
 
     commands.spawn((
-        TiledMapHandle(asset_server.load("maps/orthogonal/finite.tmx")),
+        TiledMap(asset_server.load("maps/orthogonal/finite.tmx")),
         TilemapAnchor::Center,
     ));
     next_state.set(MapState::Loaded);
@@ -63,7 +63,7 @@ fn handle_load(
     if keyboard_input.just_pressed(KeyCode::KeyL) {
         info!("Load map");
         commands.spawn((
-            TiledMapHandle(asset_server.load("maps/orthogonal/finite.tmx")),
+            TiledMap(asset_server.load("maps/orthogonal/finite.tmx")),
             TilemapAnchor::Center,
         ));
         next_state.set(MapState::Loaded);
@@ -74,7 +74,7 @@ fn handle_reload(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    maps_query: Query<Entity, With<TiledMapMarker>>,
+    maps_query: Query<Entity, With<TiledMap>>,
     mut next_state: ResMut<NextState<MapState>>,
 ) {
     // Reload the map by inserting a map asset on an existing map entity
@@ -82,9 +82,9 @@ fn handle_reload(
     if keyboard_input.just_pressed(KeyCode::KeyK) {
         if let Ok(entity) = maps_query.single() {
             info!("Reload map");
-            commands.entity(entity).insert(TiledMapHandle(
-                asset_server.load("maps/orthogonal/infinite.tmx"),
-            ));
+            commands
+                .entity(entity)
+                .insert(TiledMap(asset_server.load("maps/orthogonal/infinite.tmx")));
             next_state.set(MapState::Loaded);
         } else {
             warn!("Cannot reload: no map loaded ?");
@@ -105,14 +105,14 @@ fn handle_reload(
 
 fn handle_unload(
     mut commands: Commands,
-    mut maps: ResMut<Assets<TiledMap>>,
+    mut maps: ResMut<Assets<TiledMapAsset>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    maps_query: Query<Entity, With<TiledMapMarker>>,
+    maps_query: Query<Entity, With<TiledMap>>,
     mut next_state: ResMut<NextState<MapState>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyU) {
         // This example shows that the map gets properly unloaded if the
-        // `TiledMap` asset is removed.
+        // [`TiledMapAsset`] asset is removed.
         //
         // However, typically you would remove the map entity instead.
         info!("Unload map");
