@@ -1,7 +1,8 @@
-//! This module contains some tools to help you debug your application.
+//! Debugging tools for bevy_ecs_tiled.
 //!
-//! You need to enable the `debug` feature to use it.
-//!
+//! This module provides plugins and utilities to help visualize and debug Tiled maps and worlds
+//! in your Bevy application. Enable the `debug` feature to use these plugins, which include
+//! gizmo overlays for objects, tiles, world chunks, and axes.
 
 use bevy::app::{PluginGroup, PluginGroupBuilder};
 
@@ -10,16 +11,7 @@ pub mod objects;
 pub mod tiles;
 pub mod world_chunk;
 
-/// `bevy_ecs_tiled` debug exports.
-pub mod prelude {
-    pub use super::axis::*;
-    pub use super::objects::*;
-    pub use super::tiles::*;
-    pub use super::world_chunk::*;
-    pub use super::TiledDebugPluginGroup;
-}
-
-/// This [PluginGroup] contains all debug plugins from `bevy_ecs_tiled`.
+/// This [`PluginGroup`] contains all debug plugins from `bevy_ecs_tiled`.
 ///
 /// It can be used to easily turn on all debug informations :
 /// ```rust,no_run

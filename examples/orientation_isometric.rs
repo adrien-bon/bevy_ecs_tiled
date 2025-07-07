@@ -12,7 +12,7 @@ fn main() {
         .add_plugins(DefaultPlugins.build().set(ImagePlugin::default_nearest()))
         // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
         // be automatically added as well if it's not already done
-        .add_plugins(TiledMapPlugin::default())
+        .add_plugins(TiledPlugin::default())
         // Examples helper plugins, such as the logic to pan and zoom the camera
         // This should not be used directly in your game (but you can always have a look)
         .add_plugins(helper::HelperPlugin)
@@ -31,7 +31,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         c.insert((
             TilemapAnchor::Center,
             // For isometric maps, it can be useful to tweak `bevy_ecs_tilemap` render settings.
-            // [TilemapRenderSettings] provides the `y_sort`` parameter to sort chunks using their y-axis
+            // [`TilemapRenderSettings`] provides the `y_sort`` parameter to sort chunks using their y-axis
             // position during rendering.
             // However, it applies to whole chunks, not individual tile, so we have to force the chunk
             // size to be exactly one tile along the y-axis.

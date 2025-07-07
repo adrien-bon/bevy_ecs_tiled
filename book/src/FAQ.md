@@ -1,63 +1,89 @@
 # FAQ
 
-## What's the current status of the crate ?
+## What’s the current status of the crate?
 
-While the crate is already definitely usable, it is still under active development.
+The crate is already quite usable, but it is still under active development.
 
-Expect bugs, missing features and breaking changes !
+You may encounter bugs, missing features, or breaking changes as the API evolves.  
+However, the project follows [semantic versioning](https://semver.org/) and provides a migration guide for each breaking change (for example, when a new Bevy release is supported).
 
-However, I plan to follow semver and to provide a migration guide each time there are breaking changes (for instance, upon a new Bevy release).
+---
 
-## What kind of maps are supported ?
+## What kind of maps are supported?
 
-We should support nearly all maps from Tiled :
+Nearly all map types from Tiled are supported:
 
-- orthogonal
-- "flat-top" hexagonal
-- "pointy-top" hexagonal
-- "diamond" isometric
+- Orthogonal
+- "Flat-top" hexagonal
+- "Pointy-top" hexagonal
+- "Diamond" isometric
 
-There is however an exception: we do not (and don't plan to) support isometric "staggered" maps ([#31](https://github.com/adrien-bon/bevy_ecs_tiled/issues/31)).
+**Not supported:**  
+Isometric "staggered" maps ([see issue #31](https://github.com/adrien-bon/bevy_ecs_tiled/issues/31)).
+There are also some limitations for "diamond" isometric maps:
 
-Also, some of the feature are currently not working very well for "diamond" isometric maps: colliders don't have the proper shape ([#32](https://github.com/adrien-bon/bevy_ecs_tiled/issues/32)) and are not always at the right place ([#48](https://github.com/adrien-bon/bevy_ecs_tiled/issues/48)).
-But we hope to have better support for them in the future.
+- Colliders may not have the correct shape ([#32](https://github.com/adrien-bon/bevy_ecs_tiled/issues/32))
+- Colliders may not always be placed correctly ([#48](https://github.com/adrien-bon/bevy_ecs_tiled/issues/48))
 
-## I'm using an isometric map and it seems all messed up !
+Support for these cases will improve in the future.
 
-Make sure you are actually using a "diamond" map and not a "staggered" one, which are not supported.
+---
 
-Also, for isometric maps, you may want to tweak the [`TilemapRenderSettings`](https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/map/struct.TilemapRenderSettings.html) component from `bevy_ecs_tilemap` to enable Y-sorting and adjust the chunk size.
+## I’m using an isometric map and it seems all messed up!
 
-More information in the [isometric maps example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/orientation_isometric.rs#L34)
+- Make sure you are actually using a "diamond" isometric map, not a "staggered" one (which is not supported).
+- For isometric maps, you may need to tweak the [`TilemapRenderSettings`](https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/map/struct.TilemapRenderSettings.html) component from `bevy_ecs_tilemap` to enable Y-sorting and adjust the chunk size.
 
-## I want to add physics to my game, how should I do ?
+See the [isometric maps example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/orientation_isometric.rs#L34) for more information.
 
-You can automatically spawn physics colliders on tiles or objects using either [Avian](https://github.com/Jondolf/avian) or [Rapier](https://github.com/dimforge/bevy_rapier) physics backend.
-Basically, all you have to do is to add another plugin to your app.
-The crate handle the rest.
+---
 
-You can select on which objects or tiles you colliders are spawn based upon their name and using Tiled builtin collision editor.
-Everything is explained in the [dedicated guide](guides/physics.md).
+## How do I add physics to my game?
 
-## I want to update my Bevy entities directly from Tiled, how should I do ?
+You can automatically spawn physics colliders on tiles or objects using either the [Avian](https://github.com/Jondolf/avian) or [Rapier](https://github.com/dimforge/bevy_rapier) physics backends.
 
-Let's say you are building a top-down turn-based RPG.
-You probably want to give each of your tile some kind of information to determine if it can be crossed and what's the associated movement cost.
+All you need to do is add the appropriate plugin to your app—`bevy_ecs_tiled` handles the rest.
 
-Using [Tiled custom properties](https://doc.mapeditor.org/en/stable/manual/custom-properties/), we can define this information in Tiled editor: the crate will automatically insert the corresponding Bevy `Component` on the tile entity when you load the map, so you can use it in your game logic.
-See the [dedicated guide](guides/properties.md) for more information.
+You can control which objects or tiles receive colliders based on their name and by using Tiled’s built-in collision editor.
+See the [dedicated physics guide](guides/physics.md) for details.
 
-## How to enable map hot-reload ?
+---
 
-You need to enable Bevy `file_watcher` feature.
-`bevy_ecs_tiled` will then be able to automatically reload a map that was updated with Tiled.
+## How can I update my Bevy entities directly from Tiled?
 
-## I found a bug ! / Feature 'X' is missing ! / How do I do 'Y' ?
+Suppose you’re building a top-down RPG and want to assign properties (like movement cost or walkability) to each tile.
 
-This crate is still a work in-progress so it's likely you'll find bugs, miss some feature or just wonder how to achieve something.
+You can declare in your code some `struct` or `enum` to describe these properties then use [Tiled custom properties](https://doc.mapeditor.org/en/stable/manual/custom-properties/) editor to attach these properties to Tiled elements.
+The crate will automatically insert the corresponding Bevy `Component` on the Tiled entity when you load the map, making it available for your game logic.
 
-You can have a look to [already openned issues](https://github.com/adrien-bon/bevy_ecs_tiled/issues) and if it does not already exist, please fill a new one !
-I try to address every issue as quickly as possible.
+See the [custom properties guide](guides/properties.md) for more information.
 
-Also, contributions are more than welcome !
-If you want to contribute, please have a look to [contribution guide](misc/contributing.md) and feel free to open a PR ! :)
+---
+
+## How do I enable map hot-reload?
+
+Enable the Bevy `file_watcher` feature in your project.  
+With this enabled, `bevy_ecs_tiled` will automatically reload a map or world whenever it is updated in Tiled.
+
+---
+
+## How do I access Tiled "raw" data?
+
+Sometimes you may need to access the underlying Tiled data, such as a `tiled::ObjectData` or `tiled::TileData`.
+
+You have two main options:
+
+- Listen to [map loading events](./design/map_events.md) and use [`TiledEvent<E>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TiledEvent.html) helper methods to access Tiled data.
+- Retrieve the [`TiledMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/storage/struct.TiledMapStorage.html) component from your map entity to get the mapping between Bevy entities and their corresponding Tiled data.
+
+---
+
+## I found a bug! / Feature 'X' is missing! / How do I do 'Y'?
+
+This crate is still a work in progress, so you may encounter bugs, missing features, or have questions about usage.
+
+- Check the [open issues](https://github.com/adrien-bon/bevy_ecs_tiled/issues) to see if your problem is already reported.
+- If not, please open a new issue! I try to address every issue as quickly as possible.
+
+**Contributions are very welcome!**  
+If you’d like to contribute, please read the [contribution guide](misc/contributing.md) and feel free to open a PR!

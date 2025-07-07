@@ -1,28 +1,44 @@
 # Contributing
 
-If you would like to contribute but you're unsure where to start, here is a short wishlist and some notes on how to get started.
+Thank you for your interest in contributing to `bevy_ecs_tiled`!  
+Whether you're fixing bugs, adding features, improving documentation, or helping other users, your contributions are greatly appreciated.
 
-First, you can have a look at [GH issues](https://github.com/adrien-bon/bevy_ecs_tiled/issues).
-More specifically, the ones that are:
+## Where to Start
 
-- [tagged with `enhancement` label](https://github.com/adrien-bon/bevy_ecs_tiled/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement)
-- [tagged with `limitation` label](https://github.com/adrien-bon/bevy_ecs_tiled/issues?q=is%3Aopen+is%3Aissue+label%3Alimitation)
+If you're unsure where to begin, check out the [GitHub issues](https://github.com/adrien-bon/bevy_ecs_tiled/issues) page.  
+You might find it helpful to look at issues:
 
-If you feel like you can tackle on of these, please, feel free to submit a PR!
+- [tagged with the `enhancement` label](https://github.com/adrien-bon/bevy_ecs_tiled/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement)
+- [tagged with the `limitation` label](https://github.com/adrien-bon/bevy_ecs_tiled/issues?q=is%3Aopen+is%3Aissue+label%3Alimitation)
 
-Helping other users, respond to issues, help review PRs or just openning new issues is also very helpful !
+If you feel you can tackle one of these, please feel free to submit a PR!
 
-Also, another way of helping is to contribute on crates we rely on, namely [`rs-tiled`](https://github.com/mapeditor/rs-tiled) and [`bevy_ecs_tilemap`](https://github.com/StarArawn/bevy_ecs_tilemap), or anything else in the Bevy ecosystem.
+Other valuable ways to contribute include:
 
-## Contribution guidelines
+- Helping other users by responding to issues or reviewing PRs
+- Reporting bugs or suggesting improvements by opening new issues
+- Contributing to dependencies, such as [`rs-tiled`](https://github.com/mapeditor/rs-tiled), [`bevy_ecs_tilemap`](https://github.com/StarArawn/bevy_ecs_tilemap), or other crates in the Bevy ecosystem (or Bevy itself!)
 
-If you submit a PR, please make sure that:
+## Contribution Guidelines
 
-- the CI is green: you can locally run the `./ci_check.sh` script
-- you add proper in-code documentation
-- you update the `CHANGELOG.md` file with a description of your fix
-- if you add a new example, update the `examples/README.md` file with a description of your example and the `Cargo.toml` file with your example name (and any feature it may need)
-- if you add a new map, update the `assets/README.md` file with your map characteristics
-- if you add a new asset, update the "Assets credits" section of the `README.md` file and make sure that you actually have the right to use it!
+When submitting a pull request, please ensure that:
 
-Thanks in advance! :)
+- **CI passes:**  
+  Run `./tools/ci_check.sh` locally to check formatting, linting, and tests.
+- **Documentation:**  
+  Add or update in-code documentation for any new features or changes.
+- **Changelog:**  
+  Update the `CHANGELOG.md` file with a description of your fix or feature.
+- **Examples:**  
+  If you add a new example:
+  - Update `examples/README.md` with a description of your example.
+  - Add your example to the workspace `Cargo.toml` (and specify any required features).
+- **Assets:**  
+  If you add a new map, update `assets/README.md` with its characteristics.
+  If you add a new asset, update the "Assets credits" section of the main `README.md` and ensure you have the right to use it.
+
+If you're not sure about something, feel free to open a draft PR or ask questions in your issue or PR.
+
+---
+
+Thanks in advance for helping make `bevy_ecs_tiled` better!

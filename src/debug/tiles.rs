@@ -1,8 +1,11 @@
-//! Debug plugin for tiles
+//! Debug plugin for visualizing tile indices in Bevy Tiled maps.
 //!
-//! Display the `bevy_ecs_tilemap` index, ie. [TilePos] on each tile
+//! This module provides a plugin and configuration for displaying the `bevy_ecs_tilemap` tile index ([`TilePos`])
+//! above each tile in your map. This is useful for debugging tile placement, grid alignment, and verifying
+//! that tiles are correctly positioned and indexed within your Tiled maps.
+//!
+//! When enabled, the plugin spawns a [`Text2d`] entity above every tile, showing its [`TilePos`] coordinates.
 
-use crate::prelude::*;
 use bevy::{color::palettes::css::FUCHSIA, prelude::*};
 use bevy_ecs_tilemap::{
     map::{TilemapGridSize, TilemapSize, TilemapTileSize, TilemapType},
@@ -10,17 +13,21 @@ use bevy_ecs_tilemap::{
     tiles::TilePos,
 };
 
-/// Configuration for the [TiledDebugTilesPlugin]
+use crate::tiled::tile::{TiledTile, TiledTilemap};
+
+/// Configuration for the [`TiledDebugTilesPlugin`].
+///
+/// Allows customization of the appearance and placement of the tile index text.
 #[derive(Resource, Reflect, Clone, Debug)]
 #[reflect(Resource, Debug)]
 pub struct TiledDebugTilesConfig {
-    /// [Color] of the tile index text
+    /// [`Color`] of the tile index text.
     pub color: Color,
-    /// [TextFont] of the tile index text
+    /// [`TextFont`] used for the tile index text.
     pub font: TextFont,
-    /// Absolute Z-axis offset of the tile index text
+    /// Absolute Z-axis offset for the tile index text (controls rendering order).
     pub z_offset: f32,
-    /// Scale to apply on the tile index text
+    /// Scale to apply to the tile index text.
     pub scale: Vec3,
 }
 
@@ -35,10 +42,12 @@ impl Default for TiledDebugTilesConfig {
     }
 }
 
-/// `bevy_ecs_tiled` debug [Plugin] for tiles
+/// Debug [`Plugin`] for visualizing tile indices in Bevy Tiled maps.
 ///
-/// Enabling this plugin will spawn a [Text2d] above every tile to display their [TilePos] :
+/// Enabling this plugin will insert a [`Text2d`] component into every tile entity to display its [`TilePos`] coordinates.
+/// This is helpful for debugging tile placement and grid alignment in your Tiled maps.
 ///
+/// # Example
 /// ```rust,no_run
 /// use bevy::prelude::*;
 /// use bevy_ecs_tiled::prelude::*;
@@ -47,8 +56,10 @@ impl Default for TiledDebugTilesConfig {
 ///     .add_plugins(TiledDebugTilesPlugin::default());
 /// ```
 ///
+/// You can customize the appearance of the text using [`TiledDebugTilesConfig`].
 #[derive(Default, Clone, Debug)]
 pub struct TiledDebugTilesPlugin(pub TiledDebugTilesConfig);
+
 impl Plugin for TiledDebugTilesPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.register_type::<TiledDebugTilesConfig>()
@@ -61,7 +72,7 @@ impl Plugin for TiledDebugTilesPlugin {
 fn draw_tile_infos(
     mut commands: Commands,
     config: Res<TiledDebugTilesConfig>,
-    tiles_query: Query<(Entity, &ChildOf, &TilePos), (With<TiledMapTile>, Without<Text2d>)>,
+    tiles_query: Query<(Entity, &ChildOf, &TilePos), (With<TiledTile>, Without<Text2d>)>,
     layer_query: Query<
         (
             &TilemapType,
@@ -70,7 +81,7 @@ fn draw_tile_infos(
             &TilemapGridSize,
             &TilemapAnchor,
         ),
-        With<TiledMapTileLayerForTileset>,
+        With<TiledTilemap>,
     >,
 ) {
     for (entity, child_of, tile_pos) in tiles_query.iter() {

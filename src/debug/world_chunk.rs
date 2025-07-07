@@ -1,8 +1,12 @@
-//! Debug plugin for world chunking
+//! Debug plugin for world chunking in bevy_ecs_tiled.
 //!
-//! Display a Bevy [Gizmos] for each map boundary and world render chunk
+//! This module provides a plugin and configuration for visualizing world render chunks and map boundaries
+//! using Bevy [`Gizmos`]. It is useful for debugging how your Tiled worlds are chunked and rendered, and for
+//! verifying the alignment and boundaries of maps within a world.
+//!
+//! When enabled, the plugin draws a colored `rect_2d` gizmo for each world render chunk (centered on the camera)
+//! and for each map boundary.
 
-use crate::prelude::*;
 use bevy::{
     color::palettes::css::{BLUE, FUCHSIA, GREEN, LIME, RED, WHITE, YELLOW},
     math::bounding::BoundingVolume,
@@ -10,20 +14,22 @@ use bevy::{
 };
 use bevy_ecs_tilemap::prelude::TilemapAnchor;
 
-/// Configuration for the [TiledDebugWorldChunkPlugin]
+use crate::tiled::world::{asset::TiledWorldAsset, chunking::TiledWorldChunking, TiledWorld};
+
+/// Configuration for the [`TiledDebugWorldChunkPlugin`].
 ///
-/// Contains some settings to customize how the `rect_2d` [Gizmos] will appear.
+/// Allows customization of the appearance of the `rect_2d` [`Gizmos`] for world render chunks and map boundaries.
 #[derive(Resource, Reflect, Clone, Debug)]
 #[reflect(Resource, Debug)]
 pub struct TiledDebugWorldChunkConfig {
-    /// [Color] of the `rect_2d` [Gizmos] for world rendering chunk
+    /// [`Color`] of the `rect_2d` [`Gizmos`] for the world rendering chunk.
     ///
-    /// If [None], will not display the world rendering chunk
+    /// If [`None`], the world rendering chunk will not be displayed.
     pub world_chunk_color: Option<Color>,
-    /// List of [Color]s of the `rect_2d` [Gizmos] for maps boundary
+    /// List of [`Color`]s for the `rect_2d` [`Gizmos`] representing map boundaries.
     ///
-    /// Will cycle through the [Vec] for each map, such as joint maps should not have the same [Color]
-    /// If the [Vec] is empty, will not display any map boundary
+    /// The plugin cycles through this list for each map, so adjacent maps can be visually distinguished.
+    /// If the list is empty, no map boundaries will be displayed.
     pub maps_colors_list: Vec<Color>,
 }
 
@@ -43,10 +49,12 @@ impl Default for TiledDebugWorldChunkConfig {
     }
 }
 
-/// `bevy_ecs_tiled` debug [Plugin] for world chunking
+/// Debug [`Plugin`] for visualizing world chunking and map boundaries in Tiled worlds.
 ///
-/// You can use this plugin to debug how your worlds are rendered and to tweak their chunking parameter :
+/// Add this plugin to your app to display colored rectangles for each world render chunk (centered on the camera)
+/// and for each map boundary. This is helpful for debugging chunking parameters and map alignment in your Tiled worlds.
 ///
+/// # Example
 /// ```rust,no_run
 /// use bevy::prelude::*;
 /// use bevy_ecs_tiled::prelude::*;
@@ -54,11 +62,9 @@ impl Default for TiledDebugWorldChunkConfig {
 /// App::new()
 ///     .add_plugins(TiledDebugWorldChunkPlugin::default());
 /// ```
-///
-/// This will display a `rect_2d` [Gizmos] to highlight your maps boundary and another `rect_2d` for the world render chunk.
-///
 #[derive(Default, Clone, Debug)]
 pub struct TiledDebugWorldChunkPlugin(pub TiledDebugWorldChunkConfig);
+
 impl Plugin for TiledDebugWorldChunkPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.register_type::<TiledDebugWorldChunkConfig>()
@@ -69,7 +75,7 @@ impl Plugin for TiledDebugWorldChunkPlugin {
 
 fn draw_camera_rect(
     camera_query: Query<&Transform, (With<Camera>, Changed<Transform>)>,
-    world_query: Query<&TiledWorldChunking, With<TiledWorldMarker>>,
+    world_query: Query<&TiledWorldChunking>,
     config: Res<TiledDebugWorldChunkConfig>,
     mut gizmos: Gizmos,
 ) {
@@ -91,11 +97,8 @@ fn draw_camera_rect(
 }
 
 fn draw_maps_rect(
-    world_query: Query<
-        (&TiledWorldHandle, &GlobalTransform, &TilemapAnchor),
-        With<TiledWorldMarker>,
-    >,
-    world_assets: Res<Assets<TiledWorld>>,
+    world_query: Query<(&TiledWorld, &GlobalTransform, &TilemapAnchor)>,
+    world_assets: Res<Assets<TiledWorldAsset>>,
     config: Res<TiledDebugWorldChunkConfig>,
     mut gizmos: Gizmos,
 ) {
@@ -104,19 +107,13 @@ fn draw_maps_rect(
     }
     for (world_handle, world_transform, anchor) in world_query.iter() {
         if let Some(tiled_world) = world_assets.get(world_handle.0.id()) {
-            let offset = tiled_world.offset(anchor);
-            crate::world::for_each_map(
-                tiled_world,
-                world_transform,
-                offset.extend(0.0),
-                |idx, aabb| {
-                    gizmos.rect_2d(
-                        Isometry2d::from_translation(aabb.center()),
-                        aabb.half_size() * 2.,
-                        config.maps_colors_list[idx % config.maps_colors_list.len()],
-                    );
-                },
-            );
+            tiled_world.for_each_map(world_transform, anchor, |idx, aabb| {
+                gizmos.rect_2d(
+                    Isometry2d::from_translation(aabb.center()),
+                    aabb.half_size() * 2.,
+                    config.maps_colors_list[idx as usize % config.maps_colors_list.len()],
+                );
+            });
         }
     }
 }

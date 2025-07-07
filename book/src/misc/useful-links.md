@@ -15,6 +15,7 @@ Feel free to suggest any other link!
 - [`bevy_picking_tilemap`](https://github.com/zacryol/bevy_picking_tilemap): provides a [`bevy_mod_picking`](https://github.com/aevyrie/bevy_mod_picking/) backend to add integration with [`bevy_ecs_tilemap`](https://github.com/StarArawn/bevy_ecs_tilemap), enabling individual Tile entities to receive the picking events
 - [`avian`](https://github.com/Jondolf/avian): Avian physic backend
 - [`bevy_rapier`](https://github.com/dimforge/bevy_rapier): Rapier physic backend
+- [`bevy_northstar`](https://github.com/jtothethree/bevy_northstar): A 2D/3D pathfinding crate, with a concrete usage example with `bevy_ecs_tiled`
 
 ## Notable resources
 
