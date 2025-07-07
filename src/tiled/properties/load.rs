@@ -1,14 +1,16 @@
-use bevy::asset::LoadContext;
-use bevy::ecs::reflect::ReflectBundle;
-use bevy::platform::collections::HashMap;
-use bevy::prelude::*;
-use bevy::reflect::{
-    DynamicArray, DynamicEnum, DynamicStruct, DynamicTuple, DynamicTupleStruct, DynamicVariant,
-    NamedField, Reflect, ReflectMut, ReflectRef, TypeInfo, TypeRegistration, TypeRegistry,
-    UnnamedField, VariantInfo, VariantType,
+use crate::prelude::*;
+use bevy::{
+    asset::LoadContext,
+    ecs::reflect::ReflectBundle,
+    prelude::*,
+    reflect::{
+        DynamicArray, DynamicEnum, DynamicStruct, DynamicTuple, DynamicTupleStruct, DynamicVariant,
+        NamedField, Reflect, ReflectMut, ReflectRef, TypeInfo, TypeRegistration, TypeRegistry,
+        UnnamedField, VariantInfo, VariantType,
+    },
 };
 use std::path::PathBuf;
-use tiled::{LayerType, Properties, PropertyValue, TileId};
+use tiled::{LayerType, Properties, PropertyValue};
 
 #[derive(Debug, Clone)]
 pub(crate) struct DeserializedMapProperties<const HYDRATED: bool = false> {

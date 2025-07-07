@@ -2,7 +2,6 @@
 
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
-use bevy_ecs_tilemap::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 mod helper;

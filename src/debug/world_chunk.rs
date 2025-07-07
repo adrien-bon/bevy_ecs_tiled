@@ -7,14 +7,12 @@
 //! When enabled, the plugin draws a colored `rect_2d` gizmo for each world render chunk (centered on the camera)
 //! and for each map boundary.
 
+use crate::prelude::*;
 use bevy::{
     color::palettes::css::{BLUE, FUCHSIA, GREEN, LIME, RED, WHITE, YELLOW},
     math::bounding::BoundingVolume,
     prelude::*,
 };
-use bevy_ecs_tilemap::prelude::TilemapAnchor;
-
-use crate::tiled::world::{asset::TiledWorldAsset, chunking::TiledWorldChunking, TiledWorld};
 
 /// Configuration for the [`TiledDebugWorldChunkPlugin`].
 ///

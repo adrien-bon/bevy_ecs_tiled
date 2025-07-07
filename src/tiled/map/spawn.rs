@@ -4,35 +4,19 @@
 //! It handles the creation of map layers, tiles, objects, and their associated components in the ECS world,
 //! enabling the rendering and interaction of Tiled maps within a Bevy application.
 
-use bevy::{platform::collections::HashMap, prelude::*, sprite::Anchor};
-use bevy_ecs_tilemap::{
-    anchor::TilemapAnchor,
-    map::{IsoCoordSystem, TilemapId, TilemapRenderSettings, TilemapTexture, TilemapType},
-    tiles::{AnimatedTile, TileBundle, TileFlip, TileStorage, TileTextureIndex},
+use crate::{prelude::*, tiled::event::TiledEventWriters};
+use bevy::{prelude::*, sprite::Anchor};
+use bevy_ecs_tilemap::prelude::{
+    AnimatedTile, IsoCoordSystem, TileBundle, TileFlip, TileStorage, TileTextureIndex, TilemapId,
+    TilemapTexture,
 };
-use tiled::{ImageLayer, Layer, LayerType, ObjectLayer, Tile, TileId, TileLayer, TilesetLocation};
+use tiled::{ImageLayer, LayerType, ObjectLayer, TilesetLocation};
 
 #[cfg(feature = "render")]
-use bevy_ecs_tilemap::{
-    map::{TilemapSpacing, TilemapTileSize},
-    TilemapBundle,
-};
+use bevy_ecs_tilemap::prelude::{TilemapBundle, TilemapSpacing};
 
-use super::{storage::TiledMapStorage, TiledMapAsset, TiledMapLayerZOffset};
 #[cfg(feature = "user_properties")]
 use crate::tiled::properties::command::PropertiesCommandExt;
-use crate::tiled::{
-    animation::TiledAnimation,
-    event::{
-        LayerCreated, MapCreated, ObjectCreated, TileCreated, TiledEvent, TiledEventWriters,
-        TilemapCreated,
-    },
-    helpers::{grid_size_from_map, tilemap_type_from_map},
-    image::TiledImage,
-    layer::TiledLayer,
-    object::TiledObject,
-    tile::{TiledTile, TiledTilemap},
-};
 
 pub(crate) fn spawn_map(
     commands: &mut Commands,

@@ -13,15 +13,8 @@ pub mod avian;
 
 use std::fmt;
 
+use crate::prelude::*;
 use bevy::{prelude::*, reflect::Reflectable};
-use bevy_ecs_tilemap::anchor::TilemapAnchor;
-
-use crate::{
-    names::TiledNameFilter,
-    tiled::{event::TiledEvent, map::asset::TiledMapAsset},
-};
-
-use super::collider::ColliderCreated;
 
 /// Trait for implementing a custom physics backend for Tiled maps and worlds.
 ///

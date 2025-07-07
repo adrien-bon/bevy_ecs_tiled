@@ -13,6 +13,7 @@
 //!     .add_plugins(TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default());
 //! ```
 
+use crate::prelude::*;
 use avian2d::{
     collision::collider::EllipseColliderShape,
     parry::{
@@ -22,16 +23,7 @@ use avian2d::{
     prelude::*,
 };
 use bevy::prelude::*;
-use bevy_ecs_tilemap::{anchor::TilemapAnchor, map::TilemapGridSize};
 use tiled::{ObjectLayerData, ObjectShape};
-
-use crate::{
-    names::TiledNameFilter,
-    physics::collider::{ColliderCreated, TiledCollider},
-    tiled::{event::TiledEvent, helpers::grid_size_from_map, map::asset::TiledMapAsset},
-};
-
-use super::{TiledPhysicsBackend, TiledPhysicsBackendOutput};
 
 /// The [`TiledPhysicsBackend`] to use for Avian 2D integration.
 #[derive(Default, Reflect, Copy, Clone, Debug)]

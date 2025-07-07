@@ -4,16 +4,8 @@
 //! including layers, tiles, and associated metadata. It provides efficient access and organization of map data
 //! for use by systems and plugins within the bevy_ecs_tiled framework.
 
-use bevy::{platform::collections::HashMap, prelude::*};
-use tiled::{Layer, Map, Object, Tile, TileId};
-
-#[allow(unused_imports)]
-use crate::tiled::{
-    helpers::{get_layer_from_map, get_object_from_map, get_tile_from_map},
-    layer::TiledLayer,
-    object::TiledObject,
-    tile::TiledTile,
-};
+use crate::prelude::*;
+use bevy::prelude::*;
 
 /// [`Component`] storing all the Tiled items composing this map.
 /// Makes the association between Tiled ID and corresponding Bevy [`Entity`].

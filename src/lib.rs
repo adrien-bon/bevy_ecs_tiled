@@ -43,17 +43,21 @@ pub mod prelude {
     pub use super::physics::backend::rapier::TiledPhysicsRapierBackend;
     #[cfg(feature = "physics")]
     pub use super::physics::{
-        backend::TiledPhysicsBackend,
+        backend::{TiledPhysicsBackend, TiledPhysicsBackendOutput},
         collider::{ColliderCreated, TiledCollider},
         settings::TiledPhysicsSettings,
         TiledPhysicsPlugin,
     };
     pub use super::tiled::{
         animation::TiledAnimation,
-        event::{LayerCreated, MapCreated, ObjectCreated, TileCreated, TiledEvent, TilemapCreated},
+        event::{
+            LayerCreated, MapCreated, ObjectCreated, TileCreated, TiledEvent, TilemapCreated,
+            WorldCreated,
+        },
         helpers::{
             get_layer_from_map, get_object_from_map, get_tile_from_map, get_tileset_from_map,
             grid_size_from_map, tile_size_from_grid_size, tile_size_from_map,
+            tilemap_type_from_map,
         },
         image::TiledImage,
         layer::TiledLayer,
@@ -71,8 +75,17 @@ pub mod prelude {
         TiledPlugin, TiledPluginConfig,
     };
 
+    // Re-exports from `bevy`
+    pub use bevy::{math::bounding::Aabb2d, platform::collections::HashMap};
+
     // Re-exports from `bevy_ecs_tilemap`
-    pub use bevy_ecs_tilemap::prelude::{TilePos, TilemapAnchor, TilemapGridSize, TilemapSize};
+    pub use bevy_ecs_tilemap::prelude::{
+        TilePos, TilemapAnchor, TilemapGridSize, TilemapRenderSettings, TilemapSize,
+        TilemapTileSize, TilemapType,
+    };
     // Re-exports from `tiled`
-    pub use tiled::{Layer, Tile, TileId};
+    pub use tiled::World as TiledRawWorld; // Avoid name clash with Bevy `World`
+    pub use tiled::{
+        Layer, LayerTile, LayerTileData, Map, Object, Tile, TileId, TileLayer, Tileset,
+    };
 }
