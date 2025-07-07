@@ -29,9 +29,20 @@ Both types of objects are supported and will result in physics colliders being s
 
 To automatically spawn colliders from Tiled objects, you need to:
 
-1. **Enable the appropriate feature:**  
+1. **Enable the appropriate feature in your `Cargo.toml`:**  
    Either `avian` or `rapier`, depending on your backend choice.  
-   (You can also enable only the `physics` feature and provide your own backend.)
+   You can also enable only the `physics` feature and provide your own backend (see below).
+
+**Example: Using the Avian backend**
+
+```toml
+[dependencies]
+bevy = "0.16"
+bevy_ecs_tiled = { version = "0.7", features = ["avian"] }
+```
+
+> **Note:**  
+> You may need to adjust `bevy` and `bevy_ecs_tiled` versions.
 
 2. **Add the [`TiledPhysicsPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/struct.TiledPhysicsPlugin.html)**  
    with the backend of your choice.
