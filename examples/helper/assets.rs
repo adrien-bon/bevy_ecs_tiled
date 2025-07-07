@@ -4,7 +4,7 @@ use bevy_ecs_tiled::prelude::*;
 pub type MapInfosCallback = fn(&mut EntityCommands);
 
 pub struct MapInfos {
-    asset: Handle<TiledMap>,
+    handle: Handle<TiledMapAsset>,
     path: String,
     description: String,
     callback: MapInfosCallback,
@@ -18,7 +18,7 @@ impl MapInfos {
         callback: MapInfosCallback,
     ) -> Self {
         Self {
-            asset: asset_server.load(path.to_owned()),
+            handle: asset_server.load(path.to_owned()),
             path: path.to_owned(),
             description: description.to_owned(),
             callback,
@@ -70,9 +70,8 @@ impl AssetsManager {
         }
 
         // Then spawn the new map
-        let mut entity_commands = commands.spawn(TiledMapHandle(
-            self.map_assets[self.map_index].asset.to_owned(),
-        ));
+        let mut entity_commands =
+            commands.spawn(TiledMap(self.map_assets[self.map_index].handle.to_owned()));
         (self.map_assets[self.map_index].callback)(&mut entity_commands);
         self.map_entity = Some(entity_commands.id());
 

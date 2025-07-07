@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="10" height="10" tilewidth="32" tileheight="32" infinite="0" nextlayerid="7" nextobjectid="9">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="10" height="10" tilewidth="32" tileheight="32" infinite="0" nextlayerid="7" nextobjectid="19">
  <tileset firstgid="1" source="../../tiles/orthogonal_1.tsx"/>
  <imagelayer id="6" name="Image Layer 1" offsetx="32.6667" offsety="112.667">
   <image source="../../bevy_icon.png" width="256" height="256"/>

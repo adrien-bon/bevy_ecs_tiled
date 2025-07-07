@@ -15,7 +15,7 @@ fn main() {
         .add_plugins(DefaultPlugins.build().set(ImagePlugin::default_nearest()))
         // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
         // be automatically added as well if it's not already done.
-        .add_plugins(TiledMapPlugin::default())
+        .add_plugins(TiledPlugin::default())
         // Examples helper plugins, such as the logic to pan and zoom the
         // camera. This should not be used directly in your game (but you can
         // always have a look).
@@ -34,8 +34,8 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // Load a map then spawn it.
     commands.spawn((
-        // Only the [TiledMapHandle] component is actually required to spawn a map.
-        TiledMapHandle(asset_server.load("maps/orthogonal/finite.tmx")),
+        // Only the [`TiledMapHandle`] component is actually required to spawn a map.
+        TiledMap(asset_server.load("maps/orthogonal/finite.tmx")),
         // But you can add extra components to change the defaults settings and how
         // your map is actually displayed.
         TilemapAnchor::Center,
@@ -64,7 +64,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn change_anchor(
-    mut anchor: Single<&mut TilemapAnchor, With<TiledMapHandle>>,
+    mut anchor: Single<&mut TilemapAnchor, With<TiledMap>>,
     label: Single<Entity, With<AnchorLabel>>,
     mut writer: TextUiWriter,
     key: Res<ButtonInput<KeyCode>>,

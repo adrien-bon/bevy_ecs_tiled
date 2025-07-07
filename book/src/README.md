@@ -4,29 +4,45 @@
 
 ---
 
-**Disclaimer:** both this book and the whole crate have been heavilly inspired by the [`bevy_ecs_ldtk` crate](https://github.com/Trouv/bevy_ecs_ldtk), which is basically the equivalent of `bevy_ecs_tiled` but for the [LDTK](https://ldtk.io/) map editor.
-Thanks for the inspiration! :)
+**Disclaimer:**  
+Both this book and the whole crate have been heavily inspired by the [`bevy_ecs_ldtk` crate](https://github.com/Trouv/bevy_ecs_ldtk), which is essentially the equivalent of `bevy_ecs_tiled` but for the [LDTK](https://ldtk.io/) map editor.  
+A big thank you to the authors and contributors of `bevy_ecs_ldtk` for their inspiration and ideas!
 
 ---
 
-## Purpose of this book
+## Purpose of this Book
 
-This book aims to give you a better understanding of how [`bevy_ecs_tiled`](https://github.com/adrien-bon/bevy_ecs_tiled) works, what you can achieve with it and how you can do it.
+This book is designed to help you understand how [`bevy_ecs_tiled`](https://github.com/adrien-bon/bevy_ecs_tiled) works, what you can achieve with it, and how to use it effectively in your projects.
 
-It will focus on high-level concepts, design concerns and basic tutorials.
-If you need an API reference, please have a look at the [`bevy_ecs_tiled` API reference](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/).
-The [examples](https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/README.md) directory is also a good place to start.
+You’ll find:
 
-Finally, this book assume you already have some sort of knowledge about [Bevy](https://bevyengine.org/) and [Tiled](https://www.mapeditor.org/) map editor.
-There are already some good documentations available on these topics and some resources are referenced [in the dedicated section](misc/useful-links.md).
+- High-level concepts and design explanations
+- Step-by-step tutorials and practical guides
+- Migration guides for upgrading between versions
+- Miscellaneous tips and advanced topics
 
-## Architecture of this book
+If you need detailed API documentation, please refer to the [bevy_ecs_tiled API reference](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/).  
+The [examples directory](https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/README.md) is also a great place to see the plugin in action.
 
-This book is divided in several categories:
+> **Note:**  
+> This book assumes you already have some familiarity with [Bevy](https://bevyengine.org/) and the [Tiled](https://www.mapeditor.org/) map editor.  
+> If you’re new to these tools, check out their official documentation and the [useful links section](misc/useful-links.md) for recommended resources.
 
-- **Design and explanation**: how does the plugin work and why some technical choices have been made;
-- **How-To's**: in-depth tutorials about a specific aspect of  the plugin;
-- **Migration guides**: migration guides for specific versions;
-- **Miscellaneous**: other topics that did not fit in other categories.
+---
 
-Good reading ! :)
+## Book Structure
+
+This book is organized into several sections:
+
+- **Design & Explanation:**  
+  Learn how the plugin works internally and the reasoning behind key technical choices.
+- **How-To Guides:**  
+  In-depth tutorials covering specific features and workflows.
+- **Migration Guides:**  
+  Step-by-step instructions for upgrading between major versions.
+- **Miscellaneous:**  
+  Additional topics and tips that don’t fit elsewhere.
+
+---
+
+Happy reading, and enjoy building your games with Bevy and Tiled!

@@ -1,70 +1,67 @@
-# Entities hierarchy and marker components
+# Entities Hierarchy and Marker Components
 
-When a map is loaded, it spawns **a lot** of entities: for the map, for layers, for tiles, for objects, for colliders, ...
-To keep things nice and tidy, these entites are organized in a [parent / child hierarchy](https://bevy-cheatbook.github.io/fundamentals/hierarchy.html) and every entity has an associated marker component to help with queries.
+When a map is loaded, it spawns **many** entities: for the map, for layers, for tiles, for objects, for colliders, and more.  
+To keep things organized, these entities are structured in a [parent/child hierarchy](https://bevy-cheatbook.github.io/fundamentals/hierarchy.html), and every entity has an associated marker component to help with queries and system targeting.
 
-Using a hierachy also brings the capability to inherit some of the component from top-level entities down the tree.
-For instance, if you change the `Visibility` of a layer entity, it will automatically apply to all entities below in the hierarchy such as tiles or objects.
+Using a hierarchy also enables inheritance of certain components from top-level entities down the tree.  
+For example, if you change the `Visibility` of a layer entity, it will automatically apply to all entities below it in the hierarchy, such as tiles or objects.
 
-## Hierarchy
+---
+
+## Hierarchy Overview
 
 ### World
 
-When loading a `.world` asset, you will have a [`TiledWorldMarker`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/components/world/struct.TiledWolrdMarker.html) at the top of the tree.
-
-This entity holds the [`TiledWorldHandle`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/world/struct.TiledWorldHandle.html) pointing to your `.world` asset and all the settings that apply to it.
+When loading a `.world` asset, you get a [`TiledWorld`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/world/struct.TiledWorld.html) entity at the top of the tree, which holds a handle to the [`TiledWorldAsset`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/world/asset/struct.TiledWorldAsset.html) corresponding to your `.world` asset, along with all settings that apply to it.
 
 ### Map
 
-When loading a single `.tmx` asset, you will have a single [`TiledMapMarker`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/components/struct.TiledMapMarker.html) at the top of the tree.
-Otherwise, if working with a Tiled world, you will have several maps which are children of the top-level world.
+When loading a `.tmx` asset, you get a [`TiledMap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/map/struct.TiledMap.html) entity at the top of the tree, which holds a handle to the [`TiledMapAsset`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/map/asset/struct.TiledMapAsset.html) corresponding to your `.tmx` asset, plus all map-level settings.
 
-This entity holds the [`TiledMapHandle`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/struct.TiledMapHandle.html) component pointing to your `.tmx` file and all the settings that apply to it.
+If working with a Tiled world, you will have several maps, each as a child of the top-level world entity.
+
+Note that all map-level settings can also be added to the [`TiledWorld`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/world/struct.TiledWorld.html) entity as they will be propagated down to the underlying maps.
 
 ### Layers
 
-Below the map, we have the layers.
-They can be of different kinds, which each have their own marker component:
-
-- [`TiledMapObjectLayer`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/map/components/struct.TiledMapObjectLayer.html): for objects layer.
-- [`TiledMapTileLayer`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/map/components/struct.TiledMapTileLayer.html): for tiles layer.
-- [`TiledMapImageLayer`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/map/components/struct.TiledMapImageLayer.html): for image layer.
-- [`TiledMapGroupLayer`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/map/components/struct.TiledMapGroupLayer.html): for group layer (not supported for now).
-
-All of them are also identified by the same generic marker: [`TiledMapLayer`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/map/components/struct.TiledMapLayer.html).
+Below the map, you have the layers.  
+Layer entities are identified by the generic [`TiledLayer`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html) component whose value can help distinguish between layer types.
 
 ### Objects
 
-Objects are directly below their [`TiledMapObjectLayer`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/components/map/struct.TiledMapObjectLayer.html).
-They are identified by a [`TiledMapObject`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/components/map/struct.TiledMapObject.html) marker.
+Objects are direct children of their parent [`TiledLayer`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html).  
+They are identified by the [`TiledObject`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/struct.TiledObject.html) marker.
 
 ### Tiles
 
-For tiles, it's a little more complicated.
+Tiles have a slightly more complex structure:
 
-Below the [`TiledMapTileLayer`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/components/map/struct.TiledMapTileLayer.html), we first have one [`TiledMapTileLayerForTileset`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/map/components/struct.TiledMapTileLayerForTileset.html) per tileset in the map.
-And below these, we find the actual [`TiledMapTile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/map/components/struct.TiledMapTile.html) which correspond to a tile in the layer, for a given tileset.
+- Below each [`TiledLayer`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html), there is one [`TiledTilemap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilemap.html) per tileset used in the map.
+- Below these, you find the actual [`TiledTile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTile.html) entities, each corresponding to a tile in the layer for a given tileset.
 
-### Physics colliders
+### Physics Colliders
 
-At the bottom of the hierarchy, we find physics colliders.
-They are spawned below they "source", ie. either a tile layer or an object and they can be identified using their marker component: [`TiledColliderMarker`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliderMarker.html).
+At the bottom of the hierarchy, you find physics colliders.  
+They are spawned as children of their "source" (either a [`TiledTilemap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilemap.html) or a [`TiledObject`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/struct.TiledObject.html)) and can be identified using the [`TiledCollider`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledCollider.html) marker component.
 
-## Transform and Visibility propagation
+---
 
-You can refer to the Bevy cheatbook to get an overview of how [`Transform`](https://bevy-cheatbook.github.io/fundamentals/transforms.html) and [`Visibility`](https://bevy-cheatbook.github.io/fundamentals/visibility.html) propagation works in general.
+## Transform and Visibility Propagation
 
-In two words, it means that if you change one of these components for a top-level entity, for instance a layer, it will propagate down the hierarchy and apply to all the entities below it.
-For instance :
+Bevy automatically propagates [`Transform`](https://bevy-cheatbook.github.io/fundamentals/transforms.html) and [`Visibility`](https://bevy-cheatbook.github.io/fundamentals/visibility.html) components down the entity hierarchy.
 
-- adding the `Visibility::Hidden` component to an object layer will make all objects in it to be hidden
-- moving an object layer will also move all objects it contains
+**In practice:**  
+If you change one of these components for a top-level entity (e.g., a layer), it will propagate down and apply to all child entities. For example:
 
-However, there is a special case for tiles.
-Since they are not rendered individually but using a "chunk" of several tiles, each individual tile does **not** have a `Transform` or `Visibility` component.
-We propagate the `Transform` and `Visibility` down to the tilemap and `bevy_ecs_tilemap` take care of the rest to update the corresponding tiles chunk.
+- Adding `Visibility::Hidden` to an object layer will hide all objects in that layer.
+- Moving an object layer will also move all objects it contains.
 
-Eventhough you could, you should **not** try to add these components to individual tiles:
+**Special case for tiles:**  
+Tiles are not rendered as individual entities, but as part of a "chunk" of several tiles for performance reasons.  
+Each individual tile entity does **not** have its own [`Transform`](https://bevy-cheatbook.github.io/fundamentals/transforms.html) or [`Visibility`](https://bevy-cheatbook.github.io/fundamentals/visibility.html) component.  
+Instead, these components are propagated down to the [`TiledTilemap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilemap.html), and `bevy_ecs_tilemap` handles updating the corresponding tile chunks.
 
-- it will not do what you think, everything is handled at the tilemap level anyway
-- it may hurt performances badly
+> **Important:**  
+> Even though you technically could, you should **not** add [`Transform`](https://bevy-cheatbook.github.io/fundamentals/transforms.html) or [`Visibility`](https://bevy-cheatbook.github.io/fundamentals/visibility.html) components to individual tile entities:
+> - It will not have the intended effect—everything is handled at the tilemap level.
+> - It may hurt performance significantly.

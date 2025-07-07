@@ -1,126 +1,33 @@
-//! This module contains all map [Asset]s definition.
+//! Asset loader for Tiled maps.
+//!
+//! This module defines the asset loader implementation for importing Tiled maps into Bevy's asset system.
 
 #[cfg(feature = "user_properties")]
 use std::ops::Deref;
-use std::{fmt, sync::Arc};
+use std::sync::Arc;
 
-#[cfg(feature = "user_properties")]
-use bevy::reflect::TypeRegistryArc;
 use tiled::{ChunkData, LayerType, Tileset, TilesetLocation};
-
-#[cfg(feature = "user_properties")]
-use crate::properties::load::DeserializedMapProperties;
-
-use crate::{
-    cache::TiledResourceCache, get_grid_size, get_map_type, iso_projection,
-    reader::BytesResourceReader,
-};
 
 use bevy::{
     asset::{io::Reader, AssetLoader, AssetPath, LoadContext},
     platform::collections::HashMap,
     prelude::*,
 };
+use bevy_ecs_tilemap::map::{
+    HexCoordSystem, IsoCoordSystem, TilemapSize, TilemapTexture, TilemapType,
+};
 
-use bevy_ecs_tilemap::prelude::*;
+use super::asset::{TiledMapAsset, TiledMapTileset};
+use crate::tiled::{
+    cache::TiledResourceCache,
+    helpers::{grid_size_from_map, iso_projection, tilemap_type_from_map},
+    reader::BytesResourceReader,
+};
 
-/// Tiled map [Asset].
-///
-/// [Asset] holding Tiled map informations.
-#[derive(TypePath, Asset)]
-pub struct TiledMap {
-    /// The raw Tiled map data
-    pub map: tiled::Map,
-    /// Map size in tiles
-    pub tilemap_size: TilemapSize,
-    /// Map bounding box, unanchored.
-    ///
-    /// Origin it map bottom-left.
-    /// Minimum is set at `(0., 0.)`
-    /// Maximum is set at `(map_size.x, map_size.y)`
-    pub rect: Rect,
-    /// Offset to apply on Tiled coordinates when converting to Bevy coordinates
-    ///
-    /// Our computations for converting coordinates assume that Tiled origin (ie. point [0, 0])
-    /// is always in the top-left corner of the map. This is not the case for infinite maps where
-    /// map origin is at the top-left corner of chunk (0, 0) and we can have chunk with negative indexes
-    pub(crate) tiled_offset: Vec2,
-    /// Top-left chunk index
-    ///
-    /// For finite maps, always (0, 0)
-    pub(crate) topleft_chunk: (i32, i32),
-    /// Bottom-right chunk index
-    ///
-    /// For finite maps, always (0, 0)
-    pub(crate) bottomright_chunk: (i32, i32),
-    /// HashMap of the map tilesets
-    ///
-    /// Key is the path to the Tiled tileset
-    pub(crate) tilesets: HashMap<String, TiledMapTileset>,
-    /// HashMap of the paths to tilesets
-    ///
-    /// Key is the Tiled tileset index
-    pub(crate) tilesets_path_by_index: HashMap<usize, String>,
-    /// Map properties
+struct TiledMapLoader {
+    cache: TiledResourceCache,
     #[cfg(feature = "user_properties")]
-    pub(crate) properties: DeserializedMapProperties,
-}
-
-pub(crate) fn tile_size_from_grid(grid_size: &TilemapGridSize) -> TilemapTileSize {
-    // TODO: Do Tiled files have tile size and grid size in sync always?
-    TilemapTileSize {
-        x: grid_size.x,
-        y: grid_size.y,
-    }
-}
-
-impl TiledMap {
-    /// Offset that should be applied to map underlying layers to account for the [TilemapAnchor]
-    pub fn offset(&self, anchor: &TilemapAnchor) -> Vec2 {
-        let map_type = get_map_type(&self.map);
-        let grid_size = get_grid_size(&self.map);
-
-        // TODO: Do Tiled files have tile size and grid size in sync always? We assume so.
-        let tile_size = tile_size_from_grid(&grid_size);
-        let mut offset = anchor.as_offset(&self.tilemap_size, &grid_size, &tile_size, &map_type);
-
-        // Special case for isometric maps: bevy_ecs_tilemap start drawing
-        // them from middle left instead of from bottom left
-        if let TilemapType::Isometric(IsoCoordSystem::Diamond) = map_type {
-            offset += Vec2::new(0., self.tilemap_size.y as f32 * grid_size.y as f32 / 2.);
-        }
-
-        offset
-    }
-}
-
-impl fmt::Debug for TiledMap {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("TiledMap")
-            .field("map", &self.map)
-            .field("tilemap_size", &self.tilemap_size)
-            .field("rect", &self.rect)
-            .field("tiled_offset", &self.tiled_offset)
-            .field("topleft_chunk", &self.topleft_chunk)
-            .field("bottomright_chunk", &self.bottomright_chunk)
-            .finish()
-    }
-}
-
-#[derive(Default, Debug)]
-pub(crate) struct TiledMapTileset {
-    /// Does this tileset can be used for tiles layer ?
-    ///
-    /// A tileset can be used for tiles layer only if all the images it contains have the
-    /// same dimensions (restriction from bevy_ecs_tilemap).
-    pub(crate) usable_for_tiles_layer: bool,
-    /// Tileset texture (ie. a single image or an images collection)
-    pub(crate) tilemap_texture: TilemapTexture,
-    /// The [TextureAtlasLayout] handle associated to each tileset, if any.
-    pub(crate) texture_atlas_layout_handle: Option<Handle<TextureAtlasLayout>>,
-    /// The offset into the tileset_images for each tile id within each tileset.
-    #[cfg(not(feature = "atlas"))]
-    pub(crate) tile_image_offsets: HashMap<tiled::TileId, u32>,
+    registry: bevy::reflect::TypeRegistryArc,
 }
 
 pub(crate) fn tileset_path(tileset: &Tileset) -> Option<String> {
@@ -128,12 +35,6 @@ pub(crate) fn tileset_path(tileset: &Tileset) -> Option<String> {
         .source
         .to_str()
         .map(|s| format!("{s}#{}", tileset.name))
-}
-
-pub(crate) struct TiledMapLoader {
-    pub cache: TiledResourceCache,
-    #[cfg(feature = "user_properties")]
-    pub registry: TypeRegistryArc,
 }
 
 impl FromWorld for TiledMapLoader {
@@ -146,16 +47,16 @@ impl FromWorld for TiledMapLoader {
     }
 }
 
-/// [TiledMap] loading error.
+/// [`TiledMapAsset`] loading error.
 #[derive(Debug, thiserror::Error)]
 pub enum TiledMapLoaderError {
-    /// An [IO](std::io) Error
+    /// An [`IO`](std::io) Error
     #[error("Could not load Tiled file: {0}")]
     Io(#[from] std::io::Error),
 }
 
 impl AssetLoader for TiledMapLoader {
-    type Asset = TiledMap;
+    type Asset = TiledMapAsset;
     type Settings = ();
     type Error = TiledMapLoaderError;
 
@@ -184,7 +85,7 @@ impl AssetLoader for TiledMapLoader {
         };
 
         let mut tilesets = HashMap::default();
-        let mut tilesets_path_by_index = HashMap::<usize, String>::default();
+        let mut tilesets_path_by_index = HashMap::<u32, String>::default();
         for (tileset_index, tileset) in map.tilesets().iter().enumerate() {
             debug!(
                 "Loading tileset (index={:?} name={:?}) from {:?}",
@@ -201,7 +102,7 @@ impl AssetLoader for TiledMapLoader {
                 continue;
             };
 
-            tilesets_path_by_index.insert(tileset_index, path.to_owned());
+            tilesets_path_by_index.insert(tileset_index as u32, path.to_owned());
             tilesets.insert(path.to_owned(), tiled_map_tileset);
         }
 
@@ -260,8 +161,8 @@ impl AssetLoader for TiledMapLoader {
             }
         }
 
-        let map_type = get_map_type(&map);
-        let grid_size = get_grid_size(&map);
+        let map_type = tilemap_type_from_map(&map);
+        let grid_size = grid_size_from_map(&map);
         let (tilemap_size, tiled_offset) = if infinite {
             debug!(
                 "(infinite map) topleft = {:?}, bottomright = {:?}",
@@ -347,14 +248,17 @@ impl AssetLoader for TiledMapLoader {
         };
 
         #[cfg(feature = "user_properties")]
-        let properties =
-            DeserializedMapProperties::load(&map, self.registry.read().deref(), load_context);
+        let properties = crate::tiled::properties::load::DeserializedMapProperties::load(
+            &map,
+            self.registry.read().deref(),
+            load_context,
+        );
 
         #[cfg(feature = "user_properties")]
         trace!(?properties, "user properties");
         trace!(?tilesets, "tilesets");
 
-        let asset_map = TiledMap {
+        let asset_map = TiledMapAsset {
             map,
             tilemap_size,
             tiled_offset,
@@ -463,4 +367,8 @@ fn tileset_to_tiled_map_tileset(
         #[cfg(not(feature = "atlas"))]
         tile_image_offsets,
     })
+}
+
+pub(crate) fn plugin(app: &mut App) {
+    app.init_asset_loader::<TiledMapLoader>();
 }

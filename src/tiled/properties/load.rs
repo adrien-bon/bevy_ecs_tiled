@@ -14,7 +14,7 @@ use tiled::{LayerType, Properties, PropertyValue, TileId};
 pub(crate) struct DeserializedMapProperties<const HYDRATED: bool = false> {
     pub(crate) map: DeserializedProperties,
     pub(crate) layers: HashMap<u32, DeserializedProperties>,
-    pub(crate) tiles: HashMap<String, HashMap<TileId, DeserializedProperties>>,
+    pub(crate) tiles: HashMap<u32, HashMap<TileId, DeserializedProperties>>,
     pub(crate) objects: HashMap<u32, DeserializedProperties>,
 }
 
@@ -58,10 +58,12 @@ impl DeserializedMapProperties<false> {
         let tiles = map
             .tilesets()
             .iter()
-            .map(|s| {
+            .enumerate()
+            .map(|(tileset_id, tileset)| {
                 (
-                    s.name.clone(),
-                    s.tiles()
+                    tileset_id as u32,
+                    tileset
+                        .tiles()
                         .map(|(id, t)| {
                             (
                                 id,
