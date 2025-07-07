@@ -4,17 +4,8 @@
 //! and chunking configuration. It allows for efficient rendering and memory management by only
 //! keeping visible maps in memory, while removing those that are not currently in view.
 
-use bevy::{
-    math::bounding::{Aabb2d, IntersectsVolume},
-    prelude::*,
-};
-use bevy_ecs_tilemap::{map::TilemapRenderSettings, prelude::TilemapAnchor};
-
-use super::{asset::TiledWorldAsset, storage::TiledWorldStorage, TiledWorld};
-use crate::tiled::{
-    map::{TiledMap, TiledMapLayerZOffset},
-    sets::TiledPostUpdateSystems,
-};
+use crate::prelude::*;
+use bevy::{math::bounding::IntersectsVolume, prelude::*};
 
 /// [`Component`] holding Tiled world chunking configuration.
 ///

@@ -6,14 +6,8 @@
 //!
 //! When enabled, the plugin spawns a [`Text2d`] entity above every tile, showing its [`TilePos`] coordinates.
 
+use crate::prelude::*;
 use bevy::{color::palettes::css::FUCHSIA, prelude::*};
-use bevy_ecs_tilemap::{
-    map::{TilemapGridSize, TilemapSize, TilemapTileSize, TilemapType},
-    prelude::TilemapAnchor,
-    tiles::TilePos,
-};
-
-use crate::tiled::tile::{TiledTile, TiledTilemap};
 
 /// Configuration for the [`TiledDebugTilesPlugin`].
 ///

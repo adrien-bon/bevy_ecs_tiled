@@ -1,9 +1,11 @@
-use super::load::DeserializedProperties;
-use bevy::ecs::reflect::ReflectBundle;
-use bevy::ecs::system::EntityCommands;
-use bevy::prelude::{AppTypeRegistry, Command, Entity, ReflectComponent, ReflectResource, World};
-use bevy::reflect::{PartialReflect, TypeRegistry};
 use std::ops::Deref;
+
+use crate::tiled::properties::load::DeserializedProperties;
+use bevy::{
+    ecs::{reflect::ReflectBundle, system::EntityCommands},
+    prelude::*,
+    reflect::{PartialReflect, TypeRegistry},
+};
 
 pub(crate) trait PropertiesCommandExt {
     fn insert_properties(&mut self, properties: DeserializedProperties) -> &mut Self;

@@ -9,6 +9,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_8.
 ### Features
 
 - Explicit `SystemSet` to allow systems ordering for user applications.
+- Rationalize which types we re-export (#88)
 
 ### Changed
 

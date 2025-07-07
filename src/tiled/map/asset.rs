@@ -3,19 +3,11 @@
 //! This module defines asset structures, asset events, and the asset loader implementation for importing Tiled maps
 //! into Bevy's asset system.
 
+use crate::{prelude::*, tiled::helpers::iso_projection};
+use bevy::prelude::*;
+use bevy_ecs_tilemap::map::{HexCoordSystem, IsoCoordSystem, TilemapTexture};
 use std::fmt;
-
-use bevy::{platform::collections::HashMap, prelude::*};
-use bevy_ecs_tilemap::{
-    anchor::TilemapAnchor,
-    map::{HexCoordSystem, IsoCoordSystem, TilemapSize, TilemapTexture, TilemapType},
-    tiles::TilePos,
-};
-use tiled::{ChunkData, LayerTile, LayerTileData, Object, TileLayer};
-
-use crate::tiled::helpers::{
-    grid_size_from_map, iso_projection, tile_size_from_grid_size, tilemap_type_from_map,
-};
+use tiled::ChunkData;
 
 #[derive(Default, Debug)]
 pub(crate) struct TiledMapTileset {

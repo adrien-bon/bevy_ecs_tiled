@@ -6,9 +6,8 @@
 //! When enabled, the plugin draws a 2D arrow gizmo at each Tiled object's position, allowing you to easily
 //! verify where objects are spawned in your world.
 
+use crate::prelude::*;
 use bevy::{color::palettes::css::RED, prelude::*};
-
-use crate::tiled::object::TiledObject;
 
 /// Configuration for the [`TiledDebugObjectsPlugin`].
 ///

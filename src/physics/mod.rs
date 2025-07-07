@@ -8,20 +8,8 @@ pub mod backend;
 pub mod collider;
 pub mod settings;
 
-use backend::TiledPhysicsBackend;
+use crate::prelude::*;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::anchor::TilemapAnchor;
-use collider::{ColliderCreated, TiledCollider};
-use settings::TiledPhysicsSettings;
-
-use crate::{
-    names::{TiledName, TiledNameFilter},
-    tiled::{
-        event::{LayerCreated, ObjectCreated, TiledEvent},
-        map::{asset::TiledMapAsset, TiledMap},
-        sets::TiledPreUpdateSystems,
-    },
-};
 
 /// Physics plugin.
 ///

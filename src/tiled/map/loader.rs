@@ -6,23 +6,19 @@
 use std::ops::Deref;
 use std::sync::Arc;
 
-use tiled::{ChunkData, LayerType, Tileset, TilesetLocation};
-
+use crate::{
+    prelude::*,
+    tiled::{
+        cache::TiledResourceCache, helpers::iso_projection, map::asset::TiledMapTileset,
+        reader::BytesResourceReader,
+    },
+};
 use bevy::{
     asset::{io::Reader, AssetLoader, AssetPath, LoadContext},
-    platform::collections::HashMap,
     prelude::*,
 };
-use bevy_ecs_tilemap::map::{
-    HexCoordSystem, IsoCoordSystem, TilemapSize, TilemapTexture, TilemapType,
-};
-
-use super::asset::{TiledMapAsset, TiledMapTileset};
-use crate::tiled::{
-    cache::TiledResourceCache,
-    helpers::{grid_size_from_map, iso_projection, tilemap_type_from_map},
-    reader::BytesResourceReader,
-};
+use bevy_ecs_tilemap::map::{HexCoordSystem, IsoCoordSystem, TilemapTexture};
+use tiled::{ChunkData, LayerType, TilesetLocation};
 
 struct TiledMapLoader {
     cache: TiledResourceCache,
