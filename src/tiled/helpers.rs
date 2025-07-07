@@ -5,11 +5,10 @@
 
 use std::sync::Arc;
 
+use crate::prelude::*;
 use bevy::prelude::*;
-use bevy_ecs_tilemap::map::{
-    HexCoordSystem, IsoCoordSystem, TilemapGridSize, TilemapSize, TilemapTileSize, TilemapType,
-};
-use tiled::{Layer, Map, Object, Orientation, StaggerAxis, StaggerIndex, Tile, TileId, Tileset};
+use bevy_ecs_tilemap::prelude::{HexCoordSystem, IsoCoordSystem};
+use tiled::{Orientation, StaggerAxis, StaggerIndex};
 
 /// Retrieves a [`Layer`] from a [`Map`] given a layer ID.
 ///

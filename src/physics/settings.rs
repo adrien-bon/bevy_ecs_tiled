@@ -4,18 +4,8 @@
 //! for Tiled maps and worlds in Bevy. It notably provides filtering options for selecting which Tiled objects and tiles
 //! should receive colliders.
 
+use crate::prelude::*;
 use bevy::prelude::*;
-
-use crate::{
-    names::TiledName,
-    tiled::{
-        map::{RespawnTiledMap, TiledMap},
-        sets::{TiledPostUpdateSystems, TiledPreUpdateSystems},
-        world::{RespawnTiledWorld, TiledWorld},
-    },
-};
-
-use super::backend::TiledPhysicsBackend;
 
 /// Component for configuring physics collider generation for Tiled maps and worlds.
 ///

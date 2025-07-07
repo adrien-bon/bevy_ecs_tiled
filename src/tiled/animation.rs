@@ -3,9 +3,8 @@
 //! This module implements logic for animating Tiled tiles and objects with frame-based animations
 //! as defined in Tiled maps.
 
+use crate::prelude::*;
 use bevy::prelude::*;
-
-use super::sets::TiledUpdateSystems;
 
 /// This [`Component`] is used for animated objects.
 /// We will automatically update the Sprite index every time the timer fires.

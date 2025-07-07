@@ -4,12 +4,12 @@
 //! in your Bevy application. Enable the `debug` feature to use these plugins, which include
 //! gizmo overlays for objects, tiles, world chunks, and axes.
 
-use bevy::app::{PluginGroup, PluginGroupBuilder};
-
 pub mod axis;
 pub mod objects;
 pub mod tiles;
 pub mod world_chunk;
+
+use bevy::app::{PluginGroup, PluginGroupBuilder};
 
 /// This [`PluginGroup`] contains all debug plugins from `bevy_ecs_tiled`.
 ///
