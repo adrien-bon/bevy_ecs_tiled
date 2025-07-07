@@ -25,13 +25,29 @@ The user properties mechanism relies on Bevy's reflection system.
 
 To use custom properties from Tiled in your game, you need to:
 
-1. **Declare your custom types** in Rust and make them reflectable.
-2. **Run your game once** to export these types as a `.json` file, readable by Tiled.
-3. **Import this `.json` file** into the Tiled editor to make your types available as custom properties.
+1. **Enable the `user_properties` feature** in your local `Cargo.toml` file.
+2. **Declare your custom types** in Rust and make them reflectable.
+3. **Run your game once** to export these types as a `.json` file, readable by Tiled.
+4. **Import this `.json` file** into the Tiled editor to make your types available as custom properties.
 
 Once this is done, you can use your types directly in Tiled. When you load your map, the corresponding `Component` or `Resource` will be automatically inserted into your Bevy world.
 
 For a quick demonstration, see the [dedicated example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/properties_basic.rs).
+
+---
+
+## Enabling the feature
+
+Update your local `Cargo.toml` file to enable the `user_properties` feature:
+
+```toml
+[dependencies]
+bevy = "0.16"
+bevy_ecs_tiled = { version = "0.7", features = ["user_properties"] }
+```
+
+> **Note:**  
+> You may need to adjust `bevy` and `bevy_ecs_tiled` versions.
 
 ---
 
