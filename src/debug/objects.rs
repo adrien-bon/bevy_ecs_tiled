@@ -7,16 +7,19 @@
 //! verify where objects are spawned in your world.
 
 use crate::prelude::*;
-use bevy::{color::palettes::css::RED, prelude::*};
+use bevy::{
+    color::palettes::css::{BLUE, FUCHSIA, GREEN, LIME, RED, WHITE, YELLOW},
+    prelude::*,
+};
 
 /// Configuration for the [`TiledDebugObjectsPlugin`].
 ///
 /// Contains settings to customize how the `arrow_2d` [`Gizmos`] will appear for each Tiled object.
-#[derive(Resource, Reflect, Copy, Clone, Debug)]
+#[derive(Resource, Reflect, Clone, Debug)]
 #[reflect(Resource, Debug)]
 pub struct TiledDebugObjectsConfig {
     /// Color of the `arrow_2d` [`Gizmos`].
-    pub color: Color,
+    pub objects_colors_list: Vec<Color>,
     /// Length and direction of the `arrow_2d` [`Gizmos`].
     pub arrow_length: Vec2,
 }
@@ -24,8 +27,16 @@ pub struct TiledDebugObjectsConfig {
 impl Default for TiledDebugObjectsConfig {
     fn default() -> Self {
         Self {
-            color: bevy::prelude::Color::Srgba(RED),
-            arrow_length: Vec2::new(0., 20.),
+            arrow_length: Vec2::new(-15., 15.),
+            objects_colors_list: vec![
+                Color::from(RED),
+                Color::from(FUCHSIA),
+                Color::from(WHITE),
+                Color::from(BLUE),
+                Color::from(GREEN),
+                Color::from(YELLOW),
+                Color::from(LIME),
+            ],
         }
     }
 }
@@ -45,24 +56,52 @@ impl Default for TiledDebugObjectsConfig {
 /// ```
 ///
 /// This will display an `arrow_2d` [`Gizmos`] at each Tiled object's position.
-#[derive(Default, Copy, Clone, Debug)]
+#[derive(Default, Clone, Debug)]
 pub struct TiledDebugObjectsPlugin(pub TiledDebugObjectsConfig);
 
 impl Plugin for TiledDebugObjectsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.register_type::<TiledDebugObjectsConfig>()
-            .insert_resource(self.0)
-            .add_systems(Update, draw_debug_arrow);
+            .insert_resource(self.0.clone())
+            .add_systems(Update, draw_debug_gizmos);
     }
 }
 
-fn draw_debug_arrow(
-    objects_query: Query<&GlobalTransform, With<TiledObject>>,
+fn draw_debug_gizmos(
+    objects_query: Query<(&TiledObject, &GlobalTransform)>,
     config: Res<TiledDebugObjectsConfig>,
     mut gizmos: Gizmos,
 ) {
-    for transform in objects_query.iter() {
-        let pos = Vec2::new(transform.translation().x, transform.translation().y);
-        gizmos.arrow_2d(pos + config.arrow_length, pos, config.color);
+    for (idx, (object, transform)) in objects_query.iter().enumerate() {
+        let color = config.objects_colors_list[idx % config.objects_colors_list.len()];
+        let origin = Vec2::new(transform.translation().x, transform.translation().y);
+        match object {
+            TiledObject::Point | TiledObject::Text => {}
+            TiledObject::Rectangle { width, height } | TiledObject::Tile { width, height } => {
+                gizmos.rect_2d(
+                    object.isometry_2d(transform),
+                    Vec2::new(*width, *height),
+                    color,
+                );
+            }
+            TiledObject::Ellipse { width, height } => {
+                gizmos.ellipse_2d(
+                    object.isometry_2d(transform),
+                    Vec2::new(*width / 2., *height / 2.),
+                    color,
+                );
+            }
+            TiledObject::Polygon { vertices: _ } => {
+                let mut positions = object.vertices(transform);
+                positions.push(positions[0]); // Close the polygon
+                gizmos.linestrip_2d(positions, color);
+            }
+            TiledObject::Polyline { vertices: _ } => {
+                let positions = object.vertices(transform);
+                gizmos.linestrip_2d(positions, color);
+            }
+        }
+
+        gizmos.arrow_2d(origin + config.arrow_length, origin, color);
     }
 }

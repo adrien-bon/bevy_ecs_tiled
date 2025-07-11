@@ -9,7 +9,8 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_8.
 ### Features
 
 - Explicit `SystemSet` to allow systems ordering for user applications.
-- Rationalize which types we re-export (#88)
+- Rationalize which types we re-export (#88).
+- Attach shape information to `TiledObject` (#77).
 
 ### Changed
 
@@ -18,10 +19,15 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_8.
 - Add helpers functions to the `TiledMapStorage` component so it's easier to work with.
 - Several files have been moved around or renamed.
 
+### Bugfixes
+
+- Rotation is not taken into account for tile objects (#76).
+- Tile objects position for isometric maps (#105).
+
 ### Documentation
 
-- Overall improvement of the documentation
-- Add some example to enable `physics` and `user_properties` features (#100)
+- Overall improvement of the documentation.
+- Add some example to enable `physics` and `user_properties` features (#100).
 
 ## v0.7.3
 

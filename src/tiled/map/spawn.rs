@@ -369,14 +369,34 @@ fn spawn_objects_layer(
     anchor: &TilemapAnchor,
 ) {
     for (object_id, object_data) in object_layer.objects().enumerate() {
-        let object_position = tiled_map
+        let tiled_object = TiledObject::from_object_data(&object_data);
+        let mut pos = tiled_map
             .world_space_from_tiled_position(anchor, Vec2::new(object_data.x, object_data.y));
+
+        // For isometric maps, we need to adjust the position of tile objects
+        // to match the isometric grid.
+        if matches!(
+            tilemap_type_from_map(&tiled_map.map),
+            TilemapType::Isometric(..)
+        ) {
+            if let TiledObject::Tile { width, height: _ } = tiled_object {
+                pos.x -= width / 2.;
+            }
+        }
+
+        let transform = Transform::from_isometry(
+            Isometry3d::from_translation(pos.extend(0.))
+                * Isometry3d::from_rotation(Quat::from_rotation_z(f32::to_radians(
+                    -object_data.rotation,
+                ))),
+        );
+
         let object_entity = commands
             .spawn((
                 Name::new(format!("Object({})", object_data.name)),
-                TiledObject,
                 ChildOf(layer_event.target),
-                Transform::from_xyz(object_position.x, object_position.y, 0.),
+                tiled_object,
+                transform,
                 match &object_data.visible {
                     true => Visibility::Inherited,
                     false => Visibility::Hidden,
@@ -384,98 +404,19 @@ fn spawn_objects_layer(
             ))
             .id();
 
-        let mut sprite = None;
-        let mut animation = None;
-
-        // Handle objects containing tile data: we want to add a Sprite component to the object with the tile image
-        if let Some(tile) = object_data.get_tile() {
-            let path = match tile.tileset_location() {
-                TilesetLocation::Map(tileset_index) => {
-                    let tileset_index = *tileset_index as u32;
-                    let Some(path) = tiled_map.tilesets_path_by_index.get(&tileset_index) else {
-                        continue;
-                    };
-                    path
-                }
-                TilesetLocation::Template(tileset) => {
-                    let Some(path) = tileset.source.to_str() else {
-                        continue;
-                    };
-
-                    &path.to_owned()
-                }
-            };
-
-            sprite = tiled_map.tilesets.get(path).and_then(|t| {
-                match &t.tilemap_texture {
-                    TilemapTexture::Single(single) => {
-                        t.texture_atlas_layout_handle.as_ref().map(|handle| {
-                            Sprite {
-                                image: single.clone(),
-                                texture_atlas: Some(TextureAtlas {
-                                    layout: handle.clone(),
-                                    index: tile.id() as usize,
-                                }),
-                                anchor: Anchor::BottomLeft,
-                                ..default()
-                            }
-                        })
-                    },
-                    #[cfg(not(feature = "atlas"))]
-                    TilemapTexture::Vector(vector) => {
-                        let index = *t.tile_image_offsets.get(&tile.id())
-                            .expect("The offset into to image vector should have been saved during the initial load.");
-                        vector.get(index as usize).map(|image| {
-                            Sprite {
-                                image: image.clone(),
-                                anchor: Anchor::BottomLeft,
-                                ..default()
-                            }
-                        })
-                    }
-                    #[cfg(not(feature = "atlas"))]
-                    _ => unreachable!(),
-                }
-            });
-
-            // Handle the case of an animated tile
-            animation = tile
-                .get_tile()
-                .and_then(|t| get_animated_tile(&t))
-                .map(|animation| TiledAnimation {
-                    start: animation.start as usize,
-                    end: animation.end as usize,
-                    timer: Timer::from_seconds(
-                        1. / (animation.speed * (animation.end - animation.start) as f32),
-                        TimerMode::Repeating,
-                    ),
-                });
-        }
-
-        match (sprite, animation) {
+        // Handle objects containing tile data:
+        // we want to add a Sprite component to the object entity
+        // and possibly an animation component if the tile is animated.
+        match handle_tile_object(&object_data, tiled_map) {
             (Some(sprite), None) => {
-                commands.entity(object_entity).insert((
-                    sprite,
-                    if object_data.visible {
-                        Visibility::Inherited
-                    } else {
-                        Visibility::Hidden
-                    },
-                ));
+                commands.entity(object_entity).insert(sprite);
             }
             (Some(sprite), Some(animation)) => {
-                commands.entity(object_entity).insert((
-                    sprite,
-                    animation,
-                    if object_data.visible {
-                        Visibility::Inherited
-                    } else {
-                        Visibility::Hidden
-                    },
-                ));
+                commands.entity(object_entity).insert((sprite, animation));
             }
             _ => {}
         };
+
         entity_map.insert(object_data.id(), object_entity);
         let object_event = layer_event
             .transmute(Some(object_entity), ObjectCreated)
@@ -483,6 +424,77 @@ fn spawn_objects_layer(
             .to_owned();
         object_events.push(object_event);
     }
+}
+
+fn handle_tile_object(
+    object: &Object,
+    tiled_map: &TiledMapAsset,
+) -> (Option<Sprite>, Option<TiledAnimation>) {
+    let Some(tile) = (*object).get_tile() else {
+        return (None, None);
+    };
+
+    let path = match tile.tileset_location() {
+        TilesetLocation::Map(tileset_index) => {
+            let tileset_index = *tileset_index as u32;
+            tiled_map
+                .tilesets_path_by_index
+                .get(&tileset_index)
+                .expect("Cannot find tileset path for object tile")
+        }
+        TilesetLocation::Template(tileset) => &tileset
+            .source
+            .to_str()
+            .expect("Cannot find object tile from Template")
+            .to_owned(),
+    };
+
+    let sprite = tiled_map.tilesets.get(path).and_then(|t| {
+        match &t.tilemap_texture {
+            TilemapTexture::Single(single) => {
+                t.texture_atlas_layout_handle.as_ref().map(|handle| {
+                    Sprite {
+                        image: single.clone(),
+                        texture_atlas: Some(TextureAtlas {
+                            layout: handle.clone(),
+                            index: tile.id() as usize,
+                        }),
+                        anchor: Anchor::BottomLeft,
+                        ..default()
+                    }
+                })
+            },
+            #[cfg(not(feature = "atlas"))]
+            TilemapTexture::Vector(vector) => {
+                let index = *t.tile_image_offsets.get(&tile.id())
+                    .expect("The offset into to image vector should have been saved during the initial load.");
+                vector.get(index as usize).map(|image| {
+                    Sprite {
+                        image: image.clone(),
+                        anchor: Anchor::BottomLeft,
+                        ..default()
+                    }
+                })
+            }
+            #[cfg(not(feature = "atlas"))]
+            _ => unreachable!(),
+        }
+    });
+
+    // Handle the case of an animated tile
+    let animation = tile
+        .get_tile()
+        .and_then(|t| get_animated_tile(&t))
+        .map(|animation| TiledAnimation {
+            start: animation.start as usize,
+            end: animation.end as usize,
+            timer: Timer::from_seconds(
+                1. / (animation.speed * (animation.end - animation.start) as f32),
+                TimerMode::Repeating,
+            ),
+        });
+
+    (sprite, animation)
 }
 
 fn spawn_image_layer(
