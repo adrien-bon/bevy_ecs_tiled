@@ -29,6 +29,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_8.
 
 - Overall improvement of the documentation.
 - Add some example to enable `physics` and `user_properties` features (#100).
+- Add a FAQ entry about `.world` loading (#82).
 
 ## v0.7.4
 
