@@ -30,7 +30,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         // Add an "in-line" observer to detect when the map has finished loading
         .observe(
             |trigger: Trigger<TiledEvent<MapCreated>>, map_query: Query<&Name, With<TiledMap>>| {
-                if let Ok(name) = map_query.get(trigger.event().target) {
+                if let Ok(name) = map_query.get(trigger.event().origin) {
                     info!(
                         "=> Observer TiledMapCreated was triggered for map '{}'",
                         name
@@ -50,7 +50,7 @@ fn evt_map_created(
 ) {
     for e in map_events.read() {
         // We can either access the map components via a regular query
-        let Ok((name, storage)) = map_query.get(e.target) else {
+        let Ok((name, storage)) = map_query.get(e.origin) else {
             return;
         };
 
@@ -82,7 +82,7 @@ fn obs_layer_created(
     assets: Res<Assets<TiledMapAsset>>,
 ) {
     // We can either access the layer components via a regular query
-    let Ok(name) = layer_query.get(trigger.event().target) else {
+    let Ok(name) = layer_query.get(trigger.event().origin) else {
         return;
     };
 
@@ -110,7 +110,7 @@ fn evt_object_created(
     mut z_offset: Local<f32>,
 ) {
     for e in object_events.read() {
-        let Ok((name, mut transform)) = object_query.get_mut(e.target) else {
+        let Ok((name, mut transform)) = object_query.get_mut(e.origin) else {
             return;
         };
 

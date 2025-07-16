@@ -59,7 +59,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .observe(
             |trigger: Trigger<TiledEvent<ColliderCreated>>, mut commands: Commands| {
                 commands
-                    .entity(trigger.event().target)
+                    .entity(trigger.event().origin)
                     .insert(RigidBody::Fixed);
             },
         );
