@@ -34,7 +34,7 @@ use crate::tiled::{
 #[reflect(Component, Debug, Clone)]
 pub struct TiledEvent<E: Debug + Clone + Copy + Reflect> {
     /// The original target of this event, before bubbling
-    pub target: Entity,
+    pub origin: Entity,
     /// The specific event that was triggered
     pub event: E,
 
@@ -53,9 +53,9 @@ where
     E: Debug + Clone + Copy + Reflect,
 {
     /// Creates a new [`TiledEvent`]
-    pub fn new(target: Entity, event: E) -> Self {
+    pub fn new(origin: Entity, event: E) -> Self {
         Self {
-            target,
+            origin,
             event,
             world: None,
             map: None,
@@ -67,12 +67,12 @@ where
     }
 
     /// Transmute a [`TiledEvent`] from one kind to another
-    pub fn transmute<O>(&self, target: Option<Entity>, event: O) -> TiledEvent<O>
+    pub fn transmute<O>(&self, origin: Option<Entity>, event: O) -> TiledEvent<O>
     where
         O: Debug + Clone + Copy + Reflect,
     {
         TiledEvent::<O> {
-            target: target.unwrap_or(self.target),
+            origin: origin.unwrap_or(self.origin),
             event,
             world: self.world,
             map: self.map,
@@ -121,7 +121,7 @@ where
 
     /// Trigger observer and write event for this [`TiledEvent`]
     pub fn send(&self, commands: &mut Commands, event_writer: &mut EventWriter<TiledEvent<E>>) {
-        commands.trigger_targets(*self, self.target);
+        commands.trigger_targets(*self, self.origin);
         event_writer.write(*self);
     }
 }

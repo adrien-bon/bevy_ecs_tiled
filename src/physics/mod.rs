@@ -69,7 +69,7 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
                 anchor,
                 &settings.tiles_objects_filter,
                 ev.transmute(None, ColliderCreated(TiledCollider::TilesLayer)),
-                ev.target,
+                ev.origin,
                 &mut event_writer,
             );
         }
@@ -110,7 +110,7 @@ fn collider_from_object<T: TiledPhysicsBackend>(
                     None => &TiledName::All,
                 },
                 ev.transmute(None, ColliderCreated(TiledCollider::Object)),
-                ev.target,
+                ev.origin,
                 &mut event_writer,
             );
         }
@@ -143,7 +143,7 @@ fn spawn_colliders<T: TiledPhysicsBackend>(
         ));
         // Send collider event
         let mut event = source_event;
-        event.target = output.entity;
+        event.origin = output.entity;
         event.send(commands, event_writer);
     }
 }
