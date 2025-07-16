@@ -102,8 +102,8 @@ fn obs_layer_created(
 }
 
 // A typical usecase for regular events is to update components associated with tiles, objects or layers.
-// Here, we will add a small offset on the Z axis to our objects to prevent them
-// from Z-fighting if they are on the same layer (by default, all objects on a given layer have the same Z offset)
+// Here, we will add a small offset on the Z axis to our objects to demonstrate how to use the
+// `TiledObjectCreated` event.
 fn evt_object_created(
     mut object_events: EventReader<TiledEvent<ObjectCreated>>,
     mut object_query: Query<(&Name, &mut Transform), With<TiledObject>>,
@@ -116,8 +116,6 @@ fn evt_object_created(
 
         info!("=> Received TiledObjectCreated event for object '{}'", name);
 
-        // Obviously, this is a very naive implementation and you would
-        // probably want to do something else in a real usecase
         info!("Apply z-offset = {:?}", *z_offset);
         transform.translation.z += *z_offset;
         *z_offset += 0.01;
