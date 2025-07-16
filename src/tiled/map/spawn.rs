@@ -368,7 +368,7 @@ fn spawn_objects_layer(
     object_events: &mut Vec<TiledEvent<ObjectCreated>>,
     anchor: &TilemapAnchor,
 ) {
-    for (object_id, object_data) in object_layer.objects().enumerate() {
+    for object_data in object_layer.objects() {
         let tiled_object = TiledObject::from_object_data(&object_data);
         let mut pos = tiled_map
             .world_space_from_tiled_position(anchor, Vec2::new(object_data.x, object_data.y));
@@ -420,7 +420,7 @@ fn spawn_objects_layer(
         entity_map.insert(object_data.id(), object_entity);
         let object_event = layer_event
             .transmute(Some(object_entity), ObjectCreated)
-            .with_object(object_entity, object_id as u32)
+            .with_object(object_entity, object_data.id())
             .to_owned();
         object_events.push(object_event);
     }

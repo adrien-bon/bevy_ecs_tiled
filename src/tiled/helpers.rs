@@ -43,7 +43,7 @@ pub fn get_object_from_map(map: &Map, object_id: u32) -> Option<Object> {
     for layer in map.layers() {
         let obj = layer
             .as_object_layer()
-            .and_then(|l| l.get_object(object_id as usize));
+            .and_then(|l| l.objects().find(|o| o.id() == object_id));
         if obj.is_some() {
             return obj;
         }
