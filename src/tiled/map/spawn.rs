@@ -218,7 +218,7 @@ fn spawn_tiles_layer(
             .spawn((
                 Name::new(format!("TiledTilemap({}, {})", layer.name, tileset.name)),
                 TiledTilemap,
-                ChildOf(layer_event.target),
+                ChildOf(layer_event.origin),
             ))
             .id();
 
@@ -394,7 +394,7 @@ fn spawn_objects_layer(
         let object_entity = commands
             .spawn((
                 Name::new(format!("Object({})", object_data.name)),
-                ChildOf(layer_event.target),
+                ChildOf(layer_event.origin),
                 tiled_object,
                 transform,
                 match &object_data.visible {
@@ -520,7 +520,7 @@ fn spawn_image_layer(
         commands.spawn((
             Name::new(format!("Image({})", image.source.display())),
             TiledImage,
-            ChildOf(layer_event.target),
+            ChildOf(layer_event.origin),
             Sprite {
                 image: asset_server.load(image.source.clone()),
                 anchor: Anchor::TopLeft,

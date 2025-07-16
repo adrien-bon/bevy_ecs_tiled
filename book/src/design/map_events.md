@@ -27,7 +27,7 @@ fn handle_event(
     // Even though we receive an event for a Tiled object,
     // we can retrieve information about the Tiled map
     for e in object_events.read() {
-        let object_entity = e.target;
+        let object_entity = e.origin;
         if let Some(map_asset) = e.get_map_asset() {
             info!("Received TiledEvent<ObjectCreated> for: '{:?}'", map_asset);
         }
