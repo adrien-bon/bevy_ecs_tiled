@@ -52,11 +52,12 @@ impl<'a> TiledEvent<ColliderCreated> {
                     if let Some(tile) = layer_tile.get_tile() {
                         let grid_size = grid_size_from_map(&map_asset.map);
                         let tile_size = tile_size_from_grid_size(&grid_size);
+                        let map_type = tilemap_type_from_map(&map_asset.map);
                         let tile_coords = tile_pos.center_in_world(
                             &map_asset.tilemap_size,
                             &grid_size,
                             &tile_size,
-                            &tilemap_type_from_map(&map_asset.map),
+                            &map_type,
                             anchor,
                         );
                         out.push((tile_coords, tile));
