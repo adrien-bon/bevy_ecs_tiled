@@ -33,7 +33,7 @@
  <tile id="4" type="TileComponent">
   <image source="orthogonal/tile4.png" width="32" height="32"/>
   <objectgroup draworder="index" id="2">
-   <object id="2" name="collision" x="10.7273" y="20" width="20.7273" height="10.3636">
+   <object id="2" name="collision" x="10.4301" y="21.0898" width="20.7273" height="10.3636">
     <ellipse/>
    </object>
   </objectgroup>

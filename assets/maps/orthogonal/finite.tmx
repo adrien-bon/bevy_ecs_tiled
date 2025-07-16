@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="10" height="10" tilewidth="32" tileheight="32" infinite="0" nextlayerid="7" nextobjectid="19">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="10" height="10" tilewidth="32" tileheight="32" infinite="0" nextlayerid="7" nextobjectid="33">
  <tileset firstgid="1" source="../../tiles/orthogonal_1.tsx"/>
  <imagelayer id="6" name="Image Layer 1" offsetx="32.6667" offsety="112.667">
   <image source="../../bevy_icon.png" width="256" height="256"/>
@@ -19,18 +19,16 @@
 </data>
  </layer>
  <objectgroup id="5" name="Collisions">
-  <object id="1" x="0" y="2" width="319" height="29"/>
-  <object id="2" x="1" y="289" width="319" height="29"/>
   <object id="3" x="33" y="226" width="254" height="61">
    <ellipse/>
   </object>
   <object id="5" x="223" y="31" width="63" height="252">
    <ellipse/>
   </object>
-  <object id="6" x="2" y="36" width="116" height="78">
+  <object id="6" x="-40.5372" y="-21.2942" width="116" height="28.6476" rotation="20.3824">
    <ellipse/>
   </object>
-  <object id="8" x="33" y="161">
+  <object id="8" x="52.7213" y="106.243" rotation="56.7816">
    <polygon points="0,0 96,-31 158,-31 158,0 63,31 1,31"/>
   </object>
  </objectgroup>

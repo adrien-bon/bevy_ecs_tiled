@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="40" height="40" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="81">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="40" height="40" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="86">
  <tileset firstgid="1" source="../Magic Market/Tilesets/Tileset water - 16x16.tsx"/>
  <tileset firstgid="229" source="../Magic Market/Tilesets/Tileset floor - 16x16.tsx"/>
  <tileset firstgid="394" source="../Magic Market/Tilesets/Objects.tsx"/>
@@ -156,7 +156,7 @@
   <object id="12" gid="413" x="545.917" y="56.75" width="16" height="16"/>
   <object id="13" gid="439" x="324.25" y="238.5" width="16" height="16"/>
   <object id="14" gid="439" x="427.667" y="432.333" width="16" height="16"/>
-  <object id="15" gid="439" x="442.667" y="306.667" width="16" height="16"/>
+  <object id="15" gid="2147484087" x="447.167" y="337.167" width="16" height="16"/>
   <object id="16" gid="435" x="28.3333" y="252.333" width="16" height="16"/>
   <object id="17" gid="435" x="251.333" y="228" width="16" height="16"/>
   <object id="18" gid="435" x="116" y="437.667" width="16" height="16"/>
@@ -203,8 +203,8 @@
   <object id="63" gid="486" x="359.333" y="213.333" width="32" height="32"/>
   <object id="65" gid="492" x="331.333" y="177.333" width="48" height="16"/>
   <object id="66" gid="497" x="199.667" y="297.333" width="48" height="32"/>
-  <object id="67" gid="496" x="356.667" y="298" width="48" height="32"/>
-  <object id="68" gid="494" x="397" y="348.333" width="48" height="32"/>
+  <object id="67" gid="496" x="358.904" y="273.796" width="48" height="32" rotation="43.4122"/>
+  <object id="68" gid="494" x="80.231" y="296.362" width="48" height="32" rotation="319.925"/>
   <object id="70" template="../Magic Market/Templates/bench.tx" x="304.5" y="368"/>
   <object id="71" gid="467" x="489" y="614.5" width="16" height="32"/>
   <object id="72" gid="467" x="442" y="614" width="16" height="32"/>
