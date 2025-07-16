@@ -12,6 +12,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_8.
 - Rationalize which types we re-export (#88).
 - Attach shape information to `TiledObject` (#77).
 - Automatically adjust translation for objects on the same layer to avoid Z-fighting (#81).
+- Apply scaling and flipping for tile objects (#99).
 
 ### Changed
 
