@@ -370,7 +370,7 @@ fn spawn_objects_layer(
     object_events: &mut Vec<TiledEvent<ObjectCreated>>,
     anchor: &TilemapAnchor,
 ) {
-    for object_data in object_layer.objects() {
+    for (index, object_data) in object_layer.objects().enumerate() {
         let tiled_object = TiledObject::from_object_data(&object_data);
         let mut pos = tiled_map
             .world_space_from_tiled_position(anchor, Vec2::new(object_data.x, object_data.y));
@@ -387,7 +387,7 @@ fn spawn_objects_layer(
         }
 
         let transform = Transform::from_isometry(
-            Isometry3d::from_translation(pos.extend(0.))
+            Isometry3d::from_translation(pos.extend(index as f32 * 0.001))
                 * Isometry3d::from_rotation(Quat::from_rotation_z(f32::to_radians(
                     -object_data.rotation,
                 ))),
