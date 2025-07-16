@@ -3,6 +3,8 @@
 In 2D games, the Z-axis determines the rendering order: elements with a higher Z value appear in front of those with a lower Z value.  
 For a deeper dive into Bevy's coordinate system and Z-ordering, see [the Bevy cheatbook](https://bevy-cheatbook.github.io/fundamentals/coords.html).
 
+---
+
 ## Layer Ordering in Tiled and Bevy
 
 When designing your map in Tiled, you expect that layers higher in the stack visually cover those below.  
@@ -25,15 +27,16 @@ You can adjust this value by adding or modifying the [`TiledMapLayerZOffset`](ht
 > If your layer offset is too small, you may see unexpected rendering order issues.  
 > A larger offset (like the default `100`) helps avoid this.
 
+---
+
 ## Objects on a Layer
 
-All objects on a given layer share the same Z offset as their parent layer.  
-This can cause issues if two objects (such as sprites) overlap at the same position:  
-Bevy cannot reliably determine which one should be drawn on top, leading to ["Z-fighting"](https://en.wikipedia.org/wiki/Z-fighting)—a flickering effect as the renderer alternates between the two.
+Objects on a given layer inherit the Z offset of their parent layer, but each object is given a small additional offset to avoid ["Z-fighting"](https://en.wikipedia.org/wiki/Z-fighting)—a flickering effect that occurs when two objects share the same Z value.
 
-### How to Avoid Z-fighting
+- Each object receives a unique, small Z offset relative to its parent layer.
+- This ensures that overlapping objects are rendered in a stable order.
 
-Currently, there is no built-in way in `bevy_ecs_tiled` to automatically resolve Z-fighting between objects on the same layer.  
-However, you can work around this by listening to map events and manually adjusting the Z offset of your objects after they are spawned.
+If you need precise control over the Z position of specific objects (for example, to implement custom sorting or to ensure a particular object always appears on top), you can:
 
-See the [map events example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/dev/examples/map_events.rs) for a practical demonstration of this approach.
+- Listen to [map events](https://github.com/adrien-bon/bevy_ecs_tiled/blob/dev/examples/map_events.rs) and manually adjust the Z offset of your objects after they are spawned.
+- Use your own logic to set the Z value based on object properties or gameplay needs.
