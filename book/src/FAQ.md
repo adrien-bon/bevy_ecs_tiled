@@ -29,6 +29,32 @@ Support for these cases will improve in the future.
 
 ---
 
+## I want a huge map for my game, is it a problem?
+
+If you have performance issues with a single large map, consider using a [Tiled world](https://doc.mapeditor.org/en/stable/manual/worlds/).  
+A Tiled world is a collection of multiple maps, and you can control which ones are loaded at any given time.
+
+To spawn a Tiled world, use the [`TiledWorld`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/struct.TiledWorld.html) component after loading a `.world` asset:
+
+```rust,no_run
+use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn startup(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+) {
+    // Spawn a new entity with the TiledWorld component
+    commands.spawn(
+        TiledWorld(asset_server.load("demo.world"))
+    );
+}
+```
+
+You can customize world loading with the same components and events / observers as for maps, and use the [`TiledWorldChunking`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/chunking/struct.TiledWorldChunking.html) component to control map chunking.
+
+---
+
 ## I’m using an isometric map and it seems all messed up!
 
 - Make sure you are actually using a "diamond" isometric map, not a "staggered" one (which is not supported).
