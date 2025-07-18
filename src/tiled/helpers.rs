@@ -134,12 +134,3 @@ pub(crate) fn iso_projection(
         y: (fract.x + fract.y) * grid_size.y / 2.,
     }
 }
-
-#[allow(dead_code)]
-/// Converts an [`Isometry2d`] to a Bevy [`GlobalTransform`].
-pub(crate) fn global_transform_from_isometry_2d(isometry_2d: &Isometry2d) -> GlobalTransform {
-    GlobalTransform::from_isometry(Isometry3d {
-        rotation: Quat::from_rotation_z(isometry_2d.rotation.as_radians()),
-        translation: isometry_2d.translation.extend(0.).into(),
-    })
-}

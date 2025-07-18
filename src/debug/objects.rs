@@ -75,33 +75,12 @@ fn draw_debug_gizmos(
     for (idx, (object, transform)) in objects_query.iter().enumerate() {
         let color = config.objects_colors_list[idx % config.objects_colors_list.len()];
         let origin = Vec2::new(transform.translation().x, transform.translation().y);
-        match object {
-            TiledObject::Point | TiledObject::Text => {}
-            TiledObject::Rectangle { width, height } | TiledObject::Tile { width, height } => {
-                gizmos.rect_2d(
-                    object.isometry_2d(transform),
-                    Vec2::new(*width, *height),
-                    color,
-                );
-            }
-            TiledObject::Ellipse { width, height } => {
-                gizmos.ellipse_2d(
-                    object.isometry_2d(transform),
-                    Vec2::new(*width / 2., *height / 2.),
-                    color,
-                );
-            }
-            TiledObject::Polygon { vertices: _ } => {
-                let mut positions = object.vertices(transform);
-                positions.push(positions[0]); // Close the polygon
-                gizmos.linestrip_2d(positions, color);
-            }
-            TiledObject::Polyline { vertices: _ } => {
-                let positions = object.vertices(transform);
-                gizmos.linestrip_2d(positions, color);
-            }
-        }
-
         gizmos.arrow_2d(origin + config.arrow_length, origin, color);
+        let positions = object
+            .line_string(transform)
+            .map(|ls| ls.coords().map(|c| Vec2::new(c.x, c.y)).collect::<Vec<_>>());
+        if let Some(pos) = positions {
+            gizmos.linestrip_2d(pos, color);
+        }
     }
 }
