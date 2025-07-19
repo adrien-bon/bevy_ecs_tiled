@@ -323,7 +323,7 @@ fn load_tiles(
                     .get(path)
                     .and_then(|t| t.tile_image_offsets.get(&layer_tile.id()))
                     .expect(
-                        "The offset into to image vector should have been saved during the initial load.",
+                        "The offset into the image vector for tilemap should have been saved during the initial load.",
                     ),
                 #[cfg(not(feature = "atlas"))]
                 _ => unreachable!(),
@@ -421,7 +421,7 @@ fn load_objects_layer(
                     path
                 }
                 TilesetLocation::Template(tileset) => {
-                    let Some(path) = tileset.source.to_str() else {
+                    let Some(path) = tileset_path(tileset) else {
                         continue;
                     };
 
@@ -447,7 +447,7 @@ fn load_objects_layer(
                     #[cfg(not(feature = "atlas"))]
                     TilemapTexture::Vector(vector) => {
                         let index = *t.tile_image_offsets.get(&tile.id())
-                            .expect("The offset into to image vector should have been saved during the initial load.");
+                            .expect("The offset into the image vector for template should have been saved during the initial load.");
                         vector.get(index as usize).map(|image| {
                             Sprite {
                                 image: image.clone(),
