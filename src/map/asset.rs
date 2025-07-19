@@ -123,6 +123,13 @@ pub(crate) struct TiledMapTileset {
     pub(crate) tile_image_offsets: HashMap<tiled::TileId, u32>,
 }
 
+pub(crate) fn tileset_path(tileset: &Tileset) -> Option<String> {
+    tileset
+        .source
+        .to_str()
+        .map(|s| format!("{s}#{}", tileset.name))
+}
+
 pub(crate) struct TiledMapLoader {
     pub cache: TiledResourceCache,
     #[cfg(feature = "user_properties")]
@@ -184,7 +191,7 @@ impl AssetLoader for TiledMapLoader {
                 tileset_index, tileset.name, tileset.source
             );
 
-            let Some(path) = tileset.source.to_str() else {
+            let Some(path) = tileset_path(tileset) else {
                 continue;
             };
 
@@ -195,7 +202,6 @@ impl AssetLoader for TiledMapLoader {
             };
 
             tilesets_path_by_index.insert(tileset_index, path.to_owned());
-
             tilesets.insert(path.to_owned(), tiled_map_tileset);
         }
 
@@ -213,11 +219,11 @@ impl AssetLoader for TiledMapLoader {
                     continue;
                 };
 
-                let Some(path) = tileset.source.to_str() else {
+                let Some(path) = tileset_path(tileset) else {
                     continue;
                 };
 
-                if tilesets.contains_key(&path.to_owned()) {
+                if tilesets.contains_key(&path) {
                     continue;
                 }
 
