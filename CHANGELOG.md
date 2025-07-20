@@ -2,6 +2,8 @@
 
 ## [unreleased]
 
+## v0.7.4
+
 ### Features
 
 - Add `iyes_perf_ui` debug UI when running examples
