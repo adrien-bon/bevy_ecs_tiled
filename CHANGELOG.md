@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Bugfixes
+
+- Fix regression introduced in v0.7.3, prevent crash when using embedded tilesets (#110)
+
 ## v0.7.3
 
 ### Features
