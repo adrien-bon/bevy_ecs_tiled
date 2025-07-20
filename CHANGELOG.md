@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Features
+
+- Add `iyes_perf_ui` debug UI when running examples
+
 ### Bugfixes
 
 - Fix regression introduced in v0.7.3, prevent crash when using embedded tilesets (#110)
