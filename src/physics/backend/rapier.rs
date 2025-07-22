@@ -23,9 +23,9 @@ use bevy_rapier2d::{
 /// The [`TiledPhysicsBackend`] to use for Rapier 2D integration.
 ///
 /// This enum allows you to select how colliders are generated from Tiled shapes:
-/// - [`Polyline`]: Aggregates all line strings into a single polyline collider.
-/// - [`Triangulation`]: Triangulates polygons and aggregates triangles into a compound collider.
-/// - [`LineStrip`]: Creates a separate linestrip collider for each line string.
+/// - [`TiledPhysicsRapierBackend::Polyline`]: Aggregates all line strings into a single polyline collider.
+/// - [`TiledPhysicsRapierBackend::Triangulation`]: Triangulates polygons and aggregates triangles into a compound collider.
+/// - [`TiledPhysicsRapierBackend::LineStrip`]: Creates a separate linestrip collider for each line string.
 #[derive(Default, Reflect, Copy, Clone, Debug)]
 #[reflect(Default, Debug)]
 pub enum TiledPhysicsRapierBackend {

@@ -27,9 +27,9 @@ use bevy::prelude::*;
 /// The [`TiledPhysicsBackend`] to use for Avian 2D integration.
 ///
 /// This enum allows you to select how colliders are generated from Tiled shapes:
-/// - [`Polyline`]: Aggregates all line strings into a single polyline collider.
-/// - [`Triangulation`]: Triangulates polygons and aggregates triangles into a compound collider.
-/// - [`LineStrip`]: Creates a separate linestrip collider for each line string.
+/// - [`TiledPhysicsAvianBackend::Polyline`]: Aggregates all line strings into a single polyline collider.
+/// - [`TiledPhysicsAvianBackend::Triangulation`]: Triangulates polygons and aggregates triangles into a compound collider.
+/// - [`TiledPhysicsAvianBackend::LineStrip`]: Creates a separate linestrip collider for each line string.
 #[derive(Default, Reflect, Copy, Clone, Debug)]
 #[reflect(Default, Debug)]
 pub enum TiledPhysicsAvianBackend {
