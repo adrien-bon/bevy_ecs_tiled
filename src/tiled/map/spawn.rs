@@ -436,6 +436,11 @@ fn handle_tile_object(
         return (None, None);
     };
 
+    // Assume tile objets always have a rectangular shape
+    let tiled::ObjectShape::Rect { width, height } = object.shape else {
+        return (None, None);
+    };
+
     let path = match tile.tileset_location() {
         TilesetLocation::Map(tileset_index) => {
             let tileset_index = *tileset_index as u32;
@@ -460,6 +465,12 @@ fn handle_tile_object(
                             index: tile.id() as usize,
                         }),
                         anchor: Anchor::BottomLeft,
+                        flip_x: tile.flip_h,
+                        flip_y: tile.flip_v,
+                        custom_size: Some(Vec2::new(
+                            width,
+                            height
+                        )),
                         ..default()
                     }
                 })
@@ -472,6 +483,12 @@ fn handle_tile_object(
                     Sprite {
                         image: image.clone(),
                         anchor: Anchor::BottomLeft,
+                        flip_x: tile.flip_h,
+                        flip_y: tile.flip_v,
+                        custom_size: Some(Vec2::new(
+                            width,
+                            height
+                        )),
                         ..default()
                     }
                 })
