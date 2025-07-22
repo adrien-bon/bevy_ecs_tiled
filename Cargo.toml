@@ -54,6 +54,7 @@ tiled = { version = "0.14", features = ["world"] }
 futures-lite = "2.6"
 log = "0.4"
 thiserror = "2.0"
+geo = "0.30"
 
 # Optional dependencies, enabled via features.
 bevy_rapier2d = { version = "0.30", optional = true }

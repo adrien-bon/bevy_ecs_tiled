@@ -15,6 +15,7 @@ use std::fmt;
 
 use crate::prelude::*;
 use bevy::{prelude::*, reflect::Reflectable};
+use geo::{Centroid, TriangulateDelaunay};
 
 /// Trait for implementing a custom physics backend for Tiled maps and worlds.
 ///
@@ -32,24 +33,23 @@ pub trait TiledPhysicsBackend:
 {
     /// Spawns one or more physics colliders for a given Tiled object or tile layer.
     ///
+    /// This function is called by the physics integration to generate colliders for Tiled objects or tiles.
+    /// The backend implementation is responsible for creating the appropriate physics entities and returning
+    /// information about them.
+    ///
     /// # Arguments
     /// * `commands` - The Bevy [`Commands`] instance for spawning entities.
-    /// * `assets` - Reference to the loaded [`TiledMapAsset`] assets.
-    /// * `anchor` - The anchor point of the tilemap.
-    /// * `filter` - Name filter for selecting which objects/tiles to spawn colliders for.
     /// * `source` - The event describing the collider to be created.
+    /// * `polygons` - The [`MultiPolygon<f32>`] geometry representing the collider shape.
     ///
     /// # Returns
     /// A vector of [`TiledPhysicsBackendOutput`] describing the spawned colliders.
-    ///
     /// If the provided collider is not supported, the function should return an empty vector.
     fn spawn_colliders(
         &self,
         commands: &mut Commands,
-        assets: &Res<Assets<TiledMapAsset>>,
-        anchor: &TilemapAnchor,
-        filter: &TiledNameFilter,
         source: &TiledEvent<ColliderCreated>,
+        polygons: MultiPolygon<f32>,
     ) -> Vec<TiledPhysicsBackendOutput>;
 }
 
@@ -59,12 +59,60 @@ pub trait TiledPhysicsBackend:
 /// including its name, entity ID, and transform relative to its parent.
 #[derive(Clone, Debug)]
 pub struct TiledPhysicsBackendOutput {
-    /// Name of the collider.
+    /// [`Name`] of the collider.
     pub name: String,
     /// [`Entity`] of the spawned collider.
     pub entity: Entity,
-    /// Relative position and rotation of the collider from its parent [`Entity`].
+    /// The relative [`Transform`] of the collider from its parent [`Entity`].
     pub transform: Transform,
+}
+
+/// Converts a [`MultiPolygon<f32>`] into a vector of triangles and their centroids.
+///
+/// Each triangle is represented as an array of three [`Vec2`] points, and its centroid as a [`Vec2`].
+/// This is useful for physics backends that require triangulated shapes.
+///
+/// # Arguments
+/// * `multi_polygon` - The input geometry to triangulate.
+///
+/// # Returns
+/// A vector of tuples: ([triangle_vertices; 3], centroid).
+pub fn multi_polygon_as_triangles(multi_polygon: &MultiPolygon<f32>) -> Vec<([Vec2; 3], Vec2)> {
+    multi_polygon
+        .constrained_triangulation(Default::default())
+        .unwrap()
+        .into_iter()
+        .map(|tri| {
+            let (c_x, c_y) = tri.centroid().0.x_y();
+            let d = Vec2::new(c_x, c_y);
+            let tri = tri.to_array().map(|p| Vec2::new(p.x, p.y)).map(|p| p - d);
+
+            (tri, d)
+        })
+        .collect()
+}
+
+/// Converts a [`MultiPolygon<f32>`] into a vector of [`LineString<f32>`].
+///
+/// This function extracts all exterior and interior rings from the input geometry and returns them as line strings.
+/// Useful for physics backends that operate on polylines or linestrips.
+///
+/// # Arguments
+/// * `multi_polygon` - The input geometry to extract line strings from.
+///
+/// # Returns
+/// A vector of [`LineString<f32>`] representing all rings in the geometry.
+pub fn multi_polygon_as_line_strings(multi_polygon: &MultiPolygon<f32>) -> Vec<LineString<f32>> {
+    let mut out = vec![];
+    multi_polygon.iter().for_each(|p| {
+        [p.interiors(), &[p.exterior().clone()]]
+            .concat()
+            .into_iter()
+            .for_each(|ls| {
+                out.push(ls);
+            });
+    });
+    out
 }
 
 pub(crate) fn plugin(_app: &mut App) {
