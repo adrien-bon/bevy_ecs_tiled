@@ -117,34 +117,3 @@ fn collider_from_object<T: TiledPhysicsBackend>(
         }
     }
 }
-
-// fn spawn_colliders<T: TiledPhysicsBackend>(
-//     backend: &T,
-//     commands: &mut Commands,
-//     assets: &Res<Assets<TiledMapAsset>>,
-//     anchor: &TilemapAnchor,
-//     name_filter: &TiledName,
-//     source_event: TiledEvent<ColliderCreated>,
-//     parent: Entity,
-//     event_writer: &mut EventWriter<TiledEvent<ColliderCreated>>,
-// ) {
-//     for output in backend.spawn_colliders(
-//         commands,
-//         assets,
-//         anchor,
-//         &TiledNameFilter::from(name_filter),
-//         &source_event,
-//     ) {
-//         // Attach collider to its parent
-//         commands.entity(output.entity).insert((
-//             source_event.event.0,
-//             Name::new(format!("Collider: {}", output.name)),
-//             ChildOf(parent),
-//             output.transform,
-//         ));
-//         // Send collider event
-//         let mut event = source_event;
-//         event.origin = output.entity;
-//         event.send(commands, event_writer);
-//     }
-// }
