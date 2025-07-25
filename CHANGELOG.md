@@ -23,11 +23,13 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_8.
 - Rework the `Event` APi and provide an unified way to handle events and access underlying Tiled data.
 - Add helpers functions to the `TiledMapStorage` component so it's easier to work with.
 - Several files have been moved around or renamed.
+- Improve the physics colliders filter API and use it for filtering exported types (#102).
 
 ### Bugfixes
 
 - Rotation is not taken into account for tile objects (#76).
 - Tile objects position for isometric maps (#105).
+- Fix `bevy_color::color::Color` type export, it's directly mapped to Tiled own color type.
 
 ### Documentation
 

@@ -17,7 +17,6 @@
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::type_complexity)]
 
-pub mod names;
 pub mod tiled;
 
 #[cfg(feature = "debug")]
@@ -36,7 +35,6 @@ pub mod prelude {
         world_chunk::{TiledDebugWorldChunkConfig, TiledDebugWorldChunkPlugin},
         TiledDebugPluginGroup,
     };
-    pub use super::names::{TiledName, TiledNameFilter};
     #[cfg(feature = "avian")]
     pub use super::physics::backend::avian::TiledPhysicsAvianBackend;
     #[cfg(feature = "rapier")]
@@ -54,6 +52,7 @@ pub mod prelude {
             LayerCreated, MapCreated, ObjectCreated, TileCreated, TiledEvent, TilemapCreated,
             WorldCreated,
         },
+        filter::TiledFilter,
         helpers::{
             get_layer_from_map, get_object_from_map, get_tile_from_map, get_tileset_from_map,
             grid_size_from_map, tile_size_from_grid_size, tile_size_from_map,
@@ -91,4 +90,6 @@ pub mod prelude {
     // Re-exports from 'geo'
     pub use geo::Polygon as GeoPolygon; // Avoid name clash with Bevy 'Polygon'
     pub use geo::{Coord, LineString, MultiPoint, MultiPolygon, Point};
+    // Re-exports from 'regex'
+    pub use regex::RegexSet;
 }

@@ -6,6 +6,7 @@
 pub mod animation;
 pub(crate) mod cache;
 pub mod event;
+pub mod filter;
 pub mod helpers;
 pub mod image;
 pub mod layer;
@@ -19,10 +20,27 @@ pub mod world;
 #[cfg(feature = "user_properties")]
 pub mod properties;
 
+use crate::prelude::*;
 use bevy::prelude::*;
 use std::{env, path::PathBuf};
 
 /// [`TiledPlugin`] global configuration.
+///
+/// Example:
+/// ```rust,no_run
+/// use std::env;
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
+/// let mut path = env::current_dir().unwrap();
+/// path.push("my_tiled_export_file.json");
+///
+/// App::new()
+///     .add_plugins(TiledPlugin(TiledPluginConfig {
+///         tiled_types_export_file: Some(path),
+///         tiled_types_filter: TiledFilter::All,
+///     }));
+/// ```
 #[derive(Resource, Reflect, Clone, Debug)]
 #[reflect(Resource, Debug)]
 pub struct TiledPluginConfig {
@@ -30,6 +48,10 @@ pub struct TiledPluginConfig {
     ///
     /// If [`None`], will not export Tiled types at startup.
     pub tiled_types_export_file: Option<PathBuf>,
+    /// Tiled types filter
+    ///
+    /// Only types matching this filter will be exported at startup.
+    pub tiled_types_filter: TiledFilter,
 }
 
 impl Default for TiledPluginConfig {
@@ -38,6 +60,7 @@ impl Default for TiledPluginConfig {
         path.push("tiled_types_export.json");
         Self {
             tiled_types_export_file: Some(path),
+            tiled_types_filter: TiledFilter::All,
         }
     }
 }
@@ -78,6 +101,7 @@ impl Plugin for TiledPlugin {
             object::plugin,
             tile::plugin,
             sets::plugin,
+            filter::plugin,
             #[cfg(feature = "user_properties")]
             properties::plugin,
         ));

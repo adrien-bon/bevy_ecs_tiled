@@ -43,13 +43,14 @@ impl TypeExportRegistry {
         out
     }
 
-    pub(crate) fn from_registry(registry: &TypeRegistry) -> Self {
+    pub(crate) fn from_registry(registry: &TypeRegistry, filter: &TiledFilter) -> Self {
         let mut deps = vec![];
         let mut out = Self::default();
         for t in registry.iter() {
-            if t.data::<ReflectComponent>().is_some()
-                || t.data::<ReflectBundle>().is_some()
-                || t.data::<ReflectResource>().is_some()
+            if filter.matches(t.type_info().type_path())
+                && (t.data::<ReflectComponent>().is_some()
+                    || t.data::<ReflectBundle>().is_some()
+                    || t.data::<ReflectResource>().is_some())
             {
                 let mut new_deps =
                     out.register_from_type_registration(t, registry, USE_AS_PROPERTY.to_vec());
@@ -57,13 +58,13 @@ impl TypeExportRegistry {
             }
         }
 
-        // We should have a dedicated 'useAs' flags so we cannot add these dependencies
-        // directly as objects properties (only usable nested)
         for d in deps {
             if out.types.contains_key(d) {
                 continue;
             }
             if let Some(t) = registry.get_with_type_path(d) {
+                // We should have a dedicated 'useAs' flags so we cannot add these dependencies
+                // directly as objects properties (only usable when nested inside another type)
                 out.register_from_type_registration(t, registry, USE_AS_PROPERTY.to_vec());
             }
         }
@@ -110,6 +111,13 @@ impl TypeExportRegistry {
         )
     }
 
+    fn is_simple(registration: &TypeRegistration) -> bool {
+        matches!(
+            registration.type_info().type_path(),
+            "bevy_color::color::Color" | "bevy_ecs::name::Name"
+        )
+    }
+
     fn generate_export(
         &mut self,
         registration: &TypeRegistration,
@@ -123,6 +131,27 @@ impl TypeExportRegistry {
         if v.is_some() {
             tmp = v.unwrap();
             default_value = Some(tmp.as_ref());
+        }
+
+        if Self::is_simple(registration) {
+            let (type_field, property_type) = type_to_field(registration)?;
+            return Ok(vec![TypeExport {
+                id: self.next_id(),
+                name: registration.type_info().type_path().to_string(),
+                type_data: TypeData::Class(Class {
+                    use_as,
+                    color: DEFAULT_COLOR.to_string(),
+                    draw_fill: true,
+                    members: vec![Member {
+                        name: "0".to_string(),
+                        property_type,
+                        type_field,
+                        value: default_value
+                            .map(|v| value_to_json(v.as_partial_reflect()))
+                            .unwrap_or(serde_json::Value::default()),
+                    }],
+                }),
+            }]);
         }
 
         let out = match registration.type_info() {
@@ -604,7 +633,9 @@ fn type_to_field(
         "bevy_ecs::entity::Entity" | "core::option::Option<bevy_ecs::entity::Entity>" => {
             (FieldType::Object, None)
         }
-        "alloc::borrow::Cow<str>" | "alloc::string::String" | "char" => (FieldType::String, None),
+        "bevy_ecs::name::Name" | "alloc::borrow::Cow<str>" | "alloc::string::String" | "char" => {
+            (FieldType::String, None)
+        }
 
         "bevy_color::color::Color" => (FieldType::Color, None),
         "std::path::PathBuf" => (FieldType::File, None),
@@ -636,6 +667,10 @@ fn is_enum_and_simple(t: &TypeRegistration) -> bool {
 }
 
 fn dependencies(registration: &TypeRegistration, registry: &TypeRegistry) -> Vec<&'static str> {
+    if TypeExportRegistry::is_simple(registration) {
+        return vec![];
+    }
+
     let deps = match registration.type_info() {
         TypeInfo::Struct(info) => info.iter().map(NamedField::type_path).collect(),
         TypeInfo::TupleStruct(info) => info.iter().map(UnnamedField::type_path).collect(),
@@ -682,7 +717,7 @@ mod tests {
         let mut registry = TypeRegistry::new();
         registry.register::<ComponentA>();
 
-        let exports = TypeExportRegistry::from_registry(&registry);
+        let exports = TypeExportRegistry::from_registry(&registry, &TiledFilter::All);
         let export_type = &exports.types.get(ComponentA::type_path()).unwrap();
         assert_eq!(export_type.length(), 1);
         assert_eq!(export_type[0].name, ComponentA::type_path().to_string());
@@ -711,7 +746,7 @@ mod tests {
         let mut registry = TypeRegistry::new();
         registry.register::<ComponentA>();
 
-        let exports = TypeExportRegistry::from_registry(&registry);
+        let exports = TypeExportRegistry::from_registry(&registry, &TiledFilter::All);
         let export_type = &exports.types.get(ComponentA::type_path()).unwrap();
         assert_eq!(export_type.length(), 1);
         assert_eq!(export_type[0].name, ComponentA::type_path().to_string());
@@ -744,7 +779,7 @@ mod tests {
         let mut registry = TypeRegistry::new();
         registry.register::<EnumComponent>();
 
-        let exports = TypeExportRegistry::from_registry(&registry);
+        let exports = TypeExportRegistry::from_registry(&registry, &TiledFilter::All);
         let export_type = &exports.types.get(EnumComponent::type_path()).unwrap();
         assert_eq!(export_type.length(), 2);
         assert_eq!(
@@ -818,7 +853,7 @@ mod tests {
         registry.register::<InnerStruct>();
         registry.register::<StructComponent>();
 
-        let exports = TypeExportRegistry::from_registry(&registry);
+        let exports = TypeExportRegistry::from_registry(&registry, &TiledFilter::All);
         let export_type = &exports.types.get(StructComponent::type_path()).unwrap();
         assert_eq!(export_type.length(), 1);
         assert_eq!(
@@ -893,7 +928,7 @@ mod tests {
         registry.register::<TestStruct>();
         registry.register::<TestVariant>();
 
-        let exports = TypeExportRegistry::from_registry(&registry);
+        let exports = TypeExportRegistry::from_registry(&registry, &TiledFilter::All);
         let export_type = &exports.types.get(TestOuter::type_path()).unwrap();
         assert_eq!(export_type.length(), 1);
         assert_eq!(export_type[0].name, TestOuter::type_path().to_string());
@@ -937,7 +972,7 @@ mod tests {
         registry.register::<TestStruct>();
         registry.register::<EnumComponent>();
 
-        let exports = TypeExportRegistry::from_registry(&registry);
+        let exports = TypeExportRegistry::from_registry(&registry, &TiledFilter::All);
         let export_type = &exports.types.get(EnumComponent::type_path()).unwrap();
 
         assert_eq!(export_type.length(), 5);

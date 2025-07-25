@@ -18,17 +18,11 @@ use std::{fs::File, io::BufWriter, ops::Deref, path::Path};
 ///
 /// The predicate determines whether a symbol is exported. To export all
 /// symbols, one can provide a blanket yes predicate, e.g. `|_| true`.
-pub fn export_types(
-    reg: &AppTypeRegistry,
-    path: impl AsRef<Path>,
-    predicate: impl Fn(&str) -> bool,
-) {
+pub fn export_types(reg: &AppTypeRegistry, path: impl AsRef<Path>, filter: &TiledFilter) {
     let file = File::create(path).unwrap();
     let writer = BufWriter::new(file);
-    let registry = export::TypeExportRegistry::from_registry(reg.read().deref());
-    let mut list = registry.to_vec();
-    list.retain(|v| predicate(&v.name));
-    serde_json::to_writer_pretty(writer, &list).unwrap();
+    let registry = export::TypeExportRegistry::from_registry(reg.read().deref(), filter);
+    serde_json::to_writer_pretty(writer, &registry.to_vec()).unwrap();
 }
 
 pub(crate) fn plugin(app: &mut App) {
@@ -37,7 +31,7 @@ pub(crate) fn plugin(app: &mut App) {
         |reg: Res<AppTypeRegistry>, config: Res<TiledPluginConfig>| {
             if let Some(path) = &config.tiled_types_export_file {
                 info!("Export Tiled types to '{:?}'", &path);
-                export_types(&reg, path, |_| true);
+                export_types(&reg, path, &config.tiled_types_filter);
             }
         },
     );

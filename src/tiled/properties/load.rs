@@ -307,7 +307,9 @@ impl DeserializedProperties {
             ("bevy_color::color::Color", PV::ColorValue(c), _) => {
                 Ok(Box::new(Color::srgba_u8(c.red, c.green, c.blue, c.alpha)))
             }
-            ("alloc::string::String", PV::StringValue(s), _) => Ok(Box::new(s)),
+            ("alloc::string::String" | "alloc::borrow::Cow<str>", PV::StringValue(s), _) => {
+                Ok(Box::new(s))
+            }
             ("char", PV::StringValue(s), _) => Ok(Box::new(s.chars().next().unwrap())),
             ("std::path::PathBuf", PV::FileValue(s), _) => Ok(Box::new(PathBuf::from(s))),
             (a, PV::FileValue(s), _) if a.starts_with("bevy_asset::handle::Handle") => {
