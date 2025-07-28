@@ -28,16 +28,20 @@ fn main() {
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    // Just spawn a 2D camera and a Tiled map
     commands.spawn(Camera2d);
     commands.spawn(TiledMap(asset_server.load("maps/orthogonal/finite.tmx")));
 }
 
+/// Custom physics backend for demonstration purposes.
+///
+/// Implements the [`TiledPhysicsBackend`] trait. Instead of spawning real physics colliders,
+/// this backend draws a mesh outlining the polygons for each collider, using a custom color
+/// depending on the collider type (object or tile layer).
 #[derive(Default, Debug, Clone, Reflect)]
 #[reflect(Default, Debug)]
 struct MyCustomPhysicsBackend;
 
-// This simple example will just spawn an entity with a `MyCustomPhysicsComponent` Component,
-// at the center of where the Tiled collider is.
 impl TiledPhysicsBackend for MyCustomPhysicsBackend {
     fn spawn_colliders(
         &self,
@@ -53,8 +57,12 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
         vec![TiledPhysicsBackendOutput {
             name: name.clone(),
             entity: commands
+                // In this specific case we want to draw a mesh which require access
+                // to `Assets<Mesh>` and `Assets<ColorMaterial>` resources.
+                // We'll wrap everything in a custom command to get access to `World`
+                // so we can retrieve these resources.
                 .spawn_empty()
-                .queue(SpawnMyPhysicsObject {
+                .queue(CustomColliderCommand {
                     color,
                     multi_polygon: multi_polygon.clone(),
                 })
@@ -64,14 +72,14 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
     }
 }
 
-// Define a custom command which will spawn a new mesh
-
-struct SpawnMyPhysicsObject {
+// Custom command implementation: nothing fancy here,
+// we just store the polygons and color to use for the mesh.
+struct CustomColliderCommand {
     multi_polygon: MultiPolygon<f32>,
     color: Color,
 }
 
-impl EntityCommand for SpawnMyPhysicsObject {
+impl EntityCommand for CustomColliderCommand {
     fn apply(self, mut entity: EntityWorldMut) {
         let mut vertices = vec![];
         multi_polygon_as_line_strings(&self.multi_polygon)

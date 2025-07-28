@@ -41,7 +41,7 @@ fn main() {
 
 Or add them individually as needed:
 
-- [`TiledDebugObjectsPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/objects/index.html): Displays a Bevy `Gizmos` arrow at each Tiled object's position.
+- [`TiledDebugObjectsPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/objects/index.html): Displays an `arrow_2d` and a polyline outline `Gizmos` at each Tiled object's position and shape.
 - [`TiledDebugTilesPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/tiles/index.html): Shows the `bevy_ecs_tilemap` tile index (`TilePos`) above each tile.
 - [`TiledDebugWorldChunkPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/world_chunk/index.html): Draws a `Gizmos` rectangle for each map boundary and world render chunk.
 - [`TiledDebugAxisPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/axis/index.html): Displays a `Gizmos` axes marker at the world origin.
