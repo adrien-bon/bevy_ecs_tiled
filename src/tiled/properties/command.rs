@@ -52,7 +52,7 @@ fn insert_reflect(
     };
 
     if let Some(reflect_resource) = type_registration.data::<ReflectResource>() {
-        reflect_resource.insert(world, &*property, type_registry);
+        reflect_resource.insert(world, property.as_partial_reflect(), type_registry);
         return;
     }
 
@@ -61,9 +61,9 @@ fn insert_reflect(
     };
 
     if let Some(reflect_component) = type_registration.data::<ReflectComponent>() {
-        reflect_component.insert(&mut entity, &*property, type_registry);
+        reflect_component.insert(&mut entity, property.as_partial_reflect(), type_registry);
     } else if let Some(reflect_bundle) = type_registration.data::<ReflectBundle>() {
-        reflect_bundle.insert(&mut entity, &*property, type_registry);
+        reflect_bundle.insert(&mut entity, property.as_partial_reflect(), type_registry);
     } else {
         panic!("Could not get ReflectComponent data (for component type {type_path}) because it doesn't exist in this TypeRegistration.");
     }

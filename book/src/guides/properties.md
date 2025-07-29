@@ -132,7 +132,8 @@ Once imported, you can add custom properties to your map:
 When you load the map, the corresponding Bevy entity will have the appropriate `Component` with the values you set.
 
 > **Note:**  
-> Only add properties imported from Bevy. Properties created only in Tiled (not exported from your app) will not be loaded in Bevy.
+> Only add properties imported from Bevy. Properties created only in Tiled (ie. not exported from your app) will not be loaded in Bevy.
+> You can also control which properties are exported from Bevy via [`TiledPluginConfig`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/struct.TiledPluginConfig.html)
 
 ---
 

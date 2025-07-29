@@ -24,6 +24,15 @@ fn main() {
             // properties won't be exported anymore but
             // you will still be able to load them from the map
             tiled_types_export_file: Some(path),
+            tiled_types_filter: TiledFilter::from(
+                RegexSet::new([
+                    r"^properties_basic::.*",
+                    r"^bevy_text::text2d::Text2d$",
+                    r"^bevy_text::text::TextColor$",
+                    r"^bevy_ecs::name::Name$",
+                ])
+                .unwrap(),
+            ),
         }))
         // Examples helper plugins, such as the logic to pan and zoom the camera
         // This should not be used directly in your game (but you can always have a look)
@@ -54,6 +63,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 #[reflect(Component, Default)]
 struct BiomeInfos {
     ty: BiomeType,
+    pos: Vec2,
     block_line_of_sight: bool,
 }
 
@@ -77,6 +87,7 @@ enum SpawnType {
     Player {
         color: Color,
         id: u32,
+        other_obj: Option<Entity>,
     },
     Enemy(Color),
     Friendly,

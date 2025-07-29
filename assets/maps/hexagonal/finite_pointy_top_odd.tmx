@@ -38,6 +38,7 @@
        <properties>
         <property name="color" type="color" value="#ffff157a"/>
         <property name="id" type="int" value="42"/>
+        <property name="other_obj" type="object" value="4"/>
        </properties>
       </property>
      </properties>
@@ -74,11 +75,7 @@
     <property name="SpawnType" type="class" propertytype="properties_basic::SpawnType">
      <properties>
       <property name=":variant" propertytype="properties_basic::SpawnType:::Variant" value="Friendly"/>
-      <property name="Friendly" type="class" propertytype="properties_basic::SpawnType::Friendly">
-       <properties>
-        <property name="0" type="int" value="56"/>
-       </properties>
-      </property>
+      <property name="Friendly" value=""/>
      </properties>
     </property>
    </properties>

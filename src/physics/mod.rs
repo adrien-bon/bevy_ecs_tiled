@@ -68,7 +68,7 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
             continue;
         };
 
-        if TiledNameFilter::from(&settings.tiles_layer_filter).contains(&layer.name) {
+        if settings.tiles_layer_filter.matches(&layer.name) {
             spawn_colliders::<T>(
                 &settings.backend,
                 &mut commands,
@@ -104,8 +104,8 @@ fn collider_from_object<T: TiledPhysicsBackend>(
             continue;
         };
 
-        if TiledNameFilter::from(&settings.objects_layer_filter).contains(&layer.name)
-            && TiledNameFilter::from(&settings.objects_filter).contains(&object.name)
+        if settings.objects_layer_filter.matches(&layer.name)
+            && settings.objects_filter.matches(&object.name)
         {
             spawn_colliders::<T>(
                 &settings.backend,
@@ -114,7 +114,7 @@ fn collider_from_object<T: TiledPhysicsBackend>(
                 anchor,
                 match object.get_tile() {
                     Some(_) => &settings.tiles_objects_filter,
-                    None => &TiledName::All,
+                    None => &TiledFilter::All,
                 },
                 ev.transmute(None, ColliderCreated(TiledColliderOrigin::Object)),
                 ev.origin,

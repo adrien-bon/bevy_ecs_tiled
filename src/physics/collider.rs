@@ -83,12 +83,11 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
     commands: &mut Commands,
     assets: &Res<Assets<TiledMapAsset>>,
     anchor: &TilemapAnchor,
-    name_filter: &TiledName,
+    filter: &TiledFilter,
     source: TiledEvent<ColliderCreated>,
     parent: Entity,
     event_writer: &mut EventWriter<TiledEvent<ColliderCreated>>,
 ) {
-    let filter = TiledNameFilter::from(name_filter);
     let Some(map_asset) = source.get_map_asset(assets) else {
         return;
     };
@@ -125,7 +124,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
                         }
                         polygons_from_tile(
                             object_layer_data,
-                            &filter,
+                            filter,
                             TilemapGridSize::new(width, height),
                             offset,
                             scale,
@@ -145,7 +144,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
                 if let Some(collision) = &tile.collision {
                     acc.extend(polygons_from_tile(
                         collision,
-                        &filter,
+                        filter,
                         grid_size,
                         Vec2::new(
                             tile_position.x - grid_size.x / 2.,
@@ -184,14 +183,14 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
 
 fn polygons_from_tile(
     object_layer_data: &ObjectLayerData,
-    filter: &TiledNameFilter,
+    filter: &TiledFilter,
     grid_size: TilemapGridSize,
     offset: Vec2,
     scale: Vec2,
 ) -> Vec<GeoPolygon<f32>> {
     let mut polygons = vec![];
     for object in object_layer_data.object_data() {
-        if !filter.contains(&object.name) {
+        if !filter.matches(&object.name) {
             continue;
         }
 

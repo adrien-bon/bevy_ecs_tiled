@@ -18,22 +18,22 @@ pub struct TiledPhysicsSettings<T: TiledPhysicsBackend> {
     ///
     /// Colliders will be automatically added for all objects whose containing layer name matches this filter.
     /// By default, we add colliders for all objects.
-    pub objects_layer_filter: TiledName,
+    pub objects_layer_filter: TiledFilter,
     /// Specify which Tiled object to add colliders for using their name.
     ///
     /// Colliders will be automatically added for all objects whose name matches this filter.
     /// By default, we add colliders for all objects.
-    pub objects_filter: TiledName,
+    pub objects_filter: TiledFilter,
     /// Specify which tiles collision object to add colliders for using their layer name.
     ///
     /// Colliders will be automatically added for all tiles collision objects whose layer name matches this filter.
     /// By default, we add colliders for all collision objects.
-    pub tiles_layer_filter: TiledName,
+    pub tiles_layer_filter: TiledFilter,
     /// Specify which tiles collision object to add colliders for using their name.
     ///
     /// Colliders will be automatically added for all tiles collision objects whose name matches this filter.
     /// By default, we add colliders for all collision objects.
-    pub tiles_objects_filter: TiledName,
+    pub tiles_objects_filter: TiledFilter,
     /// Physics backend to use for adding colliders.
     pub backend: T,
 }
