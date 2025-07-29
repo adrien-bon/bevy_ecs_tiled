@@ -3,7 +3,7 @@
 Tiled allows you to add objects to your map—either directly on an object layer or attached to a tile.  
 `bevy_ecs_tiled` can use these objects to automatically spawn physics colliders when loading the map.
 
-Two physics backends are supported out of the box:  
+Two physics engines are supported out of the box:
 
 - [`avian`](https://github.com/Jondolf/avian)  
 - [`rapier`](https://github.com/dimforge/bevy_rapier)  
@@ -44,8 +44,8 @@ bevy_ecs_tiled = { version = "0.7", features = ["avian"] }
 > **Note:**  
 > You may need to adjust `bevy` and `bevy_ecs_tiled` versions.
 
-2. **Add the [`TiledPhysicsPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/struct.TiledPhysicsPlugin.html)**  
-   with the backend of your choice.
+2. **Add the [`TiledPhysicsPlugin<T>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/struct.TiledPhysicsPlugin.html)**  
+   with the [`TiledPhysicsBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/trait.TiledPhysicsBackend.html) of your choice.
 
 **Example: Using the Avian backend**
 
@@ -75,10 +75,15 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 ```
 
-Colliders will be spawned for every object in your map automatically.
+Colliders will be spawned for every object or tiles colliders in your map automatically.
+
+We provide two [`TiledPhysicsBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/trait.TiledPhysicsBackend.html) that can be used out of the box:
+
+- [`TiledPhysicsAvianBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/avian/enum.TiledPhysicsAvianBackend.html): for the Avian 2D physics engine
+- [`TiledPhysicsRapierBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/rapier/enum.TiledPhysicsRapierBackend.html): for the Rapier 2D physics engine
 
 > **Note:**  
-> You can actually use several physics backends at the same time if you register the `TiledPhysicsPlugin<T>` plugin multiple times.
+> You can actually use several physics backends at the same time if you register the [`TiledPhysicsPlugin<T>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/struct.TiledPhysicsPlugin.html) plugin multiple times, but with different [`TiledPhysicsBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/trait.TiledPhysicsBackend.html).
 
 ---
 
@@ -126,7 +131,7 @@ To reduce the number of physics colliders and improve performance, `bevy_ecs_til
   The collider entity is spawned at the object level and each object always gets its own collider.
 
 > **Note:**  
-> Complex polygons cannot always be merged, so you may still end up with multiple colliders per tile, which can affect performance.
+> Both [`TiledPhysicsAvianBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/avian/enum.TiledPhysicsAvianBackend.html) and [`TiledPhysicsRapierBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/rapier/enum.TiledPhysicsRapierBackend.html) provide several strategies to aggregate colliders. You can see their respective documentation for more information.
 
 ---
 

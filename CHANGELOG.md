@@ -8,6 +8,9 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_8.
 
 ### Features
 
+- Integrate the `geo` crate and rework how we handle physics colliders.  
+  Special thanks to @Niashi24 for inspiration on the polygons aggregation code !
+- Colliders entity now have `TiledColliderOrigin` and `TiledColliderPolygons` components
 - Explicit `SystemSet` to allow systems ordering for user applications.
 - Rationalize which types we re-export (#88).
 - Attach shape information to `TiledObject` (#77).

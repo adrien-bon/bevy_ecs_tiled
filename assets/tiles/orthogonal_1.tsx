@@ -19,8 +19,8 @@
  <tile id="2" type="TileComponent">
   <image source="orthogonal/tile2.png" width="32" height="32"/>
   <objectgroup draworder="index" id="2">
-   <object id="3" name="collision" x="15.0398" y="1.81818">
-    <polygon points="0,0 14.7784,5.80779 10.8665,15.6364 -13.0398,10.4242"/>
+   <object id="3" name="collision" x="14.6023" y="2.94318">
+    <polygon points="0,0 20.0909,7.01493 14.7728,18.8864 -17.7273,12.5909"/>
    </object>
   </objectgroup>
  </tile>

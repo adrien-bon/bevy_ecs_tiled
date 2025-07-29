@@ -1,10 +1,13 @@
 //! Debug plugin for visualizing Tiled objects in Bevy.
 //!
 //! This module provides a plugin and configuration for displaying Bevy [`Gizmos`] at the positions of Tiled objects.
-//! It is useful for debugging object placement, orientation, and map integration in your Tiled maps.
+//! It is especially useful for debugging object placement, orientation, and integration of Tiled maps in your Bevy game.
 //!
-//! When enabled, the plugin draws a 2D arrow gizmo at each Tiled object's position, allowing you to easily
-//! verify where objects are spawned in your world.
+//! When enabled, the plugin draws:
+//!   - A 2D polyline gizmo outlining each Tiled object's shape.
+//!   - A 2D arrow gizmo highlighting the object's position and orientation.
+//!
+//! This allows you to easily verify where objects are spawned and how they are oriented in your world.
 
 use crate::prelude::*;
 use bevy::{
@@ -14,13 +17,15 @@ use bevy::{
 
 /// Configuration for the [`TiledDebugObjectsPlugin`].
 ///
-/// Contains settings to customize how the `arrow_2d` [`Gizmos`] will appear for each Tiled object.
+/// This struct allows you to customize how the debug gizmos appear for each Tiled object.
+/// - `objects_colors_list`: The list of colors used to draw arrows and outlines for objects (cycled through for each object).
+/// - `arrow_length`: The length and direction of the arrow gizmo drawn at each object's position.
 #[derive(Resource, Reflect, Clone, Debug)]
 #[reflect(Resource, Debug)]
 pub struct TiledDebugObjectsConfig {
-    /// Color of the `arrow_2d` [`Gizmos`].
+    /// Colors used for the `arrow_2d` and outline [`Gizmos`]. Cycled for each object.
     pub objects_colors_list: Vec<Color>,
-    /// Length and direction of the `arrow_2d` [`Gizmos`].
+    /// Length and direction of the `arrow_2d` [`Gizmos`] drawn at each object's position.
     pub arrow_length: Vec2,
 }
 
@@ -43,8 +48,8 @@ impl Default for TiledDebugObjectsConfig {
 
 /// Debug [`Plugin`] for visualizing Tiled objects in Bevy.
 ///
-/// Add this plugin to your app to display a 2D arrow gizmo at the position of each [`TiledObject`] entity.
-/// This is helpful for debugging and verifying object placement in your Tiled maps.
+/// Add this plugin to your app to display a 2D arrow and outline gizmo at the position and shape of each [`TiledObject`] entity.
+/// This is helpful for debugging and verifying object placement, orientation, and geometry in your Tiled maps.
 ///
 /// # Example
 /// ```rust,no_run
@@ -55,7 +60,7 @@ impl Default for TiledDebugObjectsConfig {
 ///     .add_plugins(TiledDebugObjectsPlugin::default());
 /// ```
 ///
-/// This will display an `arrow_2d` [`Gizmos`] at each Tiled object's position.
+/// This will display an `arrow_2d` and a polyline outline [`Gizmos`] at each Tiled object's position and shape.
 #[derive(Default, Clone, Debug)]
 pub struct TiledDebugObjectsPlugin(pub TiledDebugObjectsConfig);
 
@@ -75,33 +80,12 @@ fn draw_debug_gizmos(
     for (idx, (object, transform)) in objects_query.iter().enumerate() {
         let color = config.objects_colors_list[idx % config.objects_colors_list.len()];
         let origin = Vec2::new(transform.translation().x, transform.translation().y);
-        match object {
-            TiledObject::Point | TiledObject::Text => {}
-            TiledObject::Rectangle { width, height } | TiledObject::Tile { width, height } => {
-                gizmos.rect_2d(
-                    object.isometry_2d(transform),
-                    Vec2::new(*width, *height),
-                    color,
-                );
-            }
-            TiledObject::Ellipse { width, height } => {
-                gizmos.ellipse_2d(
-                    object.isometry_2d(transform),
-                    Vec2::new(*width / 2., *height / 2.),
-                    color,
-                );
-            }
-            TiledObject::Polygon { vertices: _ } => {
-                let mut positions = object.vertices(transform);
-                positions.push(positions[0]); // Close the polygon
-                gizmos.linestrip_2d(positions, color);
-            }
-            TiledObject::Polyline { vertices: _ } => {
-                let positions = object.vertices(transform);
-                gizmos.linestrip_2d(positions, color);
-            }
-        }
-
         gizmos.arrow_2d(origin + config.arrow_length, origin, color);
+        let positions = object
+            .line_string(transform)
+            .map(|ls| ls.coords().map(|c| Vec2::new(c.x, c.y)).collect::<Vec<_>>());
+        if let Some(pos) = positions {
+            gizmos.linestrip_2d(pos, color);
+        }
     }
 }

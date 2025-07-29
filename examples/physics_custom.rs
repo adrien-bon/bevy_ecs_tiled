@@ -1,11 +1,11 @@
 //! This example shows how to use a custom physics backend.
 
 use bevy::{
+    asset::RenderAssetUsages,
     color::palettes::css::{PURPLE, RED},
-    ecs::{component::HookContext, world::DeferredWorld},
     prelude::*,
 };
-use bevy_ecs_tiled::{physics::backend::TiledPhysicsBackendOutput, prelude::*};
+use bevy_ecs_tiled::prelude::*;
 
 mod helper;
 
@@ -28,61 +28,78 @@ fn main() {
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    // Just spawn a 2D camera and a Tiled map
     commands.spawn(Camera2d);
     commands.spawn(TiledMap(asset_server.load("maps/orthogonal/finite.tmx")));
 }
 
+/// Custom physics backend for demonstration purposes.
+///
+/// Implements the [`TiledPhysicsBackend`] trait. Instead of spawning real physics colliders,
+/// this backend draws a mesh outlining the polygons for each collider, using a custom color
+/// depending on the collider type (object or tile layer).
 #[derive(Default, Debug, Clone, Reflect)]
 #[reflect(Default, Debug)]
 struct MyCustomPhysicsBackend;
 
-// This simple example will just spawn an entity with a `MyCustomPhysicsComponent` Component,
-// at the center of where the Tiled collider is.
 impl TiledPhysicsBackend for MyCustomPhysicsBackend {
     fn spawn_colliders(
         &self,
         commands: &mut Commands,
-        _assets: &Res<Assets<TiledMapAsset>>,
-        _anchor: &TilemapAnchor,
-        _filter: &TiledNameFilter,
         source: &TiledEvent<ColliderCreated>,
-    ) -> Vec<TiledPhysicsBackendOutput> {
-        match source.event.0 {
-            TiledCollider::Object => {
-                vec![TiledPhysicsBackendOutput {
-                    name: String::from("Custom[Object]"),
-                    entity: commands
-                        .spawn(MyCustomPhysicsComponent(Color::from(PURPLE)))
-                        .id(),
-                    transform: Transform::default(),
-                }]
+        multi_polygon: &MultiPolygon<f32>,
+    ) -> Vec<Entity> {
+        let (name, color) = match source.event.0 {
+            TiledColliderOrigin::Object => (String::from("Custom[Object]"), Color::from(PURPLE)),
+            TiledColliderOrigin::TilesLayer => {
+                (String::from("Custom[TilesLayer]"), Color::from(RED))
             }
-            TiledCollider::TilesLayer => {
-                vec![TiledPhysicsBackendOutput {
-                    name: String::from("Custom[TilesLayer]"),
-                    entity: commands
-                        .spawn(MyCustomPhysicsComponent(Color::from(RED)))
-                        .id(),
-                    transform: Transform::default(),
-                }]
-            }
-        }
+        };
+
+        vec![commands
+            .spawn(Name::from(name))
+            // In this specific case we want to draw a mesh which require access
+            // to `Assets<Mesh>` and `Assets<ColorMaterial>` resources.
+            // We'll wrap everything in a custom command to get access to `World`
+            // so we can retrieve these resources.
+            .queue(CustomColliderCommand {
+                color,
+                multi_polygon: multi_polygon.clone(),
+            })
+            .id()]
     }
 }
 
-// For debugging purpose, we will also add a 2D mesh where the collider is.
-#[derive(Component)]
-#[component(on_add = on_physics_component_added)]
-struct MyCustomPhysicsComponent(pub Color);
+// Custom command implementation: nothing fancy here,
+// we just store the polygons and color to use for the mesh.
+struct CustomColliderCommand {
+    multi_polygon: MultiPolygon<f32>,
+    color: Color,
+}
 
-fn on_physics_component_added(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
-    let color = world.get::<MyCustomPhysicsComponent>(entity).unwrap().0;
-    let mesh = world
-        .resource_mut::<Assets<Mesh>>()
-        .add(Rectangle::from_length(10.));
-    let material = world.resource_mut::<Assets<ColorMaterial>>().add(color);
-    world
-        .commands()
-        .entity(entity)
-        .insert((Mesh2d(mesh), MeshMaterial2d(material)));
+impl EntityCommand for CustomColliderCommand {
+    fn apply(self, mut entity: EntityWorldMut) {
+        let mut vertices = vec![];
+        multi_polygon_as_line_strings(&self.multi_polygon)
+            .into_iter()
+            .for_each(|ls| {
+                ls.lines().for_each(|l| {
+                    let points = l.points();
+                    vertices.push([points.0.x(), points.0.y(), 10.]);
+                    vertices.push([points.1.x(), points.1.y(), 10.]);
+                });
+            });
+
+        let mut mesh = Mesh::new(
+            bevy::render::mesh::PrimitiveTopology::LineList,
+            RenderAssetUsages::RENDER_WORLD,
+        );
+        mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices);
+
+        let mesh_handle = entity.resource_mut::<Assets<Mesh>>().add(mesh);
+        let material_handle = entity
+            .resource_mut::<Assets<ColorMaterial>>()
+            .add(self.color);
+        entity.insert((Mesh2d(mesh_handle), MeshMaterial2d(material_handle)));
+    }
 }
