@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="10" height="10" tilewidth="32" tileheight="32" infinite="0" nextlayerid="7" nextobjectid="37">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="10" height="10" tilewidth="32" tileheight="32" infinite="0" nextlayerid="7" nextobjectid="38">
  <tileset firstgid="1" source="../../tiles/orthogonal_1.tsx"/>
  <imagelayer id="6" name="Image Layer 1" offsetx="32.6667" offsety="112.667">
   <image source="../../bevy_icon.png" width="256" height="256"/>
@@ -28,10 +28,11 @@
   <object id="6" x="-40.5372" y="-21.2942" width="116" height="28.6476" rotation="20.3824">
    <ellipse/>
   </object>
-  <object id="8" x="52.7213" y="106.243" rotation="56.7816">
+  <object id="8" x="56.0546" y="102.91" rotation="56.7816">
    <polygon points="0,0 96,-31 158,-31 158,0 63,31 1,31"/>
   </object>
   <object id="34" gid="1073741828" x="357.333" y="446.667" width="117.333" height="260.667"/>
-  <object id="36" gid="7" x="322.996" y="6.56125" width="162.743" height="53.4669" rotation="39.3186"/>
+  <object id="36" gid="2147483655" x="57.4329" y="-165.119" width="216.076" height="112.596" rotation="10.3481"/>
+  <object id="37" gid="2147483653" x="371.98" y="-53.2847" width="152" height="89" rotation="55.0381"/>
  </objectgroup>
 </map>

@@ -10,6 +10,7 @@ pub mod settings;
 
 use crate::prelude::*;
 use bevy::prelude::*;
+use collider::spawn_colliders;
 
 /// Physics plugin.
 ///
@@ -20,10 +21,16 @@ use bevy::prelude::*;
 /// use bevy::prelude::*;
 /// use bevy_ecs_tiled::prelude::*;
 ///
-/// // Using Avian backend for demonstration purpose, note that we also support TiledPhysicsRapierBackend
+/// // Using Avian backend for demonstration purpose,
+/// // note that we also support TiledPhysicsRapierBackend
 /// App::new()
 ///     .add_plugins(TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default());
 /// ```
+///
+/// We provide several [`TiledPhysicsBackend`] that can be used out of the box:
+/// - [`TiledPhysicsAvianBackend`]: for the Avian 2D physics engine
+/// - [`TiledPhysicsRapierBackend`]: for the Rapier 2D physics engine
+///
 #[derive(Default, Copy, Clone, Debug)]
 pub struct TiledPhysicsPlugin<T: TiledPhysicsBackend>(std::marker::PhantomData<T>);
 
@@ -68,7 +75,7 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
                 &assets,
                 anchor,
                 &settings.tiles_objects_filter,
-                ev.transmute(None, ColliderCreated(TiledCollider::TilesLayer)),
+                ev.transmute(None, ColliderCreated(TiledColliderOrigin::TilesLayer)),
                 ev.origin,
                 &mut event_writer,
             );
@@ -109,41 +116,10 @@ fn collider_from_object<T: TiledPhysicsBackend>(
                     Some(_) => &settings.tiles_objects_filter,
                     None => &TiledName::All,
                 },
-                ev.transmute(None, ColliderCreated(TiledCollider::Object)),
+                ev.transmute(None, ColliderCreated(TiledColliderOrigin::Object)),
                 ev.origin,
                 &mut event_writer,
             );
         }
-    }
-}
-
-fn spawn_colliders<T: TiledPhysicsBackend>(
-    backend: &T,
-    commands: &mut Commands,
-    assets: &Res<Assets<TiledMapAsset>>,
-    anchor: &TilemapAnchor,
-    name_filter: &TiledName,
-    source_event: TiledEvent<ColliderCreated>,
-    parent: Entity,
-    event_writer: &mut EventWriter<TiledEvent<ColliderCreated>>,
-) {
-    for output in backend.spawn_colliders(
-        commands,
-        assets,
-        anchor,
-        &TiledNameFilter::from(name_filter),
-        &source_event,
-    ) {
-        // Attach collider to its parent
-        commands.entity(output.entity).insert((
-            source_event.event.0,
-            Name::new(format!("Collider: {}", output.name)),
-            ChildOf(parent),
-            output.transform,
-        ));
-        // Send collider event
-        let mut event = source_event;
-        event.origin = output.entity;
-        event.send(commands, event_writer);
     }
 }

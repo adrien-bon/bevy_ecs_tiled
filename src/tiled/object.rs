@@ -2,7 +2,9 @@
 //!
 //! This module defines Bevy components used to represent Tiled objects within the ECS world.
 
+use crate::prelude::*;
 use bevy::prelude::*;
+use geo::Centroid;
 use tiled::{ObjectData, ObjectShape};
 
 /// Marker [`Component`] for a Tiled map object.
@@ -59,6 +61,8 @@ pub enum TiledObject {
 }
 
 impl TiledObject {
+    const ELLIPSE_NUM_POINTS: u32 = 20;
+
     /// Creates a new [`TiledObject`] from the provided [`ObjectData`].
     pub fn from_object_data(object_data: &ObjectData) -> Self {
         if object_data.tile_data().is_some() {
@@ -98,67 +102,95 @@ impl TiledObject {
 
     /// Returns the center position of the object in world space.
     ///
-    /// The center is calculated based on the object's shape and its transformation.
-    /// For point, text, polygon, and polyline objects, it returns the origin.
-    /// For rectangle, ellipse and tile objects, it calculates the center based on their width, height, and rotation.
-    pub fn center(&self, transform: &GlobalTransform) -> Vec2 {
-        let origin = Vec2::new(transform.translation().x, transform.translation().y);
-        match self {
-            TiledObject::Point
-            | TiledObject::Text
-            | TiledObject::Polygon { vertices: _ }
-            | TiledObject::Polyline { vertices: _ } => origin,
-            TiledObject::Rectangle { width, height } | TiledObject::Ellipse { width, height } => {
-                let (cos_rotation, sin_rotation) = TiledObject::rotation_cos_sin(transform);
-                Vec2::new(
-                    origin.x + *width / 2.0 * cos_rotation + *height / 2.0 * sin_rotation,
-                    origin.y + *width / 2.0 * sin_rotation - *height / 2.0 * cos_rotation,
-                )
-            }
-            TiledObject::Tile { width, height } => {
-                let (cos_rotation, sin_rotation) = TiledObject::rotation_cos_sin(transform);
-                Vec2::new(
-                    origin.x + *width / 2.0 * cos_rotation - *height / 2.0 * sin_rotation,
-                    origin.y + *width / 2.0 * sin_rotation + *height / 2.0 * cos_rotation,
-                )
-            }
-        }
+    /// The center is computed from the object's vertices, taking into account its shape and transformation.
+    ///
+    /// # Arguments
+    /// * `transform` - The global transform to apply to the object.
+    ///
+    /// # Returns
+    /// * `Option<Coord<f32>>` - The computed center, or `None` if not applicable.
+    pub fn center(&self, transform: &GlobalTransform) -> Option<Coord<f32>> {
+        MultiPoint::from(self.vertices(transform))
+            .centroid()
+            .map(|p| Coord { x: p.x(), y: p.y() })
     }
 
     /// Returns the vertices of the object in world space.
     ///
-    /// The vertices are calculated based on the object's shape and its transformation.
-    /// For point and text objects, it returns a single vertex at the origin.
-    /// For ellipse, rectangle, and tile objects, it calculates the vertices based on their width, height, and rotation.
-    /// For polygon and polyline objects, it transforms the vertices based on the object's position and rotation.
-    pub fn vertices(&self, transform: &GlobalTransform) -> Vec<Vec2> {
-        let origin = Vec2::new(transform.translation().x, transform.translation().y);
+    /// Vertices are calculated based on the object's shape and its transformation (translation, rotation, scale).
+    ///
+    /// # Arguments
+    /// * `transform` - The global transform to apply to the object.
+    ///
+    /// # Returns
+    /// * `Vec<Coord<f32>>` - The transformed vertices.
+    pub fn vertices(&self, transform: &GlobalTransform) -> Vec<Coord<f32>> {
+        let origin = Coord {
+            x: transform.translation().x,
+            y: transform.translation().y,
+        };
         match self {
             TiledObject::Point | TiledObject::Text => vec![origin],
-            TiledObject::Ellipse {
-                width: _,
-                height: _,
-            } => vec![self.center(transform)],
-            TiledObject::Rectangle { width, height } | TiledObject::Tile { width, height } => {
-                let center = self.center(transform);
+            TiledObject::Ellipse { width, height } => {
+                let (cos_rotation, sin_rotation) = TiledObject::rotation_cos_sin(transform);
+                let center = Coord {
+                    x: origin.x + width / 2.0 * cos_rotation + height / 2.0 * sin_rotation,
+                    y: origin.y + width / 2.0 * sin_rotation - height / 2.0 * cos_rotation,
+                };
+                (0..Self::ELLIPSE_NUM_POINTS)
+                    .map(|i| {
+                        let theta = 2.0 * std::f32::consts::PI * (i as f32)
+                            / (Self::ELLIPSE_NUM_POINTS as f32);
+                        let x = width / 2. * theta.cos();
+                        let y = height / 2. * theta.sin();
+                        center
+                            + Coord {
+                                x: x * cos_rotation - y * sin_rotation,
+                                y: x * sin_rotation + y * cos_rotation,
+                            }
+                    })
+                    .collect()
+            }
+            TiledObject::Rectangle { width, height } => {
                 let (cos_rotation, sin_rotation) = TiledObject::rotation_cos_sin(transform);
                 vec![
-                    Vec2::new(
-                        center.x - *width / 2.0 * cos_rotation + *height / 2.0 * sin_rotation,
-                        center.y - *width / 2.0 * sin_rotation - *height / 2.0 * cos_rotation,
-                    ),
-                    Vec2::new(
-                        center.x + *width / 2.0 * cos_rotation + *height / 2.0 * sin_rotation,
-                        center.y + *width / 2.0 * sin_rotation - *height / 2.0 * cos_rotation,
-                    ),
-                    Vec2::new(
-                        center.x + *width / 2.0 * cos_rotation - *height / 2.0 * sin_rotation,
-                        center.y + *width / 2.0 * sin_rotation + *height / 2.0 * cos_rotation,
-                    ),
-                    Vec2::new(
-                        center.x - *width / 2.0 * cos_rotation - *height / 2.0 * sin_rotation,
-                        center.y - *width / 2.0 * sin_rotation + *height / 2.0 * cos_rotation,
-                    ),
+                    origin,
+                    origin
+                        + Coord {
+                            x: height * sin_rotation,
+                            y: -height * cos_rotation,
+                        },
+                    origin
+                        + Coord {
+                            x: width * cos_rotation + height * sin_rotation,
+                            y: width * sin_rotation - height * cos_rotation,
+                        },
+                    origin
+                        + Coord {
+                            x: width * cos_rotation,
+                            y: width * sin_rotation,
+                        },
+                ]
+            }
+            TiledObject::Tile { width, height } => {
+                let (cos_rotation, sin_rotation) = TiledObject::rotation_cos_sin(transform);
+                vec![
+                    origin,
+                    origin
+                        + Coord {
+                            x: width * cos_rotation,
+                            y: width * sin_rotation,
+                        },
+                    origin
+                        + Coord {
+                            x: width * cos_rotation - height * sin_rotation,
+                            y: width * sin_rotation + height * cos_rotation,
+                        },
+                    origin
+                        + Coord {
+                            x: -height * sin_rotation,
+                            y: height * cos_rotation,
+                        },
                 ]
             }
             TiledObject::Polygon { vertices } | TiledObject::Polyline { vertices } => {
@@ -166,22 +198,66 @@ impl TiledObject {
                 vertices
                     .iter()
                     .map(|v| {
-                        Vec2::new(
-                            origin.x + v.x * cos_rotation - v.y * sin_rotation,
-                            origin.y + v.x * sin_rotation + v.y * cos_rotation,
-                        )
+                        origin
+                            + Coord {
+                                x: v.x * cos_rotation - v.y * sin_rotation,
+                                y: v.x * sin_rotation + v.y * cos_rotation,
+                            }
                     })
                     .collect()
             }
         }
+        .iter()
+        .map(|c| Coord {
+            x: (c.x - origin.x) * transform.scale().x + origin.x,
+            y: (c.y - origin.y) * transform.scale().y + origin.y,
+        })
+        .collect()
     }
 
-    /// Returns the isometry of the object in 2D space.
-    pub fn isometry_2d(&self, transform: &GlobalTransform) -> Isometry2d {
-        Isometry2d {
-            translation: self.center(transform),
-            rotation: transform.rotation().to_euler(EulerRot::ZYX).0.into(),
+    /// Creates a [`LineString`] from the object's vertices.
+    ///
+    /// Returns `None` for point and text objects.
+    /// For ellipses, rectangles, tiles, and polygons, returns a closed line string.
+    /// For polylines, returns an open line string.
+    ///
+    /// # Arguments
+    /// * `transform` - The global transform to apply to the object.
+    ///
+    /// # Returns
+    /// * `Option<LineString<f32>>` - The resulting line string, or `None` if not applicable.
+    pub fn line_string(&self, transform: &GlobalTransform) -> Option<LineString<f32>> {
+        let coords = self.vertices(transform);
+        match self {
+            TiledObject::Point | TiledObject::Text => None,
+            TiledObject::Ellipse { .. }
+            | TiledObject::Rectangle { .. }
+            | TiledObject::Tile { .. }
+            | TiledObject::Polygon { .. } => {
+                let mut line_string = LineString::from(coords);
+                line_string.close();
+                Some(line_string)
+            }
+            TiledObject::Polyline { .. } => Some(LineString::new(coords)),
         }
+    }
+
+    /// Creates a [`GeoPolygon`] from the object's vertices.
+    ///
+    /// Returns `None` for polyline, point, and text objects.
+    /// For closed shapes, returns the corresponding polygon.
+    ///
+    /// # Arguments
+    /// * `transform` - The global transform to apply to the object.
+    ///
+    /// # Returns
+    /// * `Option<GeoPolygon<f32>>` - The resulting polygon, or `None` if not applicable.
+    pub fn polygon(&self, transform: &GlobalTransform) -> Option<GeoPolygon<f32>> {
+        self.line_string(transform)
+            .and_then(|ls| match ls.is_closed() {
+                true => Some(GeoPolygon::new(ls, vec![])),
+                false => None,
+            })
     }
 }
 

@@ -43,8 +43,8 @@ pub mod prelude {
     pub use super::physics::backend::rapier::TiledPhysicsRapierBackend;
     #[cfg(feature = "physics")]
     pub use super::physics::{
-        backend::{TiledPhysicsBackend, TiledPhysicsBackendOutput},
-        collider::{ColliderCreated, TiledCollider},
+        backend::{multi_polygon_as_line_strings, multi_polygon_as_triangles, TiledPhysicsBackend},
+        collider::{ColliderCreated, TiledColliderOrigin, TiledColliderPolygons},
         settings::TiledPhysicsSettings,
         TiledPhysicsPlugin,
     };
@@ -88,4 +88,7 @@ pub mod prelude {
     pub use tiled::{
         Layer, LayerTile, LayerTileData, Map, Object, Tile, TileId, TileLayer, Tileset,
     };
+    // Re-exports from 'geo'
+    pub use geo::Polygon as GeoPolygon; // Avoid name clash with Bevy 'Polygon'
+    pub use geo::{Coord, LineString, MultiPoint, MultiPolygon, Point};
 }
