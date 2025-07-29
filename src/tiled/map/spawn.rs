@@ -393,9 +393,19 @@ fn spawn_objects_layer(
                 ))),
         );
 
+        let object_kind = match tiled_object {
+            TiledObject::Point => "Point",
+            TiledObject::Tile { .. } => "Tile",
+            TiledObject::Text => "Text",
+            TiledObject::Rectangle { .. } => "Rectangle",
+            TiledObject::Ellipse { .. } => "Ellipse",
+            TiledObject::Polygon { .. } => "Polygon",
+            TiledObject::Polyline { .. } => "Polyline",
+        };
+
         let object_entity = commands
             .spawn((
-                Name::new(format!("Object({})", object_data.name)),
+                Name::new(format!("{object_kind}({})", object_data.name)),
                 ChildOf(layer_event.origin),
                 tiled_object,
                 transform,

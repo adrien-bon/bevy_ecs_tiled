@@ -15,14 +15,10 @@ use bevy::prelude::*;
 /// - `Objects`: A layer containing objects, parent of [`TiledObject`](crate::tiled::object::TiledObject) entities.
 /// - `Image`: A layer containing an image, parent of a single [`TiledImage`](crate::tiled::image::TiledImage) entity.
 /// - `Group`: A group of layers, used to organize multiple layers hierarchically.
-/// - `Unknown`: Fallback for unrecognized or unsupported layer types.
-#[derive(Component, Default, Reflect, Copy, Clone, Debug)]
-#[reflect(Component, Default, Debug)]
+#[derive(Component, Reflect, Copy, Clone, Debug)]
+#[reflect(Component, Debug)]
 #[require(Visibility, Transform)]
 pub enum TiledLayer {
-    /// Unknown layer type, used as a fallback when the layer type cannot be determined.
-    #[default]
-    Unknown,
     /// A layer containing tiles.
     ///
     /// Parent of [`TiledTilemap`](crate::tiled::tile::TiledTilemap) entities.

@@ -30,12 +30,13 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         // Add an "in-line" observer to detect when the map has finished loading
         .observe(
             |trigger: Trigger<TiledEvent<MapCreated>>, map_query: Query<&Name, With<TiledMap>>| {
-                if let Ok(name) = map_query.get(trigger.event().origin) {
-                    info!(
-                        "=> Observer TiledMapCreated was triggered for map '{}'",
-                        name
-                    );
-                }
+                let Ok(name) = map_query.get(trigger.event().origin) else {
+                    return;
+                };
+                info!(
+                    "=> Observer TiledMapCreated was triggered for map '{}'",
+                    name
+                );
             },
         )
         // And another one, with a dedicated function, to detect layer loading
@@ -49,7 +50,7 @@ fn evt_map_created(
     assets: Res<Assets<TiledMapAsset>>,
 ) {
     for e in map_events.read() {
-        // We can either access the map components via a regular query
+        // We can access the map components via a regular query
         let Ok((name, storage)) = map_query.get(e.origin) else {
             return;
         };
@@ -62,10 +63,13 @@ fn evt_map_created(
         info!("=> Received TiledMapCreated event for map '{}'", name);
         info!("Loaded map: {:?}", map);
 
-        // Additionally, we can access Tiled items using the TiledMapStorage component from the map
-        // From there, it's easy to access their own components with another query
-        // This can be useful if you want for instance to create a resource based upon tiles or objects
-        // data but make it available only when the map is actually spawned
+        // Additionally, we can access Tiled items using the TiledMapStorage
+        // component from the map.
+        // Using this component, we can retrieve Tiled items entity and access
+        // their own components with another query (not shown here).
+        // This can be useful if you want for instance to create a resource
+        // based upon tiles or objects data but make it available only when
+        // the map is actually spawned.
         for (id, entity) in storage.objects() {
             info!(
                 "(map) Object ID {:?} was spawned as entity {:?}",

@@ -21,7 +21,8 @@ fn main() {
     App::new()
         // Add Bevy's default plugins
         .add_plugins(DefaultPlugins)
-        // Add the bevy_ecs_tiled plugin (bevy_ecs_tilemap::TilemapPlugin will be added automatically if needed)
+        // Add the bevy_ecs_tiled plugin
+        // bevy_ecs_tilemap::TilemapPlugin will be added automatically if needed
         .add_plugins(TiledPlugin::default())
         // Add your startup system and run the app
         .add_systems(Startup, startup)
@@ -47,15 +48,13 @@ This simple example will load a map using the default settings.
 
 ### Customizing Map Loading
 
-You can customize how the map is loaded by adding various components to the map entity, such as:
+You can customize how the map is loaded by listening to specific [`TiledEvent`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/bevy_ecs_tiled/tiled/event/index.html) or adding various components to the map entity, such as:
 
 - [`TilemapAnchor`](https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/anchor/enum.TilemapAnchor.html) — Controls the anchor point of the tilemap.
 - [`TiledMapLayerZOffset`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMapLayerZOffset.html) — Adjusts the Z offset between map layers.
 - [`TilemapRenderSettings`](https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/map/struct.TilemapRenderSettings.html) — Configures rendering options.
 - [`Transform`](https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html) — Sets the position, rotation, and scale of the map.
 - [`Visibility`](https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html) — Controls the visibility of the map entity.
-
-For example, to load a map and set its anchor point to the center instead of the default bottom-left:
 
 ```rust,no_run
 use bevy::prelude::*;
@@ -65,11 +64,45 @@ fn spawn_map(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
-    // Spawn the map with a custom anchor point
-    commands.spawn((
-        TiledMap(asset_server.load("map.tmx")),
-        TilemapAnchor::Center,
-    ));
+    commands
+        // Load a map and set its anchor point to the
+        // center instead of the default bottom-left
+        .spawn((
+            TiledMap(asset_server.load("map.tmx")),
+            TilemapAnchor::Center,
+        ))
+        // Add an "in-line" observer to detect when
+        // the map has finished loading
+        .observe(
+            |trigger: Trigger<TiledEvent<MapCreated>>,
+             assets: Res<Assets<TiledMapAsset>>,
+             query: Query<(&Name, &TiledMapStorage), With<TiledMap>>| {
+                // We can access the map components via a regular query
+                let Ok((name, storage)) = query.get(trigger.event().origin) else {
+                    return;
+                };
+                info!("=> Observer TiledMapCreated was triggered for map '{name}'");
+
+                // Or directly the underneath raw tiled::Map data
+                let Some(map) = trigger.event().get_map(&assets) else {
+                    return;
+                };
+                info!("Loaded map: {:?}", map);
+
+                // Additionally, we can access Tiled items using the TiledMapStorage
+                // component: we can retrieve Tiled items entity and access
+                // their own components with another query (not shown here).
+                // This can be useful if you want for instance to create a resource
+                // based upon tiles or objects data but make it available only when
+                // the map is actually spawned.
+                for (id, entity) in storage.objects() {
+                    info!(
+                        "(map) Object ID {:?} was spawned as entity {:?}",
+                        id, entity
+                    );
+                }
+            }
+        );
 }
 ```
 
