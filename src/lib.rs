@@ -43,11 +43,8 @@ pub mod prelude {
     pub use super::physics::backend::rapier::TiledPhysicsRapierBackend;
     #[cfg(feature = "physics")]
     pub use super::physics::{
-        backend::{
-            multi_polygon_as_line_strings, multi_polygon_as_triangles, TiledPhysicsBackend,
-            TiledPhysicsBackendOutput,
-        },
-        collider::{ColliderCreated, TiledCollider},
+        backend::{multi_polygon_as_line_strings, multi_polygon_as_triangles, TiledPhysicsBackend},
+        collider::{ColliderCreated, TiledColliderOrigin, TiledColliderPolygons},
         settings::TiledPhysicsSettings,
         TiledPhysicsPlugin,
     };

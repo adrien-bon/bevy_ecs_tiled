@@ -75,7 +75,7 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
                 &assets,
                 anchor,
                 &settings.tiles_objects_filter,
-                ev.transmute(None, ColliderCreated(TiledCollider::TilesLayer)),
+                ev.transmute(None, ColliderCreated(TiledColliderOrigin::TilesLayer)),
                 ev.origin,
                 &mut event_writer,
             );
@@ -116,7 +116,7 @@ fn collider_from_object<T: TiledPhysicsBackend>(
                     Some(_) => &settings.tiles_objects_filter,
                     None => &TiledName::All,
                 },
-                ev.transmute(None, ColliderCreated(TiledCollider::Object)),
+                ev.transmute(None, ColliderCreated(TiledColliderOrigin::Object)),
                 ev.origin,
                 &mut event_writer,
             );

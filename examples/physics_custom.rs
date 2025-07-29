@@ -5,7 +5,7 @@ use bevy::{
     color::palettes::css::{PURPLE, RED},
     prelude::*,
 };
-use bevy_ecs_tiled::{physics::backend::TiledPhysicsBackendOutput, prelude::*};
+use bevy_ecs_tiled::prelude::*;
 
 mod helper;
 
@@ -47,28 +47,26 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
         &self,
         commands: &mut Commands,
         source: &TiledEvent<ColliderCreated>,
-        multi_polygon: MultiPolygon<f32>,
-    ) -> Vec<TiledPhysicsBackendOutput> {
+        multi_polygon: &MultiPolygon<f32>,
+    ) -> Vec<Entity> {
         let (name, color) = match source.event.0 {
-            TiledCollider::Object => (String::from("Custom[Object]"), Color::from(PURPLE)),
-            TiledCollider::TilesLayer => (String::from("Custom[TilesLayer]"), Color::from(RED)),
+            TiledColliderOrigin::Object => (String::from("Custom[Object]"), Color::from(PURPLE)),
+            TiledColliderOrigin::TilesLayer => {
+                (String::from("Custom[TilesLayer]"), Color::from(RED))
+            }
         };
 
-        vec![TiledPhysicsBackendOutput {
-            name: name.clone(),
-            entity: commands
-                // In this specific case we want to draw a mesh which require access
-                // to `Assets<Mesh>` and `Assets<ColorMaterial>` resources.
-                // We'll wrap everything in a custom command to get access to `World`
-                // so we can retrieve these resources.
-                .spawn_empty()
-                .queue(CustomColliderCommand {
-                    color,
-                    multi_polygon: multi_polygon.clone(),
-                })
-                .id(),
-            transform: Transform::default(),
-        }]
+        vec![commands
+            .spawn(Name::from(name))
+            // In this specific case we want to draw a mesh which require access
+            // to `Assets<Mesh>` and `Assets<ColorMaterial>` resources.
+            // We'll wrap everything in a custom command to get access to `World`
+            // so we can retrieve these resources.
+            .queue(CustomColliderCommand {
+                color,
+                multi_polygon: multi_polygon.clone(),
+            })
+            .id()]
     }
 }
 

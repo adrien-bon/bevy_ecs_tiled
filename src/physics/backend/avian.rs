@@ -47,12 +47,12 @@ impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
         &self,
         commands: &mut Commands,
         _source: &TiledEvent<ColliderCreated>,
-        multi_polygon: MultiPolygon<f32>,
-    ) -> Vec<TiledPhysicsBackendOutput> {
+        multi_polygon: &MultiPolygon<f32>,
+    ) -> Vec<Entity> {
         let mut out = vec![];
         match self {
             TiledPhysicsAvianBackend::Triangulation => {
-                let shared_shapes = multi_polygon_as_triangles(&multi_polygon)
+                let shared_shapes = multi_polygon_as_triangles(multi_polygon)
                     .iter()
                     .map(|([a, b, c], centroid)| {
                         (
@@ -64,33 +64,34 @@ impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
 
                 if !shared_shapes.is_empty() {
                     let collider: Collider = SharedShape::compound(shared_shapes).into();
-                    out.push(TiledPhysicsBackendOutput {
-                        name: "Avian[Triangulation]".to_string(),
-                        entity: commands.spawn(collider).id(),
-                        transform: Transform::default(),
-                    });
+                    out.push(
+                        commands
+                            .spawn((Name::from("Avian[Triangulation]"), collider))
+                            .id(),
+                    );
                 }
             }
             TiledPhysicsAvianBackend::LineStrip => {
-                multi_polygon_as_line_strings(&multi_polygon)
+                multi_polygon_as_line_strings(multi_polygon)
                     .iter()
-                    .for_each(|ls| {
+                    .enumerate()
+                    .for_each(|(i, ls)| {
                         let collider: Collider = SharedShape::polyline(
                             ls.points().map(|v| Point::new(v.x(), v.y())).collect(),
                             None,
                         )
                         .into();
-                        out.push(TiledPhysicsBackendOutput {
-                            name: "Avian[LineStrip]".to_string(),
-                            entity: commands.spawn(collider).id(),
-                            transform: Transform::default(),
-                        })
+                        out.push(
+                            commands
+                                .spawn((Name::from(format!("Avian[LineStrip {i}]")), collider))
+                                .id(),
+                        );
                     });
             }
             TiledPhysicsAvianBackend::Polyline => {
                 let mut vertices = vec![];
                 let mut indices = vec![];
-                multi_polygon_as_line_strings(&multi_polygon)
+                multi_polygon_as_line_strings(multi_polygon)
                     .iter()
                     .for_each(|ls| {
                         ls.lines().for_each(|l| {
@@ -103,11 +104,11 @@ impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
                     });
                 if !vertices.is_empty() {
                     let collider: Collider = SharedShape::polyline(vertices, Some(indices)).into();
-                    out.push(TiledPhysicsBackendOutput {
-                        name: "Avian[Polyline]".to_string(),
-                        entity: commands.spawn(collider).id(),
-                        transform: Transform::default(),
-                    })
+                    out.push(
+                        commands
+                            .spawn((Name::from("Avian[Polyline]"), collider))
+                            .id(),
+                    );
                 }
             }
         }

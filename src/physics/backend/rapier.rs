@@ -43,12 +43,12 @@ impl TiledPhysicsBackend for TiledPhysicsRapierBackend {
         &self,
         commands: &mut Commands,
         _source: &TiledEvent<ColliderCreated>,
-        multi_polygon: MultiPolygon<f32>,
-    ) -> Vec<TiledPhysicsBackendOutput> {
+        multi_polygon: &MultiPolygon<f32>,
+    ) -> Vec<Entity> {
         let mut out = vec![];
         match self {
             TiledPhysicsRapierBackend::Triangulation => {
-                let shared_shapes = multi_polygon_as_triangles(&multi_polygon)
+                let shared_shapes = multi_polygon_as_triangles(multi_polygon)
                     .iter()
                     .map(|([a, b, c], centroid)| {
                         (
@@ -60,33 +60,34 @@ impl TiledPhysicsBackend for TiledPhysicsRapierBackend {
 
                 if !shared_shapes.is_empty() {
                     let collider: Collider = SharedShape::compound(shared_shapes).into();
-                    out.push(TiledPhysicsBackendOutput {
-                        name: "Rapier[Trianguation]".to_string(),
-                        entity: commands.spawn(collider).id(),
-                        transform: Transform::default(),
-                    });
+                    out.push(
+                        commands
+                            .spawn((Name::from("Rapier[Triangulation]"), collider))
+                            .id(),
+                    );
                 }
             }
             TiledPhysicsRapierBackend::LineStrip => {
-                multi_polygon_as_line_strings(&multi_polygon)
+                multi_polygon_as_line_strings(multi_polygon)
                     .iter()
-                    .for_each(|ls| {
+                    .enumerate()
+                    .for_each(|(i, ls)| {
                         let collider: Collider = SharedShape::polyline(
                             ls.points().map(|v| Point::new(v.x(), v.y())).collect(),
                             None,
                         )
                         .into();
-                        out.push(TiledPhysicsBackendOutput {
-                            name: "Rapier[LineStrip]".to_string(),
-                            entity: commands.spawn(collider).id(),
-                            transform: Transform::default(),
-                        })
+                        out.push(
+                            commands
+                                .spawn((Name::from(format!("Rapier[LineStrip {i}]")), collider))
+                                .id(),
+                        );
                     });
             }
             TiledPhysicsRapierBackend::Polyline => {
                 let mut vertices = vec![];
                 let mut indices = vec![];
-                multi_polygon_as_line_strings(&multi_polygon)
+                multi_polygon_as_line_strings(multi_polygon)
                     .iter()
                     .for_each(|ls| {
                         ls.lines().for_each(|l| {
@@ -99,11 +100,11 @@ impl TiledPhysicsBackend for TiledPhysicsRapierBackend {
                     });
                 if !vertices.is_empty() {
                     let collider: Collider = SharedShape::polyline(vertices, Some(indices)).into();
-                    out.push(TiledPhysicsBackendOutput {
-                        name: "Rapier[Polyline]".to_string(),
-                        entity: commands.spawn(collider).id(),
-                        transform: Transform::default(),
-                    })
+                    out.push(
+                        commands
+                            .spawn((Name::from("Rapier[Polyline]"), collider))
+                            .id(),
+                    )
                 }
             }
         }

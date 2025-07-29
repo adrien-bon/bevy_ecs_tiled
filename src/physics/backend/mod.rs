@@ -40,31 +40,17 @@ pub trait TiledPhysicsBackend:
     /// # Arguments
     /// * `commands` - The Bevy [`Commands`] instance for spawning entities.
     /// * `source` - The event describing the collider to be created.
-    /// * `polygons` - The [`MultiPolygon<f32>`] geometry representing the collider shape.
+    /// * `multi_polygon` - The [`MultiPolygon<f32>`] geometry representing the collider shape.
     ///
     /// # Returns
-    /// A vector of [`TiledPhysicsBackendOutput`] describing the spawned colliders.
+    /// A vector of [`Entity`] of the spawned colliders.
     /// If the provided collider is not supported, the function should return an empty vector.
     fn spawn_colliders(
         &self,
         commands: &mut Commands,
         source: &TiledEvent<ColliderCreated>,
-        polygons: MultiPolygon<f32>,
-    ) -> Vec<TiledPhysicsBackendOutput>;
-}
-
-/// Output information for a spawned physics collider.
-///
-/// This struct contains details about a collider entity created by a physics backend,
-/// including its name, entity ID, and transform relative to its parent.
-#[derive(Clone, Debug)]
-pub struct TiledPhysicsBackendOutput {
-    /// [`Name`] of the collider.
-    pub name: String,
-    /// [`Entity`] of the spawned collider.
-    pub entity: Entity,
-    /// The relative [`Transform`] of the collider from its parent [`Entity`].
-    pub transform: Transform,
+        multi_polygon: &MultiPolygon<f32>,
+    ) -> Vec<Entity>;
 }
 
 /// Converts a [`MultiPolygon<f32>`] into a vector of triangles and their centroids.

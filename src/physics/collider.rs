@@ -11,35 +11,40 @@ use bevy::prelude::*;
 use geo::BooleanOps;
 use tiled::{ObjectLayerData, ObjectShape};
 
-/// Marker component for colliders
+/// Marker component for colliders origin
 ///
 /// Helps to distinguish between colliders created from Tiled objects and those created from Tiled tile layers.
 #[derive(Component, Reflect, Copy, PartialEq, Clone, Debug)]
-#[reflect(Component, Debug, PartialEq)]
-#[require(Transform)]
-pub enum TiledCollider {
+#[reflect(Component, Debug)]
+pub enum TiledColliderOrigin {
     /// Collider is created by a [`tiled::TileLayer`] (ie. a collection of [`Tile`])
     TilesLayer,
     /// Collider is created by an [`tiled::Object`]
     Object,
 }
 
+/// Collider raw geometry
+#[derive(Component, PartialEq, Clone, Debug, Deref)]
+#[require(Transform)]
+pub struct TiledColliderPolygons(pub MultiPolygon<f32>);
+
 /// Event emitted when a collider is created from a Tiled map or world.
 ///
-/// You can determine collider origin using the inner [`TiledCollider`].
+/// You can determine collider origin using the inner [`TiledColliderOrigin`].
 /// See also [`TiledEvent`]
-#[derive(Clone, Copy, PartialEq, Debug, Reflect)]
+#[derive(Clone, Copy, PartialEq, Debug, Reflect, Deref)]
 #[reflect(Clone, PartialEq)]
-pub struct ColliderCreated(pub TiledCollider);
+pub struct ColliderCreated(pub TiledColliderOrigin);
 
 pub(crate) fn plugin(app: &mut App) {
-    app.register_type::<TiledCollider>();
+    app.register_type::<TiledColliderOrigin>();
     app.add_event::<TiledEvent<ColliderCreated>>()
         .register_type::<TiledEvent<ColliderCreated>>();
 }
 
 impl<'a> TiledEvent<ColliderCreated> {
-    /// Returns a vector containing [`Tile`]s in this layer as well as their relative position from their parent [`crate::tiled::tile::TiledTilemap`] [`Entity``].
+    /// Returns a vector containing [`Tile`]s in this layer as well as their
+    /// relative position from their parent [`crate::tiled::tile::TiledTilemap`] [`Entity``].
     pub fn get_tiles(
         &self,
         assets: &'a Res<Assets<TiledMapAsset>>,
@@ -88,8 +93,8 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
         return;
     };
 
-    let polygons = match source.event.0 {
-        TiledCollider::Object => {
+    let polygons = match *source.event {
+        TiledColliderOrigin::Object => {
             if let Some(object) = source.get_object(assets) {
                 match object.get_tile() {
                     // If the object does not have a tile, we can create a collider directly from itself
@@ -132,7 +137,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
                 vec![]
             }
         }
-        TiledCollider::TilesLayer => {
+        TiledColliderOrigin::TilesLayer => {
             let grid_size = grid_size_from_map(&map_asset.map);
             let mut acc = vec![];
             // Iterate over all tiles in the layer and create colliders for each
@@ -157,21 +162,22 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
     .map(|p| MultiPolygon::new(vec![p]))
     .collect::<Vec<_>>();
 
-    // Simplify geometry: merge together adjacent polygons
-    let polygons = divide_reduce(polygons, |a, b| a.union(&b)).unwrap_or(MultiPolygon::new(vec![]));
+    // Try to simplify geometry: merge together adjacent polygons
+    let Some(polygons) = divide_reduce(polygons, |a, b| a.union(&b)) else {
+        return;
+    };
 
-    // Notify physics engine to actually spawn our colliders
-    for output in backend.spawn_colliders(commands, &source, polygons) {
-        // Attach collider to its parent
-        commands.entity(output.entity).insert((
-            source.event.0,
-            Name::new(format!("Collider: {}", output.name)),
+    // Actually spawn our colliders using provided physics backend
+    for entity in backend.spawn_colliders(commands, &source, &polygons) {
+        // Attach collider to its parent and insert additional components
+        commands.entity(entity).insert((
+            *source.event,
+            TiledColliderPolygons(polygons.to_owned()),
             ChildOf(parent),
-            output.transform,
         ));
-        // Send collider event
+        // Patch origin entity and send collider event
         let mut event = source;
-        event.origin = output.entity;
+        event.origin = entity;
         event.send(commands, event_writer);
     }
 }
