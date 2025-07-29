@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Bugfixes
+
+- Avoid crash when targeting `wasm` (#115).
+
 ## v0.7.4
 
 ### Features
