@@ -60,7 +60,7 @@ pub struct TiledMapPluginConfig {
 
 impl Default for TiledMapPluginConfig {
     fn default() -> Self {
-        let mut path = env::current_dir().unwrap();
+        let mut path = env::current_dir().unwrap_or_default();
         path.push("tiled_types_export.json");
         Self {
             tiled_types_export_file: Some(path),
