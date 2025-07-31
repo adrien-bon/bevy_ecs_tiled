@@ -26,7 +26,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // Load a world then spawn it
     commands.spawn((
-        // Only the [`TiledWorldHandle`] component is actually required to spawn a world
+        // Only the [`TiledWorld`] component is actually required to spawn a world
         TiledWorld(asset_server.load("worlds/orthogonal.world")),
         // But you can add extra components to change the defaults settings and how
         // your world is actually displayed

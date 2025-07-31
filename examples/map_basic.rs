@@ -26,7 +26,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // Load a map then spawn it
     commands.spawn((
-        // Only the [`TiledMapHandle`] component is actually required to spawn a map
+        // Only the [`TiledMap`] component is actually required to spawn a map.
         TiledMap(asset_server.load("maps/orthogonal/finite.tmx")),
         // But you can add extra components to change the defaults settings and how
         // your map is actually displayed
