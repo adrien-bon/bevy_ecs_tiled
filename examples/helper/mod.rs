@@ -15,9 +15,7 @@ pub struct HelperPlugin;
 impl Plugin for HelperPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_plugins((
-            EguiPlugin {
-                enable_multipass_for_primary_context: true,
-            },
+            EguiPlugin::default(),
             WorldInspectorPlugin::default().run_if(input_toggle_active(false, KeyCode::Escape)),
             // we want Bevy to measure these values for us:
             bevy::diagnostic::FrameTimeDiagnosticsPlugin::default(),
