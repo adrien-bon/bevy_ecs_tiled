@@ -2,7 +2,7 @@
 <map version="1.10" tiledversion="1.11.0" orientation="hexagonal" renderorder="right-down" width="20" height="20" tilewidth="16" tileheight="16" infinite="0" hexsidelength="8" staggeraxis="y" staggerindex="odd" nextlayerid="5" nextobjectid="15">
  <tileset firstgid="1" source="../../tiles/drjamgo_hex_16x16.tsx"/>
  <imagelayer id="4" name="Image Layer 1" offsetx="134.27" offsety="-26.9557">
-  <image source="../../bevy_icon.png" width="256" height="256"/>
+  <image source="../../bevy_icon.png" width="257" height="247"/>
  </imagelayer>
  <layer id="1" name="TerrainLayer" width="20" height="20">
   <data encoding="csv">

@@ -192,7 +192,7 @@ You can also refer to the [API documentation](https://docs.rs/bevy_ecs_tiled/lat
 - [drjamgo_hex_16x16](https://opengameart.org/content/basic-hex-tile-set-16x16): an hexagonal "pointy-top" tileset from [Dr. Jango](https://opengameart.org/users/dr-jamgo), licensed under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 - [simple hex flat top](https://opengameart.org/content/simple-flat-top-hexagonal-tiles): an hexagonal "flat-top" tileset from [All things hex](https://opengameart.org/users/all-things-hex), licensed under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 - [kenney-sketch-desert](https://kenney.nl/assets/sketch-desert): an isometric tileset from [Kenney](https://kenney.nl/), licensed under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
-- [Magic Market](https://gfragger.itch.io/magic-market): an orthogonal tileset from [GFragger](https://gfragger.itch.io/)
+- [bevy_logo](https://thebevyflock.github.io/the-bird/birds/alternate-bevy-logo.jpg): an alternative Bevy logo from [Steam Ed Duck](https://www.instagram.com/steamedduck_fest), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
 
 ---
 
