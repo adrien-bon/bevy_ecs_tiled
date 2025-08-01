@@ -43,7 +43,7 @@ Update your local `Cargo.toml` file to enable the `user_properties` feature:
 ```toml
 [dependencies]
 bevy = "0.16"
-bevy_ecs_tiled = { version = "0.7", features = ["user_properties"] }
+bevy_ecs_tiled = { version = "0.8", features = ["user_properties"] }
 ```
 
 > **Note:**  
