@@ -109,11 +109,19 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
                             return vec![];
                         };
 
+                        let unscaled_tile_size = match &tile.image {
+                            Some(image) => {
+                                // tile is in image collection
+                                Vec2::new(image.width as f32, image.height as f32)
+                            }
+                            None => Vec2::new(
+                                tile.tileset().tile_width as f32,
+                                tile.tileset().tile_height as f32,
+                            ),
+                        };
+
                         let mut offset = Vec2::ZERO;
-                        let mut scale = Vec2::new(
-                            width / tile.tileset().tile_width as f32,
-                            height / tile.tileset().tile_height as f32,
-                        );
+                        let mut scale = Vec2::new(width, height) / unscaled_tile_size;
                         if object_tile.flip_h {
                             scale.x *= -1.;
                             offset.x += width;
