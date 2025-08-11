@@ -16,6 +16,8 @@ pub(crate) struct TiledMapTileset {
     /// A tileset can be used for tiles layer only if all the images it contains have the
     /// same dimensions (restriction from bevy_ecs_tilemap).
     pub(crate) usable_for_tiles_layer: bool,
+    /// The offset to be used when drawing tiles from this tileset.
+    pub(crate) drawing_offset: IVec2,
     /// Tileset texture (ie. a single image or an images collection)
     pub(crate) tilemap_texture: TilemapTexture,
     /// The [`TextureAtlasLayout`] handle associated to each tileset, if any.

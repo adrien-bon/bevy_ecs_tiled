@@ -258,6 +258,11 @@ fn spawn_tiles_layer(
                     x: tileset.spacing as f32,
                     y: tileset.spacing as f32,
                 },
+                transform: Transform::from_xyz(
+                    tileset.offset_x as f32,
+                    -tileset.offset_y as f32,
+                    0.0,
+                ),
                 map_type: tilemap_type_from_map(&tiled_map.map),
                 render_settings: *_render_settings,
                 anchor: *_anchor,
@@ -420,11 +425,11 @@ fn spawn_objects_layer(
         // we want to add a Sprite component to the object entity
         // and possibly an animation component if the tile is animated.
         match handle_tile_object(&object_data, tiled_map) {
-            (Some(sprite), None) => {
-                commands.entity(object_entity).insert(sprite);
+            (Some((sprite, offset_transform)), None) => {
+                commands.spawn((ChildOf(object_entity), sprite, offset_transform));
             }
-            (Some(sprite), Some(animation)) => {
-                commands.entity(object_entity).insert((sprite, animation));
+            (Some((sprite, offset_transform)), Some(animation)) => {
+                commands.spawn((ChildOf(object_entity), sprite, offset_transform, animation));
             }
             _ => {}
         };
@@ -441,7 +446,7 @@ fn spawn_objects_layer(
 fn handle_tile_object(
     object: &Object,
     tiled_map: &TiledMapAsset,
-) -> (Option<Sprite>, Option<TiledAnimation>) {
+) -> (Option<(Sprite, Transform)>, Option<TiledAnimation>) {
     let Some(tile) = (*object).get_tile() else {
         return (None, None);
     };
@@ -464,11 +469,16 @@ fn handle_tile_object(
             .to_owned(),
     };
 
-    let sprite = tiled_map.tilesets.get(path).and_then(|t| {
+    let sprite_bundle = tiled_map.tilesets.get(path).and_then(|t| {
+        let transform = Transform::from_xyz(
+            t.drawing_offset.x as f32,
+            -t.drawing_offset.y as f32,
+            0.0,
+        );
         match &t.tilemap_texture {
             TilemapTexture::Single(single) => {
                 t.texture_atlas_layout_handle.as_ref().map(|handle| {
-                    Sprite {
+                    (Sprite {
                         image: single.clone(),
                         texture_atlas: Some(TextureAtlas {
                             layout: handle.clone(),
@@ -482,7 +492,9 @@ fn handle_tile_object(
                             height
                         )),
                         ..default()
-                    }
+                    },
+                    transform,
+                    )
                 })
             },
             #[cfg(not(feature = "atlas"))]
@@ -490,7 +502,7 @@ fn handle_tile_object(
                 let index = *t.tile_image_offsets.get(&tile.id())
                     .expect("The offset into the image vector for template should have been saved during the initial load.");
                 vector.get(index as usize).map(|image| {
-                    Sprite {
+                    (Sprite {
                         image: image.clone(),
                         anchor: Anchor::BottomLeft,
                         flip_x: tile.flip_h,
@@ -500,7 +512,9 @@ fn handle_tile_object(
                             height
                         )),
                         ..default()
-                    }
+                    },
+                    transform,
+                    )
                 })
             }
             #[cfg(not(feature = "atlas"))]
@@ -521,7 +535,7 @@ fn handle_tile_object(
             ),
         });
 
-    (sprite, animation)
+    (sprite_bundle, animation)
 }
 
 fn spawn_image_layer(
