@@ -2,6 +2,8 @@
 
 ## [unreleased]
 
+## v0.8.1
+
 ### Bugfixes
 
 - Support scaling tile objects from image collections (#119).
