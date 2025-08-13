@@ -13,7 +13,7 @@ use tiled::{Orientation, StaggerAxis, StaggerIndex};
 /// Retrieves a [`Layer`] from a [`Map`] given a layer ID.
 ///
 /// Returns `Some(Layer)` if the layer exists, or `None` if the ID is out of bounds.
-pub fn get_layer_from_map(map: &Map, layer_id: u32) -> Option<Layer> {
+pub fn get_layer_from_map(map: &Map, layer_id: u32) -> Option<Layer<'_>> {
     map.get_layer(layer_id as usize)
 }
 
@@ -32,14 +32,14 @@ pub fn get_tileset_from_map(map: &Map, tileset_id: u32) -> Option<&Arc<Tileset>>
 /// Retrieves a [`Tile`] from a [`Map`] given a tileset ID and a [`TileId`].
 ///
 /// Returns `Some(Tile)` if the tile exists in the specified tileset, or `None` otherwise.
-pub fn get_tile_from_map(map: &Map, tileset_id: u32, tile_id: TileId) -> Option<Tile> {
+pub fn get_tile_from_map(map: &Map, tileset_id: u32, tile_id: TileId) -> Option<Tile<'_>> {
     get_tileset_from_map(map, tileset_id).and_then(|t| t.get_tile(tile_id))
 }
 
 /// Retrieves an [`Object`] from a [`Map`] given an object ID.
 ///
 /// Searches all object layers for the specified object ID and returns it if found.
-pub fn get_object_from_map(map: &Map, object_id: u32) -> Option<Object> {
+pub fn get_object_from_map(map: &Map, object_id: u32) -> Option<Object<'_>> {
     for layer in map.layers() {
         let obj = layer
             .as_object_layer()

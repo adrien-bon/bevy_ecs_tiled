@@ -350,14 +350,12 @@ impl DeserializedProperties {
                 let mut out = DynamicStruct::default();
                 out.set_represented_type(Some(registration.type_info()));
 
-                let tmp;
-                let mut default_value = default_value;
-                let default_value_from_type =
-                    default_value_from_type_path(registry, info.type_path());
-                if default_value_from_type.is_some() {
-                    tmp = default_value_from_type.unwrap();
-                    default_value = Some(tmp.as_ref());
-                }
+                // Use default value from type if available
+                let tmp = default_value_from_type_path(registry, info.type_path());
+                let default_value = match tmp {
+                    Some(_) => tmp.as_deref(),
+                    None => default_value,
+                };
 
                 for field in info.iter() {
                     let value = Self::deserialize_named_field(
@@ -377,14 +375,12 @@ impl DeserializedProperties {
                 let mut out = DynamicTupleStruct::default();
                 out.set_represented_type(Some(registration.type_info()));
 
-                let tmp;
-                let mut default_value = default_value;
-                let default_value_from_type =
-                    default_value_from_type_path(registry, info.type_path());
-                if default_value_from_type.is_some() {
-                    tmp = default_value_from_type.unwrap();
-                    default_value = Some(tmp.as_ref());
-                }
+                // Use default value from type if available
+                let tmp = default_value_from_type_path(registry, info.type_path());
+                let default_value = match tmp {
+                    Some(_) => tmp.as_deref(),
+                    None => default_value,
+                };
 
                 for field in info.iter() {
                     let value = Self::deserialize_unnamed_field(
@@ -404,14 +400,12 @@ impl DeserializedProperties {
                 let mut out = DynamicTuple::default();
                 out.set_represented_type(Some(registration.type_info()));
 
-                let tmp;
-                let mut default_value = default_value;
-                let default_value_from_type =
-                    default_value_from_type_path(registry, info.type_path());
-                if default_value_from_type.is_some() {
-                    tmp = default_value_from_type.unwrap();
-                    default_value = Some(tmp.as_ref());
-                }
+                // Use default value from type if available
+                let tmp = default_value_from_type_path(registry, info.type_path());
+                let default_value = match tmp {
+                    Some(_) => tmp.as_deref(),
+                    None => default_value,
+                };
 
                 for field in info.iter() {
                     let value = Self::deserialize_unnamed_field(
@@ -457,14 +451,12 @@ impl DeserializedProperties {
                 let mut out = DynamicEnum::default();
                 out.set_represented_type(Some(registration.type_info()));
 
-                let tmp;
-                let mut default_value = default_value;
-                let default_value_from_type =
-                    default_value_from_type_path(registry, info.type_path());
-                if default_value_from_type.is_some() {
-                    tmp = default_value_from_type.unwrap();
-                    default_value = Some(tmp.as_ref());
-                }
+                // Use default value from type if available
+                let tmp = default_value_from_type_path(registry, info.type_path());
+                let default_value = match tmp {
+                    Some(_) => tmp.as_deref(),
+                    None => default_value,
+                };
 
                 if let Some(PV::StringValue(variant_name)) = properties.remove(":variant") {
                     let variant_out = match info.variant(&variant_name) {

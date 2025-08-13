@@ -125,13 +125,8 @@ impl TypeExportRegistry {
         use_as: Vec<UseAs>,
         deps: &mut Vec<&'static str>,
     ) -> ExportConversionResult {
-        let mut default_value = None;
-        let tmp;
-        let v = registration.data::<ReflectDefault>().map(|v| v.default());
-        if v.is_some() {
-            tmp = v.unwrap();
-            default_value = Some(tmp.as_ref());
-        }
+        let tmp = registration.data::<ReflectDefault>().map(|v| v.default());
+        let default_value = tmp.as_deref();
 
         if Self::is_simple(registration) {
             let (type_field, property_type) = type_to_field(registration)?;
@@ -148,7 +143,7 @@ impl TypeExportRegistry {
                         type_field,
                         value: default_value
                             .map(|v| value_to_json(v.as_partial_reflect()))
-                            .unwrap_or(serde_json::Value::default()),
+                            .unwrap_or_default(),
                     }],
                 }),
             }]);
