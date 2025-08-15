@@ -355,7 +355,6 @@ fn tileset_to_tiled_map_tileset(
 
     Some(TiledMapTileset {
         usable_for_tiles_layer,
-        drawing_offset: IVec2::new(tileset.offset_x, tileset.offset_y),
         tilemap_texture,
         texture_atlas_layout_handle,
         #[cfg(not(feature = "atlas"))]
