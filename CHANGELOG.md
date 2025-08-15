@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Bugfixes
+
+- Fix crash with negative drawing offsets and ensure positive offsets are handled correctly (#122).
+
 ## v0.8.1
 
 ### Bugfixes

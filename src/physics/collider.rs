@@ -69,7 +69,11 @@ impl<'a> TiledEvent<ColliderCreated> {
                             &map_type,
                             anchor,
                         );
-                        out.push((tile_coords, tile));
+                        let offset = Vec2::new(
+                            tile.tileset().offset_x as f32,
+                            -tile.tileset().offset_y as f32,
+                        );
+                        out.push((tile_coords + offset, tile));
                     }
                 });
                 out
@@ -120,8 +124,11 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
                             ),
                         };
 
-                        let mut offset = Vec2::ZERO;
                         let mut scale = Vec2::new(width, height) / unscaled_tile_size;
+                        let mut offset = Vec2::new(
+                            tile.tileset().offset_x as f32,
+                            -tile.tileset().offset_y as f32,
+                        ) * scale;
                         if object_tile.flip_h {
                             scale.x *= -1.;
                             offset.x += width;

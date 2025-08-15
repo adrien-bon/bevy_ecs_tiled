@@ -343,11 +343,8 @@ fn tileset_to_tiled_map_tileset(
                             UVec2::new(tileset.tile_width, tileset.tile_height),
                             columns,
                             tileset.tilecount / columns,
-                            Some(UVec2::new(tileset.spacing, tileset.spacing)),
-                            Some(UVec2::new(
-                                tileset.offset_x as u32 + tileset.margin,
-                                tileset.offset_y as u32 + tileset.margin,
-                            )),
+                            Some(UVec2::splat(tileset.spacing)),
+                            Some(UVec2::splat(tileset.margin)),
                         )
                     }));
             }

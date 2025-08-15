@@ -258,6 +258,11 @@ fn spawn_tiles_layer(
                     x: tileset.spacing as f32,
                     y: tileset.spacing as f32,
                 },
+                transform: Transform::from_xyz(
+                    tileset.offset_x as f32,
+                    -tileset.offset_y as f32,
+                    0.0,
+                ),
                 map_type: tilemap_type_from_map(&tiled_map.map),
                 render_settings: *_render_settings,
                 anchor: *_anchor,
@@ -420,11 +425,22 @@ fn spawn_objects_layer(
         // we want to add a Sprite component to the object entity
         // and possibly an animation component if the tile is animated.
         match handle_tile_object(&object_data, tiled_map) {
-            (Some(sprite), None) => {
-                commands.entity(object_entity).insert(sprite);
+            (Some((sprite, offset_transform)), None) => {
+                commands.spawn((
+                    Name::new("TileVisual"),
+                    ChildOf(object_entity),
+                    sprite,
+                    offset_transform,
+                ));
             }
-            (Some(sprite), Some(animation)) => {
-                commands.entity(object_entity).insert((sprite, animation));
+            (Some((sprite, offset_transform)), Some(animation)) => {
+                commands.spawn((
+                    Name::new("TileVisual"),
+                    ChildOf(object_entity),
+                    sprite,
+                    offset_transform,
+                    animation,
+                ));
             }
             _ => {}
         };
@@ -441,7 +457,7 @@ fn spawn_objects_layer(
 fn handle_tile_object(
     object: &Object,
     tiled_map: &TiledMapAsset,
-) -> (Option<Sprite>, Option<TiledAnimation>) {
+) -> (Option<(Sprite, Transform)>, Option<TiledAnimation>) {
     let Some(tile) = (*object).get_tile() else {
         return (None, None);
     };
@@ -464,7 +480,28 @@ fn handle_tile_object(
             .to_owned(),
     };
 
-    let sprite = tiled_map.tilesets.get(path).and_then(|t| {
+    let Some(transform) = tile.get_tile().map(|t| {
+        let unscaled_tile_size = match &t.image {
+            Some(image) => {
+                // tile is in image collection
+                Vec2::new(image.width as f32, image.height as f32)
+            }
+            None => Vec2::new(
+                t.tileset().tile_width as f32,
+                t.tileset().tile_height as f32,
+            ),
+        };
+        let scale = Vec2::new(width, height) / unscaled_tile_size;
+        Transform::from_xyz(
+            t.tileset().offset_x as f32 * scale.x,
+            -t.tileset().offset_y as f32 * scale.y,
+            0.0,
+        )
+    }) else {
+        return (None, None);
+    };
+
+    let Some(sprite) = tiled_map.tilesets.get(path).and_then(|t| {
         match &t.tilemap_texture {
             TilemapTexture::Single(single) => {
                 t.texture_atlas_layout_handle.as_ref().map(|handle| {
@@ -506,7 +543,9 @@ fn handle_tile_object(
             #[cfg(not(feature = "atlas"))]
             _ => unreachable!(),
         }
-    });
+    }) else {
+        return (None, None);
+    };
 
     // Handle the case of an animated tile
     let animation = tile
@@ -521,7 +560,7 @@ fn handle_tile_object(
             ),
         });
 
-    (sprite, animation)
+    (Some((sprite, transform)), animation)
 }
 
 fn spawn_image_layer(
