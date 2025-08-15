@@ -426,10 +426,21 @@ fn spawn_objects_layer(
         // and possibly an animation component if the tile is animated.
         match handle_tile_object(&object_data, tiled_map) {
             (Some((sprite, offset_transform)), None) => {
-                commands.spawn((ChildOf(object_entity), sprite, offset_transform));
+                commands.spawn((
+                    Name::new("TileVisual"),
+                    ChildOf(object_entity),
+                    sprite,
+                    offset_transform,
+                ));
             }
             (Some((sprite, offset_transform)), Some(animation)) => {
-                commands.spawn((ChildOf(object_entity), sprite, offset_transform, animation));
+                commands.spawn((
+                    Name::new("TileVisual"),
+                    ChildOf(object_entity),
+                    sprite,
+                    offset_transform,
+                    animation,
+                ));
             }
             _ => {}
         };
