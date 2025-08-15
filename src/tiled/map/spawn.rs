@@ -469,16 +469,32 @@ fn handle_tile_object(
             .to_owned(),
     };
 
-    let sprite_bundle = tiled_map.tilesets.get(path).and_then(|t| {
-        let transform = Transform::from_xyz(
-            t.drawing_offset.x as f32,
-            -t.drawing_offset.y as f32,
+    let Some(transform) = tile.get_tile().map(|t| {
+        let unscaled_tile_size = match &t.image {
+            Some(image) => {
+                // tile is in image collection
+                Vec2::new(image.width as f32, image.height as f32)
+            }
+            None => Vec2::new(
+                t.tileset().tile_width as f32,
+                t.tileset().tile_height as f32,
+            ),
+        };
+        let scale = Vec2::new(width, height) / unscaled_tile_size;
+        Transform::from_xyz(
+            t.tileset().offset_x as f32 * scale.x,
+            -t.tileset().offset_y as f32 * scale.y,
             0.0,
-        );
+        )
+    }) else {
+        return (None, None);
+    };
+
+    let Some(sprite) = tiled_map.tilesets.get(path).and_then(|t| {
         match &t.tilemap_texture {
             TilemapTexture::Single(single) => {
                 t.texture_atlas_layout_handle.as_ref().map(|handle| {
-                    (Sprite {
+                    Sprite {
                         image: single.clone(),
                         texture_atlas: Some(TextureAtlas {
                             layout: handle.clone(),
@@ -492,9 +508,7 @@ fn handle_tile_object(
                             height
                         )),
                         ..default()
-                    },
-                    transform,
-                    )
+                    }
                 })
             },
             #[cfg(not(feature = "atlas"))]
@@ -502,7 +516,7 @@ fn handle_tile_object(
                 let index = *t.tile_image_offsets.get(&tile.id())
                     .expect("The offset into the image vector for template should have been saved during the initial load.");
                 vector.get(index as usize).map(|image| {
-                    (Sprite {
+                    Sprite {
                         image: image.clone(),
                         anchor: Anchor::BottomLeft,
                         flip_x: tile.flip_h,
@@ -512,15 +526,15 @@ fn handle_tile_object(
                             height
                         )),
                         ..default()
-                    },
-                    transform,
-                    )
+                    }
                 })
             }
             #[cfg(not(feature = "atlas"))]
             _ => unreachable!(),
         }
-    });
+    }) else {
+        return (None, None);
+    };
 
     // Handle the case of an animated tile
     let animation = tile
@@ -535,7 +549,7 @@ fn handle_tile_object(
             ),
         });
 
-    (sprite_bundle, animation)
+    (Some((sprite, transform)), animation)
 }
 
 fn spawn_image_layer(
