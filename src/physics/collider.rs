@@ -7,6 +7,7 @@
 use std::collections::VecDeque;
 
 use crate::prelude::*;
+use crate::tiled::helpers::iso_projection;
 use bevy::prelude::*;
 use geo::BooleanOps;
 use tiled::{ObjectLayerData, ObjectShape};
@@ -101,9 +102,27 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
             if let Some(object) = source.get_object(assets) {
                 match object.get_tile() {
                     // If the object does not have a tile, we can create a collider directly from itself
-                    None => TiledObject::from_object_data(&object)
-                        .polygon(&GlobalTransform::default())
-                        .map(|p| vec![p]),
+                    None => {
+                        let global_transform = &GlobalTransform::default();
+
+                        // For isometric maps, we need to project the object's vertices onto the isometric plane
+                        if matches!(
+                            tilemap_type_from_map(&map_asset.map),
+                            TilemapType::Isometric(..)
+                        ) {
+                            create_isometric_object_polygon(
+                                &object,
+                                global_transform,
+                                map_asset,
+                                anchor,
+                            )
+                            .map(|p| vec![p])
+                        } else {
+                            TiledObject::from_object_data(&object)
+                                .polygon(global_transform)
+                                .map(|p| vec![p])
+                        }
+                    }
                     // If the object has a tile, we need to handle its collision data
                     Some(object_tile) => object_tile.get_tile().map(|tile| {
                         let Some(object_layer_data) = &tile.collision else {
@@ -233,4 +252,120 @@ fn divide_reduce<T>(list: Vec<T>, mut reduction: impl FnMut(T, T) -> T) -> Optio
     }
 
     queue.pop_back()
+}
+
+/// Creates a polygon for an isometric object by projecting all vertices onto the isometric plane.
+///
+/// This is necessary because Tiled objects on isometric maps need their shapes projected,
+/// not just their positions transformed.
+fn create_isometric_object_polygon(
+    object: &Object,
+    global_transform: &GlobalTransform,
+    map_asset: &TiledMapAsset,
+    _anchor: &TilemapAnchor,
+) -> Option<GeoPolygon<f32>> {
+    let grid_size = grid_size_from_map(&map_asset.map);
+    let tilemap_size = map_asset.tilemap_size;
+
+    // Get the object's vertices in Tiled coordinate space (relative to object origin)
+    let tiled_object = TiledObject::from_object_data(object);
+
+    // Use the object's actual world position from its transform
+    // This accounts for any adjustments made during object spawning (like the tile object width offset)
+    let object_world_pos = Vec2::new(
+        global_transform.translation().x,
+        global_transform.translation().y,
+    );
+
+    // Create vertices by projecting the shape relative to origin, then offset to correct position
+    let final_vertices: Vec<Coord<f32>> = match tiled_object {
+        TiledObject::Rectangle { width, height } => {
+            // Convert rectangle to polygon vertices relative to object origin
+            let corners = vec![
+                Vec2::new(0.0, 0.0),      // Top-left relative to object
+                Vec2::new(width, 0.0),    // Top-right
+                Vec2::new(width, height), // Bottom-right
+                Vec2::new(0.0, height),   // Bottom-left
+            ];
+
+            corners
+                .into_iter()
+                .map(|corner| {
+                    // Project the relative offset through isometric transformation
+                    let projected_offset =
+                        iso_projection(corner + map_asset.tiled_offset, &tilemap_size, &grid_size);
+                    let origin_projected =
+                        iso_projection(map_asset.tiled_offset, &tilemap_size, &grid_size);
+                    let relative_projected = projected_offset - origin_projected;
+
+                    Coord {
+                        x: object_world_pos.x + relative_projected.x,
+                        y: object_world_pos.y - relative_projected.y, // Flip Y to match Bevy coordinate system
+                    }
+                })
+                .collect()
+        }
+        TiledObject::Ellipse { width, height } => {
+            // For ellipses, create multiple points to approximate the shape
+            const NUM_POINTS: u32 = 20;
+            (0..NUM_POINTS)
+                .map(|i| {
+                    let theta = 2.0 * std::f32::consts::PI * (i as f32) / (NUM_POINTS as f32);
+                    let local_x = width / 2.0 * theta.cos() + width / 2.0;
+                    let local_y = height / 2.0 * theta.sin() + height / 2.0;
+                    let corner = Vec2::new(local_x, local_y);
+
+                    // Project the relative offset through isometric transformation
+                    let projected_offset =
+                        iso_projection(corner + map_asset.tiled_offset, &tilemap_size, &grid_size);
+                    let origin_projected =
+                        iso_projection(map_asset.tiled_offset, &tilemap_size, &grid_size);
+                    let relative_projected = projected_offset - origin_projected;
+
+                    Coord {
+                        x: object_world_pos.x + relative_projected.x,
+                        y: object_world_pos.y - relative_projected.y,
+                    }
+                })
+                .collect()
+        }
+        TiledObject::Polygon { vertices } => {
+            vertices
+                .into_iter()
+                .map(|vertex| {
+                    let corner = Vec2::new(vertex.x, -vertex.y); // Note: -vertex.y due to Tiled Y-flip
+
+                    // Project the relative offset through isometric transformation
+                    let projected_offset =
+                        iso_projection(corner + map_asset.tiled_offset, &tilemap_size, &grid_size);
+                    let origin_projected =
+                        iso_projection(map_asset.tiled_offset, &tilemap_size, &grid_size);
+                    let relative_projected = projected_offset - origin_projected;
+
+                    Coord {
+                        x: object_world_pos.x + relative_projected.x,
+                        y: object_world_pos.y - relative_projected.y,
+                    }
+                })
+                .collect()
+        }
+        TiledObject::Point => {
+            // Points don't create polygons
+            return None;
+        }
+        TiledObject::Polyline { .. } => {
+            // Polylines aren't closed shapes
+            return None;
+        }
+        TiledObject::Tile { .. } | TiledObject::Text => {
+            // These should be handled elsewhere
+            return None;
+        }
+    };
+
+    if final_vertices.len() >= 3 {
+        Some(GeoPolygon::new(LineString::new(final_vertices), vec![]))
+    } else {
+        None
+    }
 }
