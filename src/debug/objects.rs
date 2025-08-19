@@ -82,7 +82,7 @@ fn draw_debug_gizmos(
         let origin = Vec2::new(transform.translation().x, transform.translation().y);
         gizmos.arrow_2d(origin + config.arrow_length, origin, color);
         let positions = object
-            .line_string(transform)
+            .line_string(transform, None)
             .map(|ls| ls.coords().map(|c| Vec2::new(c.x, c.y)).collect::<Vec<_>>());
         if let Some(pos) = positions {
             gizmos.linestrip_2d(pos, color);
