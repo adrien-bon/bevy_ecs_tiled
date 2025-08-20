@@ -129,8 +129,9 @@ pub(crate) fn iso_projection(
         x: coords.x / grid_size.y,
         y: coords.y / grid_size.y,
     };
+    let origin_x = tilemap_size.y as f32 * grid_size.x / 2.;
     Vec2 {
-        x: tilemap_size.y as f32 * grid_size.x / 2. + (fract.x - fract.y) * grid_size.x / 2.,
+        x: (fract.x - fract.y) * grid_size.x / 2. + origin_x,
         y: (fract.x + fract.y) * grid_size.y / 2.,
     }
 }
