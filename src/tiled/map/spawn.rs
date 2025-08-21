@@ -119,16 +119,18 @@ pub(crate) fn spawn_map(
                 warn!("Group layers are not yet implemented");
             }
             LayerType::Image(image_layer) => {
-                let pos = tiled_map.world_space_from_tiled_position(
-                    anchor,
-                    Vec2::new(layer.offset_x, layer.offset_y),
-                );
                 commands.entity(layer_entity).insert((
                     Name::new(format!("TiledMapImageLayer({})", layer.name)),
                     TiledLayer::Image,
-                    Transform::from_translation(pos.extend(offset_z)),
                 ));
-                spawn_image_layer(commands, tiled_map, &layer_event, image_layer, asset_server);
+                spawn_image_layer(
+                    commands,
+                    tiled_map,
+                    &layer_event,
+                    image_layer,
+                    asset_server,
+                    anchor,
+                );
             }
         };
 
@@ -568,20 +570,25 @@ fn spawn_image_layer(
     layer_event: &TiledEvent<LayerCreated>,
     image_layer: ImageLayer,
     asset_server: &Res<AssetServer>,
+    anchor: &TilemapAnchor,
 ) {
     if let Some(image) = &image_layer.image {
-        let image_position = match tilemap_type_from_map(&tiled_map.map) {
-            // Special case for isometric maps where image origin is not (0, 0)
-            TilemapType::Isometric(IsoCoordSystem::Diamond) => {
-                let grid_size = grid_size_from_map(&tiled_map.map);
-                let map_size = tiled_map.tilemap_size;
-                Vec2 {
-                    x: map_size.x as f32 * grid_size.y / -2.,
-                    y: map_size.y as f32 * grid_size.y / 2.,
+        let image_position = tiled_map.world_space_from_tiled_position(
+            anchor,
+            match tilemap_type_from_map(&tiled_map.map) {
+                // Special case for isometric maps where image origin
+                // is not (0, 0) but (-map_width, +map_height)
+                TilemapType::Isometric(IsoCoordSystem::Diamond) => {
+                    let grid_size = grid_size_from_map(&tiled_map.map);
+                    let map_size = tiled_map.tilemap_size;
+                    Vec2 {
+                        x: map_size.x as f32 * grid_size.y / -2.,
+                        y: map_size.y as f32 * grid_size.y / 2.,
+                    }
                 }
-            }
-            _ => Vec2::ZERO,
-        };
+                _ => Vec2::ZERO,
+            },
+        );
         commands.spawn((
             Name::new(format!("Image({})", image.source.display())),
             TiledImage,
@@ -591,7 +598,7 @@ fn spawn_image_layer(
                 anchor: Anchor::TopLeft,
                 ..default()
             },
-            Transform::from_xyz(image_position.x, image_position.y, 0.),
+            Transform::from_translation(image_position.extend(0.)),
         ));
     }
 }

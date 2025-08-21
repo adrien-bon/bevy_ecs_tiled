@@ -11,10 +11,13 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_9.
 ### Changed
 
 - Rationalize usage of  `tile_size` vs. `grid_size`
+- Deduce the largest `tile_size` of a given map and use that to
+  perform map-level operations needing a `tile_size` instead of relying upong the `grid_size`
 
 ### Bugfixes
 
 - Break apart object layer colliders and project to isometric coords (#32)
+- Image layers on isometric maps are not properly positioned (#127)
 
 ## v0.8.2
 

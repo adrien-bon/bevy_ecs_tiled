@@ -100,20 +100,6 @@ pub fn tile_size(tile: &Tile) -> TilemapTileSize {
     }
 }
 
-/// Converts a [`Map`]'s grid size to a [`TilemapTileSize`].
-///
-/// The width and height will be the same as those given by [`grid_size_from_map`].
-///
-/// **Note:** this value is given from the Tiled map 'Tile Width' and 'Tile Height'
-/// properties. It can be different from the size given by the tileset, which you can
-/// retrieve with the [`tile_size`] function.
-pub fn tile_size_from_map(map: &Map) -> TilemapTileSize {
-    TilemapTileSize {
-        x: map.tile_width as f32,
-        y: map.tile_height as f32,
-    }
-}
-
 /// Projects Tiled isometric coordinates into scalar coordinates for Bevy.
 ///
 /// Used to convert isometric tile coordinates into world-space positions for rendering.

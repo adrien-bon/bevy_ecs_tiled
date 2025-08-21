@@ -34,11 +34,17 @@ pub struct TiledMapAsset {
     pub map: tiled::Map,
     /// Map size in tiles
     pub tilemap_size: TilemapSize,
-    /// Map bounding box, unanchored.
+    /// The largest tile size, in pixels, found among all tiles from this map
+    ///
+    /// You should only rely on this value for "map-level" concerns.
+    /// If you want to get the actual size of a given tile, you should instead
+    /// use the [`tile_size`] function.
+    pub largest_tile_size: TilemapTileSize,
+    /// Map bounding box, unanchored, in pixels.
     ///
     /// Origin it map bottom-left.
-    /// Minimum is set at `(0., 0.)`
-    /// Maximum is set at `(map_size.x, map_size.y)`
+    /// Minimum is `(0., 0.)`
+    /// Maximum is `(map_size.x, map_size.y)`
     pub rect: Rect,
     /// Offset to apply on Tiled coordinates when converting to Bevy coordinates
     ///
@@ -75,10 +81,10 @@ impl TiledMapAsset {
         tiled_position: Vec2,
     ) -> Vec2 {
         let map_size = self.tilemap_size;
+        let tile_size = self.largest_tile_size;
         let map_height = self.rect.height();
         let grid_size = grid_size_from_map(&self.map);
         let map_type = tilemap_type_from_map(&self.map);
-        let tile_size = tile_size_from_map(&self.map);
         let mut offset = anchor.as_offset(&map_size, &grid_size, &tile_size, &map_type);
         offset.x -= grid_size.x / 2.0;
         offset.y -= grid_size.y / 2.0;
@@ -282,6 +288,7 @@ impl fmt::Debug for TiledMapAsset {
         f.debug_struct("TiledMapAsset")
             .field("map", &self.map)
             .field("tilemap_size", &self.tilemap_size)
+            .field("largest_tile_size", &self.largest_tile_size)
             .field("rect", &self.rect)
             .field("tiled_offset", &self.tiled_offset)
             .field("topleft_chunk", &self.topleft_chunk)
