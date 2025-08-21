@@ -21,6 +21,7 @@
 
 # Migration Guides
 
+- [Migration to v0.9](migrations/v0_9.md)
 - [Migration to v0.8](migrations/v0_8.md)
 - [From v0.6.X to v0.7.X](migrations/v0_7.md)
 - [From v0.5.X to v0.6.X](migrations/v0_6.md)

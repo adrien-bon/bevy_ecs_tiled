@@ -62,39 +62,40 @@ impl Plugin for TiledDebugTilesPlugin {
     }
 }
 
-#[allow(clippy::type_complexity)]
 fn draw_tile_infos(
     mut commands: Commands,
     config: Res<TiledDebugTilesConfig>,
-    tiles_query: Query<(Entity, &ChildOf, &TilePos), (With<TiledTile>, Without<Text2d>)>,
-    layer_query: Query<
-        (
-            &TilemapType,
-            &TilemapSize,
-            &TilemapTileSize,
-            &TilemapGridSize,
-            &TilemapAnchor,
-        ),
-        With<TiledTilemap>,
-    >,
+    assets: Res<Assets<TiledMapAsset>>,
+    map_query: Query<(&TiledMap, &TiledMapStorage, &TilemapAnchor)>,
+    tile_query: Query<(Entity, &TilePos), (With<TiledTile>, Without<Text2d>)>,
 ) {
-    for (entity, child_of, tile_pos) in tiles_query.iter() {
-        let Ok((map_type, map_size, tile_size, grid_size, anchor)) =
-            layer_query.get(child_of.parent())
-        else {
+    for (tiled_map, storage, anchor) in map_query.iter() {
+        let Some(map_asset) = assets.get(&tiled_map.0) else {
             continue;
         };
-        let pos = tile_pos.center_in_world(map_size, grid_size, tile_size, map_type, anchor);
-        commands.entity(entity).insert((
-            Text2d::new(format!("{}x{}", tile_pos.x, tile_pos.y)),
-            TextColor(config.color),
-            config.font.clone(),
-            TextLayout::new_with_justify(JustifyText::Center),
-            Transform {
-                translation: Vec3::new(pos.x, pos.y, config.z_offset),
-                scale: config.scale,
-                ..default()
-            },
-        ));
+
+        for (_, entities) in storage.tiles() {
+            for entity in entities {
+                let Ok((entity, tile_pos)) = tile_query.get(*entity) else {
+                    continue;
+                };
+                let Some(tile) = storage.get_tile(&map_asset.map, entity) else {
+                    continue;
+                };
+
+                let pos = map_asset.tile_relative_position(tile_pos, &tile_size(&tile), anchor);
+                commands.entity(entity).insert((
+                    Text2d::new(format!("{}x{}", tile_pos.x, tile_pos.y)),
+                    TextColor(config.color),
+                    config.font.clone(),
+                    TextLayout::new_with_justify(JustifyText::Center),
+                    Transform {
+                        translation: Vec3::new(pos.x, pos.y, config.z_offset),
+                        scale: config.scale,
+                        ..default()
+                    },
+                ));
+            }
+        }
     }
 }

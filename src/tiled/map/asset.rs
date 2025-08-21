@@ -69,7 +69,7 @@ pub struct TiledMapAsset {
 
 impl TiledMapAsset {
     /// Convert a position from Tiled space to world space
-    pub fn world_space_from_tiled_position(
+    pub(crate) fn world_space_from_tiled_position(
         &self,
         anchor: &TilemapAnchor,
         tiled_position: Vec2,
@@ -206,22 +206,71 @@ impl TiledMapAsset {
         }
     }
 
-    /// Retrieve an [`Object`] world position (origin = top left) relative to its parent [`crate::tiled::layer::TiledLayer::Objects`] [`Entity`].
-    pub fn object_world_position(&self, object: &Object, anchor: &TilemapAnchor) -> Vec2 {
+    /// Retrieve an [`Object`] world position (object top left) relative to its parent [`TiledLayer::Objects`] [`Entity`].
+    ///
+    /// In most cases it's easier to use the object [`Transform`] component to get its position.
+    pub fn object_relative_position(&self, object: &Object, anchor: &TilemapAnchor) -> Vec2 {
         self.world_space_from_tiled_position(anchor, Vec2::new(object.x, object.y))
     }
 
-    /// Retrieve a [`tiled::Tile`] world position (origin = tile center) relative to its parent [`crate::tiled::tile::TiledTilemap`] [`Entity`].
-    pub fn tile_world_position(
+    /// Retrieve a [`Tile`] world position (tile center) relative to its parent [`TiledTilemap`] [`Entity`].
+    ///
+    /// This can be useful since tiles do not have a [`Transform`] component.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// use bevy::prelude::*;
+    /// use bevy_ecs_tiled::prelude::*;
+    ///
+    /// fn tile_position_system(
+    ///     assets: Res<Assets<TiledMapAsset>>,
+    ///     map_query: Query<(&TiledMap, &TiledMapStorage, &TilemapAnchor)>,
+    ///     tile_query: Query<(Entity, &TilePos, &ChildOf), With<TiledTile>>,
+    ///     tilemap_query: Query<&GlobalTransform, With<TiledTilemap>>,
+    /// ) {
+    ///     // We will iterate over tiles using the TiledMapStorage component
+    ///     for (tiled_map, storage, anchor) in map_query.iter() {
+    ///         let Some(map_asset) = assets.get(&tiled_map.0) else {
+    ///             continue;
+    ///         };
+    ///         for (_, entities) in storage.tiles() {
+    ///             for entity in entities {
+    ///                 let Ok((entity, tile_pos, child_of)) = tile_query.get(*entity) else {
+    ///                     continue;
+    ///                 };
+    ///                 let Some(tile) = storage.get_tile(&map_asset.map, entity) else {
+    ///                     continue;
+    ///                 };
+    ///
+    ///                 // Retrieve the tile relative position
+    ///                 let tile_rel_pos = map_asset.tile_relative_position(
+    ///                     tile_pos,
+    ///                     &tile_size(&tile),
+    ///                     anchor
+    ///                 );
+    ///
+    ///                 // If we want to get the tile GlobalTransform,
+    ///                 // we need to offset this with GlobalTransform from its parent tilemap
+    ///                 let Ok(parent_transform) = tilemap_query.get(child_of.parent()) else {
+    ///                     continue;
+    ///                 };
+    ///                 let tile_transform =
+    ///                     *parent_transform * Transform::from_translation(tile_rel_pos.extend(0.));
+    ///             }
+    ///         }
+    ///     }
+    /// }
+    /// ```
+    pub fn tile_relative_position(
         &self,
-        tile: &Tile,
         tile_pos: &TilePos,
+        tile_size: &TilemapTileSize,
         anchor: &TilemapAnchor,
     ) -> Vec2 {
         tile_pos.center_in_world(
             &self.tilemap_size,
             &grid_size_from_map(&self.map),
-            &tile_size(tile),
+            tile_size,
             &tilemap_type_from_map(&self.map),
             anchor,
         )

@@ -59,7 +59,8 @@ impl<'a> TiledEvent<ColliderCreated> {
                 let mut out = vec![];
                 map_asset.for_each_tile(&layer, |layer_tile, _, tile_pos, _| {
                     if let Some(tile) = layer_tile.get_tile() {
-                        let tile_coords = map_asset.tile_world_position(&tile, &tile_pos, anchor);
+                        let tile_coords =
+                            map_asset.tile_relative_position(&tile_pos, &tile_size(&tile), anchor);
                         let offset = Vec2::new(
                             tile.tileset().offset_x as f32,
                             -tile.tileset().offset_y as f32,

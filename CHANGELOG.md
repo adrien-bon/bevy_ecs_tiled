@@ -2,6 +2,16 @@
 
 ## [unreleased]
 
+## v0.9.0
+
+**BREAKING CHANGES**
+This version brings breaking changes.
+A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_9.html) is available to help adapt to these.
+
+### Changed
+
+- Rationalize usage of  `tile_size` vs. `grid_size`
+
 ### Bugfixes
 
 - Break apart object layer colliders and project to isometric coords (#32)

@@ -377,7 +377,7 @@ fn spawn_objects_layer(
 ) {
     for (index, object_data) in object_layer.objects().enumerate() {
         let tiled_object = TiledObject::from_object_data(&object_data);
-        let mut pos = tiled_map.object_world_position(&object_data, anchor);
+        let mut pos = tiled_map.object_relative_position(&object_data, anchor);
 
         // For isometric maps, we need to adjust the position of tile objects
         // to match the isometric grid.
