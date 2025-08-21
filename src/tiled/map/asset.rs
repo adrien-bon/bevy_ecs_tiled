@@ -78,7 +78,7 @@ impl TiledMapAsset {
         let map_height = self.rect.height();
         let grid_size = grid_size_from_map(&self.map);
         let map_type = tilemap_type_from_map(&self.map);
-        let tile_size = tile_size_from_grid_size(&grid_size);
+        let tile_size = tile_size_from_map(&self.map);
         let mut offset = anchor.as_offset(&map_size, &grid_size, &tile_size, &map_type);
         offset.x -= grid_size.x / 2.0;
         offset.y -= grid_size.y / 2.0;
@@ -121,7 +121,7 @@ impl TiledMapAsset {
                 }
                 TilemapType::Isometric(IsoCoordSystem::Diamond) => {
                     let position =
-                        iso_projection(tiled_position + self.tiled_offset, &map_size, &grid_size);
+                        iso_projection(tiled_position + self.tiled_offset, &map_size, &tile_size);
                     Vec2 {
                         x: position.x,
                         y: map_height / 2. - grid_size.y / 2. - position.y,
@@ -213,12 +213,10 @@ impl TiledMapAsset {
 
     /// Retrieve a [`tiled::Tile`] world position (origin = tile center) relative to its parent [`crate::tiled::tile::TiledTilemap`] [`Entity`].
     pub fn tile_world_position(&self, tile_pos: &TilePos, anchor: &TilemapAnchor) -> Vec2 {
-        let grid_size = grid_size_from_map(&self.map);
-        let tile_size = tile_size_from_grid_size(&grid_size);
         tile_pos.center_in_world(
             &self.tilemap_size,
-            &grid_size,
-            &tile_size,
+            &grid_size_from_map(&self.map),
+            &tile_size_from_map(&self.map), // should probably use size from the actual tile
             &tilemap_type_from_map(&self.map),
             anchor,
         )
