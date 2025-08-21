@@ -176,16 +176,10 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
                         filter,
                         map_asset,
                         grid_size,
-                        match tilemap_type_from_map(&map_asset.map) {
-                            TilemapType::Isometric(..) => Vec2::new(
-                                tile_position.x - grid_size.x / 2.,
-                                tile_position.y + grid_size.y / 2.,
-                            ),
-                            _ => Vec2::new(
-                                tile_position.x - grid_size.x / 2.,
-                                tile_position.y - grid_size.y / 2.,
-                            ),
-                        },
+                        Vec2::new(
+                            tile_position.x - grid_size.x / 2.,
+                            tile_position.y - grid_size.y / 2.,
+                        ),
                         Vec2::ONE,
                     ));
                 }
