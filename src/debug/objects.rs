@@ -97,7 +97,7 @@ fn draw_debug_gizmos(
                             TilemapType::Isometric(..)
                         ),
                         &map_asset.tilemap_size,
-                        &tile_size_from_map(&map_asset.map),
+                        &grid_size_from_map(&map_asset.map),
                         map_asset.tiled_offset,
                     )
                     .map(|ls| ls.coords().map(|c| Vec2::new(c.x, c.y)).collect::<Vec<_>>());

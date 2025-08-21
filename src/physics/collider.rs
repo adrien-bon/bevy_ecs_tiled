@@ -59,13 +59,7 @@ impl<'a> TiledEvent<ColliderCreated> {
                 let mut out = vec![];
                 map_asset.for_each_tile(&layer, |layer_tile, _, tile_pos, _| {
                     if let Some(tile) = layer_tile.get_tile() {
-                        let tile_coords = tile_pos.center_in_world(
-                            &map_asset.tilemap_size,
-                            &grid_size_from_map(&map_asset.map),
-                            &tile_size_from_map(&map_asset.map),
-                            &tilemap_type_from_map(&map_asset.map),
-                            anchor,
-                        );
+                        let tile_coords = map_asset.tile_world_position(&tile, &tile_pos, anchor);
                         let offset = Vec2::new(
                             tile.tileset().offset_x as f32,
                             -tile.tileset().offset_y as f32,
@@ -108,7 +102,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
                                     TilemapType::Isometric(..)
                                 ),
                                 &map_asset.tilemap_size,
-                                &tile_size_from_map(&map_asset.map),
+                                &grid_size_from_map(&map_asset.map),
                                 map_asset.tiled_offset,
                             )
                             .map(|p| vec![p])
@@ -140,7 +134,6 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
                         polygons_from_tile(
                             object_layer_data,
                             filter,
-                            map_asset,
                             &TilemapTileSize::new(width, height),
                             offset,
                             scale,
@@ -162,7 +155,6 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
                     acc.extend(polygons_from_tile(
                         collision,
                         filter,
-                        map_asset,
                         &tile_size,
                         Vec2::new(
                             tile_position.x - tile_size.x / 2.,
@@ -202,7 +194,6 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
 fn polygons_from_tile(
     object_layer_data: &ObjectLayerData,
     filter: &TiledFilter,
-    map_asset: &TiledMapAsset,
     tile_size: &TilemapTileSize,
     offset: Vec2,
     scale: Vec2,
@@ -219,12 +210,14 @@ fn polygons_from_tile(
             translation: pos.extend(0.).into(),
         }) * Transform::from_scale(scale.extend(1.));
 
+        // Special case for tiles: our referential is local to the tile
+        // do not use TilemapSize and TilemapGridSize relative to the whole map
         if let Some(p) = TiledObject::from_object_data(object).polygon(
             &transform,
             false, // we do not support 'isometric' tilesets
-            &map_asset.tilemap_size,
-            tile_size,
-            map_asset.tiled_offset,
+            &TilemapSize::new(1, 1),
+            &TilemapGridSize::new(tile_size.x, tile_size.y),
+            Vec2::ZERO,
         ) {
             polygons.push(p);
         }

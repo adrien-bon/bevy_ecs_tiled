@@ -121,22 +121,22 @@ pub fn tile_size_from_map(map: &Map) -> TilemapTileSize {
 /// # Arguments
 /// - `coords`: The isometric coordinates to project.
 /// - `tilemap_size`: The size of the tilemap.
-/// - `tile_size`: The size of each tile.
+/// - `grid_size`: The size of each tile on the grid in pixels.
 ///
 /// # Returns
 /// The projected 2D coordinates as a [`Vec2`].
 pub(crate) fn iso_projection(
     coords: Vec2,
     tilemap_size: &TilemapSize,
-    tile_size: &TilemapTileSize,
+    grid_size: &TilemapGridSize,
 ) -> Vec2 {
     let fract = Vec2 {
-        x: coords.x / tile_size.y,
-        y: coords.y / tile_size.y,
+        x: coords.x / grid_size.y,
+        y: coords.y / grid_size.y,
     };
-    let origin_x = tilemap_size.y as f32 * tile_size.x / 2.;
+    let origin_x = tilemap_size.y as f32 * grid_size.x / 2.;
     Vec2 {
-        x: (fract.x - fract.y) * tile_size.x / 2. + origin_x,
-        y: (fract.x + fract.y) * tile_size.y / 2.,
+        x: (fract.x - fract.y) * grid_size.x / 2. + origin_x,
+        y: (fract.x + fract.y) * grid_size.y / 2.,
     }
 }

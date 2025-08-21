@@ -159,7 +159,6 @@ impl AssetLoader for TiledMapLoader {
 
         let map_type = tilemap_type_from_map(&map);
         let grid_size = grid_size_from_map(&map);
-        let tile_size = tile_size_from_map(&map);
         let (tilemap_size, tiled_offset) = if infinite {
             debug!(
                 "(infinite map) topleft = {:?}, bottomright = {:?}",
@@ -225,14 +224,14 @@ impl AssetLoader for TiledMapLoader {
                     y: tilemap_size.y as f32 * grid_size.y * 0.75,
                 },
                 TilemapType::Isometric(IsoCoordSystem::Diamond) => {
-                    let topleft = iso_projection(Vec2::ZERO, &tilemap_size, &tile_size);
+                    let topleft = iso_projection(Vec2::ZERO, &tilemap_size, &grid_size);
                     let topright = iso_projection(
                         Vec2 {
                             x: tilemap_size.x as f32 * grid_size.y,
                             y: 0.,
                         },
                         &tilemap_size,
-                        &tile_size,
+                        &grid_size,
                     );
 
                     2. * (topright - topleft)

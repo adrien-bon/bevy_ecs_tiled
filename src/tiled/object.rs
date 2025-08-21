@@ -113,7 +113,7 @@ impl TiledObject {
     /// * `transform` - The global transform to apply to the object.
     /// * `isometric_projection` - Wheter or not to perform an isometric projection.
     /// * `tilemap_size` - Size of the tilemap in tiles.
-    /// * `tile_size` - Size of the tiles (or the grid cell) in pixels.
+    /// * `grid_size` - Size of each tile on the grid in pixels.
     /// * `offset` - Global map offset to apply.
     ///
     /// # Returns
@@ -123,14 +123,14 @@ impl TiledObject {
         transform: &GlobalTransform,
         isometric_projection: bool,
         tilemap_size: &TilemapSize,
-        tile_size: &TilemapTileSize,
+        grid_size: &TilemapGridSize,
         offset: Vec2,
     ) -> Option<Coord<f32>> {
         MultiPoint::from(self.vertices(
             transform,
             isometric_projection,
             tilemap_size,
-            tile_size,
+            grid_size,
             offset,
         ))
         .centroid()
@@ -146,7 +146,7 @@ impl TiledObject {
     /// * `transform` - The global transform to apply to the object.
     /// * `isometric_projection` - Wheter or not to perform an isometric projection.
     /// * `tilemap_size` - Size of the tilemap in tiles.
-    /// * `tile_size` - Size of the tiles (or the grid cell) in pixels.
+    /// * `grid_size` - Size of each tile on the grid in pixels.
     /// * `offset` - Global map offset to apply.
     ///
     /// # Returns
@@ -156,7 +156,7 @@ impl TiledObject {
         transform: &GlobalTransform,
         isometric_projection: bool,
         tilemap_size: &TilemapSize,
-        tile_size: &TilemapTileSize,
+        grid_size: &TilemapGridSize,
         offset: Vec2,
     ) -> Vec<Coord<f32>> {
         // Get object world position
@@ -204,9 +204,9 @@ impl TiledObject {
                 let offset_projected = iso_projection(
                     Vec2::new(offset.x + v.x, offset.y - v.y),
                     tilemap_size,
-                    tile_size,
+                    grid_size,
                 );
-                let origin_projected = iso_projection(offset, tilemap_size, tile_size);
+                let origin_projected = iso_projection(offset, tilemap_size, grid_size);
                 let relative_projected = offset_projected - origin_projected;
 
                 Coord {
@@ -233,7 +233,7 @@ impl TiledObject {
     /// * `transform` - The global transform to apply to the object.
     /// * `isometric_projection` - Wheter or not to perform an isometric projection.
     /// * `tilemap_size` - Size of the tilemap in tiles.
-    /// * `tile_size` - Size of the tiles (or the grid cell) in pixels.
+    /// * `grid_size` - Size of each tile on the grid in pixels.
     /// * `offset` - Global map offset to apply.
     ///
     /// # Returns
@@ -243,14 +243,14 @@ impl TiledObject {
         transform: &GlobalTransform,
         isometric_projection: bool,
         tilemap_size: &TilemapSize,
-        tile_size: &TilemapTileSize,
+        grid_size: &TilemapGridSize,
         offset: Vec2,
     ) -> Option<LineString<f32>> {
         let coords = self.vertices(
             transform,
             isometric_projection,
             tilemap_size,
-            tile_size,
+            grid_size,
             offset,
         );
         match self {
@@ -276,7 +276,7 @@ impl TiledObject {
     /// * `transform` - The global transform to apply to the object.
     /// * `isometric_projection` - Wheter or not to perform an isometric projection.
     /// * `tilemap_size` - Size of the tilemap in tiles.
-    /// * `tile_size` - Size of the tiles (or the grid cell) in pixels.
+    /// * `grid_size` - Size of each tile on the grid in pixels.
     /// * `offset` - Global map offset to apply.
     ///
     /// # Returns
@@ -286,14 +286,14 @@ impl TiledObject {
         transform: &GlobalTransform,
         isometric_projection: bool,
         tilemap_size: &TilemapSize,
-        tile_size: &TilemapTileSize,
+        grid_size: &TilemapGridSize,
         offset: Vec2,
     ) -> Option<GeoPolygon<f32>> {
         self.line_string(
             transform,
             isometric_projection,
             tilemap_size,
-            tile_size,
+            grid_size,
             offset,
         )
         .and_then(|ls| match ls.is_closed() {
