@@ -125,18 +125,8 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
                             return vec![];
                         };
 
-                        let unscaled_tile_size = match &tile.image {
-                            Some(image) => {
-                                // tile is in image collection
-                                Vec2::new(image.width as f32, image.height as f32)
-                            }
-                            None => Vec2::new(
-                                tile.tileset().tile_width as f32,
-                                tile.tileset().tile_height as f32,
-                            ),
-                        };
-
-                        let mut scale = Vec2::new(width, height) / unscaled_tile_size;
+                        let tile_size = tile_size(&tile);
+                        let mut scale = Vec2::new(width, height) / Vec2::new(tile_size.x, tile_size.y);
                         let mut offset = Vec2::new(
                             tile.tileset().offset_x as f32,
                             -tile.tileset().offset_y as f32,
@@ -153,7 +143,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
                             object_layer_data,
                             filter,
                             map_asset,
-                            TilemapGridSize::new(width, height),
+                            TilemapTileSize::new(width, height),
                             offset,
                             scale,
                         )
@@ -165,20 +155,20 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
             }
         }
         TiledColliderOrigin::TilesLayer => {
-            let grid_size = grid_size_from_map(&map_asset.map);
             let mut acc = vec![];
 
             // Iterate over all tiles in the layer and create colliders for each
             for (tile_position, tile) in source.get_tiles(assets, anchor) {
                 if let Some(collision) = &tile.collision {
+                    let tile_size = tile_size(&tile);
                     acc.extend(polygons_from_tile(
                         collision,
                         filter,
                         map_asset,
-                        grid_size,
+                        tile_size,
                         Vec2::new(
-                            tile_position.x - grid_size.x / 2.,
-                            tile_position.y - grid_size.y / 2.,
+                            tile_position.x - tile_size.x / 2.,
+                            tile_position.y - tile_size.y / 2.,
                         ),
                         Vec2::ONE,
                     ));
@@ -215,7 +205,7 @@ fn polygons_from_tile(
     object_layer_data: &ObjectLayerData,
     filter: &TiledFilter,
     map_asset: &TiledMapAsset,
-    grid_size: TilemapGridSize,
+    tile_size: TilemapTileSize,
     offset: Vec2,
     scale: Vec2,
 ) -> Vec<GeoPolygon<f32>> {
@@ -225,7 +215,7 @@ fn polygons_from_tile(
             continue;
         }
 
-        let pos = offset + Vec2::new(object.x * scale.x, grid_size.y - object.y * scale.y);
+        let pos = offset + Vec2::new(object.x * scale.x, tile_size.y - object.y * scale.y);
         let transform = GlobalTransform::from_isometry(Isometry3d {
             rotation: Quat::from_rotation_z(f32::to_radians(-object.rotation)),
             translation: pos.extend(0.).into(),
@@ -235,7 +225,7 @@ fn polygons_from_tile(
             &transform,
             false, // we do not support 'isometric' tilesets
             &map_asset.tilemap_size,
-            &grid_size,
+            &grid_size_from_map(&map_asset.map),
             map_asset.tiled_offset,
         ) {
             polygons.push(p);

@@ -96,6 +96,21 @@ pub fn grid_size_from_map(map: &Map) -> TilemapGridSize {
     }
 }
 
+/// Get the [`TilemapTileSize`] from given [`Tile`]
+pub fn tile_size(tile: &Tile) -> TilemapTileSize {
+    match &tile.image {
+        // tile is in image collection
+        Some(image) => {
+            TilemapTileSize::new(image.width as f32, image.height as f32)
+        }
+        // tile is in atlas image
+        None => TilemapTileSize::new(
+            tile.tileset().tile_width as f32,
+            tile.tileset().tile_height as f32,
+        ),
+    }
+}
+
 /// Converts a [`Map`]'s grid size to a [`TilemapTileSize`].
 ///
 /// The width and height will be the same as those given by [`grid_size_from_map`].
