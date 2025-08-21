@@ -91,9 +91,7 @@ pub fn grid_size_from_map(map: &Map) -> TilemapGridSize {
 pub fn tile_size(tile: &Tile) -> TilemapTileSize {
     match &tile.image {
         // tile is in image collection
-        Some(image) => {
-            TilemapTileSize::new(image.width as f32, image.height as f32)
-        }
+        Some(image) => TilemapTileSize::new(image.width as f32, image.height as f32),
         // tile is in atlas image
         None => TilemapTileSize::new(
             tile.tileset().tile_width as f32,

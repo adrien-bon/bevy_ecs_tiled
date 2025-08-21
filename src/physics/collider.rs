@@ -123,7 +123,8 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
                         };
 
                         let tile_size = tile_size(&tile);
-                        let mut scale = Vec2::new(width, height) / Vec2::new(tile_size.x, tile_size.y);
+                        let mut scale =
+                            Vec2::new(width, height) / Vec2::new(tile_size.x, tile_size.y);
                         let mut offset = Vec2::new(
                             tile.tileset().offset_x as f32,
                             -tile.tileset().offset_y as f32,
