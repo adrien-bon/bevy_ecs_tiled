@@ -203,12 +203,10 @@ impl TiledObject {
                 let origin_projected = iso_projection(offset, tilemap_size, grid_size);
                 let relative_projected = offset_projected - origin_projected;
 
-                let v = Vec2 {
+                Coord {
                     x: object_world_pos.x + relative_projected.x,
                     y: object_world_pos.y - relative_projected.y,
-                };
-                let v = transform.transform_point(v.extend(0.));
-                Coord { x: v.x, y: v.y }
+                }
             } else {
                 Coord {
                     x: v.x + object_world_pos.x,
