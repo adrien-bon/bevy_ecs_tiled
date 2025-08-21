@@ -3,7 +3,7 @@
 //! This module defines Bevy components used to represent Tiled objects within the ECS world.
 
 use crate::prelude::*;
-use crate::tiled::helpers::{grid_size_from_map, iso_projection, tilemap_type_from_map};
+use crate::tiled::helpers::iso_projection;
 use bevy::prelude::*;
 use geo::Centroid;
 use tiled::{ObjectData, ObjectShape};
@@ -95,10 +95,14 @@ impl TiledObject {
         }
     }
 
-    /// Returns the rotation cosinus and sinus of the object [`GlobalTransform`].
-    fn rotation_cos_sin(transform: &GlobalTransform) -> (f32, f32) {
+    /// Apply rotation and scaling to given coordinate.
+    fn apply_rotation_and_scaling(vertex: Vec2, transform: &GlobalTransform) -> Vec2 {
         let rotation = transform.rotation().to_euler(EulerRot::ZYX).0;
-        (rotation.cos(), rotation.sin())
+        let (cos, sin) = (rotation.cos(), rotation.sin());
+        Vec2 {
+            x: (vertex.x * cos - vertex.y * sin) * transform.scale().x,
+            y: (vertex.x * sin + vertex.y * cos) * transform.scale().y,
+        }
     }
 
     /// Returns the center position of the object in world space.
@@ -114,11 +118,20 @@ impl TiledObject {
     pub fn center(
         &self,
         transform: &GlobalTransform,
-        map_asset: Option<&TiledMapAsset>,
+        isometric_projection: bool,
+        tilemap_size: &TilemapSize,
+        grid_size: &TilemapGridSize,
+        offset: Vec2,
     ) -> Option<Coord<f32>> {
-        MultiPoint::from(self.vertices(transform, map_asset))
-            .centroid()
-            .map(|p| Coord { x: p.x(), y: p.y() })
+        MultiPoint::from(self.vertices(
+            transform,
+            isometric_projection,
+            tilemap_size,
+            grid_size,
+            offset,
+        ))
+        .centroid()
+        .map(|p| Coord { x: p.x(), y: p.y() })
     }
 
     /// Returns the vertices of the object in world space.
@@ -135,175 +148,75 @@ impl TiledObject {
     pub fn vertices(
         &self,
         transform: &GlobalTransform,
-        map_asset: Option<&TiledMapAsset>,
+        isometric_projection: bool,
+        tilemap_size: &TilemapSize,
+        grid_size: &TilemapGridSize,
+        offset: Vec2,
     ) -> Vec<Coord<f32>> {
-        // Check if we need isometric projection
-        let is_isometric = map_asset
-            .map(|asset| {
-                matches!(
-                    tilemap_type_from_map(&asset.map),
-                    TilemapType::Isometric(..)
-                )
-            })
-            .unwrap_or(false);
+        // Get object world position
+        let object_world_pos = Coord {
+            x: transform.translation().x,
+            y: transform.translation().y,
+        };
 
-        if is_isometric {
-            // For isometric maps, we need to project the vertices
-            let map_asset = map_asset.expect("Map asset required for isometric projection");
-            let grid_size = grid_size_from_map(&map_asset.map);
-            let tilemap_size = map_asset.tilemap_size;
-
-            // Get object world position
-            let object_world_pos = Vec2::new(transform.translation().x, transform.translation().y);
-
-            // Generate shape vertices relative to origin, then project and offset
-            let shape_vertices: Vec<Vec2> = match self {
-                TiledObject::Point | TiledObject::Text => vec![Vec2::ZERO],
-                TiledObject::Rectangle { width, height } => {
-                    vec![
-                        Vec2::new(0.0, 0.0),        // Top-left relative to object
-                        Vec2::new(*width, 0.0),     // Top-right
-                        Vec2::new(*width, *height), // Bottom-right
-                        Vec2::new(0.0, *height),    // Bottom-left
-                    ]
-                }
-                TiledObject::Ellipse { width, height } => (0..Self::ELLIPSE_NUM_POINTS)
-                    .map(|i| {
-                        let theta = 2.0 * std::f32::consts::PI * (i as f32)
-                            / (Self::ELLIPSE_NUM_POINTS as f32);
-                        let local_x = width / 2.0 * theta.cos() + width / 2.0;
-                        let local_y = height / 2.0 * theta.sin() + height / 2.0;
-                        Vec2::new(local_x, local_y)
-                    })
-                    .collect(),
-                TiledObject::Tile { width, height } => {
-                    vec![
-                        Vec2::new(0.0, 0.0),
-                        Vec2::new(*width, 0.0),
-                        Vec2::new(*width, *height),
-                        Vec2::new(0.0, *height),
-                    ]
-                }
-                TiledObject::Polygon { vertices } => {
-                    vertices.iter().map(|v| Vec2::new(v.x, -v.y)).collect() // Note: -v.y due to Tiled Y-flip
-                }
-                TiledObject::Polyline { vertices } => {
-                    vertices.iter().map(|v| Vec2::new(v.x, -v.y)).collect()
-                }
-            };
-
-            // Project each vertex through isometric transformation
-            shape_vertices
-                .into_iter()
-                .map(|vertex| {
-                    // Project the relative offset through isometric transformation
-                    let projected_offset =
-                        iso_projection(vertex + map_asset.tiled_offset, &tilemap_size, &grid_size);
-                    let origin_projected =
-                        iso_projection(map_asset.tiled_offset, &tilemap_size, &grid_size);
-                    let relative_projected = projected_offset - origin_projected;
-
-                    Coord {
-                        x: object_world_pos.x + relative_projected.x,
-                        y: object_world_pos.y - relative_projected.y, // Flip Y to match Bevy coordinate system
-                    }
+        // Generate shape vertices relative to origin
+        match self {
+            TiledObject::Point | TiledObject::Text => vec![Vec2::ZERO],
+            TiledObject::Tile { width, height } => {
+                vec![
+                    Vec2::new(0., 0.),          // Bottom-left relative to object
+                    Vec2::new(0., *height),     // Top-left
+                    Vec2::new(*width, *height), // Top-right
+                    Vec2::new(*width, 0.),      // Bottom-right
+                ]
+            }
+            TiledObject::Rectangle { width, height } => {
+                vec![
+                    Vec2::new(0., 0.),           // Top-left relative to object
+                    Vec2::new(*width, 0.),       // Top-right
+                    Vec2::new(*width, -*height), // Bottom-right
+                    Vec2::new(0., -*height),     // Bottom-left
+                ]
+            }
+            TiledObject::Ellipse { width, height } => (0..Self::ELLIPSE_NUM_POINTS)
+                .map(|i| {
+                    let theta =
+                        2.0 * std::f32::consts::PI * (i as f32) / (Self::ELLIPSE_NUM_POINTS as f32);
+                    let local_x = width / 2.0 * theta.cos() + width / 2.0;
+                    let local_y = height / 2.0 * theta.sin() - height / 2.0;
+                    Vec2::new(local_x, local_y)
                 })
-                .collect()
-        } else {
-            // Use original orthogonal projection logic
-            let origin = Coord {
-                x: transform.translation().x,
-                y: transform.translation().y,
-            };
-
-            let vertices = match self {
-                TiledObject::Point | TiledObject::Text => vec![origin],
-                TiledObject::Ellipse { width, height } => {
-                    let (cos_rotation, sin_rotation) = TiledObject::rotation_cos_sin(transform);
-                    let center = Coord {
-                        x: origin.x + width / 2.0 * cos_rotation + height / 2.0 * sin_rotation,
-                        y: origin.y + width / 2.0 * sin_rotation - height / 2.0 * cos_rotation,
-                    };
-                    (0..Self::ELLIPSE_NUM_POINTS)
-                        .map(|i| {
-                            let theta = 2.0 * std::f32::consts::PI * (i as f32)
-                                / (Self::ELLIPSE_NUM_POINTS as f32);
-                            let x = width / 2. * theta.cos();
-                            let y = height / 2. * theta.sin();
-                            center
-                                + Coord {
-                                    x: x * cos_rotation - y * sin_rotation,
-                                    y: x * sin_rotation + y * cos_rotation,
-                                }
-                        })
-                        .collect()
-                }
-                TiledObject::Rectangle { width, height } => {
-                    let (cos_rotation, sin_rotation) = TiledObject::rotation_cos_sin(transform);
-                    vec![
-                        origin,
-                        origin
-                            + Coord {
-                                x: height * sin_rotation,
-                                y: -height * cos_rotation,
-                            },
-                        origin
-                            + Coord {
-                                x: width * cos_rotation + height * sin_rotation,
-                                y: width * sin_rotation - height * cos_rotation,
-                            },
-                        origin
-                            + Coord {
-                                x: width * cos_rotation,
-                                y: width * sin_rotation,
-                            },
-                    ]
-                }
-                TiledObject::Tile { width, height } => {
-                    let (cos_rotation, sin_rotation) = TiledObject::rotation_cos_sin(transform);
-                    vec![
-                        origin,
-                        origin
-                            + Coord {
-                                x: width * cos_rotation,
-                                y: width * sin_rotation,
-                            },
-                        origin
-                            + Coord {
-                                x: width * cos_rotation - height * sin_rotation,
-                                y: width * sin_rotation + height * cos_rotation,
-                            },
-                        origin
-                            + Coord {
-                                x: -height * sin_rotation,
-                                y: height * cos_rotation,
-                            },
-                    ]
-                }
-                TiledObject::Polygon { vertices } | TiledObject::Polyline { vertices } => {
-                    let (cos_rotation, sin_rotation) = TiledObject::rotation_cos_sin(transform);
-                    vertices
-                        .iter()
-                        .map(|v| {
-                            origin
-                                + Coord {
-                                    x: v.x * cos_rotation - v.y * sin_rotation,
-                                    y: v.x * sin_rotation + v.y * cos_rotation,
-                                }
-                        })
-                        .collect()
-                }
-            };
-
-            // Apply scaling
-            vertices
-                .iter()
-                .map(|c| Coord {
-                    x: (c.x - origin.x) * transform.scale().x + origin.x,
-                    y: (c.y - origin.y) * transform.scale().y + origin.y,
-                })
-                .collect()
+                .collect(),
+            TiledObject::Polyline { vertices } | TiledObject::Polygon { vertices } => {
+                vertices.clone()
+            }
         }
+        .into_iter()
+        .map(|v| Self::apply_rotation_and_scaling(v, transform))
+        .map(|v| {
+            if isometric_projection && !matches!(self, TiledObject::Tile { .. }) {
+                let offset_projected = iso_projection(
+                    Vec2::new(offset.x + v.x, offset.y - v.y),
+                    tilemap_size,
+                    grid_size,
+                );
+                let origin_projected = iso_projection(offset, tilemap_size, grid_size);
+                let relative_projected = offset_projected - origin_projected;
+
+                let v = Vec2 {
+                    x: object_world_pos.x + relative_projected.x,
+                    y: object_world_pos.y - relative_projected.y,
+                };
+                let v = transform.transform_point(v.extend(0.));
+                Coord { x: v.x, y: v.y }
+            } else {
+                Coord {
+                    x: v.x + object_world_pos.x,
+                    y: v.y + object_world_pos.y,
+                }
+            }
+        })
+        .collect()
     }
 
     /// Creates a [`LineString`] from the object's vertices.
@@ -321,9 +234,18 @@ impl TiledObject {
     pub fn line_string(
         &self,
         transform: &GlobalTransform,
-        map_asset: Option<&TiledMapAsset>,
+        isometric_projection: bool,
+        tilemap_size: &TilemapSize,
+        grid_size: &TilemapGridSize,
+        offset: Vec2,
     ) -> Option<LineString<f32>> {
-        let coords = self.vertices(transform, map_asset);
+        let coords = self.vertices(
+            transform,
+            isometric_projection,
+            tilemap_size,
+            grid_size,
+            offset,
+        );
         match self {
             TiledObject::Point | TiledObject::Text => None,
             TiledObject::Ellipse { .. }
@@ -352,13 +274,22 @@ impl TiledObject {
     pub fn polygon(
         &self,
         transform: &GlobalTransform,
-        map_asset: Option<&TiledMapAsset>,
+        isometric_projection: bool,
+        tilemap_size: &TilemapSize,
+        grid_size: &TilemapGridSize,
+        offset: Vec2,
     ) -> Option<GeoPolygon<f32>> {
-        self.line_string(transform, map_asset)
-            .and_then(|ls| match ls.is_closed() {
-                true => Some(GeoPolygon::new(ls, vec![])),
-                false => None,
-            })
+        self.line_string(
+            transform,
+            isometric_projection,
+            tilemap_size,
+            grid_size,
+            offset,
+        )
+        .and_then(|ls| match ls.is_closed() {
+            true => Some(GeoPolygon::new(ls, vec![])),
+            false => None,
+        })
     }
 }
 

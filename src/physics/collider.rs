@@ -103,9 +103,17 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
                     // If the object does not have a tile, we can create a collider directly from itself
                     None => {
                         let global_transform = &GlobalTransform::default();
-
                         TiledObject::from_object_data(&object)
-                            .polygon(global_transform, Some(map_asset))
+                            .polygon(
+                                global_transform,
+                                matches!(
+                                    tilemap_type_from_map(&map_asset.map),
+                                    TilemapType::Isometric(..)
+                                ),
+                                &map_asset.tilemap_size,
+                                &grid_size_from_map(&map_asset.map),
+                                map_asset.tiled_offset,
+                            )
                             .map(|p| vec![p])
                     }
                     // If the object has a tile, we need to handle its collision data
@@ -144,10 +152,10 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
                         polygons_from_tile(
                             object_layer_data,
                             filter,
+                            map_asset,
                             TilemapGridSize::new(width, height),
                             offset,
                             scale,
-                            None, // Don't apply isometric projection for tile colliders
                         )
                     }),
                 }
@@ -159,19 +167,26 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
         TiledColliderOrigin::TilesLayer => {
             let grid_size = grid_size_from_map(&map_asset.map);
             let mut acc = vec![];
+
             // Iterate over all tiles in the layer and create colliders for each
             for (tile_position, tile) in source.get_tiles(assets, anchor) {
                 if let Some(collision) = &tile.collision {
                     acc.extend(polygons_from_tile(
                         collision,
                         filter,
+                        map_asset,
                         grid_size,
-                        Vec2::new(
-                            tile_position.x - grid_size.x / 2.,
-                            tile_position.y - grid_size.y / 2.,
-                        ),
+                        match tilemap_type_from_map(&map_asset.map) {
+                            TilemapType::Isometric(..) => Vec2::new(
+                                tile_position.x - grid_size.x / 2.,
+                                tile_position.y + grid_size.y / 2.,
+                            ),
+                            _ => Vec2::new(
+                                tile_position.x - grid_size.x / 2.,
+                                tile_position.y - grid_size.y / 2.,
+                            ),
+                        },
                         Vec2::ONE,
-                        None, // Don't apply isometric projection for tile colliders
                     ));
                 }
             }
@@ -205,10 +220,10 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
 fn polygons_from_tile(
     object_layer_data: &ObjectLayerData,
     filter: &TiledFilter,
+    map_asset: &TiledMapAsset,
     grid_size: TilemapGridSize,
     offset: Vec2,
     scale: Vec2,
-    map_asset: Option<&TiledMapAsset>,
 ) -> Vec<GeoPolygon<f32>> {
     let mut polygons = vec![];
     for object in object_layer_data.object_data() {
@@ -222,7 +237,13 @@ fn polygons_from_tile(
             translation: pos.extend(0.).into(),
         }) * Transform::from_scale(scale.extend(1.));
 
-        if let Some(p) = TiledObject::from_object_data(object).polygon(&transform, map_asset) {
+        if let Some(p) = TiledObject::from_object_data(object).polygon(
+            &transform,
+            false, // we do not support 'isometric' tilesets
+            &map_asset.tilemap_size,
+            &grid_size,
+            map_asset.tiled_offset,
+        ) {
             polygons.push(p);
         }
     }

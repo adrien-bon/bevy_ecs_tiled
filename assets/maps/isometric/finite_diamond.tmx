@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="isometric" renderorder="right-down" width="10" height="10" tilewidth="232" tileheight="110" infinite="0" nextlayerid="5" nextobjectid="8">
+<map version="1.10" tiledversion="1.11.0" orientation="isometric" renderorder="right-down" width="10" height="10" tilewidth="232" tileheight="110" infinite="0" nextlayerid="5" nextobjectid="13">
  <tileset firstgid="1" source="../../tiles/kenney-sketch-desert.tsx"/>
  <imagelayer id="4" name="Image Layer 1" offsetx="1397.47" offsety="0">
-  <image source="../../bevy_icon.png" width="256" height="256"/>
+  <image source="../../bevy_icon.png" width="257" height="247"/>
  </imagelayer>
  <layer id="1" name="Tile Layer 1" width="10" height="10">
   <data encoding="csv">
