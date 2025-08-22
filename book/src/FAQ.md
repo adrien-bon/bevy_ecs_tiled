@@ -7,6 +7,8 @@ The crate is already quite usable, but it is still under active development.
 You may encounter bugs, missing features, or breaking changes as the API evolves.  
 However, the project follows [semantic versioning](https://semver.org/) and provides a migration guide for each breaking change (for example, when a new Bevy release is supported).
 
+I try to list all known limitations and bugs of the crate as [Github issues](https://github.com/adrien-bon/bevy_ecs_tiled/issues).
+
 ---
 
 ## What kind of maps are supported?
@@ -20,12 +22,9 @@ Nearly all map types from Tiled are supported:
 
 **Not supported:**  
 Isometric "staggered" maps ([see issue #31](https://github.com/adrien-bon/bevy_ecs_tiled/issues/31)).
-There are also some limitations for "diamond" isometric maps:
 
-- Colliders may not have the correct shape ([#32](https://github.com/adrien-bon/bevy_ecs_tiled/issues/32))
-- Colliders may not always be placed correctly ([#48](https://github.com/adrien-bon/bevy_ecs_tiled/issues/48))
-
-Support for these cases will improve in the future.
+While we support isometric maps, we currently [do not support isometric tilesets](https://github.com/adrien-bon/bevy_ecs_tiled/issues/129).
+But you can still use an isometric map with an orthogonal tileset.
 
 ---
 
@@ -59,6 +58,7 @@ You can customize world loading with the same components and events / observers 
 
 - Make sure you are actually using a "diamond" isometric map, not a "staggered" one (which is not supported).
 - For isometric maps, you may need to tweak the [`TilemapRenderSettings`](https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/map/struct.TilemapRenderSettings.html) component from `bevy_ecs_tilemap` to enable Y-sorting and adjust the chunk size.
+- Make sure you are using [an orthogonal tileset and not an isometric one](https://github.com/adrien-bon/bevy_ecs_tiled/issues/129).
 
 See the [isometric maps example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/orientation_isometric.rs#L34) for more information.
 
@@ -101,6 +101,8 @@ You have two main options:
 
 - Listen to [map loading events](./design/map_events.md) and use [`TiledEvent<E>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TiledEvent.html) helper methods to access Tiled data.
 - Retrieve the [`TiledMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/storage/struct.TiledMapStorage.html) component from your map entity to get the mapping between Bevy entities and their corresponding Tiled data.
+
+These two options are demonstrated in [examples](https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples) and [debug plugins](https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/src/debug).
 
 ---
 
