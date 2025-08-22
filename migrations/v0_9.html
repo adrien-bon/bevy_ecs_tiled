@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Debug your project - bevy_ecs_tiled Documentation</title>
+        <title>Migration to v0.9 - bevy_ecs_tiled Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -175,100 +175,81 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="debug-your-project"><a class="header" href="#debug-your-project">Debug your project</a></h1>
-<h2 id="logging"><a class="header" href="#logging">Logging</a></h2>
-<p>Bevy uses the <code>tracing</code> crate for logging, which is very powerful for debugging and profiling.<br />
-You can find more information in the <a href="https://docs.rs/tracing/">official documentation</a>.</p>
-<p>To get detailed information about what's happening in your app, set the <code>RUST_LOG</code> environment variable to <code>trace</code>:</p>
-<pre><code class="language-sh">RUST_LOG=trace cargo run
-</code></pre>
-<p>This will show all logs at the <code>trace</code> level, but it can be very verbose.<br />
-To filter logs and only display information from <code>bevy_ecs_tiled</code>, use:</p>
-<pre><code class="language-sh">RUST_LOG=bevy_ecs_tiled=trace cargo run
-</code></pre>
-<p>This will only display logs from the <code>bevy_ecs_tiled</code> crate at the <code>trace</code> level.</p>
-<hr />
-<h2 id="bevy_ecs_tiled-debug-plugins"><a class="header" href="#bevy_ecs_tiled-debug-plugins"><code>bevy_ecs_tiled</code> Debug Plugins</a></h2>
-<p>When the <code>debug</code> feature is enabled, <code>bevy_ecs_tiled</code> provides several debug plugins to help visualize and inspect your maps.</p>
-<p>You can enable all debug plugins at once by adding the <code>TiledDebugPluginGroup</code> to your app:</p>
-<pre><pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
-use bevy_ecs_tiled::prelude::*;
-
-fn main() {
-    App::new()
-        .add_plugins(TiledDebugPluginGroup)
-        .run();
-}</code></pre></pre>
-<p>Or add them individually as needed:</p>
+                        <h1 id="migration-to-bevy_ecs_tiled-v09"><a class="header" href="#migration-to-bevy_ecs_tiled-v09">Migration to <code>bevy_ecs_tiled</code> v0.9</a></h1>
+<p>This guide outlines the steps required to migrate your project to version <code>0.9</code> of <code>bevy_ecs_tiled</code>.</p>
+<h2 id="main-changes"><a class="header" href="#main-changes">Main Changes</a></h2>
 <ul>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/objects/index.html"><code>TiledDebugObjectsPlugin</code></a>: Displays an <code>arrow_2d</code> and a polyline outline <code>Gizmos</code> at each Tiled object's position and shape.</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/tiles/index.html"><code>TiledDebugTilesPlugin</code></a>: Shows the <code>bevy_ecs_tilemap</code> tile index (<code>TilePos</code>) above each tile.</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/world_chunk/index.html"><code>TiledDebugWorldChunkPlugin</code></a>: Draws a <code>Gizmos</code> rectangle for each map boundary and world render chunk.</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/axis/index.html"><code>TiledDebugAxisPlugin</code></a>: Displays a <code>Gizmos</code> axes marker at the world origin.</li>
+<li><strong>Improved Isometric Map Support:</strong><br />
+Isometric maps are now much better supported, including correct physics collider shapes and placement.</li>
+<li><strong>Accurate Physics Colliders for Isometric Maps:</strong><br />
+Physics colliders are now generated with the correct geometry and position for isometric maps.</li>
+<li><strong>Clear Distinction Between <code>grid_size</code> and <code>tile_size</code>:</strong><br />
+Previously, <code>tile_size</code> (the actual size of a tile) and <code>grid_size</code> (the space a tile occupies on the grid) were treated as equivalent. This is not always true, especially for isometric maps. The API now enforces a clear distinction.</li>
+<li><strong>API Renaming for Clarity:</strong><br />
+Several functions and methods have been renamed to improve clarity and expressiveness.</li>
 </ul>
-<p>For more details, see the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/index.html">API reference</a>.</p>
-<hr />
-<h2 id="third-party-debugging-tools"><a class="header" href="#third-party-debugging-tools">Third-Party Debugging Tools</a></h2>
-<h3 id="bevy-inspector-egui"><a class="header" href="#bevy-inspector-egui"><code>bevy-inspector-egui</code></a></h3>
-<p>This plugin is highly recommended for debugging and inspecting your game world.</p>
-<p>Add the dependency to your <code>Cargo.toml</code>:</p>
-<pre><code class="language-toml">[dependencies]
-bevy-inspector-egui = "0.30"
+<h2 id="migration-steps"><a class="header" href="#migration-steps">Migration steps</a></h2>
+<ol>
+<li>
+<p><strong>Update the dependency in <code>Cargo.toml</code></strong>:</p>
+<pre><code class="language-toml">bevy_ecs_tiled = "0.9"
 </code></pre>
-<p>Then add the <code>WorldInspectorPlugin</code> to your application:</p>
-<pre><pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
-
-fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins)
-        .add_plugins(EguiPlugin { enable_multipass_for_primary_context: true })
-        .add_plugins(WorldInspectorPlugin::new())
-        .run();
-}</code></pre></pre>
-<p>Now, you can browse and edit components from all entities spawned in your game in real time.</p>
-<p>More information is available on the <a href="https://github.com/jakobhellermann/bevy-inspector-egui">project's GitHub page</a>.</p>
-<hr />
-<h3 id="physics-plugins"><a class="header" href="#physics-plugins">Physics Plugins</a></h3>
-<p>Both Avian and Rapier provide their own debug visualization plugins, which are invaluable when working with colliders and physics.</p>
-<p><strong>Avian Physics Debugging:</strong></p>
-<pre><pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
-use avian2d::prelude::*;
-
-fn main() {
-    App::new()
-        // Add Avian regular plugin
-        .add_plugins(PhysicsPlugins::default().with_length_unit(100.0))
-        // Add Avian debug plugin
-        .add_plugins(PhysicsDebugPlugin::default())
-        .run();
-}</code></pre></pre>
-<p><strong>Rapier Physics Debugging:</strong></p>
-<pre><pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
-use bevy_rapier2d::prelude::*;
-
-fn main() {
-    App::new()
-        // Add Rapier regular plugin
-        .add_plugins(RapierPhysicsPlugin::&lt;NoUserData&gt;::pixels_per_meter(100.0))
-        // Add Rapier debug plugin
-        .add_plugins(RapierDebugRenderPlugin::default())
-        .run();
-}</code></pre></pre>
-<blockquote>
-<p><strong>Note:</strong><br />
-For Rapier, you must enable either the <code>debug-render-2d</code> feature on the <code>bevy_rapier2d</code> crate or the <code>rapier_debug</code> feature on <code>bevy_ecs_tiled</code>.</p>
-</blockquote>
+</li>
+<li>
+<p><strong>Adjust function usage</strong>:</p>
+</li>
+</ol>
+<ul>
+<li>
+<p><strong>Removed:</strong><br />
+<code>tile_size_from_grid_size()</code> has been removed.<br />
+<em>Reason:</em> Avoids confusion between <code>tile_size</code> and <code>grid_size</code>.</p>
+<p><code>tile_size_from_map()</code> has been removed.<br />
+<em>Reason:</em> You should use <code>TiledMapAsset::largest_tile_size</code> instead.</p>
+</li>
+<li>
+<p><strong>Added:</strong><br />
+A new <code>tile_size()</code> helper function is available to retrieve the <code>tile_size</code> from a <code>Tile</code>.</p>
+</li>
+<li>
+<p><strong>Changed:</strong></p>
+<ul>
+<li><code>TiledMapAsset::world_space_from_tiled_position()</code> is now private to the crate.<br />
+<em>Reason:</em> This is a low-level function and should not be used directly.</li>
+<li><code>TiledMapAsset::object_world_position()</code> → <strong>Renamed to</strong> <code>TiledMapAsset::object_relative_position()</code><br />
+<em>Signature remains the same.</em></li>
+<li><code>TiledMapAsset::tile_world_position()</code> → <strong>Renamed to</strong> <code>TiledMapAsset::tile_relative_position()</code><br />
+<em>Now takes an extra <code>TilemapTileSize</code> argument instead of relying on the map's <code>TilemapGridSize</code>.</em></li>
+</ul>
+</li>
+<li>
+<p><strong>Updated Geometry Methods:</strong><br />
+The following methods on <code>TiledObject</code> now take 4 additional arguments to properly handle isometric maps:</p>
+<ul>
+<li><code>center()</code></li>
+<li><code>vertices()</code></li>
+<li><code>line_string()</code></li>
+<li><code>polygon()</code></li>
+</ul>
+</li>
+</ul>
+<h2 id="resources"><a class="header" href="#resources">Resources</a></h2>
+<ul>
+<li><a href="../index.html">Main documentation</a></li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/">API Reference</a></li>
+<li><a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/README.md">Examples</a></li>
+<li><a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/CHANGELOG.md">Full CHANGELOG</a></li>
+</ul>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../guides/properties.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../guides/debug.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../migrations/v0_9.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../migrations/v0_8.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -278,11 +259,11 @@ For Rapier, you must enable either the <code>debug-render-2d</code> feature on t
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../guides/properties.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../guides/debug.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../migrations/v0_9.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../migrations/v0_8.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

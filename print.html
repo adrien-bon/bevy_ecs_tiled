@@ -238,6 +238,7 @@ Additional topics and tips that don’t fit elsewhere.</li>
 <p>The crate is already quite usable, but it is still under active development.</p>
 <p>You may encounter bugs, missing features, or breaking changes as the API evolves.<br />
 However, the project follows <a href="https://semver.org/">semantic versioning</a> and provides a migration guide for each breaking change (for example, when a new Bevy release is supported).</p>
+<p>I try to list all known limitations and bugs of the crate as <a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues">Github issues</a>.</p>
 <hr />
 <h2 id="what-kind-of-maps-are-supported"><a class="header" href="#what-kind-of-maps-are-supported">What kind of maps are supported?</a></h2>
 <p>Nearly all map types from Tiled are supported:</p>
@@ -248,13 +249,9 @@ However, the project follows <a href="https://semver.org/">semantic versioning</
 <li>"Diamond" isometric</li>
 </ul>
 <p><strong>Not supported:</strong><br />
-Isometric "staggered" maps (<a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues/31">see issue #31</a>).
-There are also some limitations for "diamond" isometric maps:</p>
-<ul>
-<li>Colliders may not have the correct shape (<a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues/32">#32</a>)</li>
-<li>Colliders may not always be placed correctly (<a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues/48">#48</a>)</li>
-</ul>
-<p>Support for these cases will improve in the future.</p>
+Isometric "staggered" maps (<a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues/31">see issue #31</a>).</p>
+<p>While we support isometric maps, we currently <a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues/129">do not support isometric tilesets</a>.
+But you can still use an isometric map with an orthogonal tileset.</p>
 <hr />
 <h2 id="i-want-a-huge-map-for-my-game-is-it-a-problem"><a class="header" href="#i-want-a-huge-map-for-my-game-is-it-a-problem">I want a huge map for my game, is it a problem?</a></h2>
 <p>If you have performance issues with a single large map, consider using a <a href="https://doc.mapeditor.org/en/stable/manual/worlds/">Tiled world</a>.<br />
@@ -281,6 +278,7 @@ fn startup(
 <ul>
 <li>Make sure you are actually using a "diamond" isometric map, not a "staggered" one (which is not supported).</li>
 <li>For isometric maps, you may need to tweak the <a href="https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/map/struct.TilemapRenderSettings.html"><code>TilemapRenderSettings</code></a> component from <code>bevy_ecs_tilemap</code> to enable Y-sorting and adjust the chunk size.</li>
+<li>Make sure you are using <a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues/129">an orthogonal tileset and not an isometric one</a>.</li>
 </ul>
 <p>See the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/orientation_isometric.rs#L34">isometric maps example</a> for more information.</p>
 <hr />
@@ -307,6 +305,7 @@ With this enabled, <code>bevy_ecs_tiled</code> will automatically reload a map o
 <li>Listen to <a href="./design/map_events.html">map loading events</a> and use <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TiledEvent.html"><code>TiledEvent&lt;E&gt;</code></a> helper methods to access Tiled data.</li>
 <li>Retrieve the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/storage/struct.TiledMapStorage.html"><code>TiledMapStorage</code></a> component from your map entity to get the mapping between Bevy entities and their corresponding Tiled data.</li>
 </ul>
+<p>These two options are demonstrated in <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples">examples</a> and <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/src/debug">debug plugins</a>.</p>
 <hr />
 <h2 id="i-found-a-bug--feature-x-is-missing--how-do-i-do-y"><a class="header" href="#i-found-a-bug--feature-x-is-missing--how-do-i-do-y">I found a bug! / Feature 'X' is missing! / How do I do 'Y'?</a></h2>
 <p>This crate is still a work in progress, so you may encounter bugs, missing features, or have questions about usage.</p>
@@ -532,7 +531,7 @@ This means you can safely query for components and child entities in your event 
 <p>Add the required dependencies to your <code>Cargo.toml</code> file:</p>
 <pre><code class="language-toml">[dependencies]
 bevy = "0.16"
-bevy_ecs_tiled = "0.8"
+bevy_ecs_tiled = "0.9"
 </code></pre>
 <h3 id="basic-usage"><a class="header" href="#basic-usage">Basic Usage</a></h3>
 <p>To get started, add the plugin to your app and spawn a map entity.
@@ -753,7 +752,7 @@ You can also enable only the <code>physics</code> feature and provide your own b
 <p><strong>Example: Using the Avian backend</strong></p>
 <pre><code class="language-toml">[dependencies]
 bevy = "0.16"
-bevy_ecs_tiled = { version = "0.8", features = ["avian"] }
+bevy_ecs_tiled = { version = "0.9", features = ["avian"] }
 </code></pre>
 <blockquote>
 <p><strong>Note:</strong><br />
@@ -908,7 +907,7 @@ This means you can define game logic directly in the Tiled editor and use it sea
 <p>Update your local <code>Cargo.toml</code> file to enable the <code>user_properties</code> feature:</p>
 <pre><code class="language-toml">[dependencies]
 bevy = "0.16"
-bevy_ecs_tiled = { version = "0.8", features = ["user_properties"] }
+bevy_ecs_tiled = { version = "0.9", features = ["user_properties"] }
 </code></pre>
 <blockquote>
 <p><strong>Note:</strong><br />
@@ -1083,9 +1082,74 @@ fn main() {
 <p><strong>Note:</strong><br />
 For Rapier, you must enable either the <code>debug-render-2d</code> feature on the <code>bevy_rapier2d</code> crate or the <code>rapier_debug</code> feature on <code>bevy_ecs_tiled</code>.</p>
 </blockquote>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="migration-to-bevy_ecs_tiled-v09"><a class="header" href="#migration-to-bevy_ecs_tiled-v09">Migration to <code>bevy_ecs_tiled</code> v0.9</a></h1>
+<p>This guide outlines the steps required to migrate your project to version <code>0.9</code> of <code>bevy_ecs_tiled</code>.</p>
+<h2 id="main-changes"><a class="header" href="#main-changes">Main Changes</a></h2>
+<ul>
+<li><strong>Improved Isometric Map Support:</strong><br />
+Isometric maps are now much better supported, including correct physics collider shapes and placement.</li>
+<li><strong>Accurate Physics Colliders for Isometric Maps:</strong><br />
+Physics colliders are now generated with the correct geometry and position for isometric maps.</li>
+<li><strong>Clear Distinction Between <code>grid_size</code> and <code>tile_size</code>:</strong><br />
+Previously, <code>tile_size</code> (the actual size of a tile) and <code>grid_size</code> (the space a tile occupies on the grid) were treated as equivalent. This is not always true, especially for isometric maps. The API now enforces a clear distinction.</li>
+<li><strong>API Renaming for Clarity:</strong><br />
+Several functions and methods have been renamed to improve clarity and expressiveness.</li>
+</ul>
+<h2 id="migration-steps"><a class="header" href="#migration-steps">Migration steps</a></h2>
+<ol>
+<li>
+<p><strong>Update the dependency in <code>Cargo.toml</code></strong>:</p>
+<pre><code class="language-toml">bevy_ecs_tiled = "0.9"
+</code></pre>
+</li>
+<li>
+<p><strong>Adjust function usage</strong>:</p>
+</li>
+</ol>
+<ul>
+<li>
+<p><strong>Removed:</strong><br />
+<code>tile_size_from_grid_size()</code> has been removed.<br />
+<em>Reason:</em> Avoids confusion between <code>tile_size</code> and <code>grid_size</code>.</p>
+<p><code>tile_size_from_map()</code> has been removed.<br />
+<em>Reason:</em> You should use <code>TiledMapAsset::largest_tile_size</code> instead.</p>
+</li>
+<li>
+<p><strong>Added:</strong><br />
+A new <code>tile_size()</code> helper function is available to retrieve the <code>tile_size</code> from a <code>Tile</code>.</p>
+</li>
+<li>
+<p><strong>Changed:</strong></p>
+<ul>
+<li><code>TiledMapAsset::world_space_from_tiled_position()</code> is now private to the crate.<br />
+<em>Reason:</em> This is a low-level function and should not be used directly.</li>
+<li><code>TiledMapAsset::object_world_position()</code> → <strong>Renamed to</strong> <code>TiledMapAsset::object_relative_position()</code><br />
+<em>Signature remains the same.</em></li>
+<li><code>TiledMapAsset::tile_world_position()</code> → <strong>Renamed to</strong> <code>TiledMapAsset::tile_relative_position()</code><br />
+<em>Now takes an extra <code>TilemapTileSize</code> argument instead of relying on the map's <code>TilemapGridSize</code>.</em></li>
+</ul>
+</li>
+<li>
+<p><strong>Updated Geometry Methods:</strong><br />
+The following methods on <code>TiledObject</code> now take 4 additional arguments to properly handle isometric maps:</p>
+<ul>
+<li><code>center()</code></li>
+<li><code>vertices()</code></li>
+<li><code>line_string()</code></li>
+<li><code>polygon()</code></li>
+</ul>
+</li>
+</ul>
+<h2 id="resources"><a class="header" href="#resources">Resources</a></h2>
+<ul>
+<li><a href="migrations/../index.html">Main documentation</a></li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/">API Reference</a></li>
+<li><a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/README.md">Examples</a></li>
+<li><a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/CHANGELOG.md">Full CHANGELOG</a></li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="migration-to-bevy_ecs_tiled-v08"><a class="header" href="#migration-to-bevy_ecs_tiled-v08">Migration to <code>bevy_ecs_tiled</code> v0.8</a></h1>
 <p>This guide outlines the steps required to migrate your project to version <code>0.8</code> of <code>bevy_ecs_tiled</code>.</p>
-<h2 id="main-changes"><a class="header" href="#main-changes">Main Changes</a></h2>
+<h2 id="main-changes-1"><a class="header" href="#main-changes-1">Main Changes</a></h2>
 <ul>
 <li><strong>Improved <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/"><code>TiledEvent</code></a> API</strong>: Provides an unified way to handle events and access underlying Tiled data.</li>
 <li><strong>Attach shape information to <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html"><code>TiledObject</code></a></strong>: Direct access to Tiled objects shape information through ECS.</li>
@@ -1096,7 +1160,7 @@ For Rapier, you must enable either the <code>debug-render-2d</code> feature on t
 <li><strong>Rationalize naming</strong>: Several types or functions have been renamed to better reflect what they actually do.</li>
 <li><strong>Source code re-organization</strong>: Several files have been moved around or renamed.</li>
 </ul>
-<h2 id="migration-steps"><a class="header" href="#migration-steps">Migration Steps</a></h2>
+<h2 id="migration-steps-1"><a class="header" href="#migration-steps-1">Migration Steps</a></h2>
 <ol>
 <li>
 <p><strong>Update the dependency in <code>Cargo.toml</code></strong>:</p>
@@ -1174,7 +1238,7 @@ Now, everything is done via the new <a href="https://docs.rs/bevy_ecs_tiled/late
 You should use the provided methods instead of accessing fields directly.</p>
 </li>
 </ol>
-<h2 id="resources"><a class="header" href="#resources">Resources</a></h2>
+<h2 id="resources-1"><a class="header" href="#resources-1">Resources</a></h2>
 <ul>
 <li><a href="migrations/../index.html">Main documentation</a></li>
 <li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/">API Reference</a></li>
