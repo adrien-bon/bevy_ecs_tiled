@@ -80,8 +80,11 @@ impl AssetLoader for TiledMapLoader {
                 .map_err(|e| std::io::Error::other(format!("Could not load TMX map: {e}")))?
         };
 
+        let map_type = tilemap_type_from_map(&map);
+        let grid_size = grid_size_from_map(&map);
         let mut tilesets = HashMap::default();
         let mut tilesets_path_by_index = HashMap::<u32, String>::default();
+
         for (tileset_index, tileset) in map.tilesets().iter().enumerate() {
             debug!(
                 "Loading tileset (index={:?} name={:?}) from {:?}",
@@ -102,35 +105,78 @@ impl AssetLoader for TiledMapLoader {
             tilesets.insert(path.to_owned(), tiled_map_tileset);
         }
 
+        let mut largest_tile_size = TilemapTileSize::new(grid_size.x, grid_size.y);
         for layer in map.layers() {
-            let LayerType::Objects(object_layer) = layer.layer_type() else {
-                continue;
-            };
-
-            for object_data in object_layer.objects() {
-                let Some(tile) = object_data.get_tile() else {
-                    continue;
-                };
-
-                let TilesetLocation::Template(tileset) = tile.tileset_location() else {
-                    continue;
-                };
-
-                let Some(path) = tileset_path(tileset) else {
-                    continue;
-                };
-
-                if tilesets.contains_key(&path) {
-                    continue;
+            match layer.layer_type() {
+                LayerType::Tiles(tiles_layer) => {
+                    // Iterate over tiles layers to find the largest tile_size of the map
+                    match tiles_layer {
+                        TileLayer::Finite(tiles_finite_layer) => {
+                            for x in 0..tiles_finite_layer.width() as i32 {
+                                for y in 0..tiles_finite_layer.height() as i32 {
+                                    let Some(tile) = tiles_finite_layer
+                                        .get_tile(x, y)
+                                        .and_then(|t| t.get_tile())
+                                    else {
+                                        continue;
+                                    };
+                                    let tile_size = tile_size(&tile);
+                                    if tile_size > largest_tile_size {
+                                        debug!("Update tile_size: {tile_size:?}");
+                                        largest_tile_size = tile_size;
+                                    }
+                                }
+                            }
+                        }
+                        TileLayer::Infinite(tiles_infinite_layer) => {
+                            for (_, chunk) in tiles_infinite_layer.chunks() {
+                                for x in 0..ChunkData::WIDTH as i32 {
+                                    for y in 0..ChunkData::HEIGHT as i32 {
+                                        let Some(tile) =
+                                            chunk.get_tile(x, y).and_then(|t| t.get_tile())
+                                        else {
+                                            continue;
+                                        };
+                                        let tile_size = tile_size(&tile);
+                                        if tile_size > largest_tile_size {
+                                            debug!("Update tile_size: {tile_size:?}");
+                                            largest_tile_size = tile_size;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
+                LayerType::Objects(object_layer) => {
+                    // Iterate over objects layers to load potential external tilesets (templates)
+                    for object_data in object_layer.objects() {
+                        let Some(tile) = object_data.get_tile() else {
+                            continue;
+                        };
 
-                let Some(tiled_map_tileset) =
-                    tileset_to_tiled_map_tileset(tileset.clone(), load_context)
-                else {
-                    continue;
-                };
+                        let TilesetLocation::Template(tileset) = tile.tileset_location() else {
+                            continue;
+                        };
 
-                tilesets.insert(path.to_owned(), tiled_map_tileset);
+                        let Some(path) = tileset_path(tileset) else {
+                            continue;
+                        };
+
+                        if tilesets.contains_key(&path) {
+                            continue;
+                        }
+
+                        let Some(tiled_map_tileset) =
+                            tileset_to_tiled_map_tileset(tileset.clone(), load_context)
+                        else {
+                            continue;
+                        };
+
+                        tilesets.insert(path.to_owned(), tiled_map_tileset);
+                    }
+                }
+                _ => continue,
             }
         }
 
@@ -157,8 +203,6 @@ impl AssetLoader for TiledMapLoader {
             }
         }
 
-        let map_type = tilemap_type_from_map(&map);
-        let grid_size = grid_size_from_map(&map);
         let (tilemap_size, tiled_offset) = if infinite {
             debug!(
                 "(infinite map) topleft = {:?}, bottomright = {:?}",
@@ -257,6 +301,7 @@ impl AssetLoader for TiledMapLoader {
         let asset_map = TiledMapAsset {
             map,
             tilemap_size,
+            largest_tile_size,
             tiled_offset,
             rect,
             topleft_chunk: topleft,
