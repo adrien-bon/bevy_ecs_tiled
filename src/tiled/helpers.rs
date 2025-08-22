@@ -79,15 +79,6 @@ pub fn tilemap_type_from_map(map: &Map) -> TilemapType {
     }
 }
 
-/// Converts a [`TilemapGridSize`] to a [`TilemapTileSize`].
-pub fn tile_size_from_grid_size(grid_size: &TilemapGridSize) -> TilemapTileSize {
-    // TODO: Do Tiled files have tile size and grid size in sync always?
-    TilemapTileSize {
-        x: grid_size.x,
-        y: grid_size.y,
-    }
-}
-
 /// Converts a [`Map`]'s grid size to a [`TilemapGridSize`].
 pub fn grid_size_from_map(map: &Map) -> TilemapGridSize {
     TilemapGridSize {
@@ -96,12 +87,26 @@ pub fn grid_size_from_map(map: &Map) -> TilemapGridSize {
     }
 }
 
+/// Get the [`TilemapTileSize`] from given [`Tile`]
+pub fn tile_size(tile: &Tile) -> TilemapTileSize {
+    match &tile.image {
+        // tile is in image collection
+        Some(image) => TilemapTileSize::new(image.width as f32, image.height as f32),
+        // tile is in atlas image
+        None => TilemapTileSize::new(
+            tile.tileset().tile_width as f32,
+            tile.tileset().tile_height as f32,
+        ),
+    }
+}
+
 /// Converts a [`Map`]'s grid size to a [`TilemapTileSize`].
 ///
 /// The width and height will be the same as those given by [`grid_size_from_map`].
 ///
-/// **Note:** `bevy_ecs_tiled` assumes tile size and grid size have the same values;
-/// `bevy_ecs_tilemap` permits them to be different.
+/// **Note:** this value is given from the Tiled map 'Tile Width' and 'Tile Height'
+/// properties. It can be different from the size given by the tileset, which you can
+/// retrieve with the [`tile_size`] function.
 pub fn tile_size_from_map(map: &Map) -> TilemapTileSize {
     TilemapTileSize {
         x: map.tile_width as f32,
@@ -116,7 +121,7 @@ pub fn tile_size_from_map(map: &Map) -> TilemapTileSize {
 /// # Arguments
 /// - `coords`: The isometric coordinates to project.
 /// - `tilemap_size`: The size of the tilemap.
-/// - `grid_size`: The size of each grid cell.
+/// - `grid_size`: The size of each tile on the grid in pixels.
 ///
 /// # Returns
 /// The projected 2D coordinates as a [`Vec2`].

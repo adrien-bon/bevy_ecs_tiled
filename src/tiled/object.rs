@@ -111,7 +111,10 @@ impl TiledObject {
     ///
     /// # Arguments
     /// * `transform` - The global transform to apply to the object.
-    /// * `map_asset` - Optional map asset for isometric projection (required for isometric maps).
+    /// * `isometric_projection` - Wheter or not to perform an isometric projection.
+    /// * `tilemap_size` - Size of the tilemap in tiles.
+    /// * `grid_size` - Size of each tile on the grid in pixels.
+    /// * `offset` - Global map offset to apply.
     ///
     /// # Returns
     /// * `Option<Coord<f32>>` - The computed center, or `None` if not applicable.
@@ -141,7 +144,10 @@ impl TiledObject {
     ///
     /// # Arguments
     /// * `transform` - The global transform to apply to the object.
-    /// * `map_asset` - Optional map asset for isometric projection (required for isometric maps).
+    /// * `isometric_projection` - Wheter or not to perform an isometric projection.
+    /// * `tilemap_size` - Size of the tilemap in tiles.
+    /// * `grid_size` - Size of each tile on the grid in pixels.
+    /// * `offset` - Global map offset to apply.
     ///
     /// # Returns
     /// * `Vec<Coord<f32>>` - The transformed vertices.
@@ -203,12 +209,10 @@ impl TiledObject {
                 let origin_projected = iso_projection(offset, tilemap_size, grid_size);
                 let relative_projected = offset_projected - origin_projected;
 
-                let v = Vec2 {
+                Coord {
                     x: object_world_pos.x + relative_projected.x,
                     y: object_world_pos.y - relative_projected.y,
-                };
-                let v = transform.transform_point(v.extend(0.));
-                Coord { x: v.x, y: v.y }
+                }
             } else {
                 Coord {
                     x: v.x + object_world_pos.x,
@@ -227,7 +231,10 @@ impl TiledObject {
     ///
     /// # Arguments
     /// * `transform` - The global transform to apply to the object.
-    /// * `map_asset` - Optional map asset for isometric projection (required for isometric maps).
+    /// * `isometric_projection` - Wheter or not to perform an isometric projection.
+    /// * `tilemap_size` - Size of the tilemap in tiles.
+    /// * `grid_size` - Size of each tile on the grid in pixels.
+    /// * `offset` - Global map offset to apply.
     ///
     /// # Returns
     /// * `Option<LineString<f32>>` - The resulting line string, or `None` if not applicable.
@@ -267,7 +274,10 @@ impl TiledObject {
     ///
     /// # Arguments
     /// * `transform` - The global transform to apply to the object.
-    /// * `map_asset` - Optional map asset for isometric projection (required for isometric maps).
+    /// * `isometric_projection` - Wheter or not to perform an isometric projection.
+    /// * `tilemap_size` - Size of the tilemap in tiles.
+    /// * `grid_size` - Size of each tile on the grid in pixels.
+    /// * `offset` - Global map offset to apply.
     ///
     /// # Returns
     /// * `Option<GeoPolygon<f32>>` - The resulting polygon, or `None` if not applicable.
