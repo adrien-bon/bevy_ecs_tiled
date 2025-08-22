@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Bugfixes
+
+- Break apart object layer colliders and project to isometric coords (#32)
+
 ## v0.8.2
 
 ### Bugfixes

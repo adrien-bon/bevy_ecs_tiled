@@ -73,19 +73,38 @@ impl Plugin for TiledDebugObjectsPlugin {
 }
 
 fn draw_debug_gizmos(
-    objects_query: Query<(&TiledObject, &GlobalTransform)>,
+    map_query: Query<(&TiledMap, &TiledMapStorage)>,
+    assets: Res<Assets<TiledMapAsset>>,
+    object_query: Query<(&TiledObject, &GlobalTransform)>,
     config: Res<TiledDebugObjectsConfig>,
     mut gizmos: Gizmos,
 ) {
-    for (idx, (object, transform)) in objects_query.iter().enumerate() {
-        let color = config.objects_colors_list[idx % config.objects_colors_list.len()];
-        let origin = Vec2::new(transform.translation().x, transform.translation().y);
-        gizmos.arrow_2d(origin + config.arrow_length, origin, color);
-        let positions = object
-            .line_string(transform)
-            .map(|ls| ls.coords().map(|c| Vec2::new(c.x, c.y)).collect::<Vec<_>>());
-        if let Some(pos) = positions {
-            gizmos.linestrip_2d(pos, color);
+    for (tiled_map, storage) in map_query.iter() {
+        let Some(map_asset) = assets.get(&tiled_map.0) else {
+            continue;
+        };
+        // XXX: stil and issue on isometric maps for objects with a non-null rotation
+        for (idx, (_, entity)) in storage.objects().enumerate() {
+            if let Ok((object, transform)) = object_query.get(*entity) {
+                let color = config.objects_colors_list[idx % config.objects_colors_list.len()];
+                let origin = Vec2::new(transform.translation().x, transform.translation().y);
+                gizmos.arrow_2d(origin + config.arrow_length, origin, color);
+                let positions = object
+                    .line_string(
+                        transform,
+                        matches!(
+                            tilemap_type_from_map(&map_asset.map),
+                            TilemapType::Isometric(..)
+                        ),
+                        &map_asset.tilemap_size,
+                        &grid_size_from_map(&map_asset.map),
+                        map_asset.tiled_offset,
+                    )
+                    .map(|ls| ls.coords().map(|c| Vec2::new(c.x, c.y)).collect::<Vec<_>>());
+                if let Some(pos) = positions {
+                    gizmos.linestrip_2d(pos, color);
+                }
+            }
         }
     }
 }
