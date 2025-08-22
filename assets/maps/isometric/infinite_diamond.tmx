@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="isometric" renderorder="right-down" width="40" height="40" tilewidth="232" tileheight="110" infinite="1" nextlayerid="7" nextobjectid="10">
+<map version="1.10" tiledversion="1.11.0" orientation="isometric" renderorder="right-down" width="40" height="40" tilewidth="232" tileheight="110" infinite="1" nextlayerid="7" nextobjectid="11">
  <tileset firstgid="1" source="../../tiles/kenney-sketch-desert.tsx"/>
  <layer id="1" name="Tile Layer 1" width="40" height="40">
   <data encoding="csv">
@@ -211,6 +211,7 @@
   <object id="7" gid="5" x="113.722" y="7.97492" width="256" height="352"/>
   <object id="8" gid="5" x="-201.9" y="341.778" width="256" height="352"/>
   <object id="9" gid="5" x="4.42215" y="-331.21" width="256" height="352"/>
+  <object id="10" x="558.219" y="-553.464" width="391.91" height="61.0626" rotation="52.8227"/>
  </objectgroup>
  <imagelayer id="5" name="Image Layer 1" offsetx="3816" offsety="600">
   <image source="../../bevy_icon.png" width="257" height="247"/>

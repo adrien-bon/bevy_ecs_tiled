@@ -18,6 +18,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_9.
 
 - Break apart object layer colliders and project to isometric coords (#32)
 - Image layers on isometric maps are not properly positioned (#127)
+- `TiledObject::vertices()` does not work properly for objects with a rotation on isometric maps (#131)
 
 ## v0.8.2
 
