@@ -96,8 +96,15 @@ impl TiledObject {
     }
 
     /// Apply rotation and scaling to given coordinate.
-    fn apply_rotation_and_scaling(vertex: Vec2, transform: &GlobalTransform) -> Vec2 {
-        let rotation = transform.rotation().to_euler(EulerRot::ZYX).0;
+    fn apply_rotation_and_scaling(
+        inverse_rotation: bool,
+        vertex: Vec2,
+        transform: &GlobalTransform,
+    ) -> Vec2 {
+        let mut rotation = transform.rotation().to_euler(EulerRot::ZYX).0;
+        if inverse_rotation {
+            rotation *= -1.;
+        }
         let (cos, sin) = (rotation.cos(), rotation.sin());
         Vec2 {
             x: (vertex.x * cos - vertex.y * sin) * transform.scale().x,
@@ -198,8 +205,8 @@ impl TiledObject {
             }
         }
         .into_iter()
-        .map(|v| Self::apply_rotation_and_scaling(v, transform))
         .map(|v| {
+            // Only perform isometric projection if requested by caller and if we do not handle a Tile
             if isometric_projection && !matches!(self, TiledObject::Tile { .. }) {
                 let offset_projected = iso_projection(
                     Vec2::new(offset.x + v.x, offset.y - v.y),
@@ -209,11 +216,13 @@ impl TiledObject {
                 let origin_projected = iso_projection(offset, tilemap_size, grid_size);
                 let relative_projected = offset_projected - origin_projected;
 
+                let v = Self::apply_rotation_and_scaling(true, relative_projected, transform);
                 Coord {
-                    x: object_world_pos.x + relative_projected.x,
-                    y: object_world_pos.y - relative_projected.y,
+                    x: object_world_pos.x + v.x,
+                    y: object_world_pos.y - v.y,
                 }
             } else {
+                let v = Self::apply_rotation_and_scaling(false, v, transform);
                 Coord {
                     x: v.x + object_world_pos.x,
                     y: v.y + object_world_pos.y,
