@@ -58,7 +58,7 @@ geo = "0.30"
 regex = "1.11"
 
 # Optional dependencies, enabled via features.
-bevy_rapier2d = { version = "0.30", optional = true }
+bevy_rapier2d = { version = "0.31", optional = true }
 avian2d = { version = "0.3", optional = true }
 serde = { version = "1.0", optional = true, features = ["derive"] }
 serde_json = { version = "1.0", optional = true }
@@ -76,7 +76,7 @@ denylist = ["png", "bmp", "jpeg", "gif"]
 
 [dev-dependencies]
 bevy = { version = "0.16", features = ["file_watcher"] }
-bevy-inspector-egui = "0.32"
+bevy-inspector-egui = "0.33"
 iyes_perf_ui = { version = "0.5" }
 
 [[example]]
