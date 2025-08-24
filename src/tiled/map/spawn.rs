@@ -4,7 +4,7 @@
 //! It handles the creation of map layers, tiles, objects, and their associated components in the ECS world,
 //! enabling the rendering and interaction of Tiled maps within a Bevy application.
 
-use crate::{prelude::*, tiled::event::TiledEventWriters};
+use crate::{prelude::*, tiled::event::TiledEventWriters, tiled::layer::TiledLayerParallax};
 use bevy::{prelude::*, sprite::Anchor};
 use bevy_ecs_tilemap::prelude::{
     AnimatedTile, IsoCoordSystem, TileBundle, TileFlip, TileStorage, TileTextureIndex, TilemapId,
@@ -76,6 +76,20 @@ pub(crate) fn spawn_map(
             .transmute(Some(layer_entity), LayerCreated)
             .with_layer(layer_entity, layer_id)
             .to_owned();
+
+        // Add parallax component if the layer has parallax values
+        let has_parallax = layer.parallax_x != 1.0 || layer.parallax_y != 1.0;
+        let layer_position = tiled_map
+            .world_space_from_tiled_position(anchor, Vec2::new(layer.offset_x, layer.offset_y));
+
+        // Apply parallax to the layer entity if needed (works for all layer types)
+        if has_parallax {
+            commands.entity(layer_entity).insert(TiledLayerParallax {
+                parallax_x: layer.parallax_x,
+                parallax_y: layer.parallax_y,
+                base_position: layer_position,
+            });
+        }
 
         match layer.layer_type() {
             LayerType::Tiles(tile_layer) => {
