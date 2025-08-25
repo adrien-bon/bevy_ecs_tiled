@@ -31,6 +31,8 @@ pub enum TiledUpdateSystems {
     First,
     /// Animates Tiled sprites.
     AnimateSprite,
+    /// Updates parallax layers.
+    UpdateParallaxLayers,
     /// Runs debug systems related to Tiled maps and worlds.
     Debug,
     /// Marker for the last system in the update phase.
@@ -72,6 +74,7 @@ pub(crate) fn plugin(app: &mut App) {
         (
             TiledUpdateSystems::First,
             TiledUpdateSystems::AnimateSprite,
+            TiledUpdateSystems::UpdateParallaxLayers,
             TiledUpdateSystems::Debug,
             TiledUpdateSystems::Last,
         )
