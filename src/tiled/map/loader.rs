@@ -96,7 +96,7 @@ impl AssetLoader for TiledMapLoader {
             };
 
             let Some(tiled_map_tileset) =
-                tileset_to_tiled_map_tileset(tileset.clone(), load_context)
+                tileset_to_tiled_map_tileset(tileset.clone(), load_context, &path)
             else {
                 continue;
             };
@@ -105,6 +105,7 @@ impl AssetLoader for TiledMapLoader {
             tilesets.insert(path.to_owned(), tiled_map_tileset);
         }
 
+        let mut images = HashMap::default();
         let mut largest_tile_size = TilemapTileSize::new(grid_size.x, grid_size.y);
         for layer in map.layers() {
             match layer.layer_type() {
@@ -168,13 +169,26 @@ impl AssetLoader for TiledMapLoader {
                         }
 
                         let Some(tiled_map_tileset) =
-                            tileset_to_tiled_map_tileset(tileset.clone(), load_context)
+                            tileset_to_tiled_map_tileset(tileset.clone(), load_context, &path)
                         else {
                             continue;
                         };
 
                         tilesets.insert(path.to_owned(), tiled_map_tileset);
                     }
+                }
+                LayerType::Image(image_layer) => {
+                    // Load image assets used in image layers
+                    let Some(image) = &image_layer.image else {
+                        continue;
+                    };
+                    let Some(path) = image.source.to_str() else {
+                        continue;
+                    };
+                    let asset_path = AssetPath::from(image.source.clone());
+                    let handle: Handle<Image> = load_context.load(asset_path);
+
+                    images.insert(path.to_owned(), handle);
                 }
                 _ => continue,
             }
@@ -308,6 +322,7 @@ impl AssetLoader for TiledMapLoader {
             bottomright_chunk: bottomright,
             tilesets,
             tilesets_path_by_index,
+            images,
             #[cfg(feature = "user_properties")]
             properties,
         };
@@ -328,6 +343,7 @@ impl AssetLoader for TiledMapLoader {
 fn tileset_to_tiled_map_tileset(
     tileset: Arc<Tileset>,
     load_context: &mut LoadContext<'_>,
+    path: &str,
 ) -> Option<TiledMapTileset> {
     #[cfg(not(feature = "atlas"))]
     let tileset_path = tileset.source.to_str()?;
@@ -377,13 +393,13 @@ fn tileset_to_tiled_map_tileset(
         }
         Some(img) => {
             let asset_path = AssetPath::from(img.source.clone());
-            let texture: Handle<Image> = load_context.load(asset_path.clone());
+            let texture: Handle<Image> = load_context.load(asset_path);
 
             let columns = (img.width as u32 - tileset.margin + tileset.spacing)
                 / (tileset.tile_width + tileset.spacing);
             if columns > 0 {
                 texture_atlas_layout_handle =
-                    Some(load_context.labeled_asset_scope(tileset.name.clone(), |_| {
+                    Some(load_context.labeled_asset_scope(path.to_owned(), |_| {
                         TextureAtlasLayout::from_grid(
                             UVec2::new(tileset.tile_width, tileset.tile_height),
                             columns,

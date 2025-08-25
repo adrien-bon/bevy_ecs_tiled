@@ -28,7 +28,6 @@ pub(crate) fn spawn_map(
     map_storage: &mut TiledMapStorage,
     render_settings: &TilemapRenderSettings,
     layer_offset: &TiledMapLayerZOffset,
-    asset_server: &Res<AssetServer>,
     event_writers: &mut TiledEventWriters,
     anchor: &TilemapAnchor,
 ) {
@@ -137,14 +136,7 @@ pub(crate) fn spawn_map(
                     Name::new(format!("TiledMapImageLayer({})", layer.name)),
                     TiledLayer::Image,
                 ));
-                spawn_image_layer(
-                    commands,
-                    tiled_map,
-                    &layer_event,
-                    image_layer,
-                    asset_server,
-                    anchor,
-                );
+                spawn_image_layer(commands, tiled_map, &layer_event, image_layer, anchor);
             }
         };
 
@@ -583,10 +575,17 @@ fn spawn_image_layer(
     tiled_map: &TiledMapAsset,
     layer_event: &TiledEvent<LayerCreated>,
     image_layer: ImageLayer,
-    asset_server: &Res<AssetServer>,
     anchor: &TilemapAnchor,
 ) {
     if let Some(image) = &image_layer.image {
+        let Some(handle) = image
+            .source
+            .to_str()
+            .and_then(|path| tiled_map.images.get(path))
+        else {
+            return;
+        };
+
         let image_position = tiled_map.world_space_from_tiled_position(
             anchor,
             match tilemap_type_from_map(&tiled_map.map) {
@@ -608,7 +607,7 @@ fn spawn_image_layer(
             TiledImage,
             ChildOf(layer_event.origin),
             Sprite {
-                image: asset_server.load(image.source.clone()),
+                image: handle.clone(),
                 anchor: Anchor::TopLeft,
                 ..default()
             },

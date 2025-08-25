@@ -68,6 +68,10 @@ pub struct TiledMapAsset {
     ///
     /// Key is the Tiled tileset index
     pub(crate) tilesets_path_by_index: HashMap<u32, String>,
+    /// HashMap of the images used in the map
+    ///
+    /// Key is the path to the image
+    pub(crate) images: HashMap<String, Handle<Image>>,
     /// Map properties
     #[cfg(feature = "user_properties")]
     pub(crate) properties: crate::tiled::properties::load::DeserializedMapProperties,

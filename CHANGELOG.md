@@ -5,6 +5,7 @@
 ### Features
 
 - Add `TiledParallaxCamera` camera marker component to choose the camera used for map layers parallax calculations.
+- `ImageLayer`'s `Image` should be loaded during map loading and not during map spawning (#118)
 
 ## v0.9.0
 
