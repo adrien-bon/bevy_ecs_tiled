@@ -107,7 +107,7 @@ impl AssetLoader for TiledMapLoader {
 
         let mut images = HashMap::default();
         let mut largest_tile_size = TilemapTileSize::new(grid_size.x, grid_size.y);
-        for layer in map.layers() {
+        for (layer_index, layer) in map.layers().enumerate() {
             match layer.layer_type() {
                 LayerType::Tiles(tiles_layer) => {
                     // Iterate over tiles layers to find the largest tile_size of the map
@@ -182,13 +182,11 @@ impl AssetLoader for TiledMapLoader {
                     let Some(image) = &image_layer.image else {
                         continue;
                     };
-                    let Some(path) = image.source.to_str() else {
-                        continue;
-                    };
+
                     let asset_path = AssetPath::from(image.source.clone());
                     let handle: Handle<Image> = load_context.load(asset_path);
 
-                    images.insert(path.to_owned(), handle);
+                    images.insert(layer_index as u32, handle);
                 }
                 _ => continue,
             }
