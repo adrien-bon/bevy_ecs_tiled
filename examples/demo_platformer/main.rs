@@ -1,32 +1,81 @@
-use bevy::prelude::*;
+use bevy::{asset::AssetMetaCheck, prelude::*};
 use bevy_ecs_tiled::prelude::*;
 
-mod helper;
+mod camera;
+mod level;
+mod physics;
+mod animation;
+mod player;
 
 fn main() {
     let mut app = App::new();
+
+    // Add Bevy plugins.
+    app.add_plugins(
+        DefaultPlugins
+            // Prevent blur effect by changing default sampling.
+            .set(ImagePlugin::default_nearest())
+            .set(AssetPlugin {
+                // Wasm builds will check for meta files (that don't exist) if this isn't set.
+                // This causes errors and even panics on web build on itch.
+                // See https://github.com/bevyengine/bevy_github_ci_template/issues/48.
+                meta_check: AssetMetaCheck::Never,
+                ..default()
+            })
+            .set(WindowPlugin {
+                primary_window: Window {
+                    title: "Platformer Demo".to_string(),
+                    fit_canvas_to_parent: true,
+                    ..default()
+                }
+                .into(),
+                ..default()
+            }),
+    );
+
+    // Order new `UpdateSystems` variants by adding them here:
+    app.configure_sets(
+        Update,
+        (
+            UpdateSystems::TickTimers,
+            UpdateSystems::RecordInput,
+            UpdateSystems::ApplyMovement,
+            UpdateSystems::Update,
+        )
+            .chain(),
+    );
+
+    app.add_plugins((
+        animation::plugin,
+        camera::plugin,
+        player::plugin,
+        physics::plugin,
+        level::plugin,
+    ));
+
     app
-        // Bevy default plugins: prevent blur effect by changing default sampling.
-        .add_plugins(DefaultPlugins.build().set(ImagePlugin::default_nearest()))
         // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
         // be automatically added as well if it's not already done.
-        .add_plugins(TiledPlugin::default())
-        .add_plugins(helper::HelperPlugin)
-        .add_systems(Startup, startup)
-        .run();
+        .add_plugins(TiledPlugin(TiledPluginConfig {
+            tiled_types_filter: TiledFilter::from(
+                RegexSet::new([r"^demo_platformer::.*"]).unwrap(),
+            ),
+            ..default()
+        }));
+
+    app.run();
 }
 
-fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    // Spawn a 2D camera (required by Bevy)
-    commands.spawn(Camera2d);
-
-    // Load a map then spawn it
-    commands.spawn((
-        // Only the [`TiledMap`] component is actually required to spawn a map.
-        TiledMap(asset_server.load("demo_platformer/demo.tmx")),
-        // But you can add extra components to change the defaults settings and how
-        // your map is actually displayed
-        TilemapAnchor::Center,
-    ));
+/// High-level groupings of systems for the app in the `Update` schedule.
+/// When adding a new variant, make sure to order it in the `configure_sets`
+/// call above.
+#[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
+enum UpdateSystems {
+    /// Tick timers.
+    TickTimers,
+    /// Record player input.
+    RecordInput,
+    ApplyMovement,
+    /// Do everything else (consider splitting this into further variants).
+    Update,
 }
-
