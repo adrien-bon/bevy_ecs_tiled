@@ -2,7 +2,7 @@ use avian2d::prelude::*;
 use bevy::{asset::AssetMetaCheck, prelude::*};
 use bevy_ecs_tiled::prelude::*;
 
-//mod animation;
+mod animation;
 mod camera;
 mod controller;
 mod debug;
@@ -48,7 +48,7 @@ fn main() {
     );
 
     app.add_plugins((
-        //        animation::plugin,
+        animation::plugin,
         camera::plugin,
         debug::plugin,
         player::plugin,
