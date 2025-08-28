@@ -1,7 +1,8 @@
+use avian2d::prelude::*;
 use bevy::{platform::collections::HashMap, prelude::*};
 use std::time::Duration;
 
-use crate::{physics::movement::MovementController, UpdateSystems};
+use crate::UpdateSystems;
 
 pub(super) fn plugin(app: &mut App) {
     // Animate and play sound effects based on controls.
@@ -19,15 +20,15 @@ pub(super) fn plugin(app: &mut App) {
 
 /// Update the sprite direction and animation state (idling/walking).
 fn update_animation_movement(
-    mut player_query: Query<(&MovementController, &mut Sprite, &mut Animation)>,
+    mut player_query: Query<(&LinearVelocity, &mut Sprite, &mut Animation)>,
 ) {
-    for (controller, mut sprite, mut animation) in &mut player_query {
-        let dx = controller.intent.x;
-        if dx != 0.0 {
+    for (linear_velocity, mut sprite, mut animation) in &mut player_query {
+        let dx = linear_velocity.x;
+        if dx != 0. {
             sprite.flip_x = dx < 0.0;
         }
 
-        let animation_state = if controller.intent == Vec2::ZERO {
+        let animation_state = if ops::abs(dx) < 10. {
             AnimationState::Idling
         } else {
             AnimationState::Walking
@@ -57,7 +58,7 @@ fn update_animation_atlas(mut query: Query<(&Animation, &mut Sprite)>) {
 
 /// Component that tracks player's animation state.
 /// It is tightly bound to the texture atlas we use.
-#[derive(Component, Reflect)]
+#[derive(Component, Reflect, Default, Clone)]
 #[reflect(Component)]
 pub struct Animation {
     timer: Timer,
@@ -67,13 +68,59 @@ pub struct Animation {
     config: HashMap<AnimationState, AnimationStateConfig>,
 }
 
+#[derive(Default, Debug, Clone)]
 pub struct AnimationStateConfig {
-    duration: Duration,
-    frames: Vec<usize>,
+    pub duration: Duration,
+    pub frames: Vec<usize>,
 }
 
-#[derive(Reflect, PartialEq)]
+#[derive(Reflect, Hash, Eq, PartialEq, Default, Debug, Copy, Clone)]
 pub enum AnimationState {
+    #[default]
+    Unknown,
     Idling,
     Walking,
+}
+
+impl Animation {
+    pub fn add_config(&mut self, state: AnimationState, config: AnimationStateConfig) -> Self {
+        self.config.insert(state, config);
+        self.clone()
+    }
+
+    /// Update animation timers.
+    pub fn update_timer(&mut self, delta: Duration) {
+        self.timer.tick(delta);
+        if !self.timer.finished() {
+            return;
+        }
+        if let Some(config) = self.config.get(&self.state) {
+            self.frame_index = (self.frame_index + 1) % config.frames.len();
+        }
+    }
+
+    /// Update animation state if it changes.
+    pub fn update_state(&mut self, state: AnimationState) {
+        if self.state != state {
+            if let Some(config) = self.config.get(&state) {
+                self.state = state;
+                self.frame_index = 0;
+                self.timer = Timer::new(config.duration, TimerMode::Repeating);
+            }
+        }
+    }
+
+    /// Whether animation changed this tick.
+    pub fn changed(&self) -> bool {
+        self.timer.finished()
+    }
+
+    /// Return sprite index in the atlas.
+    pub fn get_atlas_index(&self) -> usize {
+        *self
+            .config
+            .get(&self.state)
+            .and_then(|c| c.frames.get(self.frame_index))
+            .unwrap_or(&0)
+    }
 }
