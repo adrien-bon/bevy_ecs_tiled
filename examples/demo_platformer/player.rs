@@ -1,8 +1,13 @@
 //! Player-specific behavior.
 
-use crate::{physics::movement::MovementController, UpdateSystems};
-use avian2d::prelude::{Collider, RigidBody};
-use bevy::prelude::*;
+use std::f32::consts::PI;
+
+use crate::{
+    controller::{CharacterControllerBundle, MovementAction, MovementEvent},
+    UpdateSystems,
+};
+use avian2d::{math::Scalar, prelude::*};
+use bevy::{prelude::*, sprite::Anchor};
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<Player>();
@@ -49,47 +54,54 @@ fn spawn_player_at_spawn_point(
         Name::new("Player"),
         Player,
         spawn_transform,
-        Sprite::from_atlas_image(
-            asset_server.load(
+        Sprite {
+            image: asset_server.load(
                 "demo_platformer/kenney_platformer-pack-redux/Spritesheets/spritesheet_players.png",
             ),
-            TextureAtlas {
+            texture_atlas: Some(TextureAtlas {
                 layout: texture_atlas_layout,
                 //                index: player_animation.get_atlas_index(),
                 index: 6,
-            },
+            }),
+            anchor: Anchor::Custom(Vec2::new(0., -0.2)),
+            ..Default::default()
+        },
+        CharacterControllerBundle::new(Collider::capsule(50., 50.)).with_movement(
+            5000.,
+            0.9,
+            600.,
+            PI * 0.45,
         ),
-        MovementController::from_max_speed(400.),
-        Collider::rectangle(128., 256.),
-        RigidBody::Dynamic,
     ));
 }
 
+/// Sends [`MovementAction`] events based on keyboard input.
 fn record_player_directional_input(
-    input: Res<ButtonInput<KeyCode>>,
-    mut controller_query: Query<&mut MovementController, With<Player>>,
+    mut movement_event_writer: EventWriter<MovementEvent>,
+    player_query: Query<Entity, With<Player>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
 ) {
-    // Collect directional input.
-    let mut intent = Vec2::ZERO;
-    if input.pressed(KeyCode::KeyW) || input.pressed(KeyCode::ArrowUp) {
-        intent.y += 1.0;
-    }
-    if input.pressed(KeyCode::KeyS) || input.pressed(KeyCode::ArrowDown) {
-        intent.y -= 1.0;
-    }
-    if input.pressed(KeyCode::KeyA) || input.pressed(KeyCode::ArrowLeft) {
-        intent.x -= 1.0;
-    }
-    if input.pressed(KeyCode::KeyD) || input.pressed(KeyCode::ArrowRight) {
-        intent.x += 1.0;
+    let Ok(player_entity) = player_query.single() else {
+        return;
+    };
+
+    let left = keyboard_input.any_pressed([KeyCode::KeyA, KeyCode::ArrowLeft]);
+    let right = keyboard_input.any_pressed([KeyCode::KeyD, KeyCode::ArrowRight]);
+
+    let horizontal = right as i8 - left as i8;
+    let direction = horizontal as Scalar;
+
+    if direction != 0.0 {
+        movement_event_writer.write(MovementEvent {
+            entity: player_entity,
+            action: MovementAction::Move(direction),
+        });
     }
 
-    // Normalize intent so that diagonal movement is the same speed as horizontal / vertical.
-    // This should be omitted if the input comes from an analog stick instead.
-    let intent = intent.normalize_or_zero();
-
-    // Apply movement intent to controllers.
-    for mut controller in &mut controller_query {
-        controller.intent = intent;
+    if keyboard_input.any_pressed([KeyCode::Space, KeyCode::KeyW, KeyCode::ArrowUp]) {
+        movement_event_writer.write(MovementEvent {
+            entity: player_entity,
+            action: MovementAction::Jump,
+        });
     }
 }

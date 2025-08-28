@@ -1,26 +1,33 @@
 use avian2d::{math::*, prelude::*};
 use bevy::{ecs::query::Has, prelude::*};
 
+use crate::UpdateSystems;
+
 pub struct CharacterControllerPlugin;
 
 impl Plugin for CharacterControllerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<MovementAction>().add_systems(
+        app.register_type::<MovementAcceleration>();
+        app.register_type::<MovementDampingFactor>();
+        app.register_type::<JumpImpulse>();
+        app.register_type::<MaxSlopeAngle>();
+        app.add_event::<MovementEvent>().add_systems(
             Update,
-            (
-                keyboard_input,
-                gamepad_input,
-                update_grounded,
-                movement,
-                apply_movement_damping,
-            )
-                .chain(),
+            (update_grounded, movement, apply_movement_damping)
+                .chain()
+                .in_set(UpdateSystems::ApplyMovement),
         );
+        app.insert_resource(Gravity(Vec2::NEG_Y * 1000.));
     }
 }
 
 /// An event sent for a movement input action.
 #[derive(Event)]
+pub struct MovementEvent {
+    pub entity: Entity,
+    pub action: MovementAction,
+}
+
 pub enum MovementAction {
     Move(Scalar),
     Jump,
@@ -35,21 +42,21 @@ pub struct CharacterController;
 #[component(storage = "SparseSet")]
 pub struct Grounded;
 /// The acceleration used for character movement.
-#[derive(Component)]
+#[derive(Component, Reflect)]
 pub struct MovementAcceleration(Scalar);
 
 /// The damping factor used for slowing down movement.
-#[derive(Component)]
+#[derive(Component, Reflect)]
 pub struct MovementDampingFactor(Scalar);
 
 /// The strength of a jump.
-#[derive(Component)]
+#[derive(Component, Reflect)]
 pub struct JumpImpulse(Scalar);
 
 /// The maximum angle a slope can have for a character controller
 /// to be able to climb and jump. If the slope is steeper than this angle,
 /// the character will slide down.
-#[derive(Component)]
+#[derive(Component, Reflect)]
 pub struct MaxSlopeAngle(Scalar);
 
 /// A bundle that contains the components needed for a basic
@@ -124,42 +131,6 @@ impl CharacterControllerBundle {
     }
 }
 
-/// Sends [`MovementAction`] events based on keyboard input.
-fn keyboard_input(
-    mut movement_event_writer: EventWriter<MovementAction>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-) {
-    let left = keyboard_input.any_pressed([KeyCode::KeyA, KeyCode::ArrowLeft]);
-    let right = keyboard_input.any_pressed([KeyCode::KeyD, KeyCode::ArrowRight]);
-
-    let horizontal = right as i8 - left as i8;
-    let direction = horizontal as Scalar;
-
-    if direction != 0.0 {
-        movement_event_writer.write(MovementAction::Move(direction));
-    }
-
-    if keyboard_input.just_pressed(KeyCode::Space) {
-        movement_event_writer.write(MovementAction::Jump);
-    }
-}
-
-/// Sends [`MovementAction`] events based on gamepad input.
-fn gamepad_input(
-    mut movement_event_writer: EventWriter<MovementAction>,
-    gamepads: Query<&Gamepad>,
-) {
-    for gamepad in gamepads.iter() {
-        if let Some(x) = gamepad.get(GamepadAxis::LeftStickX) {
-            movement_event_writer.write(MovementAction::Move(x as Scalar));
-        }
-
-        if gamepad.just_pressed(GamepadButton::South) {
-            movement_event_writer.write(MovementAction::Jump);
-        }
-    }
-}
-
 /// Updates the [`Grounded`] status for character controllers.
 fn update_grounded(
     mut commands: Commands,
@@ -190,7 +161,7 @@ fn update_grounded(
 /// Responds to [`MovementAction`] events and moves character controllers accordingly.
 fn movement(
     time: Res<Time>,
-    mut movement_event_reader: EventReader<MovementAction>,
+    mut movement_event_reader: EventReader<MovementEvent>,
     mut controllers: Query<(
         &MovementAcceleration,
         &JumpImpulse,
@@ -203,12 +174,12 @@ fn movement(
     let delta_time = time.delta_secs_f64().adjust_precision();
 
     for event in movement_event_reader.read() {
-        for (movement_acceleration, jump_impulse, mut linear_velocity, is_grounded) in
-            &mut controllers
+        if let Ok((movement_acceleration, jump_impulse, mut linear_velocity, is_grounded)) =
+            controllers.get_mut(event.entity)
         {
-            match event {
+            match event.action {
                 MovementAction::Move(direction) => {
-                    linear_velocity.x += *direction * movement_acceleration.0 * delta_time;
+                    linear_velocity.x += direction * movement_acceleration.0 * delta_time;
                 }
                 MovementAction::Jump => {
                     if is_grounded {

@@ -6,10 +6,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(Startup, startup);
 }
 
-fn startup(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-) {
+fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn((
             TiledMap(asset_server.load("demo_platformer/demo.tmx")),
