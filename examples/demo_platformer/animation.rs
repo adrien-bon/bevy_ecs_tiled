@@ -1,4 +1,4 @@
-use bevy::{prelude::*,platform::collections::HashMap};
+use bevy::{platform::collections::HashMap, prelude::*};
 use std::time::Duration;
 
 use crate::{physics::movement::MovementController, UpdateSystems};
@@ -10,13 +10,10 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         (
             update_animation_timer.in_set(UpdateSystems::TickTimers),
-            (
-                update_animation_movement,
-                update_animation_atlas,
-            )
+            (update_animation_movement, update_animation_atlas)
                 .chain()
                 .in_set(UpdateSystems::Update),
-        )
+        ),
     );
 }
 
@@ -57,7 +54,6 @@ fn update_animation_atlas(mut query: Query<(&Animation, &mut Sprite)>) {
         }
     }
 }
-
 
 /// Component that tracks player's animation state.
 /// It is tightly bound to the texture atlas we use.

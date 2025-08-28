@@ -1,10 +1,12 @@
+use avian2d::prelude::*;
 use bevy::{asset::AssetMetaCheck, prelude::*};
 use bevy_ecs_tiled::prelude::*;
 
+//mod animation;
 mod camera;
+mod controller;
+mod debug;
 mod level;
-mod physics;
-mod animation;
 mod player;
 
 fn main() {
@@ -46,22 +48,27 @@ fn main() {
     );
 
     app.add_plugins((
-        animation::plugin,
+        //        animation::plugin,
         camera::plugin,
+        debug::plugin,
         player::plugin,
-        physics::plugin,
         level::plugin,
+        controller::CharacterControllerPlugin,
     ));
 
     app
         // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
         // be automatically added as well if it's not already done.
-        .add_plugins(TiledPlugin(TiledPluginConfig {
-            tiled_types_filter: TiledFilter::from(
-                RegexSet::new([r"^demo_platformer::.*"]).unwrap(),
-            ),
-            ..default()
-        }));
+        .add_plugins((
+            TiledPlugin(TiledPluginConfig {
+                tiled_types_filter: TiledFilter::from(
+                    RegexSet::new([r"^demo_platformer::.*"]).unwrap(),
+                ),
+                ..default()
+            }),
+            TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default(),
+            PhysicsPlugins::default().with_length_unit(100.0),
+        ));
 
     app.run();
 }
