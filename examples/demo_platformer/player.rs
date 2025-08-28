@@ -1,12 +1,13 @@
 //! Player-specific behavior.
 
-use std::f32::consts::PI;
+use std::time::Duration;
 
 use crate::{
+    animation::{Animation, AnimationState, AnimationStateConfig},
     controller::{CharacterControllerBundle, MovementAction, MovementEvent},
     UpdateSystems,
 };
-use avian2d::{math::Scalar, prelude::*};
+use avian2d::{math::*, prelude::*};
 use bevy::{prelude::*, sprite::Anchor};
 
 pub(super) fn plugin(app: &mut App) {
@@ -48,7 +49,22 @@ fn spawn_player_at_spawn_point(
 
     let layout = TextureAtlasLayout::from_grid(UVec2::new(128, 256), 8, 8, None, None);
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
-    //    let player_animation = PlayerAnimation::new();
+
+    let player_animation = Animation::default()
+        .add_config(
+            AnimationState::Idling,
+            AnimationStateConfig {
+                duration: Duration::from_millis(500),
+                frames: vec![6],
+            },
+        )
+        .add_config(
+            AnimationState::Walking,
+            AnimationStateConfig {
+                duration: Duration::from_millis(100),
+                frames: vec![37, 45],
+            },
+        );
 
     commands.spawn((
         Name::new("Player"),
@@ -60,12 +76,12 @@ fn spawn_player_at_spawn_point(
             ),
             texture_atlas: Some(TextureAtlas {
                 layout: texture_atlas_layout,
-                //                index: player_animation.get_atlas_index(),
                 index: 6,
             }),
             anchor: Anchor::Custom(Vec2::new(0., -0.2)),
             ..Default::default()
         },
+        player_animation,
         CharacterControllerBundle::new(Collider::capsule(50., 50.)).with_movement(
             5000.,
             0.9,
