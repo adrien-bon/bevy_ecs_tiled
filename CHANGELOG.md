@@ -7,6 +7,10 @@
 - Add `TiledParallaxCamera` camera marker component to choose the camera used for map layers parallax calculations.
 - `ImageLayer`'s `Image` should be loaded during map loading and not during map spawning (#118)
 
+### Changed
+
+- Update `TiledMapAsset` tilesets lookup table naming and usage: we don't use a path anymore
+
 ## v0.9.0
 
 **BREAKING CHANGES**
