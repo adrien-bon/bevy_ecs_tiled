@@ -58,7 +58,7 @@ pub mod prelude {
             grid_size_from_map, tile_size, tilemap_type_from_map,
         },
         image::TiledImage,
-        layer::TiledLayer,
+        layer::{TiledLayer, TiledLayerParallax, TiledParallaxCamera},
         map::{
             asset::TiledMapAsset, loader::TiledMapLoaderError, storage::TiledMapStorage,
             RespawnTiledMap, TiledMap, TiledMapLayerZOffset,
