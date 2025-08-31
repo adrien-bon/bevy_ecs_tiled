@@ -62,12 +62,13 @@ pub struct TiledMapAsset {
     pub(crate) bottomright_chunk: (i32, i32),
     /// HashMap of the map tilesets
     ///
-    /// Key is the path to the Tiled tileset
+    /// Key is a unique label to identify the Tiled tileset within the map.
+    /// See [`tileset_label`](crate::tiled::map::loader::tileset_label) function.
     pub(crate) tilesets: HashMap<String, TiledMapTileset>,
-    /// HashMap of the paths to tilesets
+    /// HashMap of the label to tilesets
     ///
     /// Key is the Tiled tileset index
-    pub(crate) tilesets_path_by_index: HashMap<u32, String>,
+    pub(crate) tilesets_label_by_index: HashMap<u32, String>,
     /// HashMap of the images used in the map
     ///
     /// Key is the layer id of the image layer using this image

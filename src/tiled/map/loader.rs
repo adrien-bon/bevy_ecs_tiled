@@ -26,7 +26,7 @@ struct TiledMapLoader {
     registry: bevy::reflect::TypeRegistryArc,
 }
 
-pub(crate) fn tileset_path(tileset: &Tileset) -> Option<String> {
+pub(crate) fn tileset_label(tileset: &Tileset) -> Option<String> {
     tileset
         .source
         .to_str()
@@ -83,7 +83,7 @@ impl AssetLoader for TiledMapLoader {
         let map_type = tilemap_type_from_map(&map);
         let grid_size = grid_size_from_map(&map);
         let mut tilesets = HashMap::default();
-        let mut tilesets_path_by_index = HashMap::<u32, String>::default();
+        let mut tilesets_label_by_index = HashMap::<u32, String>::default();
 
         for (tileset_index, tileset) in map.tilesets().iter().enumerate() {
             debug!(
@@ -91,18 +91,18 @@ impl AssetLoader for TiledMapLoader {
                 tileset_index, tileset.name, tileset.source
             );
 
-            let Some(path) = tileset_path(tileset) else {
+            let Some(label) = tileset_label(tileset) else {
                 continue;
             };
 
             let Some(tiled_map_tileset) =
-                tileset_to_tiled_map_tileset(tileset.clone(), load_context, &path)
+                tileset_to_tiled_map_tileset(tileset.clone(), load_context, &label)
             else {
                 continue;
             };
 
-            tilesets_path_by_index.insert(tileset_index as u32, path.to_owned());
-            tilesets.insert(path.to_owned(), tiled_map_tileset);
+            tilesets_label_by_index.insert(tileset_index as u32, label.to_owned());
+            tilesets.insert(label.to_owned(), tiled_map_tileset);
         }
 
         let mut images = HashMap::default();
@@ -160,21 +160,21 @@ impl AssetLoader for TiledMapLoader {
                             continue;
                         };
 
-                        let Some(path) = tileset_path(tileset) else {
+                        let Some(label) = tileset_label(tileset) else {
                             continue;
                         };
 
-                        if tilesets.contains_key(&path) {
+                        if tilesets.contains_key(&label) {
                             continue;
                         }
 
                         let Some(tiled_map_tileset) =
-                            tileset_to_tiled_map_tileset(tileset.clone(), load_context, &path)
+                            tileset_to_tiled_map_tileset(tileset.clone(), load_context, &label)
                         else {
                             continue;
                         };
 
-                        tilesets.insert(path.to_owned(), tiled_map_tileset);
+                        tilesets.insert(label.to_owned(), tiled_map_tileset);
                     }
                 }
                 LayerType::Image(image_layer) => {
@@ -319,7 +319,7 @@ impl AssetLoader for TiledMapLoader {
             topleft_chunk: topleft,
             bottomright_chunk: bottomright,
             tilesets,
-            tilesets_path_by_index,
+            tilesets_label_by_index,
             images,
             #[cfg(feature = "user_properties")]
             properties,
