@@ -8,6 +8,14 @@ use bevy::prelude::*;
 use geo::Centroid;
 use tiled::{ObjectData, ObjectShape};
 
+/// Marker [`Component`] for the visual representation of a [`TiledObject`].
+///
+/// Added on the child [`Entity`] of a [`TiledObject::Tile`].
+#[derive(Component, Default, Reflect, Clone, Copy, Debug)]
+#[reflect(Component, Default, Debug)]
+#[require(Visibility, Transform, Sprite)]
+pub struct TiledObjectVisual;
+
 /// Marker [`Component`] for a Tiled map object.
 #[derive(Component, Default, Reflect, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
@@ -314,4 +322,5 @@ impl TiledObject {
 
 pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledObject>();
+    app.register_type::<TiledObjectVisual>();
 }
