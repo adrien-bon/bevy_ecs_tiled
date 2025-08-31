@@ -18,7 +18,7 @@ use bevy_ecs_tilemap::prelude::{TilemapBundle, TilemapSpacing};
 #[cfg(feature = "user_properties")]
 use crate::tiled::properties::command::PropertiesCommandExt;
 
-use super::loader::tileset_path;
+use super::loader::tileset_label;
 
 pub(crate) fn spawn_map(
     commands: &mut Commands,
@@ -28,7 +28,6 @@ pub(crate) fn spawn_map(
     map_storage: &mut TiledMapStorage,
     render_settings: &TilemapRenderSettings,
     layer_offset: &TiledMapLayerZOffset,
-    asset_server: &Res<AssetServer>,
     event_writers: &mut TiledEventWriters,
     anchor: &TilemapAnchor,
 ) {
@@ -137,14 +136,7 @@ pub(crate) fn spawn_map(
                     Name::new(format!("TiledMapImageLayer({})", layer.name)),
                     TiledLayer::Image,
                 ));
-                spawn_image_layer(
-                    commands,
-                    tiled_map,
-                    &layer_event,
-                    image_layer,
-                    asset_server,
-                    anchor,
-                );
+                spawn_image_layer(commands, tiled_map, &layer_event, image_layer, anchor);
             }
         };
 
@@ -216,14 +208,14 @@ fn spawn_tiles_layer(
     // this means we need to load each combination of tileset and layer separately.
     for (tileset_index, tileset) in tiled_map.map.tilesets().iter().enumerate() {
         let tileset_index = tileset_index as u32;
-        let Some(path) = tiled_map.tilesets_path_by_index.get(&tileset_index) else {
+        let Some(label) = tiled_map.tilesets_label_by_index.get(&tileset_index) else {
             log::warn!("Skipped creating layer with missing tilemap textures (index {tileset_index} not found).");
             continue;
         };
 
-        let Some(t) = tiled_map.tilesets.get(path) else {
+        let Some(t) = tiled_map.tilesets.get(label) else {
             log::warn!(
-                "Skipped creating layer with missing tilemap textures (path {path:?} not found)."
+                "Skipped creating layer with missing tilemap textures (label {label:?} not found)."
             );
             continue;
         };
@@ -313,7 +305,7 @@ fn spawn_tiles(
             }
 
             #[cfg(not(feature = "atlas"))]
-            let Some(path) = tiled_map.tilesets_path_by_index.get(&tileset_id) else {
+            let Some(label) = tiled_map.tilesets_label_by_index.get(&tileset_id) else {
                 return;
             };
 
@@ -322,7 +314,7 @@ fn spawn_tiles(
                 #[cfg(not(feature = "atlas"))]
                 TilemapTexture::Vector(_) => *tiled_map
                     .tilesets
-                    .get(path)
+                    .get(label)
                     .and_then(|t| t.tile_image_offsets.get(&layer_tile.id()))
                     .expect(
                         "The offset into the image vector for tilemap should have been saved during the initial load.",
@@ -482,15 +474,15 @@ fn handle_tile_object(
         return (None, None);
     };
 
-    let path = match tile.tileset_location() {
+    let label = match tile.tileset_location() {
         TilesetLocation::Map(tileset_index) => {
             let tileset_index = *tileset_index as u32;
             tiled_map
-                .tilesets_path_by_index
+                .tilesets_label_by_index
                 .get(&tileset_index)
                 .expect("Cannot find tileset path for object tile")
         }
-        TilesetLocation::Template(tileset) => &tileset_path(tileset)
+        TilesetLocation::Template(tileset) => &tileset_label(tileset)
             .expect("Cannot find object tile from Template")
             .to_owned(),
     };
@@ -516,7 +508,7 @@ fn handle_tile_object(
         return (None, None);
     };
 
-    let Some(sprite) = tiled_map.tilesets.get(path).and_then(|t| {
+    let Some(sprite) = tiled_map.tilesets.get(label).and_then(|t| {
         match &t.tilemap_texture {
             TilemapTexture::Single(single) => {
                 t.texture_atlas_layout_handle.as_ref().map(|handle| {
@@ -583,10 +575,16 @@ fn spawn_image_layer(
     tiled_map: &TiledMapAsset,
     layer_event: &TiledEvent<LayerCreated>,
     image_layer: ImageLayer,
-    asset_server: &Res<AssetServer>,
     anchor: &TilemapAnchor,
 ) {
     if let Some(image) = &image_layer.image {
+        let Some(handle) = layer_event
+            .get_layer_id()
+            .and_then(|id| tiled_map.images.get(&id))
+        else {
+            return;
+        };
+
         let image_position = tiled_map.world_space_from_tiled_position(
             anchor,
             match tilemap_type_from_map(&tiled_map.map) {
@@ -608,7 +606,7 @@ fn spawn_image_layer(
             TiledImage,
             ChildOf(layer_event.origin),
             Sprite {
-                image: asset_server.load(image.source.clone()),
+                image: handle.clone(),
                 anchor: Anchor::TopLeft,
                 ..default()
             },

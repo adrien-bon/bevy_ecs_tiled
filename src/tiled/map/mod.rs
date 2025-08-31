@@ -151,7 +151,6 @@ fn process_loaded_maps(
                 &mut tiled_storage,
                 render_settings,
                 layer_offset,
-                &asset_server,
                 &mut event_writers,
                 anchor,
             );

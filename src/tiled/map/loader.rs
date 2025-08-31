@@ -26,7 +26,7 @@ struct TiledMapLoader {
     registry: bevy::reflect::TypeRegistryArc,
 }
 
-pub(crate) fn tileset_path(tileset: &Tileset) -> Option<String> {
+pub(crate) fn tileset_label(tileset: &Tileset) -> Option<String> {
     tileset
         .source
         .to_str()
@@ -83,7 +83,7 @@ impl AssetLoader for TiledMapLoader {
         let map_type = tilemap_type_from_map(&map);
         let grid_size = grid_size_from_map(&map);
         let mut tilesets = HashMap::default();
-        let mut tilesets_path_by_index = HashMap::<u32, String>::default();
+        let mut tilesets_label_by_index = HashMap::<u32, String>::default();
 
         for (tileset_index, tileset) in map.tilesets().iter().enumerate() {
             debug!(
@@ -91,22 +91,23 @@ impl AssetLoader for TiledMapLoader {
                 tileset_index, tileset.name, tileset.source
             );
 
-            let Some(path) = tileset_path(tileset) else {
+            let Some(label) = tileset_label(tileset) else {
                 continue;
             };
 
             let Some(tiled_map_tileset) =
-                tileset_to_tiled_map_tileset(tileset.clone(), load_context)
+                tileset_to_tiled_map_tileset(tileset.clone(), load_context, &label)
             else {
                 continue;
             };
 
-            tilesets_path_by_index.insert(tileset_index as u32, path.to_owned());
-            tilesets.insert(path.to_owned(), tiled_map_tileset);
+            tilesets_label_by_index.insert(tileset_index as u32, label.to_owned());
+            tilesets.insert(label.to_owned(), tiled_map_tileset);
         }
 
+        let mut images = HashMap::default();
         let mut largest_tile_size = TilemapTileSize::new(grid_size.x, grid_size.y);
-        for layer in map.layers() {
+        for (layer_index, layer) in map.layers().enumerate() {
             match layer.layer_type() {
                 LayerType::Tiles(tiles_layer) => {
                     // Iterate over tiles layers to find the largest tile_size of the map
@@ -159,22 +160,33 @@ impl AssetLoader for TiledMapLoader {
                             continue;
                         };
 
-                        let Some(path) = tileset_path(tileset) else {
+                        let Some(label) = tileset_label(tileset) else {
                             continue;
                         };
 
-                        if tilesets.contains_key(&path) {
+                        if tilesets.contains_key(&label) {
                             continue;
                         }
 
                         let Some(tiled_map_tileset) =
-                            tileset_to_tiled_map_tileset(tileset.clone(), load_context)
+                            tileset_to_tiled_map_tileset(tileset.clone(), load_context, &label)
                         else {
                             continue;
                         };
 
-                        tilesets.insert(path.to_owned(), tiled_map_tileset);
+                        tilesets.insert(label.to_owned(), tiled_map_tileset);
                     }
+                }
+                LayerType::Image(image_layer) => {
+                    // Load image assets used in image layers
+                    let Some(image) = &image_layer.image else {
+                        continue;
+                    };
+
+                    let asset_path = AssetPath::from(image.source.clone());
+                    let handle: Handle<Image> = load_context.load(asset_path);
+
+                    images.insert(layer_index as u32, handle);
                 }
                 _ => continue,
             }
@@ -307,7 +319,8 @@ impl AssetLoader for TiledMapLoader {
             topleft_chunk: topleft,
             bottomright_chunk: bottomright,
             tilesets,
-            tilesets_path_by_index,
+            tilesets_label_by_index,
+            images,
             #[cfg(feature = "user_properties")]
             properties,
         };
@@ -328,6 +341,7 @@ impl AssetLoader for TiledMapLoader {
 fn tileset_to_tiled_map_tileset(
     tileset: Arc<Tileset>,
     load_context: &mut LoadContext<'_>,
+    path: &str,
 ) -> Option<TiledMapTileset> {
     #[cfg(not(feature = "atlas"))]
     let tileset_path = tileset.source.to_str()?;
@@ -377,13 +391,13 @@ fn tileset_to_tiled_map_tileset(
         }
         Some(img) => {
             let asset_path = AssetPath::from(img.source.clone());
-            let texture: Handle<Image> = load_context.load(asset_path.clone());
+            let texture: Handle<Image> = load_context.load(asset_path);
 
             let columns = (img.width as u32 - tileset.margin + tileset.spacing)
                 / (tileset.tile_width + tileset.spacing);
             if columns > 0 {
                 texture_atlas_layout_handle =
-                    Some(load_context.labeled_asset_scope(tileset.name.clone(), |_| {
+                    Some(load_context.labeled_asset_scope(path.to_owned(), |_| {
                         TextureAtlasLayout::from_grid(
                             UVec2::new(tileset.tile_width, tileset.tile_height),
                             columns,
