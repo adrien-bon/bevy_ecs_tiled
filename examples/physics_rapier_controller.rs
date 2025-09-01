@@ -51,7 +51,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     Collider::ball(10.),
                     Velocity::zero(),
                     GravityScale(GRAVITY_SCALE),
-                    Transform::from_xyz(0., -50., 0.),
+                    Transform::from_xyz(50., -50., 0.),
                 ));
             },
         )

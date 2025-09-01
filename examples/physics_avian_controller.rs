@@ -52,7 +52,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     Name::new("PlayerControlledObject (Avian2D physics)"),
                     Collider::circle(10.),
                     GravityScale(GRAVITY_SCALE),
-                    Transform::from_xyz(0., -50., 0.),
+                    Transform::from_xyz(50., -50., 0.),
                 ));
             },
         )
