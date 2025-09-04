@@ -8,13 +8,20 @@ use bevy::prelude::*;
 use geo::Centroid;
 use tiled::{ObjectData, ObjectShape};
 
-/// Marker [`Component`] for the visual representation of a [`TiledObject`].
+/// Relationship and Marker [`Component`] for the visual representation of a [`TiledObject`].
 ///
 /// Added on the child [`Entity`] of a [`TiledObject::Tile`].
-#[derive(Component, Default, Reflect, Clone, Copy, Debug)]
-#[reflect(Component, Default, Debug)]
+#[derive(Component, Reflect, Copy, Clone, Debug)]
+#[reflect(Component, Debug)]
 #[require(Visibility, Transform, Sprite)]
-pub struct TiledObjectVisual;
+#[relationship(relationship_target = TiledObjectVisuals)]
+pub struct TiledObjectVisual(pub Entity);
+
+/// Relationship target [`Component`] pointing to all the child [`TiledObjectVisual`]s.
+#[derive(Component, Reflect, Debug)]
+#[reflect(Component, Debug)]
+#[relationship_target(relationship = TiledObjectVisual)]
+pub struct TiledObjectVisuals(Vec<Entity>);
 
 /// Marker [`Component`] for a Tiled map object.
 #[derive(Component, Default, Reflect, Clone, Debug)]
@@ -323,4 +330,5 @@ impl TiledObject {
 pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledObject>();
     app.register_type::<TiledObjectVisual>();
+    app.register_type::<TiledObjectVisuals>();
 }
