@@ -198,7 +198,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
             *source.event,
             TiledColliderPolygons(polygons.to_owned()),
             ChildOf(parent),
-            TiledObjectCollider(parent)
+            TiledObjectCollider(parent),
         ));
         // Patch origin entity and send collider event
         let mut event = source;
