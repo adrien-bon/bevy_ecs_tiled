@@ -15,12 +15,12 @@ use tiled::{ObjectData, ObjectShape};
 #[reflect(Component, Debug)]
 #[require(Visibility, Transform, Sprite)]
 #[relationship(relationship_target = TiledObjectVisuals)]
-pub struct TiledObjectVisual(pub Entity);
+pub struct TiledObjectVisualOf(pub Entity);
 
 /// Relationship target [`Component`] pointing to all the child [`TiledObjectVisual`]s.
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component, Debug)]
-#[relationship_target(relationship = TiledObjectVisual)]
+#[relationship_target(relationship = TiledObjectVisualOf)]
 pub struct TiledObjectVisuals(Vec<Entity>);
 
 /// Marker [`Component`] for a Tiled map object.
@@ -329,6 +329,6 @@ impl TiledObject {
 
 pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledObject>();
-    app.register_type::<TiledObjectVisual>();
+    app.register_type::<TiledObjectVisualOf>();
     app.register_type::<TiledObjectVisuals>();
 }

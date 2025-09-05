@@ -435,7 +435,7 @@ fn spawn_objects_layer(
             (Some((sprite, offset_transform)), None) => {
                 commands.spawn((
                     Name::new("TileVisual"),
-                    TiledObjectVisual(object_entity),
+                    TiledObjectVisualOf(object_entity),
                     ChildOf(object_entity),
                     sprite,
                     offset_transform,
@@ -444,7 +444,7 @@ fn spawn_objects_layer(
             (Some((sprite, offset_transform)), Some(animation)) => {
                 commands.spawn((
                     Name::new("TileVisual"),
-                    TiledObjectVisual(object_entity),
+                    TiledObjectVisualOf(object_entity),
                     ChildOf(object_entity),
                     sprite,
                     offset_transform,

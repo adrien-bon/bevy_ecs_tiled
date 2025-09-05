@@ -23,17 +23,17 @@ pub enum TiledColliderOrigin {
     Object,
 }
 
-/// Relationship [`Component`] for the collider of a [`TiledObject`].
+/// Relationship [`Component`] for the collider of a [`TiledObject`] or [`TiledTilesLayer`].
 #[derive(Component, Reflect, Copy, Clone, Debug)]
 #[reflect(Component, Debug)]
 #[relationship(relationship_target = TiledObjectColliders)]
-pub struct TiledObjectCollider(pub Entity);
+pub struct TiledColliderOf(pub Entity);
 
-/// Relationship target [`Component`] pointing to all the child [`TiledObjectCollider`]s.
+/// Relationship target [`Component`] pointing to all the child [`TiledCollider`]s.
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component, Debug)]
-#[relationship_target(relationship = TiledObjectCollider)]
-pub struct TiledObjectColliders(Vec<Entity>);
+#[relationship_target(relationship = TiledColliderOf)]
+pub struct TiledColliders(Vec<Entity>);
 
 /// Collider raw geometry
 #[derive(Component, PartialEq, Clone, Debug, Deref)]
@@ -50,8 +50,8 @@ pub struct ColliderCreated(pub TiledColliderOrigin);
 
 pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledColliderOrigin>();
-    app.register_type::<TiledObjectCollider>();
-    app.register_type::<TiledObjectColliders>();
+    app.register_type::<TiledColliderOf>();
+    app.register_type::<TiledColliders>();
     app.add_event::<TiledEvent<ColliderCreated>>()
         .register_type::<TiledEvent<ColliderCreated>>();
 }
@@ -198,7 +198,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
             *source.event,
             TiledColliderPolygons(polygons.to_owned()),
             ChildOf(parent),
-            TiledObjectCollider(parent),
+            TiledColliderOf(parent),
         ));
         // Patch origin entity and send collider event
         let mut event = source;
