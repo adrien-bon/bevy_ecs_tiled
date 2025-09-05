@@ -23,13 +23,13 @@ pub enum TiledColliderOrigin {
     Object,
 }
 
-/// Relationship [`Component`] for the collider of a [`TiledObject`] or [`TiledTilesLayer`].
+/// Relationship [`Component`] for the collider of a [`TiledObject`] or [`TiledLayer::Tiles`].
 #[derive(Component, Reflect, Copy, Clone, Debug)]
 #[reflect(Component, Debug)]
 #[relationship(relationship_target = TiledColliders)]
 pub struct TiledColliderOf(pub Entity);
 
-/// Relationship target [`Component`] pointing to all the child [`TiledCollider`]s.
+/// Relationship target [`Component`] pointing to all the child [`TiledColliderOf`]s.
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component, Debug)]
 #[relationship_target(relationship = TiledColliderOf)]

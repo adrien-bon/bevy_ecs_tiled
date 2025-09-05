@@ -17,7 +17,7 @@ use tiled::{ObjectData, ObjectShape};
 #[relationship(relationship_target = TiledObjectVisuals)]
 pub struct TiledObjectVisualOf(pub Entity);
 
-/// Relationship target [`Component`] pointing to all the child [`TiledObjectVisual`]s.
+/// Relationship target [`Component`] pointing to all the child [`TiledObjectVisualOf`]s.
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component, Debug)]
 #[relationship_target(relationship = TiledObjectVisualOf)]
