@@ -26,7 +26,7 @@ pub enum TiledColliderOrigin {
 /// Relationship [`Component`] for the collider of a [`TiledObject`] or [`TiledTilesLayer`].
 #[derive(Component, Reflect, Copy, Clone, Debug)]
 #[reflect(Component, Debug)]
-#[relationship(relationship_target = TiledObjectColliders)]
+#[relationship(relationship_target = TiledColliders)]
 pub struct TiledColliderOf(pub Entity);
 
 /// Relationship target [`Component`] pointing to all the child [`TiledCollider`]s.
