@@ -4,10 +4,9 @@
 
 ### Features
 
-- Add separate new relationships between `TiledObjects` and `TiledObjectVisuals` as well as `TiledObjects`, `TiledTilesLayers` and `TiledColliders` (#138)
 - Add `TiledParallaxCamera` camera marker component to choose the camera used for map layers parallax calculations.
 - `ImageLayer`'s `Image` should be loaded during map loading and not during map spawning (#118)
-- Add a new marker component, `TiledObjectVisual`, to help identify the `Entity` holding the visual representation of a `TiledObject::Tile`
+- Add separate new relationships between `TiledObjects` and `TiledObjectVisuals` as well as `TiledObjects`, `TiledTilesLayers` and `TiledColliders` (#138)
 
 ### Changed
 

@@ -42,7 +42,10 @@ pub mod prelude {
     #[cfg(feature = "physics")]
     pub use super::physics::{
         backend::{multi_polygon_as_line_strings, multi_polygon_as_triangles, TiledPhysicsBackend},
-        collider::{ColliderCreated, TiledColliderOrigin, TiledColliderPolygons, TiledColliderOf, TiledColliders},
+        collider::{
+            ColliderCreated, TiledColliderOf, TiledColliderOrigin, TiledColliderPolygons,
+            TiledColliders,
+        },
         settings::TiledPhysicsSettings,
         TiledPhysicsPlugin,
     };
