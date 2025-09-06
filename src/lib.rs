@@ -42,7 +42,7 @@ pub mod prelude {
     #[cfg(feature = "physics")]
     pub use super::physics::{
         backend::{multi_polygon_as_line_strings, multi_polygon_as_triangles, TiledPhysicsBackend},
-        collider::{ColliderCreated, TiledColliderOrigin, TiledColliderPolygons},
+        collider::{ColliderCreated, TiledColliderOrigin, TiledColliderPolygons, TiledColliderOf, TiledColliders},
         settings::TiledPhysicsSettings,
         TiledPhysicsPlugin,
     };
@@ -63,7 +63,7 @@ pub mod prelude {
             asset::TiledMapAsset, loader::TiledMapLoaderError, storage::TiledMapStorage,
             RespawnTiledMap, TiledMap, TiledMapLayerZOffset,
         },
-        object::{TiledObject, TiledObjectVisualOf},
+        object::{TiledObject, TiledObjectVisualOf, TiledObjectVisuals},
         sets::{TiledPostUpdateSystems, TiledPreUpdateSystems, TiledUpdateSystems},
         tile::{TiledTile, TiledTilemap},
         world::{
