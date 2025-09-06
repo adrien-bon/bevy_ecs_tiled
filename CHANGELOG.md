@@ -2,6 +2,8 @@
 
 ## [unreleased]
 
+## v0.9.1
+
 ### Features
 
 - Add `TiledParallaxCamera` camera marker component to choose the camera used for map layers parallax calculations.
