@@ -605,11 +605,19 @@ fn spawn_image_layer(
         );
         commands.spawn((
             Name::new(format!("Image({})", image.source.display())),
-            TiledImage,
+            TiledImage {
+                base_position: image_position,
+                base_size: Vec2::new(image.width as f32, image.height as f32),
+            },
             ChildOf(layer_event.origin),
             Sprite {
                 image: handle.clone(),
                 anchor: Anchor::TopLeft,
+                image_mode: SpriteImageMode::Tiled {
+                    tile_x: image_layer.repeat_x,
+                    tile_y: image_layer.repeat_y,
+                    stretch_value: 1.,
+                },
                 ..default()
             },
             Transform::from_translation(image_position.extend(0.)),
