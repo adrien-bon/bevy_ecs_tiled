@@ -76,12 +76,13 @@ fn update_layer_parallax(
             camera_transform.translation.x,
             camera_transform.translation.y,
         );
-        let parallax_offset = Vec2::new(
-            camera_position.x * (1.0 - parallax.parallax_x),
-            camera_position.y * (1.0 - parallax.parallax_y),
-        );
-
-        transform.translation.x = parallax.base_position.x + parallax_offset.x;
-        transform.translation.y = parallax.base_position.y + parallax_offset.y;
+        if parallax.parallax_x != 1.0 {
+            let offset_x = camera_position.x * (1.0 - parallax.parallax_x);
+            transform.translation.x = parallax.base_position.x + offset_x;
+        }
+        if parallax.parallax_y != 1.0 {
+            let offset_y = camera_position.y * (1.0 - parallax.parallax_y);
+            transform.translation.y = parallax.base_position.y + offset_y;
+        }
     }
 }
