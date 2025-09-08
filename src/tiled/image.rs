@@ -4,6 +4,8 @@
 
 use bevy::prelude::*;
 
+use crate::prelude::TiledLayer;
+
 /// Marker [`Component`] for the [`Sprite`] attached to an image layer.
 #[derive(Component, Default, Reflect, Copy, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
@@ -19,8 +21,9 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 fn update_image_dimension(
-    mut image_query: Query<(&TiledImage, &mut Transform, &mut Sprite)>,
-    camera_query: Query<(&Projection, &GlobalTransform)>,
+    mut image_query: Query<(&TiledImage, &ChildOf, &mut Transform, &mut Sprite), With<TiledImage>>,
+    layer_query: Query<&Transform, (With<TiledLayer>, Without<TiledImage>)>,
+    camera_query: Query<(&Projection, &GlobalTransform), With<Camera2d>>,
 ) {
     if image_query.is_empty() {
         return;
@@ -40,16 +43,22 @@ fn update_image_dimension(
             })
         });
 
-    for (image, mut transform, mut sprite) in image_query.iter_mut() {
+    for (image, child_of, mut transform, mut sprite) in image_query.iter_mut() {
         let (repeat_x, repeat_y) = match sprite.image_mode {
             SpriteImageMode::Tiled { tile_x, tile_y, .. } => (tile_x, tile_y),
             _ => continue,
         };
 
+        let Ok(parent_transform) = layer_query.get(child_of.parent()) else {
+            continue;
+        };
+        let base = parent_transform.translation + image.base_position.extend(0.);
+
         // X axis tiling
         let (x, width) = if repeat_x {
             let tile_w = image.base_size.x;
-            let base_x = image.base_position.x;
+            //let base_x = image.base_position.x;
+            let base_x = base.x;
             let min_x = visible_area.min.x;
             let max_x = visible_area.max.x;
             let n = ((base_x - min_x) / tile_w).ceil().max(0.) + 1.;
@@ -64,7 +73,8 @@ fn update_image_dimension(
         // Y axis tiling
         let (y, height) = if repeat_y {
             let tile_h = image.base_size.y;
-            let base_y = image.base_position.y;
+            //let base_y = image.base_position.y;
+            let base_y = base.y;
             let min_y = visible_area.max.y;
             let max_y = visible_area.min.y;
             let n = ((min_y - base_y) / tile_h).ceil().max(0.) + 1.;

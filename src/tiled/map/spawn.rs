@@ -591,7 +591,7 @@ fn spawn_image_layer(
             anchor,
             match tilemap_type_from_map(&tiled_map.map) {
                 // Special case for isometric maps where image origin
-                // is not (0, 0) but (-map_width, +map_height)
+                // is not (0, 0) but (-map_width/2, +map_height/2)
                 TilemapType::Isometric(IsoCoordSystem::Diamond) => {
                     let grid_size = grid_size_from_map(&tiled_map.map);
                     let map_size = tiled_map.tilemap_size;
