@@ -4,7 +4,7 @@
 
 ### Features
 
-- Repeat 'Sprite' from image layer based upon Tiled repeat x / repeat y settings (#123)
+- Repeat image layer 'Sprite' based upon Tiled repeat x / repeat y settings (#123)
 
 ## v0.9.1
 

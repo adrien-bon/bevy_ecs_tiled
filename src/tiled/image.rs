@@ -30,10 +30,12 @@ fn update_image_position_and_size(
     layer_query: Query<&GlobalTransform, (With<TiledLayer>, Without<TiledImage>)>,
     camera_query: Query<(&Projection, &GlobalTransform), With<Camera2d>>,
 ) {
+    // Early exit in case we don't have any image
     if image_query.is_empty() {
         return;
     }
 
+    // Compute a visible area using all Camera2d
     let visible_area = camera_query
         .iter()
         .fold(Rect::EMPTY, |acc, (projection, transform)| {
@@ -54,11 +56,15 @@ fn update_image_position_and_size(
             _ => continue,
         };
 
+        // Skip to next image if this one does not repeat
+        if !repeat_x && !repeat_y {
+            continue;
+        }
+
+        // Retrieve parent transform and compute image absolute base position
         let Ok(parent_transform) = layer_query.get(child_of.parent()) else {
             continue;
         };
-
-        // Compute image absolute base position
         let base = image.base_position.extend(0.) + parent_transform.translation();
 
         // X axis tiling
