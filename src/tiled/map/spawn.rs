@@ -591,7 +591,7 @@ fn spawn_image_layer(
             anchor,
             match tilemap_type_from_map(&tiled_map.map) {
                 // Special case for isometric maps where image origin
-                // is not (0, 0) but (-map_width, +map_height)
+                // is not (0, 0) but (-map_width/2, +map_height/2)
                 TilemapType::Isometric(IsoCoordSystem::Diamond) => {
                     let grid_size = grid_size_from_map(&tiled_map.map);
                     let map_size = tiled_map.tilemap_size;
@@ -605,11 +605,19 @@ fn spawn_image_layer(
         );
         commands.spawn((
             Name::new(format!("Image({})", image.source.display())),
-            TiledImage,
+            TiledImage {
+                base_position: image_position,
+                base_size: Vec2::new(image.width as f32, image.height as f32),
+            },
             ChildOf(layer_event.origin),
             Sprite {
                 image: handle.clone(),
                 anchor: Anchor::TopLeft,
+                image_mode: SpriteImageMode::Tiled {
+                    tile_x: image_layer.repeat_x,
+                    tile_y: image_layer.repeat_y,
+                    stretch_value: 1.,
+                },
                 ..default()
             },
             Transform::from_translation(image_position.extend(0.)),
