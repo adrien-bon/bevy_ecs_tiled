@@ -2,6 +2,8 @@
 
 ## [unreleased]
 
+## v0.9.2
+
 ### Features
 
 - Repeat image layer 'Sprite' based upon Tiled repeat x / repeat y settings (#123)
