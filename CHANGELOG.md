@@ -6,6 +6,10 @@
 
 - Repeat image layer 'Sprite' based upon Tiled repeat x / repeat y settings (#123)
 
+### Bugfixes
+
+- TiledParallaxCamera Shifts Y Axis of Parallax Layers (#140)
+
 ## v0.9.1
 
 ### Features
