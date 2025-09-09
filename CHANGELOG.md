@@ -9,6 +9,7 @@
 ### Bugfixes
 
 - TiledParallaxCamera Shifts Y Axis of Parallax Layers (#140)
+- Messed up image layer position when enabling parallax
 
 ## v0.9.1
 

@@ -27,7 +27,7 @@ pub(crate) fn spawn_map(
     tiled_map: &TiledMapAsset,
     map_storage: &mut TiledMapStorage,
     render_settings: &TilemapRenderSettings,
-    layer_offset: &TiledMapLayerZOffset,
+    layer_z_offset: &TiledMapLayerZOffset,
     event_writers: &mut TiledEventWriters,
     anchor: &TilemapAnchor,
 ) {
@@ -48,21 +48,23 @@ pub(crate) fn spawn_map(
     // Order of the differents layers in the .TMX file is important:
     // a layer appearing last in the .TMX should appear above previous layers
     // Start with a negative offset so in the end we end up with the top layer at Z-offset from settings
-    let mut offset_z = tiled_map.map.layers().len() as f32 * (-layer_offset.0);
+    let mut acc_z_offset = tiled_map.map.layers().len() as f32 * (-layer_z_offset.0);
 
     // Once materials have been created/added we need to then create the layers.
     for (layer_id, layer) in tiled_map.map.layers().enumerate() {
         let layer_id = layer_id as u32;
+        let layer_position = Vec2::new(layer.offset_x, -layer.offset_y);
+
         // Increment Z offset and compute layer transform offset
-        offset_z += layer_offset.0;
-        let offset_transform = Transform::from_xyz(layer.offset_x, -layer.offset_y, offset_z);
+        acc_z_offset += layer_z_offset.0;
+        let layer_transform = Transform::from_translation(layer_position.extend(acc_z_offset));
 
         // Spawn layer entity and attach it to the map entity
         let layer_entity = commands
             .spawn((
                 ChildOf(map_entity),
                 // Apply layer Transform using both layer base Transform and Tiled offset
-                offset_transform,
+                layer_transform,
                 // Determine layer default visibility
                 match &layer.visible {
                     true => Visibility::Inherited,
@@ -71,24 +73,19 @@ pub(crate) fn spawn_map(
             ))
             .id();
 
-        let layer_event = map_event
-            .transmute(Some(layer_entity), LayerCreated)
-            .with_layer(layer_entity, layer_id)
-            .to_owned();
-
         // Add parallax component if the layer has parallax values
-        let has_parallax = layer.parallax_x != 1.0 || layer.parallax_y != 1.0;
-        let layer_position = tiled_map
-            .world_space_from_tiled_position(anchor, Vec2::new(layer.offset_x, layer.offset_y));
-
-        // Apply parallax to the layer entity if needed (works for all layer types)
-        if has_parallax {
+        if layer.parallax_x != 1.0 || layer.parallax_y != 1.0 {
             commands.entity(layer_entity).insert(TiledLayerParallax {
                 parallax_x: layer.parallax_x,
                 parallax_y: layer.parallax_y,
                 base_position: layer_position,
             });
         }
+
+        let layer_event = map_event
+            .transmute(Some(layer_entity), LayerCreated)
+            .with_layer(layer_entity, layer_id)
+            .to_owned();
 
         match layer.layer_type() {
             LayerType::Tiles(tile_layer) => {
@@ -587,6 +584,7 @@ fn spawn_image_layer(
             return;
         };
 
+        let image_size = Vec2::new(image.width as f32, image.height as f32);
         let image_position = tiled_map.world_space_from_tiled_position(
             anchor,
             match tilemap_type_from_map(&tiled_map.map) {
@@ -607,12 +605,13 @@ fn spawn_image_layer(
             Name::new(format!("Image({})", image.source.display())),
             TiledImage {
                 base_position: image_position,
-                base_size: Vec2::new(image.width as f32, image.height as f32),
+                base_size: image_size,
             },
             ChildOf(layer_event.origin),
             Sprite {
                 image: handle.clone(),
                 anchor: Anchor::TopLeft,
+                custom_size: Some(image_size),
                 image_mode: SpriteImageMode::Tiled {
                     tile_x: image_layer.repeat_x,
                     tile_y: image_layer.repeat_y,
