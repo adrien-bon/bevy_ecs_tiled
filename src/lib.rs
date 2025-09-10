@@ -64,7 +64,7 @@ pub mod prelude {
         layer::{TiledLayer, TiledLayerParallax, TiledParallaxCamera},
         map::{
             asset::TiledMapAsset, loader::TiledMapLoaderError, storage::TiledMapStorage,
-            RespawnTiledMap, TiledMap, TiledMapLayerZOffset,
+            RespawnTiledMap, TiledMap, TiledMapImageRepeatMargin, TiledMapLayerZOffset,
         },
         object::{TiledObject, TiledObjectVisualOf, TiledObjectVisuals},
         sets::{TiledPostUpdateSystems, TiledPreUpdateSystems, TiledUpdateSystems},

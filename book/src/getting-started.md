@@ -52,6 +52,7 @@ You can customize how the map is loaded by listening to specific [`TiledEvent`](
 
 - [`TilemapAnchor`](https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/anchor/enum.TilemapAnchor.html) — Controls the anchor point of the tilemap.
 - [`TiledMapLayerZOffset`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMapLayerZOffset.html) — Adjusts the Z offset between map layers.
+- [`TiledMapImageRepeatMargin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMapImageRepeatMargin.html) — Control the margin for repeated images.
 - [`TilemapRenderSettings`](https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/map/struct.TilemapRenderSettings.html) — Configures rendering options.
 - [`Transform`](https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html) — Sets the position, rotation, and scale of the map.
 - [`Visibility`](https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html) — Controls the visibility of the map entity.

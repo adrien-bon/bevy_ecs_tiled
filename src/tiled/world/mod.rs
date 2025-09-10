@@ -21,6 +21,7 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
     TiledWorldStorage,
     TiledWorldChunking,
     TiledMapLayerZOffset,
+    TiledMapImageRepeatMargin,
     TilemapAnchor,
     TilemapRenderSettings,
     Visibility,
@@ -67,6 +68,7 @@ fn process_loaded_worlds(
             // If a world settings change, force a respawn so they can be taken into account
             Changed<TilemapAnchor>,
             Changed<TiledMapLayerZOffset>,
+            Changed<TiledMapImageRepeatMargin>,
             Changed<TilemapRenderSettings>,
             With<RespawnTiledWorld>,
             // Not needed to react to changes on TiledWorldChunking:

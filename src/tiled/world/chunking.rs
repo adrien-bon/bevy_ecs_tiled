@@ -45,6 +45,7 @@ fn handle_world_chunking(
         &TiledWorldChunking,
         &TilemapAnchor,
         &TiledMapLayerZOffset,
+        &TiledMapImageRepeatMargin,
         &TilemapRenderSettings,
         &mut TiledWorldStorage,
     )>,
@@ -56,6 +57,7 @@ fn handle_world_chunking(
         world_chunking,
         anchor,
         layer_offset,
+        image_repeat_margin,
         render_settings,
         mut storage,
     ) in world_query.iter_mut()
@@ -144,6 +146,7 @@ fn handle_world_chunking(
                     // and `y` that Tiled uses in its FILE.world.
                     TilemapAnchor::TopLeft,
                     *layer_offset,
+                    *image_repeat_margin,
                     *render_settings,
                 ))
                 .id();

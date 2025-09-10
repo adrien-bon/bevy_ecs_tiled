@@ -2,9 +2,8 @@
 //!
 //! This module defines Bevy components used to represent Tiled images within the ECS world.
 
+use crate::prelude::*;
 use bevy::prelude::*;
-
-use crate::prelude::{TiledLayer, TiledUpdateSystems};
 
 /// Marker [`Component`] for the [`Sprite`] attached to an image layer.
 #[derive(Component, Default, Reflect, Copy, Clone, Debug)]
@@ -27,7 +26,8 @@ pub(crate) fn plugin(app: &mut App) {
 
 fn update_image_position_and_size(
     mut image_query: Query<(&TiledImage, &ChildOf, &mut Transform, &mut Sprite), With<TiledImage>>,
-    layer_query: Query<&GlobalTransform, (With<TiledLayer>, Without<TiledImage>)>,
+    map_query: Query<&TiledMapImageRepeatMargin, With<TiledMap>>,
+    layer_query: Query<(&GlobalTransform, &ChildOf), (With<TiledLayer>, Without<TiledImage>)>,
     camera_query: Query<(&Projection, &GlobalTransform), With<Camera2d>>,
 ) {
     // Early exit in case we don't have any image
@@ -61,21 +61,27 @@ fn update_image_position_and_size(
             continue;
         }
 
-        // Retrieve parent transform and compute image absolute base position
-        let Ok(parent_transform) = layer_query.get(child_of.parent()) else {
+        // Retrieve layer transform from layer entity and image repeat margin from map entity
+        let Ok((layer_transform, repeat_margin)) = layer_query
+            .get(child_of.parent())
+            .and_then(|(t, c)| map_query.get(c.parent()).map(|m| (t, m)))
+        else {
             continue;
         };
-        let base = image.base_position.extend(0.) + parent_transform.translation();
+
+        // Compute image absolute base position, using layer GlobalTransform
+        let base = image.base_position.extend(0.) + layer_transform.translation();
 
         // X axis tiling
         let (x, width) = if repeat_x {
             let tile_w = image.base_size.x;
             let min_x = visible_area.min.x;
             let max_x = visible_area.max.x;
-            let n = ((base.x - min_x) / tile_w).ceil().max(0.) + 1.;
+            let n = ((base.x - min_x) / tile_w).ceil().max(0.) + repeat_margin.0 as f32;
             (
                 base.x - n * tile_w,
-                (max_x - base.x).abs().max(visible_area.width()) + 2. * tile_w,
+                (max_x - base.x).abs().max(visible_area.width())
+                    + (1. + 2. * repeat_margin.0 as f32) * tile_w,
             )
         } else {
             (base.x, image.base_size.x)
@@ -86,10 +92,11 @@ fn update_image_position_and_size(
             let tile_h = image.base_size.y;
             let min_y = visible_area.max.y;
             let max_y = visible_area.min.y;
-            let n = ((min_y - base.y) / tile_h).ceil().max(0.) + 1.;
+            let n = ((min_y - base.y) / tile_h).ceil().max(0.) + repeat_margin.0 as f32;
             (
                 base.y + n * tile_h,
-                (max_y - base.y).abs().max(visible_area.height()) + 2. * tile_h,
+                (max_y - base.y).abs().max(visible_area.height())
+                    + (1. + 2. * repeat_margin.0 as f32) * tile_h,
             )
         } else {
             (base.y, image.base_size.y)
@@ -97,8 +104,8 @@ fn update_image_position_and_size(
 
         // Update Sprite relative Transform and size
         transform.translation = Vec3::new(
-            x - parent_transform.translation().x,
-            y - parent_transform.translation().y,
+            x - layer_transform.translation().x,
+            y - layer_transform.translation().y,
             0.,
         );
         sprite.custom_size = Some(Vec2::new(width, height));

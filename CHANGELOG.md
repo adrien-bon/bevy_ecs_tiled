@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Features
+
+- Add a new component on the map entity, `TiledMapImageRepeatMargin`, to control the margin to apply for repeating images
+
 ## v0.9.2
 
 ### Features
