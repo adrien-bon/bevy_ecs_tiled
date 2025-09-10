@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::TiledParallaxCamera;
 
 use crate::player::Player;
 
@@ -11,7 +12,7 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 fn setup_camera(mut commands: Commands) {
-    commands.spawn((Name::new("Camera"), Camera2d));
+    commands.spawn((Name::new("Camera"), Camera2d, TiledParallaxCamera));
 }
 
 fn camera_follow_player(
