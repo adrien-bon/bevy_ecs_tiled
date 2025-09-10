@@ -25,6 +25,7 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 #[require(
     TiledMapStorage,
     TiledMapLayerZOffset,
+    TiledMapImageRepeatMargin,
     TilemapRenderSettings,
     TilemapAnchor,
     Visibility,
@@ -42,6 +43,23 @@ pub struct TiledMapLayerZOffset(pub f32);
 impl Default for TiledMapLayerZOffset {
     fn default() -> Self {
         Self(100.)
+    }
+}
+
+/// Number of extra tiles to repeat beyond the visible area on each side when tiling an
+/// image with repeat x and/or repeat y enabled.
+///
+/// This margin ensures that, even if the camera moves or the visible area changes slightly,
+/// there will be no visible gaps at the edges of the repeated image. The value represents
+/// how many additional tiles (in both directions) are rendered outside the current viewport.
+/// Increase this value if you observe gaps when moving the camera quickly or zooming out.
+#[derive(Component, Reflect, Copy, Clone, Debug)]
+#[reflect(Component, Default, Debug)]
+pub struct TiledMapImageRepeatMargin(pub u32);
+
+impl Default for TiledMapImageRepeatMargin {
+    fn default() -> Self {
+        Self(1)
     }
 }
 
@@ -70,6 +88,7 @@ pub struct RespawnTiledMap;
 pub(crate) fn plugin(app: &mut bevy::prelude::App) {
     app.register_type::<TiledMap>();
     app.register_type::<TiledMapLayerZOffset>();
+    app.register_type::<TiledMapImageRepeatMargin>();
     app.register_type::<RespawnTiledMap>();
 
     app.add_systems(
