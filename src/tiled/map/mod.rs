@@ -88,6 +88,7 @@ pub struct RespawnTiledMap;
 pub(crate) fn plugin(app: &mut bevy::prelude::App) {
     app.register_type::<TiledMap>();
     app.register_type::<TiledMapLayerZOffset>();
+    app.register_type::<TiledMapImageRepeatMargin>();
     app.register_type::<RespawnTiledMap>();
 
     app.add_systems(
