@@ -16,7 +16,7 @@ impl Plugin for HelperPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_plugins((
             EguiPlugin::default(),
-            WorldInspectorPlugin::default().run_if(input_toggle_active(false, KeyCode::Escape)),
+            WorldInspectorPlugin::default().run_if(input_toggle_active(false, KeyCode::F1)),
             // we want Bevy to measure these values for us:
             bevy::diagnostic::FrameTimeDiagnosticsPlugin::default(),
             bevy::diagnostic::EntityCountDiagnosticsPlugin,
@@ -43,8 +43,8 @@ fn setup_help_text(mut commands: Commands) {
             ..default()
         })
         .with_children(|builder| {
-            builder.spawn(Text(String::from("Toggle inspector: [Esc]")));
-            builder.spawn(Text(String::from("Toggle iyes_perf_ui: [Backspace]")));
+            builder.spawn(Text(String::from("Toggle inspector: [F1]")));
+            builder.spawn(Text(String::from("Toggle iyes_perf_ui: [F2]")));
             builder.spawn(Text(String::from("Pan camera: [W/A/S/D]")));
             builder.spawn(Text(String::from("Zoom camera: [Z/X]")));
             builder.spawn(Text(String::from("Rotate map / world: [Q/E]")));
@@ -56,7 +56,7 @@ fn toggle_perf_ui(
     q_perf_ui: Query<Entity, With<PerfUiRoot>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
 ) {
-    if keyboard_input.just_pressed(KeyCode::Backspace) {
+    if keyboard_input.just_pressed(KeyCode::F2) {
         if let Ok(e) = q_perf_ui.single() {
             commands.entity(e).despawn();
         } else {
