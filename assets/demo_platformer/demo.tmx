@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="128" tileheight="128" infinite="1" nextlayerid="6" nextobjectid="2">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="128" tileheight="128" infinite="1" nextlayerid="7" nextobjectid="2">
  <tileset firstgid="1" source="tilesets/ground.tsx"/>
- <imagelayer id="2" name="Background">
+ <imagelayer id="2" name="Background" offsetx="6.06061" offsety="154.545" parallaxx="0.3" repeatx="1">
   <image source="kenney_platformer-pack-redux/PNG/Backgrounds/blue_land.png" width="1024" height="1024"/>
  </imagelayer>
  <layer id="1" name="Terrain" width="30" height="20">
@@ -45,7 +45,7 @@
   </data>
  </layer>
  <objectgroup id="5" name="Objects">
-  <object id="1" name="Player spawn" x="-286" y="526">
+  <object id="1" name="Player spawn" x="-270.848" y="816.909">
    <properties>
     <property name="SpawnPoint" type="class" propertytype="demo_platformer::player::PlayerSpawnPoint"/>
    </properties>
