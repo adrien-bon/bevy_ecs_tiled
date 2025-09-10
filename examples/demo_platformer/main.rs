@@ -1,3 +1,5 @@
+use std::env;
+
 use avian2d::prelude::*;
 use bevy::{asset::AssetMetaCheck, prelude::*};
 use bevy_ecs_tiled::prelude::*;
@@ -56,15 +58,20 @@ fn main() {
         controller::CharacterControllerPlugin,
     ));
 
+    let mut path = env::current_dir().unwrap();
+    path.push("assets");
+    path.push("demo_platformer");
+    path.push("demo_platformer_types.json");
+
     app
         // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
         // be automatically added as well if it's not already done.
         .add_plugins((
             TiledPlugin(TiledPluginConfig {
+                tiled_types_export_file: Some(path),
                 tiled_types_filter: TiledFilter::from(
                     RegexSet::new([r"^demo_platformer::.*"]).unwrap(),
                 ),
-                ..default()
             }),
             TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default(),
             PhysicsPlugins::default().with_length_unit(100.0),
