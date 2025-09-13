@@ -264,6 +264,94 @@ impl TiledMapAsset {
         self.world_space_from_tiled_position(anchor, Vec2::new(object.x, object.y))
     }
 
+    /// Returns the center of a Tiled object in world coordinates, taking into account map type and transform.
+    ///
+    /// # Arguments
+    /// * `tiled_object` - The Tiled object to compute the center for.
+    /// * `transform` - The global transform to apply to the object.
+    ///
+    /// # Returns
+    /// * `Option<Coord<f32>>` - The world-space center of the object, or `None` if not applicable.
+    pub fn object_center(
+        &self,
+        tiled_object: &TiledObject,
+        transform: &GlobalTransform,
+    ) -> Option<Coord<f32>> {
+        tiled_object.center(
+            transform,
+            matches!(tilemap_type_from_map(&self.map), TilemapType::Isometric(..)),
+            &self.tilemap_size,
+            &grid_size_from_map(&self.map),
+            self.tiled_offset,
+        )
+    }
+
+    /// Returns the vertices of a Tiled object in world coordinates, taking into account map type and transform.
+    ///
+    /// # Arguments
+    /// * `tiled_object` - The Tiled object to compute the vertices for.
+    /// * `transform` - The global transform to apply to the object.
+    ///
+    /// # Returns
+    /// * `Vec<Coord<f32>>` - The world-space vertices of the object.
+    pub fn object_vertices(
+        &self,
+        tiled_object: &TiledObject,
+        transform: &GlobalTransform,
+    ) -> Vec<Coord<f32>> {
+        tiled_object.vertices(
+            transform,
+            matches!(tilemap_type_from_map(&self.map), TilemapType::Isometric(..)),
+            &self.tilemap_size,
+            &grid_size_from_map(&self.map),
+            self.tiled_offset,
+        )
+    }
+
+    /// Returns the object's geometry as a [`LineString`] in world coordinates, if applicable.
+    ///
+    /// # Arguments
+    /// * `tiled_object` - The Tiled object to compute the line string for.
+    /// * `transform` - The global transform to apply to the object.
+    ///
+    /// # Returns
+    /// * `Option<LineString<f32>>` - The object's geometry as a line string, or `None` if not applicable.
+    pub fn object_line_string(
+        &self,
+        tiled_object: &TiledObject,
+        transform: &GlobalTransform,
+    ) -> Option<LineString<f32>> {
+        tiled_object.line_string(
+            transform,
+            matches!(tilemap_type_from_map(&self.map), TilemapType::Isometric(..)),
+            &self.tilemap_size,
+            &grid_size_from_map(&self.map),
+            self.tiled_offset,
+        )
+    }
+
+    /// Returns the object's geometry as a [`GeoPolygon`] in world coordinates, if applicable.
+    ///
+    /// # Arguments
+    /// * `tiled_object` - The Tiled object to compute the polygon for.
+    /// * `transform` - The global transform to apply to the object.
+    ///
+    /// # Returns
+    /// * `Option<GeoPolygon<f32>>` - The object's geometry as a polygon, or `None` if not applicable.
+    pub fn object_polygon(
+        &self,
+        tiled_object: &TiledObject,
+        transform: &GlobalTransform,
+    ) -> Option<GeoPolygon<f32>> {
+        tiled_object.polygon(
+            transform,
+            matches!(tilemap_type_from_map(&self.map), TilemapType::Isometric(..)),
+            &self.tilemap_size,
+            &grid_size_from_map(&self.map),
+            self.tiled_offset,
+        )
+    }
+
     /// Returns the world position (center) of a tile relative to its parent [`TiledTilemap`] [`Entity`].
     ///
     /// This function computes the world-space position of a tile, given its [`TilePos`], tile size, and map anchor.
