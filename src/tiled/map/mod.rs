@@ -102,6 +102,15 @@ impl Default for TiledMapImageRepeatMargin {
     }
 }
 
+/// Component that stores a reference to the parent Tiled map entity for a given Tiled item.
+///
+/// This component is automatically attached to all entities that are part of a Tiled map hierarchy,
+/// such as layers [`TiledLayer`], tilemaps [`TiledTilemap`], objects [`TiledObject`], and images [`TiledImage`].
+/// It allows systems and queries to easily retrieve the root map entity associated with any Tiled sub-entity.
+#[derive(Component, Reflect, Copy, Clone, Debug)]
+#[reflect(Component, Debug)]
+pub struct TiledMapReference(pub Entity);
+
 /// Marker component to trigger a respawn (reload) of a Tiled map.
 ///
 /// Add this component to the entity holding the [`TiledMap`] to force the map and all its layers, tiles, and objects to be reloaded.
@@ -128,6 +137,7 @@ pub(crate) fn plugin(app: &mut bevy::prelude::App) {
     app.register_type::<TiledMap>();
     app.register_type::<TiledMapLayerZOffset>();
     app.register_type::<TiledMapImageRepeatMargin>();
+    app.register_type::<TiledMapReference>();
     app.register_type::<RespawnTiledMap>();
 
     app.add_systems(

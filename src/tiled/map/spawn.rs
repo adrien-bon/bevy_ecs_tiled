@@ -63,6 +63,7 @@ pub(crate) fn spawn_map(
         let layer_entity = commands
             .spawn((
                 ChildOf(map_entity),
+                TiledMapReference(map_entity),
                 // Apply layer Transform using both layer base Transform and Tiled offset
                 layer_transform,
                 // Determine layer default visibility
@@ -224,6 +225,7 @@ fn spawn_tiles_layer(
         let tilemap_entity = commands
             .spawn((
                 Name::new(format!("TiledTilemap({}, {})", layer.name, tileset.name)),
+                TiledMapReference(layer_event.get_map_entity().unwrap()),
                 TiledTilemap,
                 ChildOf(layer_event.origin),
             ))
@@ -416,6 +418,7 @@ fn spawn_objects_layer(
             .spawn((
                 Name::new(format!("{object_kind}({})", object_data.name)),
                 ChildOf(layer_event.origin),
+                TiledMapReference(layer_event.get_map_entity().unwrap()),
                 tiled_object,
                 transform,
                 match &object_data.visible {
@@ -608,6 +611,7 @@ fn spawn_image_layer(
                 base_size: image_size,
             },
             ChildOf(layer_event.origin),
+            TiledMapReference(layer_event.get_map_entity().unwrap()),
             Sprite {
                 image: handle.clone(),
                 anchor: Anchor::TopLeft,

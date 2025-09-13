@@ -5,6 +5,7 @@
 ### Features
 
 - Add a new component on the map entity, `TiledMapImageRepeatMargin`, to control the margin to apply for repeating images
+- Add a new component, `TiledMapReference`, to track from which map a Tiled item belongs to
 
 ### Documentation
 
