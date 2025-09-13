@@ -1,6 +1,6 @@
 [
   {
-    "id": 9,
+    "id": 12,
     "name": "bevy_time::timer::TimerMode",
     "type": "class",
     "useAs": [
@@ -18,7 +18,7 @@
     ]
   },
   {
-    "id": 8,
+    "id": 11,
     "name": "bevy_time::timer::TimerMode:::Variant",
     "type": "enum",
     "storageType": "string",
@@ -29,7 +29,7 @@
     "valuesAsFlags": false
   },
   {
-    "id": 6,
+    "id": 9,
     "name": "demo_platformer::animation::AnimationState",
     "type": "class",
     "useAs": [
@@ -47,7 +47,7 @@
     ]
   },
   {
-    "id": 5,
+    "id": 8,
     "name": "demo_platformer::animation::AnimationState:::Variant",
     "type": "enum",
     "storageType": "string",
@@ -59,8 +59,8 @@
     "valuesAsFlags": false
   },
   {
-    "id": 3,
-    "name": "demo_platformer::player::Player",
+    "id": 5,
+    "name": "demo_platformer::enemy::Enemy",
     "type": "class",
     "useAs": [
       "property"
@@ -71,6 +71,51 @@
   },
   {
     "id": 2,
+    "name": "demo_platformer::enemy::PatrolProgress",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": "0",
+        "type": "int",
+        "value": null
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "demo_platformer::enemy::PatrolRoute",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": "0",
+        "type": "object",
+        "value": null
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "demo_platformer::player::Player",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": []
+  },
+  {
+    "id": 3,
     "name": "demo_platformer::player::PlayerSpawnPoint",
     "type": "class",
     "useAs": [
