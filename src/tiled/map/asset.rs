@@ -145,7 +145,38 @@ impl TiledMapAsset {
             }
     }
 
-    /// Iterate over all tiles from the given [`TileLayer`].
+    /// Iterates over all tiles in the given [`TileLayer`], invoking a callback for each tile.
+    ///
+    /// This function abstracts over both finite and infinite Tiled map layers, providing a unified
+    /// way to visit every tile in a layer. For each tile, the provided closure is called with:
+    /// - the [`LayerTile`] (tile instance)
+    /// - a reference to the [`LayerTileData`] (tile metadata)
+    /// - the [`TilePos`] (tile position in Bevy coordinates)
+    /// - the [`IVec2`] (tile position in Tiled chunk coordinates)
+    ///
+    /// The coordinate conversion ensures that the tile positions are consistent with Bevy's coordinate system,
+    /// including Y-axis inversion and chunk offset handling for infinite maps.
+    ///
+    /// # Arguments
+    /// * `tiles_layer` - The Tiled tile layer to iterate over (finite or infinite).
+    /// * `f` - A closure to call for each tile, with signature:
+    ///   `(LayerTile, &LayerTileData, TilePos, IVec2)`
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// use bevy_ecs_tiled::prelude::*;
+    ///
+    /// fn print_tile_positions(asset: &TiledMapAsset, layer: &TileLayer) {
+    ///     asset.for_each_tile(layer, |tile, data, tile_pos, chunk_pos| {
+    ///         println!("Tile at Bevy pos: {:?}, chunk pos: {:?}", tile_pos, chunk_pos);
+    ///     });
+    /// }
+    /// ```
+    ///
+    /// # Notes
+    /// - For infinite maps, chunk positions are shifted so that the top-left chunk is at (0, 0),
+    ///   and negative tile coordinates are avoided.
+    /// - The Y coordinate is inverted to match Bevy's coordinate system (origin at bottom-left).
     pub fn for_each_tile<'a, F>(&'a self, tiles_layer: &TileLayer<'a>, mut f: F)
     where
         F: FnMut(LayerTile<'a>, &LayerTileData, TilePos, IVec2),
@@ -217,16 +248,38 @@ impl TiledMapAsset {
         }
     }
 
-    /// Retrieve an [`Object`] world position (object top left) relative to its parent [`TiledLayer::Objects`] [`Entity`].
+    /// Returns the world position of a Tiled [`Object`] relative to its parent [`TiledLayer::Objects`] entity.
     ///
-    /// In most cases it's easier to use the object [`Transform`] component to get its position.
+    /// The returned position corresponds to the object's top-left anchor in world coordinates, taking into account
+    /// the map's anchor, grid size, and coordinate system. This is equivalent to using the object's [`Transform`] component
+    /// to get its position, but is provided for convenience and consistency with other Tiled coordinate conversions.
+    ///
+    /// # Arguments
+    /// * `object` - The Tiled object whose position to compute.
+    /// * `anchor` - The [`TilemapAnchor`] used for the map.
+    ///
+    /// # Returns
+    /// * `Vec2` - The object's world position relative to its parent layer entity.
     pub fn object_relative_position(&self, object: &Object, anchor: &TilemapAnchor) -> Vec2 {
         self.world_space_from_tiled_position(anchor, Vec2::new(object.x, object.y))
     }
 
-    /// Retrieve a [`Tile`] world position (tile center) relative to its parent [`TiledTilemap`] [`Entity`].
+    /// Returns the world position (center) of a tile relative to its parent [`TiledTilemap`] [`Entity`].
     ///
-    /// This can be useful since tiles do not have a [`Transform`] component.
+    /// This function computes the world-space position of a tile, given its [`TilePos`], tile size, and map anchor.
+    /// It is especially useful because tiles do not have their own [`Transform`] component, so their world position must be calculated manually.
+    ///
+    /// The returned position is the center of the tile in world coordinates, taking into account the map's size,
+    /// grid size, tile size, map type (orthogonal, isometric, hex), and anchor. This ensures correct placement
+    /// regardless of map orientation or coordinate system.
+    ///
+    /// # Arguments
+    /// * `tile_pos` - The tile's position in Bevy tile coordinates (origin at bottom-left).
+    /// * `tile_size` - The size of the tile in pixels.
+    /// * `anchor` - The [`TilemapAnchor`] used for the map.
+    ///
+    /// # Returns
+    /// * `Vec2` - The world-space position of the tile's center, relative to its parent tilemap entity.
     ///
     /// # Example
     /// ```rust,no_run
@@ -239,39 +292,30 @@ impl TiledMapAsset {
     ///     tile_query: Query<(Entity, &TilePos, &ChildOf), With<TiledTile>>,
     ///     tilemap_query: Query<&GlobalTransform, With<TiledTilemap>>,
     /// ) {
-    ///     // We will iterate over tiles using the TiledMapStorage component
     ///     for (tiled_map, storage, anchor) in map_query.iter() {
-    ///         let Some(map_asset) = assets.get(&tiled_map.0) else {
-    ///             continue;
-    ///         };
+    ///         let Some(map_asset) = assets.get(&tiled_map.0) else { continue; };
     ///         for (_, entities) in storage.tiles() {
     ///             for entity in entities {
-    ///                 let Ok((entity, tile_pos, child_of)) = tile_query.get(*entity) else {
-    ///                     continue;
-    ///                 };
-    ///                 let Some(tile) = storage.get_tile(&map_asset.map, entity) else {
-    ///                     continue;
-    ///                 };
-    ///
-    ///                 // Retrieve the tile relative position
+    ///                 let Ok((_, tile_pos, child_of)) = tile_query.get(*entity) else { continue; };
+    ///                 let Some(tile) = storage.get_tile(&map_asset.map, *entity) else { continue; };
+    ///                 // Compute the tile's world position (center)
     ///                 let tile_rel_pos = map_asset.tile_relative_position(
     ///                     tile_pos,
     ///                     &tile_size(&tile),
     ///                     anchor
     ///                 );
-    ///
-    ///                 // If we want to get the tile GlobalTransform,
-    ///                 // we need to offset this with GlobalTransform from its parent tilemap
-    ///                 let Ok(parent_transform) = tilemap_query.get(child_of.parent()) else {
-    ///                     continue;
-    ///                 };
-    ///                 let tile_transform =
-    ///                     *parent_transform * Transform::from_translation(tile_rel_pos.extend(0.));
+    ///                 // To get the tile's global transform, combine with the parent tilemap's transform
+    ///                 let Ok(parent_transform) = tilemap_query.get(child_of.parent()) else { continue; };
+    ///                 let tile_transform = *parent_transform * Transform::from_translation(tile_rel_pos.extend(0.));
     ///             }
     ///         }
     ///     }
     /// }
     /// ```
+    ///
+    /// # Notes
+    /// - The returned position is relative to the parent tilemap entity, not global coordinates.
+    /// - For global/world coordinates, combine with the parent tilemap's [`GlobalTransform`].
     pub fn tile_relative_position(
         &self,
         tile_pos: &TilePos,

@@ -10,6 +10,7 @@
 ### Documentation
 
 - Improve documentation for world and map base components
+- Improve documentation for `TiledMapAsset` functions
 
 ## v0.9.2
 
