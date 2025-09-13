@@ -8,6 +8,7 @@ mod animation;
 mod camera;
 mod controller;
 mod debug;
+mod enemy;
 mod level;
 mod player;
 
@@ -54,6 +55,7 @@ fn main() {
         camera::plugin,
         debug::plugin,
         player::plugin,
+        enemy::plugin,
         level::plugin,
         controller::CharacterControllerPlugin,
     ));

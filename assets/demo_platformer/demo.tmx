@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="128" tileheight="128" infinite="1" nextlayerid="7" nextobjectid="2">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="128" tileheight="128" infinite="1" nextlayerid="7" nextobjectid="4">
  <tileset firstgid="1" source="tilesets/ground.tsx"/>
  <imagelayer id="2" name="Background" offsetx="6.06061" offsety="154.545" parallaxx="0.3" repeatx="1">
   <image source="kenney_platformer-pack-redux/PNG/Backgrounds/blue_land.png" width="1024" height="1024"/>
@@ -50,6 +50,20 @@
     <property name="SpawnPoint" type="class" propertytype="demo_platformer::player::PlayerSpawnPoint"/>
    </properties>
    <point/>
+  </object>
+  <object id="2" name="Enemy n°1" x="957.576" y="887.879">
+   <properties>
+    <property name="Enemy" type="class" propertytype="demo_platformer::enemy::Enemy"/>
+    <property name="PatrolRoute" type="class" propertytype="demo_platformer::enemy::PatrolRoute">
+     <properties>
+      <property name="0" type="object" value="3"/>
+     </properties>
+    </property>
+   </properties>
+   <point/>
+  </object>
+  <object id="3" name="Patrol route n°1" x="815.152" y="972.727">
+   <polyline points="0,0 -469.697,0 -1027.27,-3.0303"/>
   </object>
  </objectgroup>
 </map>
