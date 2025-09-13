@@ -10,6 +10,9 @@ use crate::{
 use avian2d::{math::*, prelude::*};
 use bevy::{prelude::*, sprite::Anchor};
 
+const PLAYER_SPRITE_FILE: &str =
+    "demo_platformer/kenney_platformer-pack-redux/Spritesheets/spritesheet_players.png";
+
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<Player>();
     app.register_type::<PlayerSpawnPoint>();
@@ -71,9 +74,7 @@ fn spawn_player_at_spawn_point(
         Player,
         spawn_transform,
         Sprite {
-            image: asset_server.load(
-                "demo_platformer/kenney_platformer-pack-redux/Spritesheets/spritesheet_players.png",
-            ),
+            image: asset_server.load(PLAYER_SPRITE_FILE),
             texture_atlas: Some(TextureAtlas {
                 layout: texture_atlas_layout,
                 index: 6,
