@@ -29,10 +29,12 @@ use crate::tiled::{
 /// Wrapper around Tiled events
 ///
 /// Contains generic informations about origin of a particular Tiled event
-#[derive(Event, Clone, Copy, PartialEq, Debug, Reflect, Component)]
-#[event(auto_propagate, traversal = &'static ChildOf)]
+#[derive(Message, EntityEvent Clone, Copy, PartialEq, Debug, Reflect, Component)]
+#[event(auto_propagate, propagate = &'static ChildOf)]
 #[reflect(Component, Debug, Clone)]
 pub struct TiledEvent<E: Debug + Clone + Copy + Reflect> {
+    /// The entity this event happened for
+    pub entity: Entity,
     /// The original target of this event, before bubbling
     pub origin: Entity,
     /// The specific event that was triggered
@@ -55,6 +57,7 @@ where
     /// Creates a new [`TiledEvent`]
     pub fn new(origin: Entity, event: E) -> Self {
         Self {
+            entity: origin,
             origin,
             event,
             world: None,
@@ -72,6 +75,7 @@ where
         O: Debug + Clone + Copy + Reflect,
     {
         TiledEvent::<O> {
+            entity: self.entity,
             origin: origin.unwrap_or(self.origin),
             event,
             world: self.world,
@@ -120,8 +124,8 @@ where
     }
 
     /// Trigger observer and write event for this [`TiledEvent`]
-    pub fn send(&self, commands: &mut Commands, event_writer: &mut EventWriter<TiledEvent<E>>) {
-        commands.trigger_targets(*self, self.origin);
+    pub fn send(&self, commands: &mut Commands, event_writer: &mut MessageWriter<TiledEvent<E>>) {
+        commands.trigger_targets(*self);
         event_writer.write(*self);
     }
 }
@@ -293,24 +297,24 @@ pub struct ObjectCreated;
 
 // /// All event writers used when loading a map
 #[derive(SystemParam)]
-pub(crate) struct TiledEventWriters<'w> {
+pub(crate) struct TiledMessageWriters<'w> {
     /// World events writer
-    pub world_created: EventWriter<'w, TiledEvent<WorldCreated>>,
+    pub world_created: MessageWriter<'w, TiledEvent<WorldCreated>>,
     /// Map events writer
-    pub map_created: EventWriter<'w, TiledEvent<MapCreated>>,
+    pub map_created: MessageWriter<'w, TiledEvent<MapCreated>>,
     /// Layer events writer
-    pub layer_created: EventWriter<'w, TiledEvent<LayerCreated>>,
+    pub layer_created: MessageWriter<'w, TiledEvent<LayerCreated>>,
     /// Tilemap events writer
-    pub tilemap_created: EventWriter<'w, TiledEvent<TilemapCreated>>,
+    pub tilemap_created: MessageWriter<'w, TiledEvent<TilemapCreated>>,
     /// Tile events writer
-    pub tile_created: EventWriter<'w, TiledEvent<TileCreated>>,
+    pub tile_created: MessageWriter<'w, TiledEvent<TileCreated>>,
     /// Object events writer
-    pub object_created: EventWriter<'w, TiledEvent<ObjectCreated>>,
+    pub object_created: MessageWriter<'w, TiledEvent<ObjectCreated>>,
 }
 
-impl fmt::Debug for TiledEventWriters<'_> {
+impl fmt::Debug for TiledMessageWriters<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("TiledEventWriters").finish()
+        f.debug_struct("TiledMessageWriters").finish()
     }
 }
 
