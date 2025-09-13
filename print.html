@@ -535,7 +535,7 @@ bevy_ecs_tiled = "0.9"
 </code></pre>
 <h3 id="basic-usage"><a class="header" href="#basic-usage">Basic Usage</a></h3>
 <p>To get started, add the plugin to your app and spawn a map entity.
-All you need to do is spawn a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/struct.TiledMap.html"><code>TiledMap</code></a> component with the map asset you want to load (e.g., your <code>map.tmx</code> file).
+All you need to do is spawn a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMap.html"><code>TiledMap</code></a> component with the map asset you want to load (e.g., your <code>map.tmx</code> file).
 Make sure this map asset, along with any required dependencies (such as images or tilesets), is present in your local assets folder (by default, <code>./assets/</code>).</p>
 <pre><pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
@@ -567,7 +567,7 @@ fn startup(
 }</code></pre></pre>
 <p>This simple example will load a map using the default settings.</p>
 <h3 id="customizing-map-loading"><a class="header" href="#customizing-map-loading">Customizing Map Loading</a></h3>
-<p>You can customize how the map is loaded by listening to specific <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/bevy_ecs_tiled/tiled/event/index.html"><code>TiledEvent</code></a> or adding various components to the map entity, such as:</p>
+<p>You can customize how the map is loaded by listening to specific <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TiledEvent.html"><code>TiledEvent</code></a> or adding various components to the map entity, such as:</p>
 <ul>
 <li><a href="https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/anchor/enum.TilemapAnchor.html"><code>TilemapAnchor</code></a> — Controls the anchor point of the tilemap.</li>
 <li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMapLayerZOffset.html"><code>TiledMapLayerZOffset</code></a> — Adjusts the Z offset between map layers.</li>
