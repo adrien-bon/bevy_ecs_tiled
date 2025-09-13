@@ -12,9 +12,24 @@ pub mod storage;
 use crate::{prelude::*, tiled::event::TiledEventWriters};
 use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 
-/// Wrapper around the [`Handle`] to the `.world` file representing the [`TiledWorld`].
+/// Main component for loading and managing a Tiled world in the ECS world.
 ///
-/// This is the main [`Component`] that must be spawned to load a Tiled world.
+/// Attach this component to an entity to load a Tiled world from a `.world` file. The inner value is a [`Handle<TiledWorldAsset>`],
+/// which references the loaded [`TiledWorldAsset`]. This entity acts as the root for all maps, layers, and objects spawned from the world.
+///
+/// Required components (automatically added with default value if missing):
+/// - [`TiledWorldChunking`]: Controls chunking and streaming of maps within the world.
+/// - [`TiledMapLayerZOffset`], [`TiledMapImageRepeatMargin`], [`TilemapAnchor`], [`TilemapRenderSettings`], [`Visibility`], [`Transform`]: Required components for the underlying [`TiledMap`]Required components for the underlying [`TiledMap`].
+///
+/// Example:
+/// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
+/// fn spawn_world(mut commands: Commands, asset_server: Res<AssetServer>) {
+///     commands.spawn(TiledWorld(asset_server.load("demo.world")));
+/// }
+/// ```
 #[derive(Component, Reflect, Clone, Debug)]
 #[reflect(Component, Debug)]
 #[require(
@@ -29,9 +44,24 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 )]
 pub struct TiledWorld(pub Handle<TiledWorldAsset>);
 
-/// Marker [`Component`] to trigger a world respawn.
+/// Marker component to trigger a Tiled world respawn.
 ///
-/// Must be added to the [`Entity`] holding the map.
+/// Add this component to the entity holding the [`TiledWorld`] to force the world and all its maps to be reloaded.
+/// This is useful for hot-reloading, resetting, or programmatically refreshing the world state.
+///
+/// When present, the plugin will despawn all child entities and re-instantiate the world from its asset, preserving the top-level entity and its components.
+///
+/// Example:
+/// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
+/// fn respawn_world(mut commands: Commands, world_query: Query<Entity, With<TiledWorld>>) {
+///     if let Ok(entity) = world_query.single() {
+///         commands.entity(entity).insert(RespawnTiledWorld);
+///     }
+/// }
+/// ```
 #[derive(Component, Default, Reflect, Copy, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
 pub struct RespawnTiledWorld;

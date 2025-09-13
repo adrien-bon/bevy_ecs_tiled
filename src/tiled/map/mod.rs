@@ -16,10 +16,27 @@ use crate::{
 };
 use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 
-/// The component representing our Tiled map.
+/// Main component for loading and managing a Tiled map in the ECS world.
 ///
-/// This is a [`Handle`] to the loaded `.tmx` file, ie. a [`TiledMapAsset`].
-/// This is the main [`Component`] that must be spawned to load a Tiled map.
+/// Attach this component to an entity to load a Tiled map from a `.tmx` file. The inner value is a [`Handle<TiledMapAsset>`],
+/// which references the loaded [`TiledMapAsset`]. This entity acts as the root for all layers, tiles, and objects spawned from the map.
+///
+/// Required components (automatically added with default value if missing):
+/// - [`TiledMapLayerZOffset`]: Controls Z stacking order between layers.
+/// - [`TiledMapImageRepeatMargin`]: Controls image tiling margin for repeated images.
+/// - [`TilemapRenderSettings`]: Controls custom parameters for the render pipeline.
+/// - [`TilemapAnchor`]: Controls the anchor point of the map.
+/// - [`Visibility`] and [`Transform`]: Standard Bevy components.
+///
+/// Example:
+/// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
+/// fn spawn_map(mut commands: Commands, asset_server: Res<AssetServer>) {
+///     commands.spawn(TiledMap(asset_server.load("map.tmx")));
+/// }
+/// ```
 #[derive(Component, Reflect, Clone, Debug)]
 #[reflect(Component, Debug)]
 #[require(
@@ -33,9 +50,31 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 )]
 pub struct TiledMap(pub Handle<TiledMapAsset>);
 
-/// Specificy the Z offset between two consecutives Tiled layers.
+/// Controls the Z stacking order between Tiled map layers for correct rendering.
 ///
-/// Must be added to the [`TiledMap`] [`Entity`].
+/// Attach this component to a [`TiledMap`] entity to specify the Z offset (distance) between each Tiled layer.
+/// This ensures that layers are rendered in the correct order and helps prevent Z-fighting artifacts, especially
+/// in isometric or multi-layered maps. The value is in world units (typically pixels for 2D maps).
+///
+/// Defaults to `100.0` units between layers, which is suitable for most 2D maps.
+/// - Increase the value if you observe rendering artifacts or Z-fighting between layers.
+/// - Decrease the value if you want a more compact stacking of layers (e.g., for a "flatter" map).
+///
+/// Example:
+/// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
+/// fn spawn_map(mut commands: Commands, asset_server: Res<AssetServer>) {
+///     commands.spawn((
+///         TiledMap(asset_server.load("map.tmx")),
+///         TiledMapLayerZOffset(200.0), // Custom Z offset between layers
+///     ));
+/// }
+/// ```
+///
+/// # Notes
+/// - The Z offset is applied incrementally for each layer: the first layer is at Z=0, the next at Z=offset, etc.
 #[derive(Component, Reflect, Copy, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
 pub struct TiledMapLayerZOffset(pub f32);
@@ -63,19 +102,19 @@ impl Default for TiledMapImageRepeatMargin {
     }
 }
 
-/// Marker [`Component`] to trigger a map respawn.
+/// Marker component to trigger a respawn (reload) of a Tiled map.
 ///
-/// Must be added to the [`TiledMap`] [`Entity`].
+/// Add this component to the entity holding the [`TiledMap`] to force the map and all its layers, tiles, and objects to be reloaded.
+/// This is useful for hot-reloading, resetting, or programmatically refreshing the map state at runtime.
+///
+/// When present, the plugin will despawn all child entities and re-instantiate the map from its asset, preserving the top-level entity and its components.
 ///
 /// Example:
 /// ```rust,no_run
 /// use bevy::prelude::*;
 /// use bevy_ecs_tiled::prelude::*;
 ///
-/// fn handle_respawn(
-///     mut commands: Commands,
-///     map_query: Query<Entity, With<TiledMap>>,
-/// ) {
+/// fn respawn_map(mut commands: Commands, map_query: Query<Entity, With<TiledMap>>) {
 ///     if let Ok(entity) = map_query.single() {
 ///         commands.entity(entity).insert(RespawnTiledMap);
 ///     }

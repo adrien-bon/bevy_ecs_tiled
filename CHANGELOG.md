@@ -6,6 +6,10 @@
 
 - Add a new component on the map entity, `TiledMapImageRepeatMargin`, to control the margin to apply for repeating images
 
+### Documentation
+
+- Improve documentation for world and map base components
+
 ## v0.9.2
 
 ### Features
