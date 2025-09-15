@@ -4,7 +4,7 @@
 //! It handles the creation of map layers, tiles, objects, and their associated components in the ECS world,
 //! enabling the rendering and interaction of Tiled maps within a Bevy application.
 
-use crate::{prelude::*, tiled::event::TiledEventWriters, tiled::layer::TiledLayerParallax};
+use crate::{prelude::*, tiled::event::TiledMessageWriters, tiled::layer::TiledLayerParallax};
 use bevy::{prelude::*, sprite::Anchor};
 use bevy_ecs_tilemap::prelude::{
     AnimatedTile, IsoCoordSystem, TileBundle, TileFlip, TileStorage, TileTextureIndex, TilemapId,
@@ -28,7 +28,7 @@ pub(crate) fn spawn_map(
     map_storage: &mut TiledMapStorage,
     render_settings: &TilemapRenderSettings,
     layer_z_offset: &TiledMapLayerZOffset,
-    event_writers: &mut TiledEventWriters,
+    message_writers: &mut TiledMessageWriters,
     anchor: &TilemapAnchor,
 ) {
     commands.entity(map_entity).insert(Name::new(format!(
@@ -171,19 +171,19 @@ pub(crate) fn spawn_map(
     }
 
     // Send events and trigger observers
-    map_event.send(commands, &mut event_writers.map_created);
+    map_event.send(commands, &mut message_writers.map_created);
 
     for e in layer_events {
-        e.send(commands, &mut event_writers.layer_created);
+        e.send(commands, &mut message_writers.layer_created);
     }
     for e in tilemap_events {
-        e.send(commands, &mut event_writers.tilemap_created);
+        e.send(commands, &mut message_writers.tilemap_created);
     }
     for e in tile_events {
-        e.send(commands, &mut event_writers.tile_created);
+        e.send(commands, &mut message_writers.tile_created);
     }
     for e in object_events {
-        e.send(commands, &mut event_writers.object_created);
+        e.send(commands, &mut message_writers.object_created);
     }
 }
 
@@ -438,6 +438,7 @@ fn spawn_objects_layer(
                     TiledObjectVisualOf(object_entity),
                     ChildOf(object_entity),
                     sprite,
+                    Anchor::BOTTOM_LEFT,
                     offset_transform,
                 ));
             }
@@ -447,6 +448,7 @@ fn spawn_objects_layer(
                     TiledObjectVisualOf(object_entity),
                     ChildOf(object_entity),
                     sprite,
+                    Anchor::BOTTOM_LEFT,
                     offset_transform,
                     animation,
                 ));
@@ -520,7 +522,6 @@ fn handle_tile_object(
                             layout: handle.clone(),
                             index: tile.id() as usize,
                         }),
-                        anchor: Anchor::BottomLeft,
                         flip_x: tile.flip_h,
                         flip_y: tile.flip_v,
                         custom_size: Some(Vec2::new(
@@ -538,7 +539,6 @@ fn handle_tile_object(
                 vector.get(index as usize).map(|image| {
                     Sprite {
                         image: image.clone(),
-                        anchor: Anchor::BottomLeft,
                         flip_x: tile.flip_h,
                         flip_y: tile.flip_v,
                         custom_size: Some(Vec2::new(
@@ -614,7 +614,6 @@ fn spawn_image_layer(
             TiledMapReference(layer_event.get_map_entity().unwrap()),
             Sprite {
                 image: handle.clone(),
-                anchor: Anchor::TopLeft,
                 custom_size: Some(image_size),
                 image_mode: SpriteImageMode::Tiled {
                     tile_x: image_layer.repeat_x,
@@ -623,6 +622,7 @@ fn spawn_image_layer(
                 },
                 ..default()
             },
+            Anchor::TOP_LEFT,
             Transform::from_translation(image_position.extend(0.)),
         ));
     }
