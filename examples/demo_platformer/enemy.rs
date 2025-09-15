@@ -21,7 +21,7 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
-#[require(Transform, Visibility)]
+#[require(Transform, Visibility, PatrolProgress)]
 #[reflect(Component)]
 pub struct Enemy;
 
@@ -30,9 +30,9 @@ pub struct Enemy;
 #[reflect(Component)]
 pub struct PatrolRoute(pub Entity);
 
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Reflect)]
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq, Reflect)]
 #[require(Transform, Visibility)]
-#[reflect(Component)]
+#[reflect(Component, Default)]
 pub struct PatrolProgress(pub usize);
 
 fn on_enemy_added(
@@ -74,7 +74,7 @@ fn on_enemy_added(
         },
         enemy_animation,
         CharacterControllerBundle::new(Collider::capsule(40., 30.)).with_movement(
-            5000.,
+            2000.,
             0.9,
             600.,
             PI * 0.45,
@@ -89,32 +89,25 @@ fn move_enemy_along_patrol_route(
         With<Enemy>,
     >,
     maps_assets: Res<Assets<TiledMapAsset>>,
-    map_query: Query<(&TiledMap, &TiledMapStorage)>,
-    objects_query: Query<(&TiledObject, &GlobalTransform)>,
+    map_query: Query<&TiledMap>,
+    objects_query: Query<(&TiledObject, &TiledMapReference, &GlobalTransform)>,
 ) {
     for (enemy, transform, route, mut progress) in patrolling_enemy_query.iter_mut() {
-        let Some((tilemap_size, grid_size)) = map_query
-            .iter()
-            .find_map(|(handle, storage)| {
-                maps_assets
-                    .get(&handle.0)
-                    .and_then(|m| storage.get_object(&m.map, route.0).map(|_| m))
-            })
-            .map(|m| (m.tilemap_size, grid_size_from_map(&m.map)))
+        let Some(vertices) =
+            objects_query
+                .get(route.0)
+                .ok()
+                .and_then(|(route, map_reference, route_transform)| {
+                    map_query
+                        .get(map_reference.0)
+                        .ok()
+                        .and_then(|map_handle| maps_assets.get(&map_handle.0))
+                        .map(|map_asset| map_asset.object_vertices(route, route_transform))
+                })
         else {
             continue;
         };
-        let Ok((route, route_transform)) = objects_query.get(route.0) else {
-            continue;
-        };
 
-        let vertices = route.vertices(
-            route_transform,
-            false,
-            &tilemap_size,
-            &grid_size,
-            Vec2::ZERO,
-        );
         if progress.0 >= vertices.len() {
             progress.0 = 0;
         }
