@@ -396,16 +396,17 @@ fn tileset_to_tiled_map_tileset(
             let columns = (img.width as u32 - tileset.margin + tileset.spacing)
                 / (tileset.tile_width + tileset.spacing);
             if columns > 0 {
-                texture_atlas_layout_handle =
-                    Some(load_context.labeled_asset_scope(path.to_owned(), |_| {
-                        TextureAtlasLayout::from_grid(
+                texture_atlas_layout_handle = load_context
+                    .labeled_asset_scope(path.to_owned(), |_| {
+                        Ok::<_, ()>(TextureAtlasLayout::from_grid(
                             UVec2::new(tileset.tile_width, tileset.tile_height),
                             columns,
                             tileset.tilecount / columns,
                             Some(UVec2::splat(tileset.spacing)),
                             Some(UVec2::splat(tileset.margin)),
-                        )
-                    }));
+                        ))
+                    })
+                    .ok();
             }
 
             (true, TilemapTexture::Single(texture.clone()))

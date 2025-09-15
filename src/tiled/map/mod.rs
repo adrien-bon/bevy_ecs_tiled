@@ -12,7 +12,7 @@ pub mod storage;
 
 use crate::{
     prelude::*,
-    tiled::{cache::TiledResourceCache, event::TiledEventWriters},
+    tiled::{cache::TiledResourceCache, event::TiledMessageWriters},
 };
 use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 
@@ -174,7 +174,7 @@ fn process_loaded_maps(
             With<RespawnTiledMap>,
         )>,
     >,
-    mut event_writers: TiledEventWriters,
+    mut message_writers: TiledMessageWriters,
 ) {
     for (map_entity, map_handle, mut tiled_storage, render_settings, anchor, layer_offset) in
         map_query.iter_mut()
@@ -219,7 +219,7 @@ fn process_loaded_maps(
                 &mut tiled_storage,
                 render_settings,
                 layer_offset,
-                &mut event_writers,
+                &mut message_writers,
                 anchor,
             );
 
@@ -232,7 +232,7 @@ fn process_loaded_maps(
 /// System to update maps as they are changed or removed.
 fn handle_map_events(
     mut commands: Commands,
-    mut map_events: EventReader<AssetEvent<TiledMapAsset>>,
+    mut map_events: MessageReader<AssetEvent<TiledMapAsset>>,
     map_query: Query<(Entity, &TiledMap)>,
     mut cache: ResMut<TiledResourceCache>,
 ) {

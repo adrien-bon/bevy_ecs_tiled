@@ -29,8 +29,8 @@ use crate::tiled::{
 /// Wrapper around Tiled events
 ///
 /// Contains generic informations about origin of a particular Tiled event
-#[derive(Message, EntityEvent Clone, Copy, PartialEq, Debug, Reflect, Component)]
-#[event(auto_propagate, propagate = &'static ChildOf)]
+#[derive(Message, EntityEvent, Clone, Copy, PartialEq, Debug, Reflect, Component)]
+#[entity_event(auto_propagate, propagate = &'static ChildOf)]
 #[reflect(Component, Debug, Clone)]
 pub struct TiledEvent<E: Debug + Clone + Copy + Reflect> {
     /// The entity this event happened for
@@ -124,9 +124,9 @@ where
     }
 
     /// Trigger observer and write event for this [`TiledEvent`]
-    pub fn send(&self, commands: &mut Commands, event_writer: &mut MessageWriter<TiledEvent<E>>) {
-        commands.trigger_targets(*self);
-        event_writer.write(*self);
+    pub fn send(&self, commands: &mut Commands, message_writer: &mut MessageWriter<TiledEvent<E>>) {
+        commands.trigger(*self);
+        message_writer.write(*self);
     }
 }
 
@@ -319,16 +319,16 @@ impl fmt::Debug for TiledMessageWriters<'_> {
 }
 
 pub(crate) fn plugin(app: &mut App) {
-    app.add_event::<TiledEvent<WorldCreated>>()
+    app.add_message::<TiledEvent<WorldCreated>>()
         .register_type::<TiledEvent<WorldCreated>>();
-    app.add_event::<TiledEvent<MapCreated>>()
+    app.add_message::<TiledEvent<MapCreated>>()
         .register_type::<TiledEvent<MapCreated>>();
-    app.add_event::<TiledEvent<LayerCreated>>()
+    app.add_message::<TiledEvent<LayerCreated>>()
         .register_type::<TiledEvent<LayerCreated>>();
-    app.add_event::<TiledEvent<TilemapCreated>>()
+    app.add_message::<TiledEvent<TilemapCreated>>()
         .register_type::<TiledEvent<TilemapCreated>>();
-    app.add_event::<TiledEvent<TileCreated>>()
+    app.add_message::<TiledEvent<TileCreated>>()
         .register_type::<TiledEvent<TileCreated>>();
-    app.add_event::<TiledEvent<ObjectCreated>>()
+    app.add_message::<TiledEvent<ObjectCreated>>()
         .register_type::<TiledEvent<ObjectCreated>>();
 }
