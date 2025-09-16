@@ -29,7 +29,7 @@ pub enum TiledColliderOrigin {
 #[relationship(relationship_target = TiledColliders)]
 pub struct TiledColliderOf(pub Entity);
 
-/// Relationship target [`Component`] pointing to all the child [`TiledColliderOf`]s.
+/// Relationship target [`Component`] pointing to all the child [`TiledColliderOf`]s (eg. entities holding a physics collider).
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component, Debug)]
 #[relationship_target(relationship = TiledColliderOf)]
@@ -42,7 +42,7 @@ pub struct TiledColliderPolygons(pub MultiPolygon<f32>);
 
 /// Event emitted when a collider is created from a Tiled map or world.
 ///
-/// You can determine collider origin using the inner [`TiledColliderOrigin`].
+/// You can determine collider origin using the inner [`TiledColliderOrigin`] or [`TiledColliderOf`] components.
 /// See also [`TiledEvent`]
 #[derive(Clone, Copy, PartialEq, Debug, Reflect, Deref)]
 #[reflect(Clone, PartialEq)]

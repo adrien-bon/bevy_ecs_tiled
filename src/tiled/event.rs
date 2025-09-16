@@ -277,7 +277,7 @@ pub struct LayerCreated;
 #[reflect(Clone, PartialEq)]
 pub struct TilemapCreated;
 
-/// A [`TiledTile`] was created
+/// A [`TiledTile`] with custom properties was created
 ///
 /// See also [`TiledEvent`]
 #[derive(Clone, Copy, PartialEq, Debug, Reflect)]

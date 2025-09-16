@@ -50,7 +50,7 @@ There are six main events:
   - [`TiledEvent<TilemapCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TilemapCreated.html):  
     Emitted for each tilemap, for every tile layer, after the map is loaded. Contains information about the tilemap entity.
   - [`TiledEvent<TileCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TileCreated.html):  
-    Emitted for each tile after the map is loaded. Contains information about the tile entity.
+    Emitted for each tile after the map is loaded. Contains information about the tile entity. Note this event is only fired for tiles using custom properties.
   - [`TiledEvent<ObjectCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.ObjectCreated.html):  
     Emitted for each object after the map is loaded. Contains information about the object entity.
 - **For worlds only:**

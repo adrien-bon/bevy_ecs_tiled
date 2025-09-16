@@ -9,7 +9,7 @@ These aspects are also covered in the [dedicated example](https://github.com/adr
 Spawning a map is a two-step process:
 
 1. **Load the map asset** using Bevy's `AssetServer`.
-2. **Spawn a `TiledMap`** containing a reference to this map asset.
+2. **Spawn a [`TiledMap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMap.html)** containing a reference to this map asset.
 
 ```rust,no_run
 fn spawn_map(
@@ -53,7 +53,7 @@ pub fn despawn_map(
 ## Respawning / Reloading a Map
 
 If you want to reload or respawn a map, you can despawn it and spawn it again as shown above.  
-However, there is a more ergonomic way: **insert the `RespawnTiledMap` component** on the map entity.
+However, there is a more ergonomic way: insert the [`RespawnTiledMap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.RespawnTiledMap.html) component on the map entity.
 
 ```rust,no_run
 fn respawn_map(
@@ -69,7 +69,7 @@ fn respawn_map(
 This will reload the same map asset, despawning and respawning all child entities (layers, tiles, objects, etc.), while preserving the top-level map entity and its components.
 
 - Any changes you made to child entities (e.g., tile color, object position) will be reset to their original state.
-- Components on the map entity itself (such as `TiledMapSettings`, `TilemapRenderSettings`, or `Transform`) will be **preserved**.
+- Components on the map entity itself (such as [`TilemapRenderSettings`](https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/map/struct.TilemapRenderSettings.html), [`TiledMapLayerZOffset`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMapLayerZOffset.html), or [`Transform`](https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html)) will be **preserved**.
 
 This is useful for implementing level respawn or resetting a map to its initial state.
 
@@ -77,7 +77,7 @@ This is useful for implementing level respawn or resetting a map to its initial 
 
 ## Loading a New Map Over an Existing One
 
-To replace the current map with a different one, simply insert a new `TiledMap` on the existing map entity:
+To replace the current map with a different one, simply insert a new [`TiledMap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMap.html) on the existing map entity:
 
 ```rust,no_run
 fn handle_reload(
@@ -94,14 +94,14 @@ fn handle_reload(
 }
 ```
 
-- If you insert the same map handle, it is equivalent to inserting the `RespawnTiledMap` component.
+- If you insert the same map handle, it is equivalent to inserting the [`RespawnTiledMap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.RespawnTiledMap.html) component.
 
 ---
 
 ## Summary
 
-- **Spawn**: Load the map asset and spawn a `TiledMap`.
+- **Spawn**: Load the map asset and spawn a [`TiledMap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMap.html).
 - **Despawn**: Remove the map entity (children are cleaned up automatically).
-- **Respawn/Reload**: Insert `RespawnTiledMap` or a new `TiledMap` to reload or swap maps efficiently.
+- **Respawn/Reload**: Insert [`RespawnTiledMap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.RespawnTiledMap.html) or a new [`TiledMap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMap.html) to reload or swap maps efficiently.
 
 For more advanced usage, see the [examples](https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/map_reload.rs).

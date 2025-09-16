@@ -11,13 +11,14 @@ use tiled::{ObjectData, ObjectShape};
 /// Relationship and Marker [`Component`] for the visual representation of a [`TiledObject`].
 ///
 /// Added on the child [`Entity`] of a [`TiledObject::Tile`].
+/// These entity have an associated [`Sprite`] and eventually a [`TiledAnimation`] component.
 #[derive(Component, Reflect, Copy, Clone, Debug)]
 #[reflect(Component, Debug)]
 #[require(Visibility, Transform, Sprite)]
 #[relationship(relationship_target = TiledObjectVisuals)]
 pub struct TiledObjectVisualOf(pub Entity);
 
-/// Relationship target [`Component`] pointing to all the child [`TiledObjectVisualOf`]s.
+/// Relationship target [`Component`] pointing to a single child [`TiledObjectVisualOf`]s.
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component, Debug)]
 #[relationship_target(relationship = TiledObjectVisualOf)]
@@ -62,8 +63,8 @@ pub enum TiledObject {
     /// A tile object, which is a reference to a tile in a tilemap.
     ///
     /// Anchor is at the bottom-left corner of the tile.
-    /// These objects usually have an associated [`Sprite`] and eventually
-    /// a [`crate::prelude::TiledAnimation`] component.
+    /// These objects have a child [`TiledObjectVisualOf`] entity holding
+    /// their visual representation, which is usually a [`Sprite`].
     Tile {
         /// The width of the tile.
         width: f32,

@@ -434,7 +434,7 @@ fn spawn_objects_layer(
         match handle_tile_object(&object_data, tiled_map) {
             (Some((sprite, offset_transform)), None) => {
                 commands.spawn((
-                    Name::new("TileVisual"),
+                    Name::new("TiledObjectVisual"),
                     TiledObjectVisualOf(object_entity),
                     ChildOf(object_entity),
                     sprite,
@@ -443,7 +443,7 @@ fn spawn_objects_layer(
             }
             (Some((sprite, offset_transform)), Some(animation)) => {
                 commands.spawn((
-                    Name::new("TileVisual"),
+                    Name::new("TiledObjectVisual"),
                     TiledObjectVisualOf(object_entity),
                     ChildOf(object_entity),
                     sprite,
