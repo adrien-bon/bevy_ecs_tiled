@@ -179,33 +179,35 @@
 <p>When a map is loaded, it spawns <strong>many</strong> entities: for the map, for layers, for tiles, for objects, for colliders, and more.<br />
 To keep things organized, these entities are structured in a <a href="https://bevy-cheatbook.github.io/fundamentals/hierarchy.html">parent/child hierarchy</a>, and every entity has an associated marker component to help with queries and system targeting.</p>
 <p>Using a hierarchy also enables inheritance of certain components from top-level entities down the tree.<br />
-For example, if you change the <code>Visibility</code> of a layer entity, it will automatically apply to all entities below it in the hierarchy, such as tiles or objects.</p>
+For example, if you change the <a href="https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html"><code>Visibility</code></a> of a layer entity, it will automatically apply to all entities below it in the hierarchy, such as tiles or objects.</p>
 <hr />
 <h2 id="hierarchy-overview"><a class="header" href="#hierarchy-overview">Hierarchy Overview</a></h2>
 <h3 id="world"><a class="header" href="#world">World</a></h3>
-<p>When loading a <code>.world</code> asset, you get a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/world/struct.TiledWorld.html"><code>TiledWorld</code></a> entity at the top of the tree, which holds a handle to the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/world/asset/struct.TiledWorldAsset.html"><code>TiledWorldAsset</code></a> corresponding to your <code>.world</code> asset, along with all settings that apply to it.</p>
+<p>When loading a <code>.world</code> asset, you get a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/struct.TiledWorld.html"><code>TiledWorld</code></a> entity at the top of the tree, which holds a handle to the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/asset/struct.TiledWorldAsset.html"><code>TiledWorldAsset</code></a> corresponding to your <code>.world</code> asset, along with all settings that apply to it.</p>
 <h3 id="map"><a class="header" href="#map">Map</a></h3>
-<p>When loading a <code>.tmx</code> asset, you get a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/map/struct.TiledMap.html"><code>TiledMap</code></a> entity at the top of the tree, which holds a handle to the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/map/asset/struct.TiledMapAsset.html"><code>TiledMapAsset</code></a> corresponding to your <code>.tmx</code> asset, plus all map-level settings.</p>
+<p>When loading a <code>.tmx</code> asset, you get a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMap.html"><code>TiledMap</code></a> entity at the top of the tree, which holds a handle to the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html"><code>TiledMapAsset</code></a> corresponding to your <code>.tmx</code> asset, plus all map-level settings.</p>
 <p>If working with a Tiled world, you will have several maps, each as a child of the top-level world entity.</p>
-<p>Note that all map-level settings can also be added to the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/world/struct.TiledWorld.html"><code>TiledWorld</code></a> entity as they will be propagated down to the underlying maps.</p>
+<p>Note that all map-level settings can also be added to the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/struct.TiledWorld.html"><code>TiledWorld</code></a> entity as they will be propagated down to the underlying maps.</p>
 <h3 id="layers"><a class="header" href="#layers">Layers</a></h3>
 <p>Below the map, you have the layers.<br />
 Layer entities are identified by the generic <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html"><code>TiledLayer</code></a> component whose value can help distinguish between layer types.</p>
 <h3 id="objects"><a class="header" href="#objects">Objects</a></h3>
-<p>Objects are direct children of their parent <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html"><code>TiledLayer</code></a>.<br />
-They are identified by the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/struct.TiledObject.html"><code>TiledObject</code></a> marker.</p>
+<p>Objects are direct children of their parent <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html#variant.Objects"><code>TiledLayer::Object</code></a>.<br />
+They are identified by the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html"><code>TiledObject</code></a> marker.</p>
+<p>Note that in case of a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html#variant.Tile"><code>TiledObject::Tile</code></a>, the object entity will have another child entity with a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/struct.TiledObjectVisualOf.html"><code>TiledObjectVisualOf</code></a> marker component, holding the actual visual of the object: a <code>Sprite</code> and eventually a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/animation/struct.TiledAnimation.html"><code>TiledAnimation</code></a>.</p>
 <h3 id="tiles"><a class="header" href="#tiles">Tiles</a></h3>
 <p>Tiles have a slightly more complex structure:</p>
 <ul>
-<li>Below each <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html"><code>TiledLayer</code></a>, there is one <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilemap.html"><code>TiledTilemap</code></a> per tileset used in the map.</li>
+<li>Below each <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html#variant.Tiles"><code>TiledLayer::Tiles</code></a>, there is one <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilemap.html"><code>TiledTilemap</code></a> per tileset used in the map.</li>
 <li>Below these, you find the actual <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTile.html"><code>TiledTile</code></a> entities, each corresponding to a tile in the layer for a given tileset.</li>
 </ul>
 <h3 id="physics-colliders"><a class="header" href="#physics-colliders">Physics Colliders</a></h3>
 <p>At the bottom of the hierarchy, you find physics colliders.<br />
-They are spawned as children of their "source" (either a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilemap.html"><code>TiledTilemap</code></a> or a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/struct.TiledObject.html"><code>TiledObject</code></a>) and can be identified using the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledCollider.html"><code>TiledCollider</code></a> marker component.</p>
+They are spawned as children of their "source" (either a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html#variant.Tiles"><code>TiledLayer::Tiles</code></a> or a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html"><code>TiledObject</code></a>) and can be identified using the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderOrigin.html"><code>TiledColliderOrigin</code></a> marker component.</p>
+<p>Entities responsible for spawning a physics collider will have a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliders.html"><code>TiledColliders</code></a> component containing a list of attached colliders.</p>
 <hr />
 <h2 id="transform-and-visibility-propagation"><a class="header" href="#transform-and-visibility-propagation">Transform and Visibility Propagation</a></h2>
-<p>Bevy automatically propagates <a href="https://bevy-cheatbook.github.io/fundamentals/transforms.html"><code>Transform</code></a> and <a href="https://bevy-cheatbook.github.io/fundamentals/visibility.html"><code>Visibility</code></a> components down the entity hierarchy.</p>
+<p>Bevy automatically propagates <a href="https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html"><code>Transform</code></a> and <a href="https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html"><code>Visibility</code></a> components down the entity hierarchy.</p>
 <p><strong>In practice:</strong><br />
 If you change one of these components for a top-level entity (e.g., a layer), it will propagate down and apply to all child entities. For example:</p>
 <ul>
@@ -214,11 +216,11 @@ If you change one of these components for a top-level entity (e.g., a layer), it
 </ul>
 <p><strong>Special case for tiles:</strong><br />
 Tiles are not rendered as individual entities, but as part of a "chunk" of several tiles for performance reasons.<br />
-Each individual tile entity does <strong>not</strong> have its own <a href="https://bevy-cheatbook.github.io/fundamentals/transforms.html"><code>Transform</code></a> or <a href="https://bevy-cheatbook.github.io/fundamentals/visibility.html"><code>Visibility</code></a> component.<br />
+Each individual tile entity does <strong>not</strong> have its own <a href="https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html"><code>Transform</code></a> or <a href="https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html"><code>Visibility</code></a> component.<br />
 Instead, these components are propagated down to the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilemap.html"><code>TiledTilemap</code></a>, and <code>bevy_ecs_tilemap</code> handles updating the corresponding tile chunks.</p>
 <blockquote>
 <p><strong>Important:</strong><br />
-Even though you technically could, you should <strong>not</strong> add <a href="https://bevy-cheatbook.github.io/fundamentals/transforms.html"><code>Transform</code></a> or <a href="https://bevy-cheatbook.github.io/fundamentals/visibility.html"><code>Visibility</code></a> components to individual tile entities:</p>
+Even though you technically could, you should <strong>not</strong> add <a href="https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html"><code>Transform</code></a> or <a href="https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html"><code>Visibility</code></a> components to individual tile entities:</p>
 <ul>
 <li>It will not have the intended effect—everything is handled at the tilemap level.</li>
 <li>It may hurt performance significantly.</li>
