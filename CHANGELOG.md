@@ -2,6 +2,8 @@
 
 ## [unreleased]
 
+## v0.9.4
+
 ### Features
 
 - Re-export all prelude from `bevy_ecs_tilemap` (#150)
