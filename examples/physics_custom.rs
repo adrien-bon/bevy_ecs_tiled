@@ -47,7 +47,7 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
         &self,
         commands: &mut Commands,
         source: &TiledEvent<ColliderCreated>,
-        multi_polygon: &MultiPolygon<f32>,
+        multi_polygon: &geo::MultiPolygon<f32>,
     ) -> Vec<Entity> {
         let (name, color) = match source.event.source {
             TiledColliderSource::Object => (String::from("Custom[Object]"), Color::from(PURPLE)),
@@ -73,7 +73,7 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
 // Custom command implementation: nothing fancy here,
 // we just store the polygons and color to use for the mesh.
 struct CustomColliderCommand {
-    multi_polygon: MultiPolygon<f32>,
+    multi_polygon: geo::MultiPolygon<f32>,
     color: Color,
 }
 

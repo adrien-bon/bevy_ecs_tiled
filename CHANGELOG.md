@@ -11,6 +11,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_10
 ### Features
 
 - Update for Bevy v0.17
+- Properly re-export external dependencies types (#152)
 
 ### Changed
 

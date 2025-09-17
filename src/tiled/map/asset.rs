@@ -4,10 +4,8 @@
 //! into Bevy's asset system.
 
 use crate::{prelude::*, tiled::helpers::iso_projection};
-use bevy::prelude::*;
-use bevy_ecs_tilemap::map::{HexCoordSystem, IsoCoordSystem, TilemapTexture};
+use bevy::{platform::collections::HashMap, prelude::*};
 use std::fmt;
-use tiled::ChunkData;
 
 #[derive(Default, Debug)]
 pub(crate) struct TiledMapTileset {
@@ -184,13 +182,13 @@ impl TiledMapAsset {
     /// - For infinite maps, chunk positions are shifted so that the top-left chunk is at (0, 0),
     ///   and negative tile coordinates are avoided.
     /// - The Y coordinate is inverted to match Bevy's coordinate system (origin at bottom-left).
-    pub fn for_each_tile<'a, F>(&'a self, tiles_layer: &TileLayer<'a>, mut f: F)
+    pub fn for_each_tile<'a, F>(&'a self, tiles_layer: &tiled::TileLayer<'a>, mut f: F)
     where
-        F: FnMut(LayerTile<'a>, &LayerTileData, TilePos, IVec2),
+        F: FnMut(tiled::LayerTile<'a>, &tiled::LayerTileData, TilePos, IVec2),
     {
         let tilemap_size = self.tilemap_size;
         match tiles_layer {
-            TileLayer::Finite(layer) => {
+            tiled::TileLayer::Finite(layer) => {
                 for x in 0..tilemap_size.x {
                     for y in 0..tilemap_size.y {
                         // Transform TMX coords into bevy coords.
@@ -214,7 +212,7 @@ impl TiledMapAsset {
                     }
                 }
             }
-            TileLayer::Infinite(layer) => {
+            tiled::TileLayer::Infinite(layer) => {
                 for (chunk_pos, chunk) in layer.chunks() {
                     // bevy_ecs_tilemap doesn't support negative tile coordinates, so shift all chunks
                     // such that the top-left chunk is at (0, 0).
@@ -223,8 +221,8 @@ impl TiledMapAsset {
                         chunk_pos.1 - self.topleft_chunk.1,
                     );
 
-                    for x in 0..ChunkData::WIDTH {
-                        for y in 0..ChunkData::HEIGHT {
+                    for x in 0..tiled::ChunkData::WIDTH {
+                        for y in 0..tiled::ChunkData::HEIGHT {
                             // Invert y to match bevy coordinates.
                             let Some(layer_tile) = chunk.get_tile(x as i32, y as i32) else {
                                 continue;
@@ -235,8 +233,8 @@ impl TiledMapAsset {
                             };
 
                             let index = IVec2 {
-                                x: chunk_pos_mapped.0 * ChunkData::WIDTH as i32 + x as i32,
-                                y: chunk_pos_mapped.1 * ChunkData::HEIGHT as i32 + y as i32,
+                                x: chunk_pos_mapped.0 * tiled::ChunkData::WIDTH as i32 + x as i32,
+                                y: chunk_pos_mapped.1 * tiled::ChunkData::HEIGHT as i32 + y as i32,
                             };
 
                             f(
@@ -267,7 +265,7 @@ impl TiledMapAsset {
     ///
     /// # Returns
     /// * `Vec2` - The object's world position relative to its parent layer entity.
-    pub fn object_relative_position(&self, object: &Object, anchor: &TilemapAnchor) -> Vec2 {
+    pub fn object_relative_position(&self, object: &tiled::Object, anchor: &TilemapAnchor) -> Vec2 {
         self.world_space_from_tiled_position(anchor, Vec2::new(object.x, object.y))
     }
 
@@ -283,7 +281,7 @@ impl TiledMapAsset {
         &self,
         tiled_object: &TiledObject,
         transform: &GlobalTransform,
-    ) -> Option<Coord<f32>> {
+    ) -> Option<geo::Coord<f32>> {
         tiled_object.center(
             transform,
             matches!(tilemap_type_from_map(&self.map), TilemapType::Isometric(..)),
@@ -305,7 +303,7 @@ impl TiledMapAsset {
         &self,
         tiled_object: &TiledObject,
         transform: &GlobalTransform,
-    ) -> Vec<Coord<f32>> {
+    ) -> Vec<geo::Coord<f32>> {
         tiled_object.vertices(
             transform,
             matches!(tilemap_type_from_map(&self.map), TilemapType::Isometric(..)),
@@ -327,7 +325,7 @@ impl TiledMapAsset {
         &self,
         tiled_object: &TiledObject,
         transform: &GlobalTransform,
-    ) -> Option<LineString<f32>> {
+    ) -> Option<geo::LineString<f32>> {
         tiled_object.line_string(
             transform,
             matches!(tilemap_type_from_map(&self.map), TilemapType::Isometric(..)),
@@ -349,7 +347,7 @@ impl TiledMapAsset {
         &self,
         tiled_object: &TiledObject,
         transform: &GlobalTransform,
-    ) -> Option<GeoPolygon<f32>> {
+    ) -> Option<geo::Polygon<f32>> {
         tiled_object.polygon(
             transform,
             matches!(tilemap_type_from_map(&self.map), TilemapType::Isometric(..)),
