@@ -80,11 +80,9 @@ pub mod prelude {
     // Re-exports from `bevy`
     pub use bevy::{math::bounding::Aabb2d, platform::collections::HashMap};
 
-    // Re-exports from `bevy_ecs_tilemap`
-    pub use bevy_ecs_tilemap::prelude::{
-        TilePos, TilemapAnchor, TilemapGridSize, TilemapRenderSettings, TilemapSize,
-        TilemapTileSize, TilemapType,
-    };
+    // Re-exports from `bevy_ecs_tilemap`:
+    // just take everything since we are so tightly coupled
+    pub use bevy_ecs_tilemap::prelude::*;
     // Re-exports from `tiled`
     pub use tiled::World as TiledRawWorld; // Avoid name clash with Bevy `World`
     pub use tiled::{
