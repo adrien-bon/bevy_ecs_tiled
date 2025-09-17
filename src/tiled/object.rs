@@ -2,11 +2,9 @@
 //!
 //! This module defines Bevy components used to represent Tiled objects within the ECS world.
 
-use crate::prelude::*;
+use crate::prelude::{geo::Centroid, *};
 use crate::tiled::helpers::iso_projection;
 use bevy::prelude::*;
-use geo::Centroid;
-use tiled::{ObjectData, ObjectShape};
 
 /// Relationship and Marker [`Component`] for the visual representation of a [`TiledObject`].
 ///
@@ -81,9 +79,9 @@ impl TiledObject {
     const ELLIPSE_NUM_POINTS: u32 = 20;
 
     /// Creates a new [`TiledObject`] from the provided [`ObjectData`].
-    pub fn from_object_data(object_data: &ObjectData) -> Self {
+    pub fn from_object_data(object_data: &tiled::ObjectData) -> Self {
         if object_data.tile_data().is_some() {
-            if let ObjectShape::Rect { width, height } = object_data.shape {
+            if let tiled::ObjectShape::Rect { width, height } = object_data.shape {
                 TiledObject::Tile { width, height }
             } else {
                 warn!(
@@ -94,16 +92,20 @@ impl TiledObject {
             }
         } else {
             match object_data.shape.clone() {
-                ObjectShape::Point { .. } => TiledObject::Point,
-                ObjectShape::Rect { width, height } => TiledObject::Rectangle { width, height },
-                ObjectShape::Ellipse { width, height } => TiledObject::Ellipse { width, height },
-                ObjectShape::Polygon { points } => TiledObject::Polygon {
+                tiled::ObjectShape::Point { .. } => TiledObject::Point,
+                tiled::ObjectShape::Rect { width, height } => {
+                    TiledObject::Rectangle { width, height }
+                }
+                tiled::ObjectShape::Ellipse { width, height } => {
+                    TiledObject::Ellipse { width, height }
+                }
+                tiled::ObjectShape::Polygon { points } => TiledObject::Polygon {
                     vertices: points.into_iter().map(|(x, y)| Vec2::new(x, -y)).collect(),
                 },
-                ObjectShape::Polyline { points } => TiledObject::Polyline {
+                tiled::ObjectShape::Polyline { points } => TiledObject::Polyline {
                     vertices: points.into_iter().map(|(x, y)| Vec2::new(x, -y)).collect(),
                 },
-                ObjectShape::Text { .. } => {
+                tiled::ObjectShape::Text { .. } => {
                     log::warn!("Text objects are not supported yet");
                     TiledObject::Text
                 }
@@ -148,8 +150,8 @@ impl TiledObject {
         tilemap_size: &TilemapSize,
         grid_size: &TilemapGridSize,
         offset: Vec2,
-    ) -> Option<Coord<f32>> {
-        MultiPoint::from(self.vertices(
+    ) -> Option<geo::Coord<f32>> {
+        geo::MultiPoint::from(self.vertices(
             transform,
             isometric_projection,
             tilemap_size,
@@ -157,7 +159,7 @@ impl TiledObject {
             offset,
         ))
         .centroid()
-        .map(|p| Coord { x: p.x(), y: p.y() })
+        .map(|p| geo::Coord { x: p.x(), y: p.y() })
     }
 
     /// Returns the vertices of the object in world space.
@@ -181,9 +183,9 @@ impl TiledObject {
         tilemap_size: &TilemapSize,
         grid_size: &TilemapGridSize,
         offset: Vec2,
-    ) -> Vec<Coord<f32>> {
+    ) -> Vec<geo::Coord<f32>> {
         // Get object world position
-        let object_world_pos = Coord {
+        let object_world_pos = geo::Coord {
             x: transform.translation().x,
             y: transform.translation().y,
         };
@@ -233,13 +235,13 @@ impl TiledObject {
                 let relative_projected = offset_projected - origin_projected;
 
                 let v = Self::apply_rotation_and_scaling(true, relative_projected, transform);
-                Coord {
+                geo::Coord {
                     x: object_world_pos.x + v.x,
                     y: object_world_pos.y - v.y,
                 }
             } else {
                 let v = Self::apply_rotation_and_scaling(false, v, transform);
-                Coord {
+                geo::Coord {
                     x: v.x + object_world_pos.x,
                     y: v.y + object_world_pos.y,
                 }
@@ -270,7 +272,7 @@ impl TiledObject {
         tilemap_size: &TilemapSize,
         grid_size: &TilemapGridSize,
         offset: Vec2,
-    ) -> Option<LineString<f32>> {
+    ) -> Option<geo::LineString<f32>> {
         let coords = self.vertices(
             transform,
             isometric_projection,
@@ -284,11 +286,11 @@ impl TiledObject {
             | TiledObject::Rectangle { .. }
             | TiledObject::Tile { .. }
             | TiledObject::Polygon { .. } => {
-                let mut line_string = LineString::from(coords);
+                let mut line_string = geo::LineString::from(coords);
                 line_string.close();
                 Some(line_string)
             }
-            TiledObject::Polyline { .. } => Some(LineString::new(coords)),
+            TiledObject::Polyline { .. } => Some(geo::LineString::new(coords)),
         }
     }
 
@@ -313,7 +315,7 @@ impl TiledObject {
         tilemap_size: &TilemapSize,
         grid_size: &TilemapGridSize,
         offset: Vec2,
-    ) -> Option<GeoPolygon<f32>> {
+    ) -> Option<geo::Polygon<f32>> {
         self.line_string(
             transform,
             isometric_projection,
@@ -322,7 +324,7 @@ impl TiledObject {
             offset,
         )
         .and_then(|ls| match ls.is_closed() {
-            true => Some(GeoPolygon::new(ls, vec![])),
+            true => Some(geo::Polygon::new(ls, vec![])),
             false => None,
         })
     }

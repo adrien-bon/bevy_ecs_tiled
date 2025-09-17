@@ -1,6 +1,7 @@
 use crate::{prelude::*, tiled::properties::types_json::*};
 use bevy::{
     ecs::reflect::ReflectBundle,
+    platform::collections::HashMap,
     prelude::*,
     reflect::{
         ArrayInfo, EnumInfo, NamedField, ReflectRef, StructInfo, TupleInfo, TupleStructInfo,

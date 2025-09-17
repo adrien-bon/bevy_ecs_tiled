@@ -4,8 +4,9 @@
 //! including references to maps, world chunks, and world-level metadata. It enables efficient access and
 //! organization of world data for chunking, streaming, and world management systems.
 
+#[allow(unused_imports)]
 use crate::prelude::*;
-use bevy::prelude::*;
+use bevy::{platform::collections::HashMap, prelude::*};
 
 /// [`Component`] storing all the Tiled maps that are composing this world.
 /// Makes the association between Tiled ID and corresponding Bevy [`Entity`].

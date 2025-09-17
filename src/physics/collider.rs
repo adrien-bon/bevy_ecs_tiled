@@ -6,10 +6,8 @@
 
 use std::collections::VecDeque;
 
-use crate::prelude::*;
+use crate::prelude::{geo::BooleanOps, *};
 use bevy::prelude::*;
-use geo::BooleanOps;
-use tiled::{ObjectLayerData, ObjectShape};
 
 /// Marker component for collider's source
 ///
@@ -38,7 +36,7 @@ pub struct TiledColliders(Vec<Entity>);
 /// Collider raw geometry
 #[derive(Component, PartialEq, Clone, Debug, Deref)]
 #[require(Transform)]
-pub struct TiledColliderPolygons(pub MultiPolygon<f32>);
+pub struct TiledColliderPolygons(pub geo::MultiPolygon<f32>);
 
 /// Event emitted when a collider is created from a Tiled map or world.
 ///
@@ -78,7 +76,7 @@ impl<'a> TiledEvent<ColliderCreated> {
         &self,
         assets: &'a Res<Assets<TiledMapAsset>>,
         anchor: &TilemapAnchor,
-    ) -> Vec<(Vec2, Tile<'a>)> {
+    ) -> Vec<(Vec2, tiled::Tile<'a>)> {
         let Some(map_asset) = self.get_map_asset(assets) else {
             return vec![];
         };
@@ -141,7 +139,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
                         let Some(object_layer_data) = &tile.collision else {
                             return vec![];
                         };
-                        let ObjectShape::Rect { width, height } = object.shape else {
+                        let ::tiled::ObjectShape::Rect { width, height } = object.shape else {
                             return vec![];
                         };
 
@@ -197,7 +195,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
         }
     }
     .into_iter()
-    .map(|p| MultiPolygon::new(vec![p]))
+    .map(|p| geo::MultiPolygon::new(vec![p]))
     .collect::<Vec<_>>();
 
     // Try to simplify geometry: merge together adjacent polygons
@@ -222,12 +220,12 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
 }
 
 fn polygons_from_tile(
-    object_layer_data: &ObjectLayerData,
+    object_layer_data: &::tiled::ObjectLayerData,
     filter: &TiledFilter,
     tile_size: &TilemapTileSize,
     offset: Vec2,
     scale: Vec2,
-) -> Vec<GeoPolygon<f32>> {
+) -> Vec<geo::Polygon<f32>> {
     let mut polygons = vec![];
     for object in object_layer_data.object_data() {
         if !filter.matches(&object.name) {

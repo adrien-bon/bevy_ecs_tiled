@@ -8,19 +8,18 @@ use std::sync::Arc;
 use crate::prelude::*;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::{HexCoordSystem, IsoCoordSystem};
-use tiled::{Orientation, StaggerAxis, StaggerIndex};
 
 /// Retrieves a [`Layer`] from a [`Map`] given a layer ID.
 ///
 /// Returns `Some(Layer)` if the layer exists, or `None` if the ID is out of bounds.
-pub fn get_layer_from_map(map: &Map, layer_id: u32) -> Option<Layer<'_>> {
+pub fn get_layer_from_map(map: &tiled::Map, layer_id: u32) -> Option<tiled::Layer<'_>> {
     map.get_layer(layer_id as usize)
 }
 
 /// Retrieves a [`Tileset`] from a [`Map`] given a tileset ID.
 ///
 /// Returns a reference to the tileset if found, or `None` if the ID is invalid.
-pub fn get_tileset_from_map(map: &Map, tileset_id: u32) -> Option<&Arc<Tileset>> {
+pub fn get_tileset_from_map(map: &tiled::Map, tileset_id: u32) -> Option<&Arc<tiled::Tileset>> {
     for (id, tileset) in map.tilesets().iter().enumerate() {
         if id == tileset_id as usize {
             return Some(tileset);
@@ -32,14 +31,18 @@ pub fn get_tileset_from_map(map: &Map, tileset_id: u32) -> Option<&Arc<Tileset>>
 /// Retrieves a [`Tile`] from a [`Map`] given a tileset ID and a [`TileId`].
 ///
 /// Returns `Some(Tile)` if the tile exists in the specified tileset, or `None` otherwise.
-pub fn get_tile_from_map(map: &Map, tileset_id: u32, tile_id: TileId) -> Option<Tile<'_>> {
+pub fn get_tile_from_map(
+    map: &tiled::Map,
+    tileset_id: u32,
+    tile_id: tiled::TileId,
+) -> Option<tiled::Tile<'_>> {
     get_tileset_from_map(map, tileset_id).and_then(|t| t.get_tile(tile_id))
 }
 
 /// Retrieves an [`Object`] from a [`Map`] given an object ID.
 ///
 /// Searches all object layers for the specified object ID and returns it if found.
-pub fn get_object_from_map(map: &Map, object_id: u32) -> Option<Object<'_>> {
+pub fn get_object_from_map(map: &tiled::Map, object_id: u32) -> Option<tiled::Object<'_>> {
     for layer in map.layers() {
         let obj = layer
             .as_object_layer()
@@ -54,33 +57,33 @@ pub fn get_object_from_map(map: &Map, object_id: u32) -> Option<Object<'_>> {
 /// Converts a [`Map`]'s [`Orientation`] to a [`TilemapType`].
 ///
 /// Panics if the orientation is [`Orientation::Staggered`] which is not supported by this plugin.
-pub fn tilemap_type_from_map(map: &Map) -> TilemapType {
+pub fn tilemap_type_from_map(map: &tiled::Map) -> TilemapType {
     match map.orientation {
-        Orientation::Orthogonal => TilemapType::Square,
-        Orientation::Hexagonal => match map.stagger_axis {
-            StaggerAxis::X if map.stagger_index == StaggerIndex::Even => {
+        tiled::Orientation::Orthogonal => TilemapType::Square,
+        tiled::Orientation::Hexagonal => match map.stagger_axis {
+            tiled::StaggerAxis::X if map.stagger_index == tiled::StaggerIndex::Even => {
                 TilemapType::Hexagon(HexCoordSystem::ColumnOdd)
             }
-            StaggerAxis::X if map.stagger_index == StaggerIndex::Odd => {
+            tiled::StaggerAxis::X if map.stagger_index == tiled::StaggerIndex::Odd => {
                 TilemapType::Hexagon(HexCoordSystem::ColumnEven)
             }
-            StaggerAxis::Y if map.stagger_index == StaggerIndex::Even => {
+            tiled::StaggerAxis::Y if map.stagger_index == tiled::StaggerIndex::Even => {
                 TilemapType::Hexagon(HexCoordSystem::RowOdd)
             }
-            StaggerAxis::Y if map.stagger_index == StaggerIndex::Odd => {
+            tiled::StaggerAxis::Y if map.stagger_index == tiled::StaggerIndex::Odd => {
                 TilemapType::Hexagon(HexCoordSystem::RowEven)
             }
             _ => unreachable!(),
         },
-        Orientation::Isometric => TilemapType::Isometric(IsoCoordSystem::Diamond),
-        Orientation::Staggered => {
+        tiled::Orientation::Isometric => TilemapType::Isometric(IsoCoordSystem::Diamond),
+        tiled::Orientation::Staggered => {
             panic!("Isometric (Staggered) map is not supported");
         }
     }
 }
 
 /// Converts a [`Map`]'s grid size to a [`TilemapGridSize`].
-pub fn grid_size_from_map(map: &Map) -> TilemapGridSize {
+pub fn grid_size_from_map(map: &tiled::Map) -> TilemapGridSize {
     TilemapGridSize {
         x: map.tile_width as f32,
         y: map.tile_height as f32,
@@ -88,7 +91,7 @@ pub fn grid_size_from_map(map: &Map) -> TilemapGridSize {
 }
 
 /// Get the [`TilemapTileSize`] from given [`Tile`]
-pub fn tile_size(tile: &Tile) -> TilemapTileSize {
+pub fn tile_size(tile: &tiled::Tile) -> TilemapTileSize {
     match &tile.image {
         // tile is in image collection
         Some(image) => TilemapTileSize::new(image.width as f32, image.height as f32),

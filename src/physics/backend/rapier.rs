@@ -43,7 +43,7 @@ impl TiledPhysicsBackend for TiledPhysicsRapierBackend {
         &self,
         commands: &mut Commands,
         _source: &TiledEvent<ColliderCreated>,
-        multi_polygon: &MultiPolygon<f32>,
+        multi_polygon: &geo::MultiPolygon<f32>,
     ) -> Vec<Entity> {
         let mut out = vec![];
         match self {

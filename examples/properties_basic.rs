@@ -25,7 +25,7 @@ fn main() {
             // you will still be able to load them from the map
             tiled_types_export_file: Some(path),
             tiled_types_filter: TiledFilter::from(
-                RegexSet::new([
+                regex::RegexSet::new([
                     r"^properties_basic::.*",
                     r"^bevy_sprite::text2d::Text2d$",
                     r"^bevy_text::text::TextColor$",

@@ -4,7 +4,6 @@
 //! It organizes submodules for assets, components, systems, events and utilities related to Tiled support.
 
 pub mod animation;
-pub(crate) mod cache;
 pub mod event;
 pub mod filter;
 pub mod helpers;
@@ -12,10 +11,12 @@ pub mod image;
 pub mod layer;
 pub mod map;
 pub mod object;
-pub(crate) mod reader;
 pub mod sets;
 pub mod tile;
 pub mod world;
+
+pub(crate) mod cache;
+pub(crate) mod reader;
 
 #[cfg(feature = "user_properties")]
 pub mod properties;

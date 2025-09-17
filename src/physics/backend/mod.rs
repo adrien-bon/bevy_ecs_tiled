@@ -13,9 +13,11 @@ pub mod avian;
 
 use std::fmt;
 
-use crate::prelude::*;
+use crate::prelude::{
+    geo::{Centroid, TriangulateDelaunay},
+    *,
+};
 use bevy::{prelude::*, reflect::Reflectable};
-use geo::{Centroid, TriangulateDelaunay};
 
 /// Trait for implementing a custom physics backend for Tiled maps and worlds.
 ///
@@ -49,7 +51,7 @@ pub trait TiledPhysicsBackend:
         &self,
         commands: &mut Commands,
         source: &TiledEvent<ColliderCreated>,
-        multi_polygon: &MultiPolygon<f32>,
+        multi_polygon: &geo::MultiPolygon<f32>,
     ) -> Vec<Entity>;
 }
 
@@ -63,7 +65,9 @@ pub trait TiledPhysicsBackend:
 ///
 /// # Returns
 /// A vector of tuples: ([triangle_vertices; 3], centroid).
-pub fn multi_polygon_as_triangles(multi_polygon: &MultiPolygon<f32>) -> Vec<([Vec2; 3], Vec2)> {
+pub fn multi_polygon_as_triangles(
+    multi_polygon: &geo::MultiPolygon<f32>,
+) -> Vec<([Vec2; 3], Vec2)> {
     multi_polygon
         .constrained_triangulation(Default::default())
         .unwrap()
@@ -88,7 +92,9 @@ pub fn multi_polygon_as_triangles(multi_polygon: &MultiPolygon<f32>) -> Vec<([Ve
 ///
 /// # Returns
 /// A vector of [`LineString<f32>`] representing all rings in the geometry.
-pub fn multi_polygon_as_line_strings(multi_polygon: &MultiPolygon<f32>) -> Vec<LineString<f32>> {
+pub fn multi_polygon_as_line_strings(
+    multi_polygon: &geo::MultiPolygon<f32>,
+) -> Vec<geo::LineString<f32>> {
     let mut out = vec![];
     multi_polygon.iter().for_each(|p| {
         [p.interiors(), &[p.exterior().clone()]]

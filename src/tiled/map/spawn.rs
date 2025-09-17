@@ -5,12 +5,7 @@
 //! enabling the rendering and interaction of Tiled maps within a Bevy application.
 
 use crate::{prelude::*, tiled::event::TiledMessageWriters, tiled::layer::TiledLayerParallax};
-use bevy::{prelude::*, sprite::Anchor};
-use bevy_ecs_tilemap::prelude::{
-    AnimatedTile, IsoCoordSystem, TileBundle, TileFlip, TileStorage, TileTextureIndex, TilemapId,
-    TilemapTexture,
-};
-use tiled::{ImageLayer, LayerType, ObjectLayer, TilesetLocation};
+use bevy::{platform::collections::HashMap, prelude::*, sprite::Anchor};
 
 #[cfg(feature = "render")]
 use bevy_ecs_tilemap::prelude::{TilemapBundle, TilemapSpacing};
@@ -89,7 +84,7 @@ pub(crate) fn spawn_map(
             .to_owned();
 
         match layer.layer_type() {
-            LayerType::Tiles(tile_layer) => {
+            tiled::LayerType::Tiles(tile_layer) => {
                 commands.entity(layer_entity).insert((
                     Name::new(format!("TiledMapTileLayer({})", layer.name)),
                     TiledLayer::Tiles,
@@ -107,7 +102,7 @@ pub(crate) fn spawn_map(
                     anchor,
                 );
             }
-            LayerType::Objects(object_layer) => {
+            tiled::LayerType::Objects(object_layer) => {
                 commands.entity(layer_entity).insert((
                     Name::new(format!("TiledMapObjectLayer({})", layer.name)),
                     TiledLayer::Objects,
@@ -122,14 +117,14 @@ pub(crate) fn spawn_map(
                     anchor,
                 );
             }
-            LayerType::Group(_group_layer) => {
+            tiled::LayerType::Group(_group_layer) => {
                 commands.entity(layer_entity).insert((
                     Name::new(format!("TiledMapGroupLayer({})", layer.name)),
                     TiledLayer::Group,
                 ));
                 warn!("Group layers are not yet implemented");
             }
-            LayerType::Image(image_layer) => {
+            tiled::LayerType::Image(image_layer) => {
                 commands.entity(layer_entity).insert((
                     Name::new(format!("TiledMapImageLayer({})", layer.name)),
                     TiledLayer::Image,
@@ -191,10 +186,10 @@ fn spawn_tiles_layer(
     commands: &mut Commands,
     tiled_map: &TiledMapAsset,
     layer_event: &TiledEvent<LayerCreated>,
-    layer: Layer,
-    tiles_layer: TileLayer,
+    layer: tiled::Layer,
+    tiles_layer: tiled::TileLayer,
     _render_settings: &TilemapRenderSettings,
-    entity_map: &mut HashMap<(u32, TileId), Vec<Entity>>,
+    entity_map: &mut HashMap<(u32, tiled::TileId), Vec<Entity>>,
     tilemap_events: &mut Vec<TiledEvent<TilemapCreated>>,
     tile_events: &mut Vec<TiledEvent<TileCreated>>,
     _anchor: &TilemapAnchor,
@@ -286,8 +281,8 @@ fn spawn_tiles(
     layer_entity: Entity,
     tilemap_texture: &TilemapTexture,
     tileset_id: u32,
-    tiles_layer: &TileLayer,
-    entity_map: &mut HashMap<(u32, TileId), Vec<Entity>>,
+    tiles_layer: &tiled::TileLayer,
+    entity_map: &mut HashMap<(u32, tiled::TileId), Vec<Entity>>,
     tile_events: &mut Vec<TiledEvent<TileCreated>>,
 ) -> TileStorage {
     let tilemap_size = tiled_map.tilemap_size;
@@ -377,7 +372,7 @@ fn spawn_objects_layer(
     commands: &mut Commands,
     tiled_map: &TiledMapAsset,
     layer_event: &TiledEvent<LayerCreated>,
-    object_layer: ObjectLayer,
+    object_layer: tiled::ObjectLayer,
     entity_map: &mut HashMap<u32, Entity>,
     object_events: &mut Vec<TiledEvent<ObjectCreated>>,
     anchor: &TilemapAnchor,
@@ -466,7 +461,7 @@ fn spawn_objects_layer(
 }
 
 fn handle_tile_object(
-    object: &Object,
+    object: &tiled::Object,
     tiled_map: &TiledMapAsset,
 ) -> (Option<(Sprite, Transform)>, Option<TiledAnimation>) {
     let Some(tile) = (*object).get_tile() else {
@@ -479,14 +474,14 @@ fn handle_tile_object(
     };
 
     let label = match tile.tileset_location() {
-        TilesetLocation::Map(tileset_index) => {
+        tiled::TilesetLocation::Map(tileset_index) => {
             let tileset_index = *tileset_index as u32;
             tiled_map
                 .tilesets_label_by_index
                 .get(&tileset_index)
                 .expect("Cannot find tileset path for object tile")
         }
-        TilesetLocation::Template(tileset) => &tileset_label(tileset)
+        tiled::TilesetLocation::Template(tileset) => &tileset_label(tileset)
             .expect("Cannot find object tile from Template")
             .to_owned(),
     };
@@ -576,7 +571,7 @@ fn spawn_image_layer(
     commands: &mut Commands,
     tiled_map: &TiledMapAsset,
     layer_event: &TiledEvent<LayerCreated>,
-    image_layer: ImageLayer,
+    image_layer: tiled::ImageLayer,
     anchor: &TilemapAnchor,
 ) {
     if let Some(image) = &image_layer.image {
@@ -628,7 +623,7 @@ fn spawn_image_layer(
     }
 }
 
-fn get_animated_tile(tile: &Tile) -> Option<AnimatedTile> {
+fn get_animated_tile(tile: &tiled::Tile) -> Option<AnimatedTile> {
     let Some(animation_data) = &tile.animation else {
         return None;
     };
