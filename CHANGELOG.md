@@ -2,6 +2,8 @@
 
 ## [unreleased]
 
+## v0.9.5
+
 ### Features
 
 - Make `TiledMapAsset::world_space_from_tiled_position()` public again
