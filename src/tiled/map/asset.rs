@@ -79,8 +79,15 @@ pub struct TiledMapAsset {
 }
 
 impl TiledMapAsset {
-    /// Convert a position from Tiled space to world space
-    pub(crate) fn world_space_from_tiled_position(
+    /// Raw conversion between a Tiled position and Bevy world space
+    ///
+    /// # Arguments
+    /// * `anchor` - The [`TilemapAnchor`] used for the map.
+    /// * `tiled_position` - Tiled position.
+    ///
+    /// # Returns
+    /// * `Vec2` - The corresponding world position.
+    pub fn world_space_from_tiled_position(
         &self,
         anchor: &TilemapAnchor,
         tiled_position: Vec2,
