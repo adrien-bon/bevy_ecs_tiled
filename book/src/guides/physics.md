@@ -109,8 +109,8 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         // - objects named 'hitbox' or 'collision'
         // - tile colliders in a layer named 'collision'
         TiledPhysicsSettings::<TiledPhysicsAvianBackend> {
-            objects_filter: ObjectNames::Names(vec!["hitbox".into(), "collision".into()]),
-            tiles_layer_filter: ObjectNames::Names(vec!["collision".into()]),
+            objects_filter: TiledFilter::Names(vec!["hitbox".into(), "collision".into()]),
+            tiles_layer_filter: TiledFilter::Names(vec!["collision".into()]),
             ..default()
         },
     ));
