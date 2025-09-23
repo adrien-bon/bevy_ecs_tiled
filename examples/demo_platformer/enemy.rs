@@ -17,13 +17,21 @@ pub(super) fn plugin(app: &mut App) {
     app.register_type::<PatrolRoute>();
     app.register_type::<PatrolProgress>();
     app.add_observer(on_enemy_added);
-    app.add_systems(Update, move_enemy_along_patrol_route);
+    app.add_systems(
+        Update,
+        (move_enemy_along_patrol_route, move_enemy_to_target),
+    );
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[require(Transform, Visibility, PatrolProgress)]
 #[reflect(Component)]
 pub struct Enemy;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Reflect)]
+#[require(Transform, Visibility)]
+#[reflect(Component)]
+pub struct EnemyTarget(pub f32);
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Reflect)]
 #[require(Transform, Visibility)]
@@ -73,6 +81,7 @@ fn on_enemy_added(
             ..Default::default()
         },
         enemy_animation,
+        Mass(1_000_000.),
         CharacterControllerBundle::new(Collider::capsule(40., 30.)).with_movement(
             2000.,
             0.9,
@@ -82,17 +91,35 @@ fn on_enemy_added(
     ));
 }
 
-fn move_enemy_along_patrol_route(
+fn move_enemy_to_target(
+    mut commands: Commands,
     mut movement_event_writer: EventWriter<MovementEvent>,
+    mut enemy_query: Query<(Entity, &GlobalTransform, &EnemyTarget)>,
+) {
+    for (enemy, transform, target) in enemy_query.iter_mut() {
+        let distance = target.0 - transform.translation().x;
+        if distance.abs() < 10. {
+            commands.entity(enemy).remove::<EnemyTarget>();
+        } else {
+            movement_event_writer.write(MovementEvent {
+                entity: enemy,
+                action: MovementAction::Move(if distance > 0. { 1. } else { -1. }),
+            });
+        }
+    }
+}
+
+fn move_enemy_along_patrol_route(
+    mut commands: Commands,
     mut patrolling_enemy_query: Query<
-        (Entity, &GlobalTransform, &PatrolRoute, &mut PatrolProgress),
-        With<Enemy>,
+        (Entity, &PatrolRoute, &mut PatrolProgress),
+        Without<EnemyTarget>,
     >,
     maps_assets: Res<Assets<TiledMapAsset>>,
     map_query: Query<&TiledMap>,
     objects_query: Query<(&TiledObject, &TiledMapReference, &GlobalTransform)>,
 ) {
-    for (enemy, transform, route, mut progress) in patrolling_enemy_query.iter_mut() {
+    for (enemy, route, mut progress) in patrolling_enemy_query.iter_mut() {
         let Some(vertices) =
             objects_query
                 .get(route.0)
@@ -111,16 +138,9 @@ fn move_enemy_along_patrol_route(
         if progress.0 >= vertices.len() {
             progress.0 = 0;
         }
-        let target = vertices.get(progress.0).unwrap();
-        let distance = target.x - transform.translation().x;
-        info!("{}: target = {:?}, position = {}", enemy, target, distance);
-        movement_event_writer.write(MovementEvent {
-            entity: enemy,
-            action: MovementAction::Move(if distance > 0. { 1. } else { -1. }),
-        });
 
-        if distance.abs() < 10. {
-            progress.0 += 1;
-        }
+        let target = vertices.get(progress.0).unwrap();
+        commands.entity(enemy).insert(EnemyTarget(target.x));
+        progress.0 += 1;
     }
 }

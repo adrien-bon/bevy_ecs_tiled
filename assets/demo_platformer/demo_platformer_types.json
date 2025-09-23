@@ -59,7 +59,7 @@
     "valuesAsFlags": false
   },
   {
-    "id": 4,
+    "id": 5,
     "name": "demo_platformer::enemy::Enemy",
     "type": "class",
     "useAs": [
@@ -70,7 +70,7 @@
     "members": []
   },
   {
-    "id": 5,
+    "id": 6,
     "name": "demo_platformer::enemy::PatrolProgress",
     "type": "class",
     "useAs": [
@@ -87,7 +87,7 @@
     ]
   },
   {
-    "id": 3,
+    "id": 1,
     "name": "demo_platformer::enemy::PatrolRoute",
     "type": "class",
     "useAs": [
@@ -104,7 +104,7 @@
     ]
   },
   {
-    "id": 6,
+    "id": 4,
     "name": "demo_platformer::player::Player",
     "type": "class",
     "useAs": [
@@ -115,7 +115,7 @@
     "members": []
   },
   {
-    "id": 1,
+    "id": 2,
     "name": "demo_platformer::player::PlayerSpawnPoint",
     "type": "class",
     "useAs": [
