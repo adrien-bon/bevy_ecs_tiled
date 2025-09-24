@@ -2,11 +2,10 @@ use std::time::Duration;
 
 use avian2d::{math::*, prelude::*};
 use bevy::{prelude::*, sprite::Anchor};
-use bevy_ecs_tiled::prelude::*;
 
 use crate::{
     animation::{Animation, AnimationState, AnimationStateConfig},
-    controller::{CharacterControllerBundle, MovementAction, MovementEvent},
+    controller::CharacterControllerBundle,
 };
 
 const ENEMY_SPRITE_FILE: &str =
@@ -14,34 +13,13 @@ const ENEMY_SPRITE_FILE: &str =
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<Enemy>();
-    app.register_type::<PatrolRoute>();
-    app.register_type::<PatrolProgress>();
     app.add_observer(on_enemy_added);
-    app.add_systems(
-        Update,
-        (move_enemy_along_patrol_route, move_enemy_to_target),
-    );
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
-#[require(Transform, Visibility, PatrolProgress)]
+#[require(Transform, Visibility)]
 #[reflect(Component)]
 pub struct Enemy;
-
-#[derive(Component, Debug, Clone, Copy, PartialEq, Reflect)]
-#[require(Transform, Visibility)]
-#[reflect(Component)]
-pub struct EnemyTarget(pub f32);
-
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Reflect)]
-#[require(Transform, Visibility)]
-#[reflect(Component)]
-pub struct PatrolRoute(pub Entity);
-
-#[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq, Reflect)]
-#[require(Transform, Visibility)]
-#[reflect(Component, Default)]
-pub struct PatrolProgress(pub usize);
 
 fn on_enemy_added(
     trigger: Trigger<OnAdd, Enemy>,
@@ -89,58 +67,4 @@ fn on_enemy_added(
             PI * 0.45,
         ),
     ));
-}
-
-fn move_enemy_to_target(
-    mut commands: Commands,
-    mut movement_event_writer: EventWriter<MovementEvent>,
-    mut enemy_query: Query<(Entity, &GlobalTransform, &EnemyTarget)>,
-) {
-    for (enemy, transform, target) in enemy_query.iter_mut() {
-        let distance = target.0 - transform.translation().x;
-        if distance.abs() < 10. {
-            commands.entity(enemy).remove::<EnemyTarget>();
-        } else {
-            movement_event_writer.write(MovementEvent {
-                entity: enemy,
-                action: MovementAction::Move(if distance > 0. { 1. } else { -1. }),
-            });
-        }
-    }
-}
-
-fn move_enemy_along_patrol_route(
-    mut commands: Commands,
-    mut patrolling_enemy_query: Query<
-        (Entity, &PatrolRoute, &mut PatrolProgress),
-        Without<EnemyTarget>,
-    >,
-    maps_assets: Res<Assets<TiledMapAsset>>,
-    map_query: Query<&TiledMap>,
-    objects_query: Query<(&TiledObject, &TiledMapReference, &GlobalTransform)>,
-) {
-    for (enemy, route, mut progress) in patrolling_enemy_query.iter_mut() {
-        let Some(vertices) =
-            objects_query
-                .get(route.0)
-                .ok()
-                .and_then(|(route, map_reference, route_transform)| {
-                    map_query
-                        .get(map_reference.0)
-                        .ok()
-                        .and_then(|map_handle| maps_assets.get(&map_handle.0))
-                        .map(|map_asset| map_asset.object_vertices(route, route_transform))
-                })
-        else {
-            continue;
-        };
-
-        if progress.0 >= vertices.len() {
-            progress.0 = 0;
-        }
-
-        let target = vertices.get(progress.0).unwrap();
-        commands.entity(enemy).insert(EnemyTarget(target.x));
-        progress.0 += 1;
-    }
 }

@@ -10,6 +10,7 @@ mod controller;
 mod debug;
 mod enemy;
 mod level;
+mod patrol;
 mod player;
 
 fn main() {
@@ -56,6 +57,7 @@ fn main() {
         debug::plugin,
         player::plugin,
         enemy::plugin,
+        patrol::plugin,
         level::plugin,
         controller::CharacterControllerPlugin,
     ));
