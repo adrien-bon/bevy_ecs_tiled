@@ -12,6 +12,7 @@ mod enemy;
 mod level;
 mod patrol;
 mod player;
+mod trigger;
 
 fn main() {
     let mut app = App::new();
@@ -59,6 +60,7 @@ fn main() {
         enemy::plugin,
         patrol::plugin,
         level::plugin,
+        trigger::plugin,
         controller::CharacterControllerPlugin,
     ));
 
@@ -81,6 +83,7 @@ fn main() {
             PhysicsPlugins::default().with_length_unit(100.0),
         ));
 
+    app.insert_resource(ClearColor(Color::srgb_u8(196, 237, 240)));
     app.run();
 }
 

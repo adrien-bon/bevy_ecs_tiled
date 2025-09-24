@@ -5,6 +5,7 @@ use std::time::Duration;
 use crate::{
     animation::{Animation, AnimationState, AnimationStateConfig},
     controller::{CharacterControllerBundle, MovementAction, MovementEvent},
+    trigger::TriggerActor,
     UpdateSystems,
 };
 use avian2d::{math::*, prelude::*};
@@ -72,6 +73,7 @@ fn spawn_player_at_spawn_point(
     commands.spawn((
         Name::new("Player"),
         Player,
+        TriggerActor,
         spawn_transform,
         Sprite {
             image: asset_server.load(PLAYER_SPRITE_FILE),
@@ -86,7 +88,7 @@ fn spawn_player_at_spawn_point(
         CharacterControllerBundle::new(Collider::capsule(50., 50.)).with_movement(
             5000.,
             0.9,
-            600.,
+            800.,
             PI * 0.45,
         ),
     ));

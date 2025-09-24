@@ -63,7 +63,7 @@ fn on_enemy_added(
         CharacterControllerBundle::new(Collider::capsule(40., 30.)).with_movement(
             2000.,
             0.9,
-            600.,
+            800.,
             PI * 0.45,
         ),
     ));
