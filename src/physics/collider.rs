@@ -52,7 +52,7 @@ pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledColliderOrigin>();
     app.register_type::<TiledColliderOf>();
     app.register_type::<TiledColliders>();
-    app.add_event::<TiledEvent<ColliderCreated>>()
+    app.add_message::<TiledEvent<ColliderCreated>>()
         .register_type::<TiledEvent<ColliderCreated>>();
 }
 
@@ -96,7 +96,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
     filter: &TiledFilter,
     source: TiledEvent<ColliderCreated>,
     parent: Entity,
-    event_writer: &mut EventWriter<TiledEvent<ColliderCreated>>,
+    collider_created: &mut MessageWriter<TiledEvent<ColliderCreated>>,
 ) {
     let Some(map_asset) = source.get_map_asset(assets) else {
         return;
@@ -203,7 +203,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
         // Patch origin entity and send collider event
         let mut event = source;
         event.origin = entity;
-        event.send(commands, event_writer);
+        event.send(commands, collider_created);
     }
 }
 

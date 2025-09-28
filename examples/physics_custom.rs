@@ -91,7 +91,7 @@ impl EntityCommand for CustomColliderCommand {
             });
 
         let mut mesh = Mesh::new(
-            bevy::render::mesh::PrimitiveTopology::LineList,
+            bevy::mesh::PrimitiveTopology::LineList,
             RenderAssetUsages::RENDER_WORLD,
         );
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices);
