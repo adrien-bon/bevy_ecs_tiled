@@ -48,13 +48,13 @@ impl<T: TiledPhysicsBackend> Plugin for TiledPhysicsPlugin<T> {
 }
 
 fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
-    mut layer_event: EventReader<TiledEvent<LayerCreated>>,
+    mut layer_created: MessageReader<TiledEvent<LayerCreated>>,
     mut commands: Commands,
     assets: Res<Assets<TiledMapAsset>>,
     maps_query: Query<(&TiledPhysicsSettings<T>, &TilemapAnchor), With<TiledMap>>,
-    mut event_writer: EventWriter<TiledEvent<ColliderCreated>>,
+    mut collider_created: MessageWriter<TiledEvent<ColliderCreated>>,
 ) {
-    for ev in layer_event.read() {
+    for ev in layer_created.read() {
         let (settings, anchor) = ev
             .get_map_entity()
             .and_then(|e| maps_query.get(e).ok())
@@ -77,20 +77,20 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
                 &settings.tiles_objects_filter,
                 ev.transmute(None, ColliderCreated(TiledColliderOrigin::TilesLayer)),
                 ev.origin,
-                &mut event_writer,
+                &mut collider_created,
             );
         }
     }
 }
 
 fn collider_from_object<T: TiledPhysicsBackend>(
-    mut object_event: EventReader<TiledEvent<ObjectCreated>>,
+    mut object_created: MessageReader<TiledEvent<ObjectCreated>>,
     mut commands: Commands,
     assets: Res<Assets<TiledMapAsset>>,
     maps_query: Query<(&TiledPhysicsSettings<T>, &TilemapAnchor), With<TiledMap>>,
-    mut event_writer: EventWriter<TiledEvent<ColliderCreated>>,
+    mut collider_created: MessageWriter<TiledEvent<ColliderCreated>>,
 ) {
-    for ev in object_event.read() {
+    for ev in object_created.read() {
         let (settings, anchor) = ev
             .get_map_entity()
             .and_then(|e| maps_query.get(e).ok())
@@ -118,7 +118,7 @@ fn collider_from_object<T: TiledPhysicsBackend>(
                 },
                 ev.transmute(None, ColliderCreated(TiledColliderOrigin::Object)),
                 ev.origin,
-                &mut event_writer,
+                &mut collider_created,
             );
         }
     }
