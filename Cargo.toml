@@ -46,8 +46,8 @@ user_properties = ["dep:serde", "dep:serde_json"]
 
 [dependencies]
 # Main dependencies
-bevy = { version = "0.17.0-rc.1", default-features = false }
-bevy_ecs_tilemap = { version = "0.17", default-features = false }
+bevy = { version = "0.17.0-rc.2", default-features = false }
+bevy_ecs_tilemap = { version = "0.17.0-rc.1", default-features = false }
 tiled = { version = "0.15", features = ["world"] }
 
 # Utilities
@@ -75,7 +75,7 @@ max_combination_size = 3
 denylist = ["png", "bmp", "jpeg", "gif"]
 
 [dev-dependencies]
-bevy = { version = "0.17.0-rc.1", features = ["file_watcher"] }
+bevy = { version = "0.17.0-rc.2", features = ["file_watcher"] }
 bevy-inspector-egui = "0.34"
 iyes_perf_ui = { version = "0.5" }
 
@@ -150,7 +150,7 @@ name = "world_chunking"
 required-features = ["debug"]
 
 [patch.crates-io]
-bevy_ecs_tilemap = { git = "https://github.com/ChristopherBiscardi/bevy_ecs_tilemap.git", rev = "a6d778b2bb9d9984656126c5ad8ee8c6ce019fa9" }
-bevy-inspector-egui = { git = "https://github.com/pindash-io/bevy-inspector-egui.git", rev = "43ecd13855e0f91ad8255d07abeadec60384e514" }
-avian2d = { git = "https://github.com/Jondolf/avian.git", rev = "2d09db4f05386f9459ee613309d983e2a8076e5e" }
+bevy_ecs_tilemap = { git = "https://github.com/ChristopherBiscardi/bevy_ecs_tilemap.git", rev = "fc496887c1e3e058bc539392d42c0473594efb05" }
+bevy-inspector-egui = { git = "https://github.com/pindash-io/bevy-inspector-egui.git", rev = "92814ac36d0d5649aa0335d2bc07ada1da0a2cc2" }
+avian2d = { git = "https://github.com/Jondolf/avian.git", rev = "cf1d88a2c032a215633a8c32e8e4bb08b16ae790" }
 iyes_perf_ui = { git = "https://github.com/mgi388/iyes_perf_ui.git", rev = "d9d8e7e8c9e0bbc499f529daf5bb7adaef044616" }
