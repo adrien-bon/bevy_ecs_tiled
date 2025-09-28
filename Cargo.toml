@@ -152,5 +152,5 @@ required-features = ["debug"]
 [patch.crates-io]
 bevy_ecs_tilemap = { git = "https://github.com/ChristopherBiscardi/bevy_ecs_tilemap.git", rev = "fc496887c1e3e058bc539392d42c0473594efb05" }
 bevy-inspector-egui = { git = "https://github.com/pindash-io/bevy-inspector-egui.git", rev = "92814ac36d0d5649aa0335d2bc07ada1da0a2cc2" }
-avian2d = { git = "https://github.com/Jondolf/avian.git", rev = "cf1d88a2c032a215633a8c32e8e4bb08b16ae790" }
+avian2d = { git = "https://github.com/Jondolf/avian.git", rev = "19f4c2ca692d2541fd5fa58c5bcaf1c2fe87ee22" }
 iyes_perf_ui = { git = "https://github.com/mgi388/iyes_perf_ui.git", rev = "d9d8e7e8c9e0bbc499f529daf5bb7adaef044616" }

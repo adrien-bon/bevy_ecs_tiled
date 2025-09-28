@@ -45,7 +45,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ))
         // Wait for map loading to complete and spawn a simple player-controlled object
         .observe(
-            |_: Trigger<TiledEvent<MapCreated>>, mut commands: Commands| {
+            |_: On<TiledEvent<MapCreated>>, mut commands: Commands| {
                 commands.spawn((
                     RigidBody::Dynamic,
                     PlayerMarker,
@@ -58,9 +58,9 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         )
         // Automatically insert a `RigidBody::Static` component on all the colliders entities from the map
         .observe(
-            |trigger: Trigger<TiledEvent<ColliderCreated>>, mut commands: Commands| {
+            |collider_created: On<TiledEvent<ColliderCreated>>, mut commands: Commands| {
                 commands
-                    .entity(trigger.event().origin)
+                    .entity(collider_created.event().origin)
                     .insert(RigidBody::Static);
             },
         );
