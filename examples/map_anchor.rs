@@ -49,7 +49,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 font_size,
                 ..default()
             },
-            TextLayout::new_with_justify(JustifyText::Left),
+            TextLayout::new_with_justify(Justify::Left),
             AnchorLabel,
         ))
         .with_children(|parent| {
