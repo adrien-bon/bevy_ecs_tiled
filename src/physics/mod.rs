@@ -52,7 +52,7 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
     mut commands: Commands,
     assets: Res<Assets<TiledMapAsset>>,
     maps_query: Query<(&TiledPhysicsSettings<T>, &TilemapAnchor), With<TiledMap>>,
-    mut collider_created: MessageWriter<TiledEvent<ColliderCreated>>,
+    mut message_writer: MessageWriter<TiledEvent<ColliderCreated>>,
 ) {
     for ev in layer_created.read() {
         let (settings, anchor) = ev
@@ -75,9 +75,11 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
                 &assets,
                 anchor,
                 &settings.tiles_objects_filter,
-                ev.transmute(None, ColliderCreated(TiledColliderOrigin::TilesLayer)),
-                ev.origin,
-                &mut collider_created,
+                ev.transmute(
+                    None,
+                    ColliderCreated::new(TiledColliderSource::TilesLayer, ev.origin),
+                ),
+                &mut message_writer,
             );
         }
     }
@@ -88,7 +90,7 @@ fn collider_from_object<T: TiledPhysicsBackend>(
     mut commands: Commands,
     assets: Res<Assets<TiledMapAsset>>,
     maps_query: Query<(&TiledPhysicsSettings<T>, &TilemapAnchor), With<TiledMap>>,
-    mut collider_created: MessageWriter<TiledEvent<ColliderCreated>>,
+    mut message_writer: MessageWriter<TiledEvent<ColliderCreated>>,
 ) {
     for ev in object_created.read() {
         let (settings, anchor) = ev
@@ -116,9 +118,11 @@ fn collider_from_object<T: TiledPhysicsBackend>(
                     Some(_) => &settings.tiles_objects_filter,
                     None => &TiledFilter::All,
                 },
-                ev.transmute(None, ColliderCreated(TiledColliderOrigin::Object)),
-                ev.origin,
-                &mut collider_created,
+                ev.transmute(
+                    None,
+                    ColliderCreated::new(TiledColliderSource::Object, ev.origin),
+                ),
+                &mut message_writer,
             );
         }
     }

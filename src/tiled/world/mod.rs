@@ -30,7 +30,7 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 ///     commands.spawn(TiledWorld(asset_server.load("demo.world")));
 /// }
 /// ```
-#[derive(Component, Reflect, Clone, Debug)]
+#[derive(Component, Reflect, Clone, Debug, Deref)]
 #[reflect(Component, Debug)]
 #[require(
     TiledWorldStorage,

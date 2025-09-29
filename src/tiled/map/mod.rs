@@ -37,7 +37,7 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 ///     commands.spawn(TiledMap(asset_server.load("map.tmx")));
 /// }
 /// ```
-#[derive(Component, Reflect, Clone, Debug)]
+#[derive(Component, Reflect, Clone, Debug, Deref)]
 #[reflect(Component, Debug)]
 #[require(
     TiledMapStorage,
@@ -75,7 +75,7 @@ pub struct TiledMap(pub Handle<TiledMapAsset>);
 ///
 /// # Notes
 /// - The Z offset is applied incrementally for each layer: the first layer is at Z=0, the next at Z=offset, etc.
-#[derive(Component, Reflect, Copy, Clone, Debug)]
+#[derive(Component, Reflect, Copy, Clone, Debug, Deref)]
 #[reflect(Component, Default, Debug)]
 pub struct TiledMapLayerZOffset(pub f32);
 
@@ -92,7 +92,7 @@ impl Default for TiledMapLayerZOffset {
 /// there will be no visible gaps at the edges of the repeated image. The value represents
 /// how many additional tiles (in both directions) are rendered outside the current viewport.
 /// Increase this value if you observe gaps when moving the camera quickly or zooming out.
-#[derive(Component, Reflect, Copy, Clone, Debug)]
+#[derive(Component, Reflect, Copy, Clone, Debug, Deref)]
 #[reflect(Component, Default, Debug)]
 pub struct TiledMapImageRepeatMargin(pub u32);
 
@@ -107,7 +107,7 @@ impl Default for TiledMapImageRepeatMargin {
 /// This component is automatically attached to all entities that are part of a Tiled map hierarchy,
 /// such as layers [`TiledLayer`], tilemaps [`TiledTilemap`], objects [`TiledObject`], and images [`TiledImage`].
 /// It allows systems and queries to easily retrieve the root map entity associated with any Tiled sub-entity.
-#[derive(Component, Reflect, Copy, Clone, Debug)]
+#[derive(Component, Reflect, Copy, Clone, Debug, Deref)]
 #[reflect(Component, Debug)]
 pub struct TiledMapReference(pub Entity);
 
