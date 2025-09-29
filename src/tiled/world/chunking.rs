@@ -14,7 +14,7 @@ use bevy::{math::bounding::IntersectsVolume, prelude::*};
 /// map if it overlaps with its associated [`Rect`].
 ///
 /// Must be added to the [`Entity`] holding the world.
-#[derive(Component, Default, Reflect, Copy, Clone, Debug)]
+#[derive(Component, Default, Reflect, Copy, Clone, Debug, Deref)]
 #[reflect(Component, Default, Debug)]
 pub struct TiledWorldChunking(pub Option<Vec2>);
 

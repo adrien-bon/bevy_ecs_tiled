@@ -55,12 +55,12 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ));
             },
         )
-        // Automatically insert a `RigidBody::Fixed` component on all the colliders entities from the map
+        // Automatically insert a `RigidBody::Static` component on all the map entities
         .observe(
-            |trigger: Trigger<TiledEvent<ColliderCreated>>, mut commands: Commands| {
+            |collider_created: On<TiledEvent<ColliderCreated>>, mut commands: Commands| {
                 commands
-                    .entity(trigger.event().origin)
-                    .insert(RigidBody::Fixed);
+                    .entity(*collider_created.event().event.collider_of)
+                    .insert(RigidBody::Static);
             },
         );
 }

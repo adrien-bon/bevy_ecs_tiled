@@ -43,7 +43,7 @@ pub mod prelude {
     pub use super::physics::{
         backend::{multi_polygon_as_line_strings, multi_polygon_as_triangles, TiledPhysicsBackend},
         collider::{
-            ColliderCreated, TiledColliderOf, TiledColliderOrigin, TiledColliderPolygons,
+            ColliderCreated, TiledColliderOf, TiledColliderPolygons, TiledColliderSource,
             TiledColliders,
         },
         settings::TiledPhysicsSettings,
