@@ -2,6 +2,21 @@
 
 ## [unreleased]
 
+## v0.10.0
+
+**BREAKING CHANGES**
+This version brings breaking changes.
+A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_10.html) is available to help adapt to these.
+
+### Features
+
+- Update for Bevy v0.17
+
+### Changed
+
+- Rename `TiledColliderOrigin` to `TiledColliderSource`
+- Improve `ColliderCreated` event so it now includes a direct reference to the collider's parent entity
+
 ## v0.9.6
 
 ### Bugfixes
