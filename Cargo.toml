@@ -59,7 +59,7 @@ regex = "1.11"
 
 # Optional dependencies, enabled via features.
 bevy_rapier2d = { version = "0.31", optional = true }
-avian2d = { version = "0.3", optional = true }
+avian2d = { version = "0.4.0-dev", optional = true }
 serde = { version = "1.0", optional = true, features = ["derive"] }
 serde_json = { version = "1.0", optional = true }
 
@@ -152,5 +152,5 @@ required-features = ["debug"]
 [patch.crates-io]
 bevy_ecs_tilemap = { git = "https://github.com/ChristopherBiscardi/bevy_ecs_tilemap.git", rev = "fc496887c1e3e058bc539392d42c0473594efb05" }
 bevy-inspector-egui = { git = "https://github.com/pindash-io/bevy-inspector-egui.git", rev = "92814ac36d0d5649aa0335d2bc07ada1da0a2cc2" }
-avian2d = { git = "https://github.com/Jondolf/avian.git", rev = "19f4c2ca692d2541fd5fa58c5bcaf1c2fe87ee22" }
+avian2d = { git = "https://github.com/Jondolf/avian.git", rev = "20175b1d16615af2e7e9c08a71be0ac904442479" }
 iyes_perf_ui = { git = "https://github.com/mgi388/iyes_perf_ui.git", rev = "d9d8e7e8c9e0bbc499f529daf5bb7adaef044616" }
