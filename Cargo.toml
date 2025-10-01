@@ -46,7 +46,7 @@ user_properties = ["dep:serde", "dep:serde_json"]
 
 [dependencies]
 # Main dependencies
-bevy = { version = "0.16", default-features = false }
+bevy = { version = "0.17", default-features = false }
 bevy_ecs_tilemap = { version = "0.16", default-features = false }
 tiled = { version = "0.15", features = ["world"] }
 
@@ -75,7 +75,7 @@ max_combination_size = 3
 denylist = ["png", "bmp", "jpeg", "gif"]
 
 [dev-dependencies]
-bevy = { version = "0.16", features = ["file_watcher"] }
+bevy = { version = "0.17", features = ["file_watcher"] }
 bevy-inspector-egui = "0.33"
 iyes_perf_ui = { version = "0.5" }
 
