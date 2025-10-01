@@ -37,13 +37,13 @@ pub enum TiledFilter {
     /// Matches only the provided regex.
     ///
     /// See <https://docs.rs/regex/latest/regex/index.html#syntax>
-    RegexSet(RegexSet),
+    RegexSet(regex::RegexSet),
     /// Matches no names.
     None,
 }
 
-impl From<RegexSet> for TiledFilter {
-    fn from(rs: RegexSet) -> Self {
+impl From<regex::RegexSet> for TiledFilter {
+    fn from(rs: regex::RegexSet) -> Self {
         Self::RegexSet(rs)
     }
 }
