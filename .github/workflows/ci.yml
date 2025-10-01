@@ -8,8 +8,10 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  RUSTFLAGS: --deny warnings
-  RUSTDOCFLAGS: --deny warnings
+  # Reduce compile time and cache size.
+  RUSTFLAGS: -Dwarnings -Zshare-generics=y -Zthreads=0 -C debuginfo=line-tables-only
+  RUSTDOCFLAGS: -Dwarnings -Zshare-generics=y -Zthreads=0 -C debuginfo=line-tables-only
+  toolchain: nightly-2025-06-26
 
 jobs:
   # Run tests.
@@ -23,12 +25,18 @@ jobs:
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.toolchain }}
 
-      - name: Install dependencies
-        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+      - name: Restore Rust cache
+        id: cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci
 
-      - name: Populate target directory from cache
-        uses: Leafwing-Studios/cargo-cache@v2
+      - name: Install build dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev; sudo apt-get clean
 
       - name: Run tests
         run: |
@@ -48,13 +56,18 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: ${{ env.toolchain }}
           components: clippy
 
-      - name: Install dependencies
-        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+      - name: Restore Rust cache
+        id: cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci
 
-      - name: Populate target directory from cache
-        uses: Leafwing-Studios/cargo-cache@v2
+      - name: Install build dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev; sudo apt-get clean
 
       - name: Run clippy lints
         run: cargo clippy --workspace --all-targets --all-features -- --deny warnings
@@ -71,6 +84,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: ${{ env.toolchain }}
           components: rustfmt
 
       - name: Run cargo fmt
@@ -87,12 +101,18 @@ jobs:
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.toolchain }}
 
-      - name: Install dependencies
-        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+      - name: Restore Rust cache
+        id: cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci
 
-      - name: Populate target directory from cache
-        uses: Leafwing-Studios/cargo-cache@v2
+      - name: Install build dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev; sudo apt-get clean
 
       - name: Check documentation
         run: cargo doc --workspace --all-features --document-private-items --no-deps
@@ -107,12 +127,19 @@ jobs:
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.toolchain }}
 
-      - name: Install dependencies
-        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+      - name: Restore Rust cache
+        id: cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci
+          save-if: false
 
-      - name: Populate target directory from cache
-        uses: Leafwing-Studios/cargo-cache@v2
+      - name: Install build dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev; sudo apt-get clean
 
       - name: Install cargo-all-features
         run: cargo install --force cargo-all-features
