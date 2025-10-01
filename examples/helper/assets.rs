@@ -1,4 +1,4 @@
-use bevy::{ecs::system::EntityCommands, prelude::*};
+use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 
 pub type MapInfosCallback = fn(&mut EntityCommands);

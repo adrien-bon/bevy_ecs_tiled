@@ -24,7 +24,7 @@ fn main() {
         .add_plugins(TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default())
         // Avian physics plugins
         .add_plugins(PhysicsPlugins::default().with_length_unit(100.0))
-        .add_plugins(PhysicsDebugPlugin::default())
+        .add_plugins(PhysicsDebugPlugin)
         // Add gravity for this example
         .insert_resource(Gravity(Vec2::NEG_Y * 1000.0))
         // Add our systems and run the app!
@@ -44,23 +44,21 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             TilemapAnchor::Center,
         ))
         // Wait for map loading to complete and spawn a simple player-controlled object
+        .observe(|_: On<TiledEvent<MapCreated>>, mut commands: Commands| {
+            commands.spawn((
+                RigidBody::Dynamic,
+                PlayerMarker,
+                Name::new("PlayerControlledObject (Avian2D physics)"),
+                Collider::circle(10.),
+                GravityScale(GRAVITY_SCALE),
+                Transform::from_xyz(50., -50., 0.),
+            ));
+        })
+        // Automatically insert a `RigidBody::Static` component on all the map entities
         .observe(
-            |_: Trigger<TiledEvent<MapCreated>>, mut commands: Commands| {
-                commands.spawn((
-                    RigidBody::Dynamic,
-                    PlayerMarker,
-                    Name::new("PlayerControlledObject (Avian2D physics)"),
-                    Collider::circle(10.),
-                    GravityScale(GRAVITY_SCALE),
-                    Transform::from_xyz(50., -50., 0.),
-                ));
-            },
-        )
-        // Automatically insert a `RigidBody::Static` component on all the colliders entities from the map
-        .observe(
-            |trigger: Trigger<TiledEvent<ColliderCreated>>, mut commands: Commands| {
+            |collider_created: On<TiledEvent<ColliderCreated>>, mut commands: Commands| {
                 commands
-                    .entity(trigger.event().origin)
+                    .entity(*collider_created.event().event.collider_of)
                     .insert(RigidBody::Static);
             },
         );

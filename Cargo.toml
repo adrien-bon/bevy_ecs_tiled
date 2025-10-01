@@ -33,8 +33,8 @@ debug = ["bevy/bevy_gizmos", "bevy/bevy_text"]
 
 # Physics
 physics = []
-rapier = ["bevy_rapier2d", "physics"]
-rapier_debug = ["rapier", "bevy_rapier2d/debug-render-2d", "debug"]
+#rapier = ["bevy_rapier2d", "physics"]
+#rapier_debug = ["rapier", "bevy_rapier2d/debug-render-2d", "debug"]
 avian = ["dep:avian2d", "physics"]
 avian_debug = ["avian", "debug"]
 
@@ -46,8 +46,8 @@ user_properties = ["dep:serde", "dep:serde_json"]
 
 [dependencies]
 # Main dependencies
-bevy = { version = "0.16", default-features = false }
-bevy_ecs_tilemap = { version = "0.16", default-features = false }
+bevy = { version = "0.17", default-features = false }
+bevy_ecs_tilemap = { version = "0.17.0-rc.1", default-features = false }
 tiled = { version = "0.15", features = ["world"] }
 
 # Utilities
@@ -58,14 +58,15 @@ geo = "0.31"
 regex = "1.11"
 
 # Optional dependencies, enabled via features.
-bevy_rapier2d = { version = "0.31", optional = true }
-avian2d = { version = "0.3", optional = true }
+#bevy_rapier2d = { version = "0.31", optional = true }
+avian2d = { version = "0.4.0-dev", optional = true }
 serde = { version = "1.0", optional = true, features = ["derive"] }
 serde_json = { version = "1.0", optional = true }
 
 # docs.rs-specific configuration
 [package.metadata.docs.rs]
-features = ["debug","user_properties","physics","avian","rapier"]
+#features = ["debug","user_properties","physics","avian","rapier"]
+features = ["debug","user_properties","physics","avian"]
 
 # cargo-all-features configuration
 [package.metadata.cargo-all-features]
@@ -75,8 +76,8 @@ max_combination_size = 3
 denylist = ["png", "bmp", "jpeg", "gif"]
 
 [dev-dependencies]
-bevy = { version = "0.16", features = ["file_watcher"] }
-bevy-inspector-egui = "0.33"
+bevy = { version = "0.17", features = ["file_watcher"] }
+bevy-inspector-egui = "0.34"
 iyes_perf_ui = { version = "0.5" }
 
 [[example]]
@@ -126,17 +127,17 @@ required-features = ["avian_debug"]
 name = "physics_custom"
 required-features = ["physics"]
 
-[[example]]
-name = "physics_rapier_controller"
-required-features = ["rapier_debug"]
+# [[example]]
+# name = "physics_rapier_controller"
+# required-features = ["rapier_debug"]
 
-[[example]]
-name = "physics_rapier_orientation"
-required-features = ["rapier_debug"]
+# [[example]]
+# name = "physics_rapier_orientation"
+# required-features = ["rapier_debug"]
 
-[[example]]
-name = "physics_rapier_settings"
-required-features = ["rapier_debug"]
+# [[example]]
+# name = "physics_rapier_settings"
+# required-features = ["rapier_debug"]
 
 [[example]]
 name = "properties_basic"
@@ -148,3 +149,9 @@ name = "world_basic"
 [[example]]
 name = "world_chunking"
 required-features = ["debug"]
+
+[patch.crates-io]
+bevy_ecs_tilemap = { git = "https://github.com/ChristopherBiscardi/bevy_ecs_tilemap.git", rev = "fc496887c1e3e058bc539392d42c0473594efb05" }
+bevy-inspector-egui = { git = "https://github.com/pindash-io/bevy-inspector-egui.git", rev = "92814ac36d0d5649aa0335d2bc07ada1da0a2cc2" }
+avian2d = { git = "https://github.com/Jondolf/avian.git", rev = "20175b1d16615af2e7e9c08a71be0ac904442479" }
+iyes_perf_ui = { git = "https://github.com/mgi388/iyes_perf_ui.git", rev = "d9d8e7e8c9e0bbc499f529daf5bb7adaef044616" }

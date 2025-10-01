@@ -11,7 +11,7 @@ fn main() {
     // Use a custom file path to export registered types in Tiled format
     let mut path = env::current_dir().unwrap();
     path.push("examples");
-    path.push("my_tiled_export_file.json");
+    path.push("properties_basic.json");
 
     App::new()
         // Bevy default plugins: prevent blur effect by changing default sampling
@@ -27,7 +27,7 @@ fn main() {
             tiled_types_filter: TiledFilter::from(
                 RegexSet::new([
                     r"^properties_basic::.*",
-                    r"^bevy_text::text2d::Text2d$",
+                    r"^bevy_sprite::text2d::Text2d$",
                     r"^bevy_text::text::TextColor$",
                     r"^bevy_ecs::name::Name$",
                 ])

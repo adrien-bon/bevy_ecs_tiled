@@ -112,7 +112,7 @@ fn handle_unload(
 ) {
     if keyboard_input.just_pressed(KeyCode::KeyU) {
         // This example shows that the map gets properly unloaded if the
-        // [`TiledMapAsset`] asset is removed.
+        // [`TiledMapAsset`] handle is removed.
         //
         // However, typically you would remove the map entity instead.
         info!("Unload map");
@@ -132,7 +132,7 @@ fn handle_unload(
     }
 }
 
-fn log_transitions(mut transitions: EventReader<StateTransitionEvent<MapState>>) {
+fn log_transitions(mut transitions: MessageReader<StateTransitionEvent<MapState>>) {
     for transition in transitions.read() {
         info!(
             "transition: {:?} => {:?}",

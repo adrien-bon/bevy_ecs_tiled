@@ -162,15 +162,14 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(
         TiledMap(asset_server.load("map.tmx"))
             .observe(
-                |trigger: Trigger<TiledEvent<ColliderCreated>>, mut commands: Commands| {
-                    // Automatically add a RigidBody::Static component to colliders created from Tiled objects
-                    if trigger.event().event != TiledCollider::TilesLayer {
-                        return;
+                |collider_created: On<TiledEvent<ColliderCreated>>, mut commands: Commands| {
+                    // Filter collider created from Tiled objects
+                    if collider_created.event().event.source == TiledCollider::Object {
+                        // Add a RigidBody::Static to the collider parent entity
+                        commands
+                            .entity(*collider_created.event().event.collider_of)
+                            .insert(RigidBody::Static);
                     }
-                    // Add a RigidBody::Static component to the collider entity
-                    commands
-                        .entity(trigger.event().target)
-                        .insert(RigidBody::Static);
                 },
             ),
     );

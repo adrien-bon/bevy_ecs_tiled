@@ -89,9 +89,9 @@
   </object>
   <object id="11" x="145.75" y="5.75">
    <properties>
-    <property name="Text2d" type="class" propertytype="bevy_text::text2d::Text2d">
+    <property name="Text2d" type="class" propertytype="bevy_sprite::text2d::Text2d">
      <properties>
-      <property name="0" value="This Text2d comes directly from Tiled !"/>
+      <property name="0" value="This text comes from Tiled editor !"/>
      </properties>
     </property>
     <property name="TextColor" type="class" propertytype="bevy_text::text::TextColor">

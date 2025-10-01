@@ -38,8 +38,8 @@ Note that in case of a [`TiledObject::Tile`](https://docs.rs/bevy_ecs_tiled/late
 
 Tiles have a slightly more complex structure:
 
-- Below each [`TiledLayer::Tiles`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html#variant.Tiles), there is one [`TiledTilemap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilemap.html) per tileset used in the map.
-- Below these, you find the actual [`TiledTile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTile.html) entities, each corresponding to a tile in the layer for a given tileset.
+- Below each [`TiledLayer::Tiles`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html#variant.Tiles), there is one [`TiledTilemap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilemap.html) per tileset used in the map. It notably holds the `TilemapBundle` from `bevy_ecs_tilemap`.
+- Below these tilemaps, you find the actual [`TiledTile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTile.html) entities, each corresponding to a tile in the layer for a given tileset.
 
 ### Physics Colliders
 

@@ -9,7 +9,7 @@ pub mod chunking;
 pub mod loader;
 pub mod storage;
 
-use crate::{prelude::*, tiled::event::TiledEventWriters};
+use crate::{prelude::*, tiled::event::TiledMessageWriters};
 use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 
 /// Main component for loading and managing a Tiled world in the ECS world.
@@ -30,7 +30,7 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 ///     commands.spawn(TiledWorld(asset_server.load("demo.world")));
 /// }
 /// ```
-#[derive(Component, Reflect, Clone, Debug)]
+#[derive(Component, Reflect, Clone, Debug, Deref)]
 #[reflect(Component, Debug)]
 #[require(
     TiledWorldStorage,
@@ -105,7 +105,7 @@ fn process_loaded_worlds(
             // it's read each frame by world_chunking() system
         )>,
     >,
-    mut event_writers: TiledEventWriters,
+    mut message_writers: TiledMessageWriters,
 ) {
     for (world_entity, world_handle, mut world_storage) in world_query.iter_mut() {
         if let Some(load_state) = asset_server.get_recursive_dependency_load_state(&world_handle.0)
@@ -155,7 +155,7 @@ fn process_loaded_worlds(
 
             TiledEvent::new(world_entity, WorldCreated)
                 .with_world(world_entity, world_handle.0.id())
-                .send(&mut commands, &mut event_writers.world_created);
+                .send(&mut commands, &mut message_writers.world_created);
         }
     }
 }
@@ -163,7 +163,7 @@ fn process_loaded_worlds(
 /// System to update worlds as they are changed or removed.
 fn handle_world_events(
     mut commands: Commands,
-    mut world_events: EventReader<AssetEvent<TiledWorldAsset>>,
+    mut world_events: MessageReader<AssetEvent<TiledWorldAsset>>,
     world_query: Query<(Entity, &TiledWorld)>,
 ) {
     for event in world_events.read() {

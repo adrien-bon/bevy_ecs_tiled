@@ -12,7 +12,7 @@ pub mod storage;
 
 use crate::{
     prelude::*,
-    tiled::{cache::TiledResourceCache, event::TiledEventWriters},
+    tiled::{cache::TiledResourceCache, event::TiledMessageWriters},
 };
 use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 
@@ -37,7 +37,7 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 ///     commands.spawn(TiledMap(asset_server.load("map.tmx")));
 /// }
 /// ```
-#[derive(Component, Reflect, Clone, Debug)]
+#[derive(Component, Reflect, Clone, Debug, Deref)]
 #[reflect(Component, Debug)]
 #[require(
     TiledMapStorage,
@@ -75,7 +75,7 @@ pub struct TiledMap(pub Handle<TiledMapAsset>);
 ///
 /// # Notes
 /// - The Z offset is applied incrementally for each layer: the first layer is at Z=0, the next at Z=offset, etc.
-#[derive(Component, Reflect, Copy, Clone, Debug)]
+#[derive(Component, Reflect, Copy, Clone, Debug, Deref)]
 #[reflect(Component, Default, Debug)]
 pub struct TiledMapLayerZOffset(pub f32);
 
@@ -92,7 +92,7 @@ impl Default for TiledMapLayerZOffset {
 /// there will be no visible gaps at the edges of the repeated image. The value represents
 /// how many additional tiles (in both directions) are rendered outside the current viewport.
 /// Increase this value if you observe gaps when moving the camera quickly or zooming out.
-#[derive(Component, Reflect, Copy, Clone, Debug)]
+#[derive(Component, Reflect, Copy, Clone, Debug, Deref)]
 #[reflect(Component, Default, Debug)]
 pub struct TiledMapImageRepeatMargin(pub u32);
 
@@ -107,7 +107,7 @@ impl Default for TiledMapImageRepeatMargin {
 /// This component is automatically attached to all entities that are part of a Tiled map hierarchy,
 /// such as layers [`TiledLayer`], tilemaps [`TiledTilemap`], objects [`TiledObject`], and images [`TiledImage`].
 /// It allows systems and queries to easily retrieve the root map entity associated with any Tiled sub-entity.
-#[derive(Component, Reflect, Copy, Clone, Debug)]
+#[derive(Component, Reflect, Copy, Clone, Debug, Deref)]
 #[reflect(Component, Debug)]
 pub struct TiledMapReference(pub Entity);
 
@@ -174,7 +174,7 @@ fn process_loaded_maps(
             With<RespawnTiledMap>,
         )>,
     >,
-    mut event_writers: TiledEventWriters,
+    mut message_writers: TiledMessageWriters,
 ) {
     for (map_entity, map_handle, mut tiled_storage, render_settings, anchor, layer_offset) in
         map_query.iter_mut()
@@ -219,7 +219,7 @@ fn process_loaded_maps(
                 &mut tiled_storage,
                 render_settings,
                 layer_offset,
-                &mut event_writers,
+                &mut message_writers,
                 anchor,
             );
 
@@ -232,7 +232,7 @@ fn process_loaded_maps(
 /// System to update maps as they are changed or removed.
 fn handle_map_events(
     mut commands: Commands,
-    mut map_events: EventReader<AssetEvent<TiledMapAsset>>,
+    mut map_events: MessageReader<AssetEvent<TiledMapAsset>>,
     map_query: Query<(Entity, &TiledMap)>,
     mut cache: ResMut<TiledResourceCache>,
 ) {

@@ -19,7 +19,7 @@ impl Plugin for HelperPlugin {
             WorldInspectorPlugin::default().run_if(input_toggle_active(false, KeyCode::F1)),
             // we want Bevy to measure these values for us:
             bevy::diagnostic::FrameTimeDiagnosticsPlugin::default(),
-            bevy::diagnostic::EntityCountDiagnosticsPlugin,
+            bevy::diagnostic::EntityCountDiagnosticsPlugin::default(),
             bevy::diagnostic::SystemInformationDiagnosticsPlugin,
             bevy::render::diagnostic::RenderDiagnosticsPlugin,
             PerfUiPlugin,

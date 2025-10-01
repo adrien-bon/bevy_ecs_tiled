@@ -49,9 +49,9 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
         source: &TiledEvent<ColliderCreated>,
         multi_polygon: &MultiPolygon<f32>,
     ) -> Vec<Entity> {
-        let (name, color) = match source.event.0 {
-            TiledColliderOrigin::Object => (String::from("Custom[Object]"), Color::from(PURPLE)),
-            TiledColliderOrigin::TilesLayer => {
+        let (name, color) = match source.event.source {
+            TiledColliderSource::Object => (String::from("Custom[Object]"), Color::from(PURPLE)),
+            TiledColliderSource::TilesLayer => {
                 (String::from("Custom[TilesLayer]"), Color::from(RED))
             }
         };
@@ -91,7 +91,7 @@ impl EntityCommand for CustomColliderCommand {
             });
 
         let mut mesh = Mesh::new(
-            bevy::render::mesh::PrimitiveTopology::LineList,
+            bevy::mesh::PrimitiveTopology::LineList,
             RenderAssetUsages::RENDER_WORLD,
         );
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices);
