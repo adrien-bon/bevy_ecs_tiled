@@ -24,7 +24,7 @@ fn main() {
         .add_plugins(TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default())
         // Avian physics plugins
         .add_plugins(PhysicsPlugins::default().with_length_unit(100.0))
-        .add_plugins(PhysicsDebugPlugin::default())
+        .add_plugins(PhysicsDebugPlugin)
         // Add gravity for this example
         .insert_resource(Gravity(Vec2::NEG_Y * 1000.0))
         // Add our systems and run the app!
