@@ -11,6 +11,7 @@ mod debug;
 mod enemy;
 mod level;
 mod player;
+mod minimap;
 
 fn main() {
     let mut app = App::new();
@@ -58,6 +59,7 @@ fn main() {
         enemy::plugin,
         level::plugin,
         controller::CharacterControllerPlugin,
+        minimap::plugin,
     ));
 
     let mut path = env::current_dir().unwrap();
