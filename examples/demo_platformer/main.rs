@@ -13,6 +13,7 @@ mod level;
 mod patrol;
 mod player;
 mod trigger;
+mod minimap;
 
 fn main() {
     let mut app = App::new();
@@ -62,6 +63,7 @@ fn main() {
         level::plugin,
         trigger::plugin,
         controller::CharacterControllerPlugin,
+        minimap::plugin,
     ));
 
     let mut path = env::current_dir().unwrap();
