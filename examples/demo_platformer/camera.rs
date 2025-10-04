@@ -11,12 +11,21 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
+#[derive(Component)]
+pub struct MainCamera;
+
 fn setup_camera(mut commands: Commands) {
-    commands.spawn((Name::new("Camera"), Camera2d, TiledParallaxCamera));
+    commands.spawn((
+        Name::new("Camera"),
+        Camera2d,
+        MainCamera,
+        TiledParallaxCamera,
+        IsDefaultUiCamera,
+    ));
 }
 
 fn camera_follow_player(
-    camera_single: Single<&mut Transform, With<Camera2d>>,
+    camera_single: Single<&mut Transform, With<MainCamera>>,
     player_single: Single<&GlobalTransform, With<Player>>,
 ) {
     let mut camera_transform = camera_single.into_inner();
