@@ -35,7 +35,6 @@ jobs:
           shared-key: ci
 
       - name: Install build dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev; sudo apt-get clean
 
       - name: Run tests
@@ -66,7 +65,6 @@ jobs:
           shared-key: ci
 
       - name: Install build dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev; sudo apt-get clean
 
       - name: Run clippy lints
@@ -111,7 +109,6 @@ jobs:
           shared-key: ci
 
       - name: Install build dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev; sudo apt-get clean
 
       - name: Check documentation
@@ -138,7 +135,6 @@ jobs:
           save-if: false
 
       - name: Install build dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev; sudo apt-get clean
 
       - name: Install cargo-all-features
