@@ -42,24 +42,22 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             TilemapAnchor::Center,
         ))
         // Wait for map loading to complete and spawn a simple player-controlled object
+        .observe(|_: On<TiledEvent<MapCreated>>, mut commands: Commands| {
+            commands.spawn((
+                RigidBody::Dynamic,
+                PlayerMarker,
+                Name::new("PlayerControlledObject (Rapier physics)"),
+                Collider::ball(10.),
+                Velocity::zero(),
+                GravityScale(GRAVITY_SCALE),
+                Transform::from_xyz(50., -50., 0.),
+            ));
+        })
+        // Automatically insert a `RigidBody::Static` component on all the map entities
         .observe(
-            |_: Trigger<TiledEvent<MapCreated>>, mut commands: Commands| {
-                commands.spawn((
-                    RigidBody::Dynamic,
-                    PlayerMarker,
-                    Name::new("PlayerControlledObject (Rapier physics)"),
-                    Collider::ball(10.),
-                    Velocity::zero(),
-                    GravityScale(GRAVITY_SCALE),
-                    Transform::from_xyz(50., -50., 0.),
-                ));
-            },
-        )
-        // Automatically insert a `RigidBody::Fixed` component on all the colliders entities from the map
-        .observe(
-            |trigger: Trigger<TiledEvent<ColliderCreated>>, mut commands: Commands| {
+            |collider_created: On<TiledEvent<ColliderCreated>>, mut commands: Commands| {
                 commands
-                    .entity(trigger.event().origin)
+                    .entity(*collider_created.event().event.collider_of)
                     .insert(RigidBody::Fixed);
             },
         );

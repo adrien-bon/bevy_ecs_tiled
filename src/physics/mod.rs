@@ -48,13 +48,13 @@ impl<T: TiledPhysicsBackend> Plugin for TiledPhysicsPlugin<T> {
 }
 
 fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
-    mut layer_event: EventReader<TiledEvent<LayerCreated>>,
+    mut layer_created: MessageReader<TiledEvent<LayerCreated>>,
     mut commands: Commands,
     assets: Res<Assets<TiledMapAsset>>,
     maps_query: Query<(&TiledPhysicsSettings<T>, &TilemapAnchor), With<TiledMap>>,
-    mut event_writer: EventWriter<TiledEvent<ColliderCreated>>,
+    mut message_writer: MessageWriter<TiledEvent<ColliderCreated>>,
 ) {
-    for ev in layer_event.read() {
+    for ev in layer_created.read() {
         let (settings, anchor) = ev
             .get_map_entity()
             .and_then(|e| maps_query.get(e).ok())
@@ -75,22 +75,24 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
                 &assets,
                 anchor,
                 &settings.tiles_objects_filter,
-                ev.transmute(None, ColliderCreated(TiledColliderOrigin::TilesLayer)),
-                ev.origin,
-                &mut event_writer,
+                ev.transmute(
+                    None,
+                    ColliderCreated::new(TiledColliderSource::TilesLayer, ev.origin),
+                ),
+                &mut message_writer,
             );
         }
     }
 }
 
 fn collider_from_object<T: TiledPhysicsBackend>(
-    mut object_event: EventReader<TiledEvent<ObjectCreated>>,
+    mut object_created: MessageReader<TiledEvent<ObjectCreated>>,
     mut commands: Commands,
     assets: Res<Assets<TiledMapAsset>>,
     maps_query: Query<(&TiledPhysicsSettings<T>, &TilemapAnchor), With<TiledMap>>,
-    mut event_writer: EventWriter<TiledEvent<ColliderCreated>>,
+    mut message_writer: MessageWriter<TiledEvent<ColliderCreated>>,
 ) {
-    for ev in object_event.read() {
+    for ev in object_created.read() {
         let (settings, anchor) = ev
             .get_map_entity()
             .and_then(|e| maps_query.get(e).ok())
@@ -116,9 +118,11 @@ fn collider_from_object<T: TiledPhysicsBackend>(
                     Some(_) => &settings.tiles_objects_filter,
                     None => &TiledFilter::All,
                 },
-                ev.transmute(None, ColliderCreated(TiledColliderOrigin::Object)),
-                ev.origin,
-                &mut event_writer,
+                ev.transmute(
+                    None,
+                    ColliderCreated::new(TiledColliderSource::Object, ev.origin),
+                ),
+                &mut message_writer,
             );
         }
     }

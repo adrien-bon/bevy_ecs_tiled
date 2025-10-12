@@ -14,7 +14,7 @@ use bevy::{math::bounding::IntersectsVolume, prelude::*};
 /// map if it overlaps with its associated [`Rect`].
 ///
 /// Must be added to the [`Entity`] holding the world.
-#[derive(Component, Default, Reflect, Copy, Clone, Debug)]
+#[derive(Component, Default, Reflect, Copy, Clone, Debug, Deref)]
 #[reflect(Component, Default, Debug)]
 pub struct TiledWorldChunking(pub Option<Vec2>);
 
@@ -136,7 +136,7 @@ fn handle_world_chunking(
             let map_entity = commands
                 .spawn((
                     ChildOf(world_entity),
-                    TiledMap(handle.clone_weak()),
+                    TiledMap(handle.clone()),
                     Transform::from_translation(
                         offset.extend(0.0) + Vec3::new(rect.min.x, rect.max.y, 0.0),
                     ),

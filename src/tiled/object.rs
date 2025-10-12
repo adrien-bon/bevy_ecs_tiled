@@ -12,14 +12,14 @@ use tiled::{ObjectData, ObjectShape};
 ///
 /// Added on the child [`Entity`] of a [`TiledObject::Tile`].
 /// These entity have an associated [`Sprite`] and eventually a [`TiledAnimation`] component.
-#[derive(Component, Reflect, Copy, Clone, Debug)]
+#[derive(Component, Reflect, Copy, Clone, Debug, Deref)]
 #[reflect(Component, Debug)]
 #[require(Visibility, Transform, Sprite)]
 #[relationship(relationship_target = TiledObjectVisuals)]
 pub struct TiledObjectVisualOf(pub Entity);
 
 /// Relationship target [`Component`] pointing to a single child [`TiledObjectVisualOf`]s.
-#[derive(Component, Reflect, Debug)]
+#[derive(Component, Reflect, Debug, Deref)]
 #[reflect(Component, Debug)]
 #[relationship_target(relationship = TiledObjectVisualOf)]
 pub struct TiledObjectVisuals(Vec<Entity>);

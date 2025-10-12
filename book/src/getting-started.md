@@ -75,17 +75,17 @@ fn spawn_map(
         // Add an "in-line" observer to detect when
         // the map has finished loading
         .observe(
-            |trigger: Trigger<TiledEvent<MapCreated>>,
+            |map_created: On<TiledEvent<MapCreated>>,
              assets: Res<Assets<TiledMapAsset>>,
              query: Query<(&Name, &TiledMapStorage), With<TiledMap>>| {
                 // We can access the map components via a regular query
-                let Ok((name, storage)) = query.get(trigger.event().origin) else {
+                let Ok((name, storage)) = query.get(map_created.event().origin) else {
                     return;
                 };
                 info!("=> Observer TiledMapCreated was triggered for map '{name}'");
 
                 // Or directly the underneath raw tiled::Map data
-                let Some(map) = trigger.event().get_map(&assets) else {
+                let Some(map) = map_created.event().get_map(&assets) else {
                     return;
                 };
                 info!("Loaded map: {:?}", map);

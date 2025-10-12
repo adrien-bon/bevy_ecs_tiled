@@ -21,7 +21,7 @@ fn main() {
         .add_plugins(TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default())
         // Avian physics plugins
         .add_plugins(PhysicsPlugins::default().with_length_unit(100.0))
-        .add_plugins(PhysicsDebugPlugin::default())
+        .add_plugins(PhysicsDebugPlugin)
         // Add our systems and run the app!
         .add_systems(Startup, startup)
         .add_systems(Update, switch_map)

@@ -29,8 +29,8 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn(TiledMap(asset_server.load("maps/orthogonal/finite.tmx")))
         // Add an "in-line" observer to detect when the map has finished loading
         .observe(
-            |trigger: Trigger<TiledEvent<MapCreated>>, map_query: Query<&Name, With<TiledMap>>| {
-                let Ok(name) = map_query.get(trigger.event().origin) else {
+            |map_created: On<TiledEvent<MapCreated>>, map_query: Query<&Name, With<TiledMap>>| {
+                let Ok(name) = map_query.get(map_created.event().origin) else {
                     return;
                 };
                 info!(
@@ -43,9 +43,9 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .observe(obs_layer_created);
 }
 
-// We fire both an observer and a regular event, so you can also use an [`EventReader`]
+// We fire both an observer and a regular event, so you can also use an [`MessageReader`]
 fn evt_map_created(
-    mut map_events: EventReader<TiledEvent<MapCreated>>,
+    mut map_events: MessageReader<TiledEvent<MapCreated>>,
     map_query: Query<(&Name, &TiledMapStorage), With<TiledMap>>,
     assets: Res<Assets<TiledMapAsset>>,
 ) {
@@ -81,17 +81,17 @@ fn evt_map_created(
 
 // Callback for our observer, will be triggered for every layer of the map
 fn obs_layer_created(
-    trigger: Trigger<TiledEvent<LayerCreated>>,
+    layer_created: On<TiledEvent<LayerCreated>>,
     layer_query: Query<&Name, With<TiledLayer>>,
     assets: Res<Assets<TiledMapAsset>>,
 ) {
     // We can either access the layer components via a regular query
-    let Ok(name) = layer_query.get(trigger.event().origin) else {
+    let Ok(name) = layer_query.get(layer_created.event().origin) else {
         return;
     };
 
     // Or directly the underneath tiled Layer data
-    let Some(layer) = trigger.event().get_layer(&assets) else {
+    let Some(layer) = layer_created.event().get_layer(&assets) else {
         return;
     };
 
@@ -102,14 +102,14 @@ fn obs_layer_created(
     info!("Loaded layer: {:?}", layer);
 
     // Moreover, we can retrieve the TiledMapCreated event data from here
-    let _map = trigger.event().get_map(&assets);
+    let _map = layer_created.event().get_map(&assets);
 }
 
 // A typical usecase for regular events is to update components associated with tiles, objects or layers.
 // Here, we will add a small offset on the Z axis to our objects to demonstrate how to use the
 // `TiledObjectCreated` event.
 fn evt_object_created(
-    mut object_events: EventReader<TiledEvent<ObjectCreated>>,
+    mut object_events: MessageReader<TiledEvent<ObjectCreated>>,
     mut object_query: Query<(&Name, &mut Transform), With<TiledObject>>,
     mut z_offset: Local<f32>,
 ) {

@@ -11,12 +11,12 @@ use bevy::prelude::*;
 use geo::BooleanOps;
 use tiled::{ObjectLayerData, ObjectShape};
 
-/// Marker component for collider's origin
+/// Marker component for collider's source
 ///
 /// Helps to distinguish between colliders created from Tiled objects and those created from Tiled tile layers.
 #[derive(Component, Reflect, Copy, PartialEq, Clone, Debug)]
 #[reflect(Component, Debug)]
-pub enum TiledColliderOrigin {
+pub enum TiledColliderSource {
     /// Collider is created by a [`tiled::TileLayer`] (ie. a collection of [`Tile`])
     TilesLayer,
     /// Collider is created by an [`tiled::Object`]
@@ -24,13 +24,13 @@ pub enum TiledColliderOrigin {
 }
 
 /// Relationship [`Component`] for the collider of a [`TiledObject`] or [`TiledLayer::Tiles`].
-#[derive(Component, Reflect, Copy, Clone, Debug)]
+#[derive(Component, Reflect, Copy, PartialEq, Clone, Debug, Deref)]
 #[reflect(Component, Debug)]
 #[relationship(relationship_target = TiledColliders)]
 pub struct TiledColliderOf(pub Entity);
 
 /// Relationship target [`Component`] pointing to all the child [`TiledColliderOf`]s (eg. entities holding a physics collider).
-#[derive(Component, Reflect, Debug)]
+#[derive(Component, Reflect, Debug, Deref)]
 #[reflect(Component, Debug)]
 #[relationship_target(relationship = TiledColliderOf)]
 pub struct TiledColliders(Vec<Entity>);
@@ -42,17 +42,32 @@ pub struct TiledColliderPolygons(pub MultiPolygon<f32>);
 
 /// Event emitted when a collider is created from a Tiled map or world.
 ///
-/// You can determine collider origin using the inner [`TiledColliderOrigin`] or [`TiledColliderOf`] components.
+/// You can determine collider origin using the inner [`TiledColliderSource`] or [`TiledColliderOf`] components.
 /// See also [`TiledEvent`]
-#[derive(Clone, Copy, PartialEq, Debug, Reflect, Deref)]
+#[derive(Clone, Copy, PartialEq, Debug, Reflect)]
 #[reflect(Clone, PartialEq)]
-pub struct ColliderCreated(pub TiledColliderOrigin);
+pub struct ColliderCreated {
+    /// Origin of the collider
+    pub source: TiledColliderSource,
+    /// Parent entity of the collider
+    pub collider_of: TiledColliderOf,
+}
+
+impl ColliderCreated {
+    /// Create a new [`ColliderCreated`] event
+    pub fn new(source: TiledColliderSource, parent: Entity) -> Self {
+        Self {
+            source,
+            collider_of: TiledColliderOf(parent),
+        }
+    }
+}
 
 pub(crate) fn plugin(app: &mut App) {
-    app.register_type::<TiledColliderOrigin>();
+    app.register_type::<TiledColliderSource>();
     app.register_type::<TiledColliderOf>();
     app.register_type::<TiledColliders>();
-    app.add_event::<TiledEvent<ColliderCreated>>()
+    app.add_message::<TiledEvent<ColliderCreated>>()
         .register_type::<TiledEvent<ColliderCreated>>();
 }
 
@@ -94,17 +109,16 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
     assets: &Res<Assets<TiledMapAsset>>,
     anchor: &TilemapAnchor,
     filter: &TiledFilter,
-    source: TiledEvent<ColliderCreated>,
-    parent: Entity,
-    event_writer: &mut EventWriter<TiledEvent<ColliderCreated>>,
+    collider_created: TiledEvent<ColliderCreated>,
+    message_writer: &mut MessageWriter<TiledEvent<ColliderCreated>>,
 ) {
-    let Some(map_asset) = source.get_map_asset(assets) else {
+    let Some(map_asset) = collider_created.get_map_asset(assets) else {
         return;
     };
 
-    let polygons = match *source.event {
-        TiledColliderOrigin::Object => {
-            if let Some(object) = source.get_object(assets) {
+    let polygons = match collider_created.event.source {
+        TiledColliderSource::Object => {
+            if let Some(object) = collider_created.get_object(assets) {
                 match object.get_tile() {
                     // If the object does not have a tile, we can create a collider directly from itself
                     None => {
@@ -160,11 +174,11 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
                 vec![]
             }
         }
-        TiledColliderOrigin::TilesLayer => {
+        TiledColliderSource::TilesLayer => {
             let mut acc = vec![];
 
             // Iterate over all tiles in the layer and create colliders for each
-            for (tile_position, tile) in source.get_tiles(assets, anchor) {
+            for (tile_position, tile) in collider_created.get_tiles(assets, anchor) {
                 if let Some(collision) = &tile.collision {
                     let tile_size = tile_size(&tile);
                     acc.extend(polygons_from_tile(
@@ -192,18 +206,18 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
     };
 
     // Actually spawn our colliders using provided physics backend
-    for entity in backend.spawn_colliders(commands, &source, &polygons) {
+    for entity in backend.spawn_colliders(commands, &collider_created, &polygons) {
         // Attach collider to its parent and insert additional components
         commands.entity(entity).insert((
-            *source.event,
+            collider_created.event.source,
+            collider_created.event.collider_of,
             TiledColliderPolygons(polygons.to_owned()),
-            ChildOf(parent),
-            TiledColliderOf(parent),
+            ChildOf(*collider_created.event.collider_of),
         ));
         // Patch origin entity and send collider event
-        let mut event = source;
+        let mut event = collider_created;
         event.origin = entity;
-        event.send(commands, event_writer);
+        event.send(commands, message_writer);
     }
 }
 
