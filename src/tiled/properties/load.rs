@@ -649,7 +649,7 @@ fn hydrate(object: &mut dyn PartialReflect, obj_entity_map: &HashMap<u32, Entity
         // Cannot hydrate a Set since it does not have a get_mut() function
         ReflectMut::Set(_) => {}
         // we don't care about any of the other values
-        ReflectMut::Opaque(_) => {}
+        _ => {}
     }
 }
 

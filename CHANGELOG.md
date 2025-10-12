@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Bugfixes
+
+- Fix compilation failure with `ReflectMut::Function` when `reflect_functions` Bevy feature is enabled (#159)
+
 ## v0.9.5
 
 ### Features
