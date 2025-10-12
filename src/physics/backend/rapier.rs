@@ -30,7 +30,7 @@ use bevy_rapier2d::{
 #[reflect(Default, Debug)]
 pub enum TiledPhysicsRapierBackend {
     #[default]
-    /// Aggregates all [`LineString`]s into a single collider using [`SharedShape::polyline`].
+    /// Aggregates all [`geo::LineString`]s into a single collider using [`SharedShape::polyline`].
     Polyline,
     /// Performs triangulation and produces a single collider by aggregating multiple [`SharedShape::triangle`]s.
     Triangulation,

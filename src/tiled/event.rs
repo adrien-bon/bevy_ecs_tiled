@@ -170,7 +170,7 @@ where
         self.map.and_then(|(_, id)| assets.get(id))
     }
 
-    /// Retrieve the [`Map`] associated with this [`TiledEvent`]
+    /// Retrieve the [`tiled::Map`] associated with this [`TiledEvent`]
     pub fn get_map(&self, assets: &'a Res<Assets<TiledMapAsset>>) -> Option<&'a tiled::Map> {
         self.get_map_asset(assets).map(|m| &m.map)
     }
@@ -185,7 +185,7 @@ where
         self.layer.map(|(_, id)| id)
     }
 
-    /// Retrieve the [`Layer`] associated with this [`TiledEvent`]
+    /// Retrieve the [`tiled::Layer`] associated with this [`TiledEvent`]
     pub fn get_layer(&self, assets: &'a Res<Assets<TiledMapAsset>>) -> Option<tiled::Layer<'a>> {
         self.get_map(assets).and_then(|map| {
             self.get_layer_id()
@@ -203,7 +203,7 @@ where
         self.tilemap.map(|(_, id)| id)
     }
 
-    /// Retrieve the tilemap [`Tileset`] associated with this [`TiledEvent`]
+    /// Retrieve the tilemap [`tiled::Tileset`] associated with this [`TiledEvent`]
     pub fn get_tilemap_tileset(
         &self,
         assets: &'a Res<Assets<TiledMapAsset>>,
@@ -224,12 +224,12 @@ where
         self.tile.map(|(_, pos, _)| pos)
     }
 
-    /// Retrieve the [`TileId`] associated with this [`TiledEvent`]
+    /// Retrieve the [`tiled::TileId`] associated with this [`TiledEvent`]
     pub fn get_tile_id(&self) -> Option<tiled::TileId> {
         self.tile.map(|(_, _, id)| id)
     }
 
-    /// Retrieve the [`Tile`] associated with this [`TiledEvent`]
+    /// Retrieve the [`tiled::Tile`] associated with this [`TiledEvent`]
     pub fn get_tile(&self, assets: &'a Res<Assets<TiledMapAsset>>) -> Option<tiled::Tile<'a>> {
         self.get_map(assets).and_then(|map| {
             self.get_tilemap_tileset_id().and_then(|tileset_id| {
@@ -249,7 +249,7 @@ where
         self.object.map(|(_, id)| id)
     }
 
-    /// Retrieve the tilemap [`Tileset`] associated with this [`TiledEvent`]
+    /// Retrieve the tilemap [`tiled::Tileset`] associated with this [`TiledEvent`]
     pub fn get_object(&self, assets: &'a Res<Assets<TiledMapAsset>>) -> Option<tiled::Object<'a>> {
         self.get_map(assets).and_then(|map| {
             self.get_object_id()

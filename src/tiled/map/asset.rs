@@ -150,12 +150,12 @@ impl TiledMapAsset {
             }
     }
 
-    /// Iterates over all tiles in the given [`TileLayer`], invoking a callback for each tile.
+    /// Iterates over all tiles in the given [`tiled::TileLayer`], invoking a callback for each tile.
     ///
     /// This function abstracts over both finite and infinite Tiled map layers, providing a unified
     /// way to visit every tile in a layer. For each tile, the provided closure is called with:
-    /// - the [`LayerTile`] (tile instance)
-    /// - a reference to the [`LayerTileData`] (tile metadata)
+    /// - the [`tiled::LayerTile`] (tile instance)
+    /// - a reference to the [`tiled::LayerTileData`] (tile metadata)
     /// - the [`TilePos`] (tile position in Bevy coordinates)
     /// - the [`IVec2`] (tile position in Tiled chunk coordinates)
     ///
@@ -171,7 +171,7 @@ impl TiledMapAsset {
     /// ```rust,no_run
     /// use bevy_ecs_tiled::prelude::*;
     ///
-    /// fn print_tile_positions(asset: &TiledMapAsset, layer: &TileLayer) {
+    /// fn print_tile_positions(asset: &TiledMapAsset, layer: &tiled::TileLayer) {
     ///     asset.for_each_tile(layer, |tile, data, tile_pos, chunk_pos| {
     ///         println!("Tile at Bevy pos: {:?}, chunk pos: {:?}", tile_pos, chunk_pos);
     ///     });
@@ -253,7 +253,7 @@ impl TiledMapAsset {
         }
     }
 
-    /// Returns the world position of a Tiled [`Object`] relative to its parent [`TiledLayer::Objects`] entity.
+    /// Returns the world position of a Tiled [`tiled::Object`] relative to its parent [`TiledLayer::Objects`] entity.
     ///
     /// The returned position corresponds to the object's top-left anchor in world coordinates, taking into account
     /// the map's anchor, grid size, and coordinate system. This is equivalent to using the object's [`Transform`] component
@@ -276,7 +276,7 @@ impl TiledMapAsset {
     /// * `transform` - The global transform to apply to the object.
     ///
     /// # Returns
-    /// * `Option<Coord<f32>>` - The world-space center of the object, or `None` if not applicable.
+    /// * `Option<geo::Coord<f32>>` - The world-space center of the object, or `None` if not applicable.
     pub fn object_center(
         &self,
         tiled_object: &TiledObject,
@@ -298,7 +298,7 @@ impl TiledMapAsset {
     /// * `transform` - The global transform to apply to the object.
     ///
     /// # Returns
-    /// * `Vec<Coord<f32>>` - The world-space vertices of the object.
+    /// * `Vec<geo::Coord<f32>>` - The world-space vertices of the object.
     pub fn object_vertices(
         &self,
         tiled_object: &TiledObject,
@@ -313,14 +313,14 @@ impl TiledMapAsset {
         )
     }
 
-    /// Returns the object's geometry as a [`LineString`] in world coordinates, if applicable.
+    /// Returns the object's geometry as a [`geo::LineString`] in world coordinates, if applicable.
     ///
     /// # Arguments
     /// * `tiled_object` - The Tiled object to compute the line string for.
     /// * `transform` - The global transform to apply to the object.
     ///
     /// # Returns
-    /// * `Option<LineString<f32>>` - The object's geometry as a line string, or `None` if not applicable.
+    /// * `Option<geo::LineString<f32>>` - The object's geometry as a line string, or `None` if not applicable.
     pub fn object_line_string(
         &self,
         tiled_object: &TiledObject,
@@ -335,14 +335,14 @@ impl TiledMapAsset {
         )
     }
 
-    /// Returns the object's geometry as a [`GeoPolygon`] in world coordinates, if applicable.
+    /// Returns the object's geometry as a [`geo::Polygon`] in world coordinates, if applicable.
     ///
     /// # Arguments
     /// * `tiled_object` - The Tiled object to compute the polygon for.
     /// * `transform` - The global transform to apply to the object.
     ///
     /// # Returns
-    /// * `Option<GeoPolygon<f32>>` - The object's geometry as a polygon, or `None` if not applicable.
+    /// * `Option<geo::Polygon<f32>>` - The object's geometry as a polygon, or `None` if not applicable.
     pub fn object_polygon(
         &self,
         tiled_object: &TiledObject,

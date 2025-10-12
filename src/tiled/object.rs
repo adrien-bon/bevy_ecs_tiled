@@ -78,7 +78,7 @@ pub enum TiledObject {
 impl TiledObject {
     const ELLIPSE_NUM_POINTS: u32 = 20;
 
-    /// Creates a new [`TiledObject`] from the provided [`ObjectData`].
+    /// Creates a new [`TiledObject`] from the provided [`tiled::ObjectData`].
     pub fn from_object_data(object_data: &tiled::ObjectData) -> Self {
         if object_data.tile_data().is_some() {
             if let tiled::ObjectShape::Rect { width, height } = object_data.shape {
@@ -142,7 +142,7 @@ impl TiledObject {
     /// * `offset` - Global map offset to apply.
     ///
     /// # Returns
-    /// * `Option<Coord<f32>>` - The computed center, or `None` if not applicable.
+    /// * `Option<geo::Coord<f32>>` - The computed center, or `None` if not applicable.
     pub fn center(
         &self,
         transform: &GlobalTransform,
@@ -175,7 +175,7 @@ impl TiledObject {
     /// * `offset` - Global map offset to apply.
     ///
     /// # Returns
-    /// * `Vec<Coord<f32>>` - The transformed vertices.
+    /// * `Vec<geo::Coord<f32>>` - The transformed vertices.
     pub fn vertices(
         &self,
         transform: &GlobalTransform,
@@ -250,7 +250,7 @@ impl TiledObject {
         .collect()
     }
 
-    /// Creates a [`LineString`] from the object's vertices.
+    /// Creates a [`geo::LineString`] from the object's vertices.
     ///
     /// Returns `None` for point and text objects.
     /// For ellipses, rectangles, tiles, and polygons, returns a closed line string.
@@ -264,7 +264,7 @@ impl TiledObject {
     /// * `offset` - Global map offset to apply.
     ///
     /// # Returns
-    /// * `Option<LineString<f32>>` - The resulting line string, or `None` if not applicable.
+    /// * `Option<geo::LineString<f32>>` - The resulting line string, or `None` if not applicable.
     pub fn line_string(
         &self,
         transform: &GlobalTransform,
@@ -294,7 +294,7 @@ impl TiledObject {
         }
     }
 
-    /// Creates a [`GeoPolygon`] from the object's vertices.
+    /// Creates a [`geo::Polygon`] from the object's vertices.
     ///
     /// Returns `None` for polyline, point, and text objects.
     /// For closed shapes, returns the corresponding polygon.
@@ -307,7 +307,7 @@ impl TiledObject {
     /// * `offset` - Global map offset to apply.
     ///
     /// # Returns
-    /// * `Option<GeoPolygon<f32>>` - The resulting polygon, or `None` if not applicable.
+    /// * `Option<geo::Polygon<f32>>` - The resulting polygon, or `None` if not applicable.
     pub fn polygon(
         &self,
         transform: &GlobalTransform,

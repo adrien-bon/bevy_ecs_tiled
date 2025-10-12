@@ -15,7 +15,7 @@ use bevy::prelude::*;
 #[derive(Component, Reflect, Copy, PartialEq, Clone, Debug)]
 #[reflect(Component, Debug)]
 pub enum TiledColliderSource {
-    /// Collider is created by a [`tiled::TileLayer`] (ie. a collection of [`Tile`])
+    /// Collider is created by a [`tiled::TileLayer`] (ie. a collection of [`tiled::Tile`])
     TilesLayer,
     /// Collider is created by an [`tiled::Object`]
     Object,
@@ -70,7 +70,7 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 impl<'a> TiledEvent<ColliderCreated> {
-    /// Returns a vector containing [`Tile`]s in this layer as well as their
+    /// Returns a vector containing [`tiled::Tile`]s in this layer as well as their
     /// relative position from their parent [`crate::tiled::tile::TiledTilemap`] [`Entity``].
     pub fn get_tiles(
         &self,

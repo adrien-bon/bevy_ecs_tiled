@@ -9,14 +9,14 @@ use crate::prelude::*;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::{HexCoordSystem, IsoCoordSystem};
 
-/// Retrieves a [`Layer`] from a [`Map`] given a layer ID.
+/// Retrieves a [`tiled::Layer`] from a [`tiled::Map`] given a layer ID.
 ///
-/// Returns `Some(Layer)` if the layer exists, or `None` if the ID is out of bounds.
+/// Returns `Some(tiled::Layer)` if the layer exists, or `None` if the ID is out of bounds.
 pub fn get_layer_from_map(map: &tiled::Map, layer_id: u32) -> Option<tiled::Layer<'_>> {
     map.get_layer(layer_id as usize)
 }
 
-/// Retrieves a [`Tileset`] from a [`Map`] given a tileset ID.
+/// Retrieves a [`tiled::Tileset`] from a [`tiled::Map`] given a tileset ID.
 ///
 /// Returns a reference to the tileset if found, or `None` if the ID is invalid.
 pub fn get_tileset_from_map(map: &tiled::Map, tileset_id: u32) -> Option<&Arc<tiled::Tileset>> {
@@ -28,9 +28,9 @@ pub fn get_tileset_from_map(map: &tiled::Map, tileset_id: u32) -> Option<&Arc<ti
     None
 }
 
-/// Retrieves a [`Tile`] from a [`Map`] given a tileset ID and a [`TileId`].
+/// Retrieves a [`tiled::Tile`] from a [`tiled::Map`] given a tileset ID and a [`tiled::TileId`].
 ///
-/// Returns `Some(Tile)` if the tile exists in the specified tileset, or `None` otherwise.
+/// Returns `Some(tiled::Tile)` if the tile exists in the specified tileset, or `None` otherwise.
 pub fn get_tile_from_map(
     map: &tiled::Map,
     tileset_id: u32,
@@ -39,7 +39,7 @@ pub fn get_tile_from_map(
     get_tileset_from_map(map, tileset_id).and_then(|t| t.get_tile(tile_id))
 }
 
-/// Retrieves an [`Object`] from a [`Map`] given an object ID.
+/// Retrieves an [`tiled::Object`] from a [`tiled::Map`] given an object ID.
 ///
 /// Searches all object layers for the specified object ID and returns it if found.
 pub fn get_object_from_map(map: &tiled::Map, object_id: u32) -> Option<tiled::Object<'_>> {
@@ -54,9 +54,9 @@ pub fn get_object_from_map(map: &tiled::Map, object_id: u32) -> Option<tiled::Ob
     None
 }
 
-/// Converts a [`Map`]'s [`Orientation`] to a [`TilemapType`].
+/// Converts a [`tiled::Map`]'s [`tiled::Orientation`] to a [`TilemapType`].
 ///
-/// Panics if the orientation is [`Orientation::Staggered`] which is not supported by this plugin.
+/// Panics if the orientation is [`tiled::Orientation::Staggered`] which is not supported by this plugin.
 pub fn tilemap_type_from_map(map: &tiled::Map) -> TilemapType {
     match map.orientation {
         tiled::Orientation::Orthogonal => TilemapType::Square,
@@ -82,7 +82,7 @@ pub fn tilemap_type_from_map(map: &tiled::Map) -> TilemapType {
     }
 }
 
-/// Converts a [`Map`]'s grid size to a [`TilemapGridSize`].
+/// Converts a [`tiled::Map`]'s grid size to a [`TilemapGridSize`].
 pub fn grid_size_from_map(map: &tiled::Map) -> TilemapGridSize {
     TilemapGridSize {
         x: map.tile_width as f32,
@@ -90,7 +90,7 @@ pub fn grid_size_from_map(map: &tiled::Map) -> TilemapGridSize {
     }
 }
 
-/// Get the [`TilemapTileSize`] from given [`Tile`]
+/// Get the [`TilemapTileSize`] from given [`tiled::Tile`]
 pub fn tile_size(tile: &tiled::Tile) -> TilemapTileSize {
     match &tile.image {
         // tile is in image collection

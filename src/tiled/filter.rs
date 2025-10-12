@@ -14,7 +14,7 @@ use bevy::prelude::*;
 ///
 /// let names_filter = TiledFilter::from(vec!["some", "name"]);
 /// let regex_filter = TiledFilter::from(
-///     RegexSet::new([
+///     regex::RegexSet::new([
 ///         r"^some",
 ///         r"name$"
 ///     ]).unwrap());
