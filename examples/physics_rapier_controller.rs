@@ -43,7 +43,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ))
         // Wait for map loading to complete and spawn a simple player-controlled object
         .observe(
-            |_: Trigger<TiledEvent<MapCreated>>, mut commands: Commands| {
+            |_: On<TiledEvent<MapCreated>>, mut commands: Commands| {
                 commands.spawn((
                     RigidBody::Dynamic,
                     PlayerMarker,
@@ -60,7 +60,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             |collider_created: On<TiledEvent<ColliderCreated>>, mut commands: Commands| {
                 commands
                     .entity(*collider_created.event().event.collider_of)
-                    .insert(RigidBody::Static);
+                    .insert(RigidBody::Fixed);
             },
         );
 }
