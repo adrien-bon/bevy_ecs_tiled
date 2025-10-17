@@ -37,7 +37,7 @@ pub struct Player;
 pub struct PlayerSpawnPoint;
 
 fn spawn_player_at_spawn_point(
-    t: Trigger<OnAdd, PlayerSpawnPoint>,
+    add_player_spawn: On<Add, PlayerSpawnPoint>,
     mut commands: Commands,
     player_query: Query<Entity, With<Player>>,
     player_spawn_query: Query<&Transform, With<PlayerSpawnPoint>>,
@@ -49,7 +49,9 @@ fn spawn_player_at_spawn_point(
         return;
     }
 
-    let spawn_transform = *player_spawn_query.get(t.target()).unwrap();
+    let spawn_transform = *player_spawn_query
+        .get(add_player_spawn.event().entity)
+        .unwrap();
 
     let layout = TextureAtlasLayout::from_grid(UVec2::new(128, 256), 8, 8, None, None);
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
@@ -81,9 +83,9 @@ fn spawn_player_at_spawn_point(
                 layout: texture_atlas_layout,
                 index: 6,
             }),
-            anchor: Anchor::Custom(Vec2::new(0., -0.2)),
             ..Default::default()
         },
+        Anchor::from(Vec2::new(0., -0.2)),
         player_animation,
         CharacterControllerBundle::new(Collider::capsule(50., 50.)).with_movement(
             5000.,
@@ -96,7 +98,7 @@ fn spawn_player_at_spawn_point(
 
 /// Sends [`MovementAction`] events based on keyboard input.
 fn record_player_directional_input(
-    mut movement_event_writer: EventWriter<MovementEvent>,
+    mut movement_message_writer: MessageWriter<MovementEvent>,
     player_query: Query<Entity, With<Player>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
 ) {
@@ -111,14 +113,14 @@ fn record_player_directional_input(
     let direction = horizontal as Scalar;
 
     if direction != 0.0 {
-        movement_event_writer.write(MovementEvent {
+        movement_message_writer.write(MovementEvent {
             entity: player_entity,
             action: MovementAction::Move(direction),
         });
     }
 
     if keyboard_input.any_pressed([KeyCode::Space, KeyCode::KeyW, KeyCode::ArrowUp]) {
-        movement_event_writer.write(MovementEvent {
+        movement_message_writer.write(MovementEvent {
             entity: player_entity,
             action: MovementAction::Jump,
         });

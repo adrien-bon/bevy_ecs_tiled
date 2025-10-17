@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_ecs_tiled::prelude::TiledParallaxCamera;
+use bevy_ecs_tiled::prelude::*;
 
 use crate::player::Player;
 
@@ -7,7 +7,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(Startup, setup_camera);
     app.add_systems(
         PostUpdate,
-        camera_follow_player.before(TransformSystem::TransformPropagate),
+        camera_follow_player.before(TransformSystems::Propagate),
     );
 }
 

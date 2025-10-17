@@ -22,7 +22,7 @@ pub(super) fn plugin(app: &mut App) {
 pub struct Enemy;
 
 fn on_enemy_added(
-    trigger: Trigger<OnAdd, Enemy>,
+    add_enemy: On<Add, Enemy>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
@@ -47,7 +47,7 @@ fn on_enemy_added(
             },
         );
 
-    commands.entity(trigger.target()).insert((
+    commands.entity(add_enemy.event().entity).insert((
         Name::new("Enemy"),
         Sprite {
             image: asset_server.load(ENEMY_SPRITE_FILE),
@@ -55,9 +55,9 @@ fn on_enemy_added(
                 layout: texture_atlas_layout,
                 index: 75,
             }),
-            anchor: Anchor::Custom(Vec2::new(0., -0.1)),
             ..Default::default()
         },
+        Anchor::from(Vec2::new(0., -0.1)),
         enemy_animation,
         Mass(1_000_000.),
         CharacterControllerBundle::new(Collider::capsule(40., 30.)).with_movement(

@@ -12,11 +12,11 @@ pub(super) fn plugin(app: &mut App) {
         WorldInspectorPlugin::default().run_if(input_toggle_active(false, TOGGLE_INSPECTOR_KEY)),
         // we want Bevy to measure these values for us:
         bevy::diagnostic::FrameTimeDiagnosticsPlugin::default(),
-        bevy::diagnostic::EntityCountDiagnosticsPlugin,
+        bevy::diagnostic::EntityCountDiagnosticsPlugin::default(),
         bevy::diagnostic::SystemInformationDiagnosticsPlugin,
         bevy::render::diagnostic::RenderDiagnosticsPlugin,
         PerfUiPlugin,
-        avian2d::prelude::PhysicsDebugPlugin::default(),
+        avian2d::prelude::PhysicsDebugPlugin,
     ));
 
     app.add_systems(Startup, setup_help_text);

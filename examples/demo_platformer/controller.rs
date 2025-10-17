@@ -11,7 +11,7 @@ impl Plugin for CharacterControllerPlugin {
         app.register_type::<MovementDampingFactor>();
         app.register_type::<JumpImpulse>();
         app.register_type::<MaxSlopeAngle>();
-        app.add_event::<MovementEvent>().add_systems(
+        app.add_message::<MovementEvent>().add_systems(
             Update,
             (update_grounded, movement, apply_movement_damping)
                 .chain()
@@ -22,7 +22,7 @@ impl Plugin for CharacterControllerPlugin {
 }
 
 /// An event sent for a movement input action.
-#[derive(Event)]
+#[derive(Message)]
 pub struct MovementEvent {
     pub entity: Entity,
     pub action: MovementAction,
@@ -161,7 +161,7 @@ fn update_grounded(
 /// Responds to [`MovementAction`] events and moves character controllers accordingly.
 fn movement(
     time: Res<Time>,
-    mut movement_event_reader: EventReader<MovementEvent>,
+    mut movement_message_reader: MessageReader<MovementEvent>,
     mut controllers: Query<(
         &MovementAcceleration,
         &JumpImpulse,
@@ -173,7 +173,7 @@ fn movement(
     // both the `f32` and `f64` features. Otherwise you don't need this.
     let delta_time = time.delta_secs_f64().adjust_precision();
 
-    for event in movement_event_reader.read() {
+    for event in movement_message_reader.read() {
         if let Ok((movement_acceleration, jump_impulse, mut linear_velocity, is_grounded)) =
             controllers.get_mut(event.entity)
         {

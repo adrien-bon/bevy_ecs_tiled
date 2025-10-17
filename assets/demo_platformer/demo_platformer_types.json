@@ -59,7 +59,7 @@
     "valuesAsFlags": false
   },
   {
-    "id": 5,
+    "id": 2,
     "name": "demo_platformer::enemy::Enemy",
     "type": "class",
     "useAs": [
@@ -70,7 +70,7 @@
     "members": []
   },
   {
-    "id": 12,
+    "id": 3,
     "name": "demo_platformer::patrol::PatrolProgress",
     "type": "class",
     "useAs": [
@@ -87,7 +87,7 @@
     ]
   },
   {
-    "id": 1,
+    "id": 10,
     "name": "demo_platformer::patrol::PatrolRoute",
     "type": "class",
     "useAs": [
@@ -104,7 +104,7 @@
     ]
   },
   {
-    "id": 3,
+    "id": 1,
     "name": "demo_platformer::patrol::RequestedDestination",
     "type": "class",
     "useAs": [
@@ -121,7 +121,7 @@
     ]
   },
   {
-    "id": 6,
+    "id": 12,
     "name": "demo_platformer::player::Player",
     "type": "class",
     "useAs": [
@@ -132,7 +132,7 @@
     "members": []
   },
   {
-    "id": 2,
+    "id": 9,
     "name": "demo_platformer::player::PlayerSpawnPoint",
     "type": "class",
     "useAs": [
@@ -154,7 +154,7 @@
     "members": []
   },
   {
-    "id": 10,
+    "id": 8,
     "name": "demo_platformer::trigger::TriggerZone",
     "type": "class",
     "useAs": [
@@ -184,7 +184,7 @@
     ]
   },
   {
-    "id": 7,
+    "id": 5,
     "name": "demo_platformer::trigger::TriggerZone:::Variant",
     "type": "enum",
     "storageType": "string",
@@ -197,7 +197,7 @@
     "valuesAsFlags": false
   },
   {
-    "id": 8,
+    "id": 6,
     "name": "demo_platformer::trigger::TriggerZone::Damage",
     "type": "class",
     "useAs": [
@@ -214,7 +214,7 @@
     ]
   },
   {
-    "id": 9,
+    "id": 7,
     "name": "demo_platformer::trigger::TriggerZone::Teleport",
     "type": "class",
     "useAs": [

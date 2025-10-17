@@ -13,8 +13,10 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             TilemapAnchor::Center,
         ))
         .observe(
-            |t: Trigger<TiledEvent<ColliderCreated>>, mut commands: Commands| {
-                commands.entity(t.event().origin).insert(RigidBody::Static);
+            |collider_created: On<TiledEvent<ColliderCreated>>, mut commands: Commands| {
+                commands
+                    .entity(*collider_created.event().event.collider_of)
+                    .insert(RigidBody::Static);
             },
         );
 }

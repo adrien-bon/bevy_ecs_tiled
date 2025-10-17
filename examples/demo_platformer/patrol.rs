@@ -33,7 +33,7 @@ pub struct PatrolProgress(pub usize);
 
 fn move_to_destination(
     mut commands: Commands,
-    mut movement_event_writer: EventWriter<MovementEvent>,
+    mut movement_message_writer: MessageWriter<MovementEvent>,
     mut patrolling_actor_query: Query<(Entity, &GlobalTransform, &RequestedDestination)>,
 ) {
     for (enemy, transform, target) in patrolling_actor_query.iter_mut() {
@@ -41,7 +41,7 @@ fn move_to_destination(
         if distance.abs() < 10. {
             commands.entity(enemy).remove::<RequestedDestination>();
         } else {
-            movement_event_writer.write(MovementEvent {
+            movement_message_writer.write(MovementEvent {
                 entity: enemy,
                 action: MovementAction::Move(if distance > 0. { 1. } else { -1. }),
             });

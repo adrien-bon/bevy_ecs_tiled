@@ -76,7 +76,7 @@ fn main() {
             TiledPlugin(TiledPluginConfig {
                 tiled_types_export_file: Some(path),
                 tiled_types_filter: TiledFilter::from(
-                    RegexSet::new([r"^demo_platformer::.*"]).unwrap(),
+                    regex::RegexSet::new([r"^demo_platformer::.*"]).unwrap(),
                 ),
             }),
             TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default(),

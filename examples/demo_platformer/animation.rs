@@ -91,7 +91,7 @@ impl Animation {
     /// Update animation timers.
     pub fn update_timer(&mut self, delta: Duration) {
         self.timer.tick(delta);
-        if !self.timer.finished() {
+        if !self.timer.is_finished() {
             return;
         }
         if let Some(config) = self.config.get(&self.state) {
@@ -112,7 +112,7 @@ impl Animation {
 
     /// Whether animation changed this tick.
     pub fn changed(&self) -> bool {
-        self.timer.finished()
+        self.timer.is_finished()
     }
 
     /// Return sprite index in the atlas.
