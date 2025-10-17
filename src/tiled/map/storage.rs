@@ -5,7 +5,7 @@
 //! for use by systems and plugins within the bevy_ecs_tiled framework.
 
 use crate::prelude::*;
-use bevy::prelude::*;
+use bevy::{platform::collections::HashMap, prelude::*};
 
 /// [`Component`] storing all the Tiled items composing this map.
 /// Makes the association between Tiled ID and corresponding Bevy [`Entity`].
@@ -20,11 +20,11 @@ pub struct TiledMapStorage {
     /// Mapping between a Tiled object ID with corresponding [`TiledObject`] [`Entity`]
     pub(crate) objects: HashMap<u32, Entity>,
 
-    /// Mapping between a Tiled tileset ID + [`TileId`] with all corresponding [`TiledTile`] [`Entity`]s
+    /// Mapping between a Tiled tileset ID + [`tiled::TileId`] with all corresponding [`TiledTile`] [`Entity`]s
     ///
     /// Note that we can have multiple entities (ie.several instances) of the same tile since
     /// it references the tile on the tileset and not the tile on the tilemap.
-    pub(crate) tiles: HashMap<(u32, TileId), Vec<Entity>>,
+    pub(crate) tiles: HashMap<(u32, tiled::TileId), Vec<Entity>>,
 }
 
 impl TiledMapStorage {
@@ -58,37 +58,37 @@ impl<'a> TiledMapStorage {
             .map(|(&id, _)| id)
     }
 
-    /// Retrieve the [`Layer`] associated with this [`TiledLayer`] [`Entity`]
-    pub fn get_layer(&self, map: &'a Map, entity: Entity) -> Option<Layer<'a>> {
+    /// Retrieve the [`tiled::Layer`] associated with this [`TiledLayer`] [`Entity`]
+    pub fn get_layer(&self, map: &'a tiled::Map, entity: Entity) -> Option<tiled::Layer<'a>> {
         self.get_layer_id(entity)
             .and_then(|id| get_layer_from_map(map, id))
     }
 
-    /// Returns an iterator over the [`TiledTile`] [`Entity`] and tileset ID + [`TileId`] associations
+    /// Returns an iterator over the [`TiledTile`] [`Entity`] and tileset ID + [`tiled::TileId`] associations
     pub fn tiles(
         &self,
-    ) -> bevy::platform::collections::hash_map::Iter<'_, (u32, TileId), Vec<Entity>> {
+    ) -> bevy::platform::collections::hash_map::Iter<'_, (u32, tiled::TileId), Vec<Entity>> {
         self.tiles.iter()
     }
 
-    /// Retrieve the [`TiledTile`] [`Entity`] list associated with this tileset ID and [`TileId`]
-    pub fn get_tile_entities(&self, tileset_id: u32, tile_id: TileId) -> Vec<Entity> {
+    /// Retrieve the [`TiledTile`] [`Entity`] list associated with this tileset ID and [`tiled::TileId`]
+    pub fn get_tile_entities(&self, tileset_id: u32, tile_id: tiled::TileId) -> Vec<Entity> {
         self.tiles
             .get(&(tileset_id, tile_id))
             .cloned()
             .unwrap_or_default()
     }
 
-    /// Retrieve the tileset ID and [`TileId`] associated with this [`TiledTile`] [`Entity`]
-    pub fn get_tile_id(&self, entity: Entity) -> Option<(u32, TileId)> {
+    /// Retrieve the tileset ID and [`tiled::TileId`] associated with this [`TiledTile`] [`Entity`]
+    pub fn get_tile_id(&self, entity: Entity) -> Option<(u32, tiled::TileId)> {
         self.tiles
             .iter()
             .find(|(_, v)| v.contains(&entity))
             .map(|(&id, _)| id)
     }
 
-    /// Retrieve the [`Tile`] associated with this [`TiledTile`] [`Entity`]
-    pub fn get_tile(&self, map: &'a Map, entity: Entity) -> Option<Tile<'a>> {
+    /// Retrieve the [`tiled::Tile`] associated with this [`TiledTile`] [`Entity`]
+    pub fn get_tile(&self, map: &'a tiled::Map, entity: Entity) -> Option<tiled::Tile<'a>> {
         self.get_tile_id(entity)
             .and_then(|(tileset_id, tile_id)| get_tile_from_map(map, tileset_id, tile_id))
     }
@@ -111,8 +111,8 @@ impl<'a> TiledMapStorage {
             .map(|(&id, _)| id)
     }
 
-    /// Retrieve the [`Object`] associated with this [`TiledObject`] [`Entity`]
-    pub fn get_object(&self, map: &'a Map, entity: Entity) -> Option<Object<'a>> {
+    /// Retrieve the [`tiled::Object`] associated with this [`TiledObject`] [`Entity`]
+    pub fn get_object(&self, map: &'a tiled::Map, entity: Entity) -> Option<tiled::Object<'a>> {
         self.get_object_id(entity)
             .and_then(|id| get_object_from_map(map, id))
     }

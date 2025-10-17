@@ -30,7 +30,7 @@ use bevy_rapier2d::{
 #[reflect(Default, Debug)]
 pub enum TiledPhysicsRapierBackend {
     #[default]
-    /// Aggregates all [`LineString`]s into a single collider using [`SharedShape::polyline`].
+    /// Aggregates all [`geo::LineString`]s into a single collider using [`SharedShape::polyline`].
     Polyline,
     /// Performs triangulation and produces a single collider by aggregating multiple [`SharedShape::triangle`]s.
     Triangulation,
@@ -43,7 +43,7 @@ impl TiledPhysicsBackend for TiledPhysicsRapierBackend {
         &self,
         commands: &mut Commands,
         _source: &TiledEvent<ColliderCreated>,
-        multi_polygon: &MultiPolygon<f32>,
+        multi_polygon: &geo::MultiPolygon<f32>,
     ) -> Vec<Entity> {
         let mut out = vec![];
         match self {

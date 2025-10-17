@@ -7,21 +7,21 @@
 //!
 //! The cache supports concurrent access and can be cleared at runtime if needed.
 
+use crate::prelude::*;
 use bevy::prelude::*;
 use std::sync::{Arc, RwLock};
-use tiled::{DefaultResourceCache, ResourceCache};
 
 /// Thread-safe resource cache for Tiled assets, stored as a Bevy resource.
 ///
 /// Wraps a [`tiled::DefaultResourceCache`] in an [`Arc<RwLock<...>>`] to allow safe concurrent access
 /// from multiple systems. Provides methods for clearing the cache and implements the [`tiled::ResourceCache`] trait.
 #[derive(Resource, Clone)]
-pub(crate) struct TiledResourceCache(pub(crate) Arc<RwLock<DefaultResourceCache>>);
+pub(crate) struct TiledResourceCache(pub(crate) Arc<RwLock<tiled::DefaultResourceCache>>);
 
 impl TiledResourceCache {
     /// Creates a new, empty Tiled resource cache.
     pub(crate) fn new() -> Self {
-        Self(Arc::new(RwLock::new(DefaultResourceCache::new())))
+        Self(Arc::new(RwLock::new(tiled::DefaultResourceCache::new())))
     }
 }
 
@@ -31,11 +31,11 @@ impl TiledResourceCache {
     /// This can be useful to force reloading of Tiled assets at runtime.
     pub fn clear(&mut self) {
         debug!("Clearing cache");
-        *self.0.write().unwrap() = DefaultResourceCache::new();
+        *self.0.write().unwrap() = tiled::DefaultResourceCache::new();
     }
 }
 
-impl ResourceCache for TiledResourceCache {
+impl tiled::ResourceCache for TiledResourceCache {
     fn get_tileset(
         &self,
         path: impl AsRef<tiled::ResourcePath>,

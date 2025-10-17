@@ -46,7 +46,7 @@ pub struct TiledEvent<E: Debug + Clone + Copy + Reflect> {
     map: Option<(Entity, AssetId<TiledMapAsset>)>,
     layer: Option<(Entity, u32)>,
     tilemap: Option<(Entity, u32)>,
-    tile: Option<(Entity, TilePos, TileId)>,
+    tile: Option<(Entity, TilePos, tiled::TileId)>,
     object: Option<(Entity, u32)>,
 }
 
@@ -118,7 +118,12 @@ where
     }
 
     /// Update the tile information for this [`TiledEvent`]
-    pub fn with_tile(&mut self, entity: Entity, position: TilePos, tile_id: TileId) -> &mut Self {
+    pub fn with_tile(
+        &mut self,
+        entity: Entity,
+        position: TilePos,
+        tile_id: tiled::TileId,
+    ) -> &mut Self {
         self.tile = Some((entity, position, tile_id));
         self
     }
@@ -148,7 +153,7 @@ where
     }
 
     /// Retrieve the [`World`] associated with this [`TiledEvent`]
-    pub fn get_world(&self, assets: &'a Res<Assets<TiledWorldAsset>>) -> Option<&'a TiledRawWorld> {
+    pub fn get_world(&self, assets: &'a Res<Assets<TiledWorldAsset>>) -> Option<&'a tiled::World> {
         self.get_world_asset(assets).map(|w| &w.world)
     }
 
@@ -165,8 +170,8 @@ where
         self.map.and_then(|(_, id)| assets.get(id))
     }
 
-    /// Retrieve the [`Map`] associated with this [`TiledEvent`]
-    pub fn get_map(&self, assets: &'a Res<Assets<TiledMapAsset>>) -> Option<&'a Map> {
+    /// Retrieve the [`tiled::Map`] associated with this [`TiledEvent`]
+    pub fn get_map(&self, assets: &'a Res<Assets<TiledMapAsset>>) -> Option<&'a tiled::Map> {
         self.get_map_asset(assets).map(|m| &m.map)
     }
 
@@ -180,8 +185,8 @@ where
         self.layer.map(|(_, id)| id)
     }
 
-    /// Retrieve the [`Layer`] associated with this [`TiledEvent`]
-    pub fn get_layer(&self, assets: &'a Res<Assets<TiledMapAsset>>) -> Option<Layer<'a>> {
+    /// Retrieve the [`tiled::Layer`] associated with this [`TiledEvent`]
+    pub fn get_layer(&self, assets: &'a Res<Assets<TiledMapAsset>>) -> Option<tiled::Layer<'a>> {
         self.get_map(assets).and_then(|map| {
             self.get_layer_id()
                 .and_then(|id| get_layer_from_map(map, id))
@@ -198,11 +203,11 @@ where
         self.tilemap.map(|(_, id)| id)
     }
 
-    /// Retrieve the tilemap [`Tileset`] associated with this [`TiledEvent`]
+    /// Retrieve the tilemap [`tiled::Tileset`] associated with this [`TiledEvent`]
     pub fn get_tilemap_tileset(
         &self,
         assets: &'a Res<Assets<TiledMapAsset>>,
-    ) -> Option<&'a Arc<Tileset>> {
+    ) -> Option<&'a Arc<tiled::Tileset>> {
         self.get_map(assets).and_then(|map| {
             self.get_tilemap_tileset_id()
                 .and_then(|id| get_tileset_from_map(map, id))
@@ -219,13 +224,13 @@ where
         self.tile.map(|(_, pos, _)| pos)
     }
 
-    /// Retrieve the [`TileId`] associated with this [`TiledEvent`]
-    pub fn get_tile_id(&self) -> Option<TileId> {
+    /// Retrieve the [`tiled::TileId`] associated with this [`TiledEvent`]
+    pub fn get_tile_id(&self) -> Option<tiled::TileId> {
         self.tile.map(|(_, _, id)| id)
     }
 
-    /// Retrieve the [`Tile`] associated with this [`TiledEvent`]
-    pub fn get_tile(&self, assets: &'a Res<Assets<TiledMapAsset>>) -> Option<Tile<'a>> {
+    /// Retrieve the [`tiled::Tile`] associated with this [`TiledEvent`]
+    pub fn get_tile(&self, assets: &'a Res<Assets<TiledMapAsset>>) -> Option<tiled::Tile<'a>> {
         self.get_map(assets).and_then(|map| {
             self.get_tilemap_tileset_id().and_then(|tileset_id| {
                 self.get_tile_id()
@@ -244,8 +249,8 @@ where
         self.object.map(|(_, id)| id)
     }
 
-    /// Retrieve the tilemap [`Tileset`] associated with this [`TiledEvent`]
-    pub fn get_object(&self, assets: &'a Res<Assets<TiledMapAsset>>) -> Option<Object<'a>> {
+    /// Retrieve the tilemap [`tiled::Tileset`] associated with this [`TiledEvent`]
+    pub fn get_object(&self, assets: &'a Res<Assets<TiledMapAsset>>) -> Option<tiled::Object<'a>> {
         self.get_map(assets).and_then(|map| {
             self.get_object_id()
                 .and_then(|id| get_object_from_map(map, id))

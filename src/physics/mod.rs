@@ -10,7 +10,6 @@ pub mod settings;
 
 use crate::prelude::*;
 use bevy::prelude::*;
-use collider::spawn_colliders;
 
 /// Physics plugin.
 ///
@@ -69,7 +68,7 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
         };
 
         if settings.tiles_layer_filter.matches(&layer.name) {
-            spawn_colliders::<T>(
+            collider::spawn_colliders::<T>(
                 &settings.backend,
                 &mut commands,
                 &assets,
@@ -109,7 +108,7 @@ fn collider_from_object<T: TiledPhysicsBackend>(
         if settings.objects_layer_filter.matches(&layer.name)
             && settings.objects_filter.matches(&object.name)
         {
-            spawn_colliders::<T>(
+            collider::spawn_colliders::<T>(
                 &settings.backend,
                 &mut commands,
                 &assets,

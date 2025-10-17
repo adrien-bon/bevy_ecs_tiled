@@ -5,7 +5,10 @@
 //! keeping visible maps in memory, while removing those that are not currently in view.
 
 use crate::prelude::*;
-use bevy::{math::bounding::IntersectsVolume, prelude::*};
+use bevy::{
+    math::bounding::{Aabb2d, IntersectsVolume},
+    prelude::*,
+};
 
 /// [`Component`] holding Tiled world chunking configuration.
 ///

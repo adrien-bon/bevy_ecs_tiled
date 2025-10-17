@@ -13,9 +13,11 @@ pub mod avian;
 
 use std::fmt;
 
-use crate::prelude::*;
+use crate::prelude::{
+    geo::{Centroid, TriangulateDelaunay},
+    *,
+};
 use bevy::{prelude::*, reflect::Reflectable};
-use geo::{Centroid, TriangulateDelaunay};
 
 /// Trait for implementing a custom physics backend for Tiled maps and worlds.
 ///
@@ -40,7 +42,7 @@ pub trait TiledPhysicsBackend:
     /// # Arguments
     /// * `commands` - The Bevy [`Commands`] instance for spawning entities.
     /// * `source` - The event describing the collider to be created.
-    /// * `multi_polygon` - The [`MultiPolygon<f32>`] geometry representing the collider shape.
+    /// * `multi_polygon` - The [`geo::MultiPolygon<f32>`] geometry representing the collider shape.
     ///
     /// # Returns
     /// A vector of [`Entity`] of the spawned colliders.
@@ -49,11 +51,11 @@ pub trait TiledPhysicsBackend:
         &self,
         commands: &mut Commands,
         source: &TiledEvent<ColliderCreated>,
-        multi_polygon: &MultiPolygon<f32>,
+        multi_polygon: &geo::MultiPolygon<f32>,
     ) -> Vec<Entity>;
 }
 
-/// Converts a [`MultiPolygon<f32>`] into a vector of triangles and their centroids.
+/// Converts a [`geo::MultiPolygon<f32>`] into a vector of triangles and their centroids.
 ///
 /// Each triangle is represented as an array of three [`Vec2`] points, and its centroid as a [`Vec2`].
 /// This is useful for physics backends that require triangulated shapes.
@@ -63,7 +65,9 @@ pub trait TiledPhysicsBackend:
 ///
 /// # Returns
 /// A vector of tuples: ([triangle_vertices; 3], centroid).
-pub fn multi_polygon_as_triangles(multi_polygon: &MultiPolygon<f32>) -> Vec<([Vec2; 3], Vec2)> {
+pub fn multi_polygon_as_triangles(
+    multi_polygon: &geo::MultiPolygon<f32>,
+) -> Vec<([Vec2; 3], Vec2)> {
     multi_polygon
         .constrained_triangulation(Default::default())
         .unwrap()
@@ -78,7 +82,7 @@ pub fn multi_polygon_as_triangles(multi_polygon: &MultiPolygon<f32>) -> Vec<([Ve
         .collect()
 }
 
-/// Converts a [`MultiPolygon<f32>`] into a vector of [`LineString<f32>`].
+/// Converts a [`geo::MultiPolygon<f32>`] into a vector of [`geo::LineString<f32>`].
 ///
 /// This function extracts all exterior and interior rings from the input geometry and returns them as line strings.
 /// Useful for physics backends that operate on polylines or linestrips.
@@ -87,8 +91,10 @@ pub fn multi_polygon_as_triangles(multi_polygon: &MultiPolygon<f32>) -> Vec<([Ve
 /// * `multi_polygon` - The input geometry to extract line strings from.
 ///
 /// # Returns
-/// A vector of [`LineString<f32>`] representing all rings in the geometry.
-pub fn multi_polygon_as_line_strings(multi_polygon: &MultiPolygon<f32>) -> Vec<LineString<f32>> {
+/// A vector of [`geo::LineString<f32>`] representing all rings in the geometry.
+pub fn multi_polygon_as_line_strings(
+    multi_polygon: &geo::MultiPolygon<f32>,
+) -> Vec<geo::LineString<f32>> {
     let mut out = vec![];
     multi_polygon.iter().for_each(|p| {
         [p.interiors(), &[p.exterior().clone()]]

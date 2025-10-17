@@ -4,10 +4,8 @@
 //! into Bevy's asset system.
 
 use crate::{prelude::*, tiled::helpers::iso_projection};
-use bevy::prelude::*;
-use bevy_ecs_tilemap::map::{HexCoordSystem, IsoCoordSystem, TilemapTexture};
+use bevy::{platform::collections::HashMap, prelude::*};
 use std::fmt;
-use tiled::ChunkData;
 
 #[derive(Default, Debug)]
 pub(crate) struct TiledMapTileset {
@@ -152,12 +150,12 @@ impl TiledMapAsset {
             }
     }
 
-    /// Iterates over all tiles in the given [`TileLayer`], invoking a callback for each tile.
+    /// Iterates over all tiles in the given [`tiled::TileLayer`], invoking a callback for each tile.
     ///
     /// This function abstracts over both finite and infinite Tiled map layers, providing a unified
     /// way to visit every tile in a layer. For each tile, the provided closure is called with:
-    /// - the [`LayerTile`] (tile instance)
-    /// - a reference to the [`LayerTileData`] (tile metadata)
+    /// - the [`tiled::LayerTile`] (tile instance)
+    /// - a reference to the [`tiled::LayerTileData`] (tile metadata)
     /// - the [`TilePos`] (tile position in Bevy coordinates)
     /// - the [`IVec2`] (tile position in Tiled chunk coordinates)
     ///
@@ -173,7 +171,7 @@ impl TiledMapAsset {
     /// ```rust,no_run
     /// use bevy_ecs_tiled::prelude::*;
     ///
-    /// fn print_tile_positions(asset: &TiledMapAsset, layer: &TileLayer) {
+    /// fn print_tile_positions(asset: &TiledMapAsset, layer: &tiled::TileLayer) {
     ///     asset.for_each_tile(layer, |tile, data, tile_pos, chunk_pos| {
     ///         println!("Tile at Bevy pos: {:?}, chunk pos: {:?}", tile_pos, chunk_pos);
     ///     });
@@ -184,13 +182,13 @@ impl TiledMapAsset {
     /// - For infinite maps, chunk positions are shifted so that the top-left chunk is at (0, 0),
     ///   and negative tile coordinates are avoided.
     /// - The Y coordinate is inverted to match Bevy's coordinate system (origin at bottom-left).
-    pub fn for_each_tile<'a, F>(&'a self, tiles_layer: &TileLayer<'a>, mut f: F)
+    pub fn for_each_tile<'a, F>(&'a self, tiles_layer: &tiled::TileLayer<'a>, mut f: F)
     where
-        F: FnMut(LayerTile<'a>, &LayerTileData, TilePos, IVec2),
+        F: FnMut(tiled::LayerTile<'a>, &tiled::LayerTileData, TilePos, IVec2),
     {
         let tilemap_size = self.tilemap_size;
         match tiles_layer {
-            TileLayer::Finite(layer) => {
+            tiled::TileLayer::Finite(layer) => {
                 for x in 0..tilemap_size.x {
                     for y in 0..tilemap_size.y {
                         // Transform TMX coords into bevy coords.
@@ -214,7 +212,7 @@ impl TiledMapAsset {
                     }
                 }
             }
-            TileLayer::Infinite(layer) => {
+            tiled::TileLayer::Infinite(layer) => {
                 for (chunk_pos, chunk) in layer.chunks() {
                     // bevy_ecs_tilemap doesn't support negative tile coordinates, so shift all chunks
                     // such that the top-left chunk is at (0, 0).
@@ -223,8 +221,8 @@ impl TiledMapAsset {
                         chunk_pos.1 - self.topleft_chunk.1,
                     );
 
-                    for x in 0..ChunkData::WIDTH {
-                        for y in 0..ChunkData::HEIGHT {
+                    for x in 0..tiled::ChunkData::WIDTH {
+                        for y in 0..tiled::ChunkData::HEIGHT {
                             // Invert y to match bevy coordinates.
                             let Some(layer_tile) = chunk.get_tile(x as i32, y as i32) else {
                                 continue;
@@ -235,8 +233,8 @@ impl TiledMapAsset {
                             };
 
                             let index = IVec2 {
-                                x: chunk_pos_mapped.0 * ChunkData::WIDTH as i32 + x as i32,
-                                y: chunk_pos_mapped.1 * ChunkData::HEIGHT as i32 + y as i32,
+                                x: chunk_pos_mapped.0 * tiled::ChunkData::WIDTH as i32 + x as i32,
+                                y: chunk_pos_mapped.1 * tiled::ChunkData::HEIGHT as i32 + y as i32,
                             };
 
                             f(
@@ -255,7 +253,7 @@ impl TiledMapAsset {
         }
     }
 
-    /// Returns the world position of a Tiled [`Object`] relative to its parent [`TiledLayer::Objects`] entity.
+    /// Returns the world position of a Tiled [`tiled::Object`] relative to its parent [`TiledLayer::Objects`] entity.
     ///
     /// The returned position corresponds to the object's top-left anchor in world coordinates, taking into account
     /// the map's anchor, grid size, and coordinate system. This is equivalent to using the object's [`Transform`] component
@@ -267,7 +265,7 @@ impl TiledMapAsset {
     ///
     /// # Returns
     /// * `Vec2` - The object's world position relative to its parent layer entity.
-    pub fn object_relative_position(&self, object: &Object, anchor: &TilemapAnchor) -> Vec2 {
+    pub fn object_relative_position(&self, object: &tiled::Object, anchor: &TilemapAnchor) -> Vec2 {
         self.world_space_from_tiled_position(anchor, Vec2::new(object.x, object.y))
     }
 
@@ -278,12 +276,12 @@ impl TiledMapAsset {
     /// * `transform` - The global transform to apply to the object.
     ///
     /// # Returns
-    /// * `Option<Coord<f32>>` - The world-space center of the object, or `None` if not applicable.
+    /// * `Option<geo::Coord<f32>>` - The world-space center of the object, or `None` if not applicable.
     pub fn object_center(
         &self,
         tiled_object: &TiledObject,
         transform: &GlobalTransform,
-    ) -> Option<Coord<f32>> {
+    ) -> Option<geo::Coord<f32>> {
         tiled_object.center(
             transform,
             matches!(tilemap_type_from_map(&self.map), TilemapType::Isometric(..)),
@@ -300,12 +298,12 @@ impl TiledMapAsset {
     /// * `transform` - The global transform to apply to the object.
     ///
     /// # Returns
-    /// * `Vec<Coord<f32>>` - The world-space vertices of the object.
+    /// * `Vec<geo::Coord<f32>>` - The world-space vertices of the object.
     pub fn object_vertices(
         &self,
         tiled_object: &TiledObject,
         transform: &GlobalTransform,
-    ) -> Vec<Coord<f32>> {
+    ) -> Vec<geo::Coord<f32>> {
         tiled_object.vertices(
             transform,
             matches!(tilemap_type_from_map(&self.map), TilemapType::Isometric(..)),
@@ -315,19 +313,19 @@ impl TiledMapAsset {
         )
     }
 
-    /// Returns the object's geometry as a [`LineString`] in world coordinates, if applicable.
+    /// Returns the object's geometry as a [`geo::LineString`] in world coordinates, if applicable.
     ///
     /// # Arguments
     /// * `tiled_object` - The Tiled object to compute the line string for.
     /// * `transform` - The global transform to apply to the object.
     ///
     /// # Returns
-    /// * `Option<LineString<f32>>` - The object's geometry as a line string, or `None` if not applicable.
+    /// * `Option<geo::LineString<f32>>` - The object's geometry as a line string, or `None` if not applicable.
     pub fn object_line_string(
         &self,
         tiled_object: &TiledObject,
         transform: &GlobalTransform,
-    ) -> Option<LineString<f32>> {
+    ) -> Option<geo::LineString<f32>> {
         tiled_object.line_string(
             transform,
             matches!(tilemap_type_from_map(&self.map), TilemapType::Isometric(..)),
@@ -337,19 +335,19 @@ impl TiledMapAsset {
         )
     }
 
-    /// Returns the object's geometry as a [`GeoPolygon`] in world coordinates, if applicable.
+    /// Returns the object's geometry as a [`geo::Polygon`] in world coordinates, if applicable.
     ///
     /// # Arguments
     /// * `tiled_object` - The Tiled object to compute the polygon for.
     /// * `transform` - The global transform to apply to the object.
     ///
     /// # Returns
-    /// * `Option<GeoPolygon<f32>>` - The object's geometry as a polygon, or `None` if not applicable.
+    /// * `Option<geo::Polygon<f32>>` - The object's geometry as a polygon, or `None` if not applicable.
     pub fn object_polygon(
         &self,
         tiled_object: &TiledObject,
         transform: &GlobalTransform,
-    ) -> Option<GeoPolygon<f32>> {
+    ) -> Option<geo::Polygon<f32>> {
         tiled_object.polygon(
             transform,
             matches!(tilemap_type_from_map(&self.map), TilemapType::Isometric(..)),
