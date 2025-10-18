@@ -398,13 +398,15 @@ fn tileset_to_tiled_map_tileset(
             if columns > 0 {
                 texture_atlas_layout_handle = if let Ok(handle_asset) = load_context
                     .labeled_asset_scope(path.to_owned(), |_| {
-                        Ok::<TextureAtlasLayout, TiledMapLoaderError>(TextureAtlasLayout::from_grid(
-                            UVec2::new(tileset.tile_width, tileset.tile_height),
-                            columns,
-                            tileset.tilecount / columns,
-                            Some(UVec2::splat(tileset.spacing)),
-                            Some(UVec2::splat(tileset.margin)),
-                        ))
+                        Ok::<TextureAtlasLayout, TiledMapLoaderError>(
+                            TextureAtlasLayout::from_grid(
+                                UVec2::new(tileset.tile_width, tileset.tile_height),
+                                columns,
+                                tileset.tilecount / columns,
+                                Some(UVec2::splat(tileset.spacing)),
+                                Some(UVec2::splat(tileset.margin)),
+                            ),
+                        )
                     }) {
                     Some(handle_asset)
                 } else {
