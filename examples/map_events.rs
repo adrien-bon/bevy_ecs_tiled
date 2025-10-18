@@ -23,13 +23,13 @@ fn main() {
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d);
-    commands
+    /*commands
         // Spawn a map and attach some observers on it.
         // All events and observers will be fired _after_ the map has finished loading
         .spawn(TiledMap(asset_server.load("maps/orthogonal/finite.tmx")))
         // Add an "in-line" observer to detect when the map has finished loading
         .observe(
-            |trigger: Trigger<TiledEvent<MapCreated>>, map_query: Query<&Name, With<TiledMap>>| {
+            |trigger: On<TiledEvent<MapCreated>>, map_query: Query<&Name, With<TiledMap>>| {
                 let Ok(name) = map_query.get(trigger.event().origin) else {
                     return;
                 };
@@ -40,7 +40,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             },
         )
         // And another one, with a dedicated function, to detect layer loading
-        .observe(obs_layer_created);
+        .observe(obs_layer_created);*/
 }
 
 // We fire both an observer and a regular event, so you can also use an [`EventReader`]
@@ -81,28 +81,30 @@ fn evt_map_created(
 
 // Callback for our observer, will be triggered for every layer of the map
 fn obs_layer_created(
-    trigger: Trigger<TiledEvent<LayerCreated>>,
+    tiled_events: &mut MessageReader<TiledEvent<LayerCreated>>,
     layer_query: Query<&Name, With<TiledLayer>>,
     assets: Res<Assets<TiledMapAsset>>,
 ) {
-    // We can either access the layer components via a regular query
-    let Ok(name) = layer_query.get(trigger.event().origin) else {
-        return;
-    };
+    for event in tiled_events.read() {
+        // We can either access the layer components via a regular query
+        let Ok(name) = layer_query.get(event.origin) else {
+            return;
+        };
 
-    // Or directly the underneath tiled Layer data
-    let Some(layer) = trigger.event().get_layer(&assets) else {
-        return;
-    };
+        // Or directly the underneath tiled Layer data
+        let Some(layer) = event.get_layer(&assets) else {
+            return;
+        };
 
-    info!(
-        "=> Observer TiledLayerCreated was triggered for layer '{}'",
-        name
-    );
-    info!("Loaded layer: {:?}", layer);
+        info!(
+            "=> Observer TiledLayerCreated was triggered for layer '{}'",
+            name
+        );
+        info!("Loaded layer: {:?}", layer);
 
-    // Moreover, we can retrieve the TiledMapCreated event data from here
-    let _map = trigger.event().get_map(&assets);
+        // Moreover, we can retrieve the TiledMapCreated event data from here
+        let _map = event.get_map(&assets);
+    }
 }
 
 // A typical usecase for regular events is to update components associated with tiles, objects or layers.

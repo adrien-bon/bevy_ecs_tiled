@@ -29,8 +29,7 @@ use crate::tiled::{
 /// Wrapper around Tiled events
 ///
 /// Contains generic informations about origin of a particular Tiled event
-#[derive(Event, Clone, Copy, PartialEq, Debug, Reflect, Component)]
-#[event(auto_propagate, traversal = &'static ChildOf)]
+#[derive(Message, Clone, Copy, PartialEq, Debug, Reflect, Component)]
 #[reflect(Component, Debug, Clone)]
 pub struct TiledEvent<E: Debug + Clone + Copy + Reflect> {
     /// The original target of this event, before bubbling
@@ -120,9 +119,8 @@ where
     }
 
     /// Trigger observer and write event for this [`TiledEvent`]
-    pub fn send(&self, commands: &mut Commands, event_writer: &mut EventWriter<TiledEvent<E>>) {
-        commands.trigger_targets(*self, self.origin);
-        event_writer.write(*self);
+    pub fn send(&self, message_writer: &mut MessageWriter<TiledEvent<E>>) {
+        message_writer.write(*self);
     }
 }
 
@@ -295,17 +293,17 @@ pub struct ObjectCreated;
 #[derive(SystemParam)]
 pub(crate) struct TiledEventWriters<'w> {
     /// World events writer
-    pub world_created: EventWriter<'w, TiledEvent<WorldCreated>>,
+    pub world_created: MessageWriter<'w, TiledEvent<WorldCreated>>,
     /// Map events writer
-    pub map_created: EventWriter<'w, TiledEvent<MapCreated>>,
+    pub map_created: MessageWriter<'w, TiledEvent<MapCreated>>,
     /// Layer events writer
-    pub layer_created: EventWriter<'w, TiledEvent<LayerCreated>>,
+    pub layer_created: MessageWriter<'w, TiledEvent<LayerCreated>>,
     /// Tilemap events writer
-    pub tilemap_created: EventWriter<'w, TiledEvent<TilemapCreated>>,
+    pub tilemap_created: MessageWriter<'w, TiledEvent<TilemapCreated>>,
     /// Tile events writer
-    pub tile_created: EventWriter<'w, TiledEvent<TileCreated>>,
+    pub tile_created: MessageWriter<'w, TiledEvent<TileCreated>>,
     /// Object events writer
-    pub object_created: EventWriter<'w, TiledEvent<ObjectCreated>>,
+    pub object_created: MessageWriter<'w, TiledEvent<ObjectCreated>>,
 }
 
 impl fmt::Debug for TiledEventWriters<'_> {
@@ -315,16 +313,16 @@ impl fmt::Debug for TiledEventWriters<'_> {
 }
 
 pub(crate) fn plugin(app: &mut App) {
-    app.add_event::<TiledEvent<WorldCreated>>()
+    app.add_message::<TiledEvent<WorldCreated>>()
         .register_type::<TiledEvent<WorldCreated>>();
-    app.add_event::<TiledEvent<MapCreated>>()
+    app.add_message::<TiledEvent<MapCreated>>()
         .register_type::<TiledEvent<MapCreated>>();
-    app.add_event::<TiledEvent<LayerCreated>>()
+    app.add_message::<TiledEvent<LayerCreated>>()
         .register_type::<TiledEvent<LayerCreated>>();
-    app.add_event::<TiledEvent<TilemapCreated>>()
+    app.add_message::<TiledEvent<TilemapCreated>>()
         .register_type::<TiledEvent<TilemapCreated>>();
-    app.add_event::<TiledEvent<TileCreated>>()
+    app.add_message::<TiledEvent<TileCreated>>()
         .register_type::<TiledEvent<TileCreated>>();
-    app.add_event::<TiledEvent<ObjectCreated>>()
+    app.add_message::<TiledEvent<ObjectCreated>>()
         .register_type::<TiledEvent<ObjectCreated>>();
 }

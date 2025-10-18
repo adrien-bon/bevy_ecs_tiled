@@ -171,19 +171,19 @@ pub(crate) fn spawn_map(
     }
 
     // Send events and trigger observers
-    map_event.send(commands, &mut event_writers.map_created);
+    map_event.send( &mut event_writers.map_created);
 
     for e in layer_events {
-        e.send(commands, &mut event_writers.layer_created);
+        e.send(&mut event_writers.layer_created);
     }
     for e in tilemap_events {
-        e.send(commands, &mut event_writers.tilemap_created);
+        e.send(&mut event_writers.tilemap_created);
     }
     for e in tile_events {
-        e.send(commands, &mut event_writers.tile_created);
+        e.send( &mut event_writers.tile_created);
     }
     for e in object_events {
-        e.send(commands, &mut event_writers.object_created);
+        e.send(&mut event_writers.object_created);
     }
 }
 
@@ -432,16 +432,17 @@ fn spawn_objects_layer(
         // we want to add a Sprite component to the object entity
         // and possibly an animation component if the tile is animated.
         match handle_tile_object(&object_data, tiled_map) {
-            (Some((sprite, offset_transform)), None) => {
+            (Some((sprite, offset_transform, anchor)), None) => {
                 commands.spawn((
                     Name::new("TiledObjectVisual"),
                     TiledObjectVisualOf(object_entity),
                     ChildOf(object_entity),
                     sprite,
                     offset_transform,
+                    anchor,
                 ));
             }
-            (Some((sprite, offset_transform)), Some(animation)) => {
+            (Some((sprite, offset_transform, anchor)), Some(animation)) => {
                 commands.spawn((
                     Name::new("TiledObjectVisual"),
                     TiledObjectVisualOf(object_entity),
@@ -449,6 +450,7 @@ fn spawn_objects_layer(
                     sprite,
                     offset_transform,
                     animation,
+                    anchor,
                 ));
             }
             _ => {}
@@ -466,7 +468,7 @@ fn spawn_objects_layer(
 fn handle_tile_object(
     object: &Object,
     tiled_map: &TiledMapAsset,
-) -> (Option<(Sprite, Transform)>, Option<TiledAnimation>) {
+) -> (Option<(Sprite, Transform, Anchor)>, Option<TiledAnimation>) {
     let Some(tile) = (*object).get_tile() else {
         return (None, None);
     };
@@ -520,7 +522,6 @@ fn handle_tile_object(
                             layout: handle.clone(),
                             index: tile.id() as usize,
                         }),
-                        anchor: Anchor::BottomLeft,
                         flip_x: tile.flip_h,
                         flip_y: tile.flip_v,
                         custom_size: Some(Vec2::new(
@@ -538,7 +539,6 @@ fn handle_tile_object(
                 vector.get(index as usize).map(|image| {
                     Sprite {
                         image: image.clone(),
-                        anchor: Anchor::BottomLeft,
                         flip_x: tile.flip_h,
                         flip_y: tile.flip_v,
                         custom_size: Some(Vec2::new(
@@ -569,7 +569,7 @@ fn handle_tile_object(
             ),
         });
 
-    (Some((sprite, transform)), animation)
+    (Some((sprite, transform, Anchor::BOTTOM_LEFT)), animation)
 }
 
 fn spawn_image_layer(
@@ -614,7 +614,6 @@ fn spawn_image_layer(
             TiledMapReference(layer_event.get_map_entity().unwrap()),
             Sprite {
                 image: handle.clone(),
-                anchor: Anchor::TopLeft,
                 custom_size: Some(image_size),
                 image_mode: SpriteImageMode::Tiled {
                     tile_x: image_layer.repeat_x,
@@ -623,6 +622,7 @@ fn spawn_image_layer(
                 },
                 ..default()
             },
+            Anchor::TOP_LEFT,
             Transform::from_translation(image_position.extend(0.)),
         ));
     }

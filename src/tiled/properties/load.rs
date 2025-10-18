@@ -323,11 +323,11 @@ impl DeserializedProperties {
                 if o == 0 {
                     Err("empty object reference".to_string())
                 } else {
-                    Ok(Box::new(Entity::from_raw(o)))
+                    Ok(Box::new(Entity::from_raw_u32 (o)))
                 }
             }
             ("core::option::Option<bevy_ecs::entity::Entity>", PV::ObjectValue(o), _) => {
-                Ok(Box::new(Some(Entity::from_raw(o)).filter(|_| o != 0)))
+                Ok(Box::new(Some(Entity::from_raw_u32 (o)).filter(|_| o != 0)))
             }
             (_, PV::StringValue(s), TypeInfo::Enum(info)) => {
                 let Some(variant) = info.variant(&s) else {
@@ -638,12 +638,10 @@ fn hydrate(object: &mut dyn PartialReflect, obj_entity_map: &HashMap<u32, Entity
             _ => {}
         },
         ReflectMut::Map(s) => {
-            for i in 0..s.len() {
-                let (k, v) = s.get_at_mut(i).unwrap();
-                if object_ref(k, obj_entity_map).is_some() {
-                    panic!("Unable to hydrate a key in a map!");
-                }
-                hydrate(v, obj_entity_map);
+            for i in s.iter() {
+                if let Ok(mut value) = i.0.reflect_clone() {
+                    hydrate(value.as_mut(), obj_entity_map);
+                }                
             }
         }
         // Cannot hydrate a Set since it does not have a get_mut() function

@@ -232,7 +232,7 @@ fn process_loaded_maps(
 /// System to update maps as they are changed or removed.
 fn handle_map_events(
     mut commands: Commands,
-    mut map_events: EventReader<AssetEvent<TiledMapAsset>>,
+    mut map_events: MessageReader<AssetEvent<TiledMapAsset>>,
     map_query: Query<(Entity, &TiledMap)>,
     mut cache: ResMut<TiledResourceCache>,
 ) {

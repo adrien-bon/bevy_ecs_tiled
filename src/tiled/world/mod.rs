@@ -155,7 +155,7 @@ fn process_loaded_worlds(
 
             TiledEvent::new(world_entity, WorldCreated)
                 .with_world(world_entity, world_handle.0.id())
-                .send(&mut commands, &mut event_writers.world_created);
+                .send(&mut event_writers.world_created);
         }
     }
 }
@@ -163,7 +163,7 @@ fn process_loaded_worlds(
 /// System to update worlds as they are changed or removed.
 fn handle_world_events(
     mut commands: Commands,
-    mut world_events: EventReader<AssetEvent<TiledWorldAsset>>,
+    mut world_events: MessageReader<AssetEvent<TiledWorldAsset>>,
     world_query: Query<(Entity, &TiledWorld)>,
 ) {
     for event in world_events.read() {
