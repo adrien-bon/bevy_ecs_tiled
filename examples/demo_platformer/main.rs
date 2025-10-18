@@ -10,10 +10,10 @@ mod controller;
 mod debug;
 mod enemy;
 mod level;
+mod minimap;
 mod patrol;
 mod player;
 mod trigger;
-mod minimap;
 
 fn main() {
     let mut app = App::new();

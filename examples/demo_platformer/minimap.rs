@@ -1,7 +1,4 @@
-use bevy::prelude::*;
-use bevy::render::camera::Viewport;
-use bevy::render::view::RenderLayers;
-
+use bevy::{camera::{visibility::RenderLayers, Viewport}, prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(Startup, setup_minimap);
