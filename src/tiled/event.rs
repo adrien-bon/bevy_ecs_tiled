@@ -29,10 +29,12 @@ use crate::tiled::{
 /// Wrapper around Tiled events
 ///
 /// Contains generic informations about origin of a particular Tiled event
-#[derive(Message, Clone, Copy, PartialEq, Debug, Reflect, Component)]
+#[derive(EntityEvent, Message, Clone, Copy, PartialEq, Debug, Reflect, Component)]
+#[entity_event(propagate = &'static ChildOf)]
 #[reflect(Component, Debug, Clone)]
 pub struct TiledEvent<E: Debug + Clone + Copy + Reflect> {
     /// The original target of this event, before bubbling
+    #[event_target]
     pub origin: Entity,
     /// The specific event that was triggered
     pub event: E,
@@ -119,7 +121,8 @@ where
     }
 
     /// Trigger observer and write event for this [`TiledEvent`]
-    pub fn send(&self, message_writer: &mut MessageWriter<TiledEvent<E>>) {
+    pub fn send(&self, commands: &mut Commands, message_writer: &mut MessageWriter<TiledEvent<E>>) {
+        commands.trigger(TiledEvent::new(self.origin, self.event));
         message_writer.write(*self);
     }
 }

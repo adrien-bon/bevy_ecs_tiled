@@ -171,19 +171,19 @@ pub(crate) fn spawn_map(
     }
 
     // Send events and trigger observers
-    map_event.send( &mut event_writers.map_created);
+    map_event.send(commands, &mut event_writers.map_created);
 
     for e in layer_events {
-        e.send(&mut event_writers.layer_created);
+        e.send(commands, &mut event_writers.layer_created);
     }
     for e in tilemap_events {
-        e.send(&mut event_writers.tilemap_created);
+        e.send(commands, &mut event_writers.tilemap_created);
     }
     for e in tile_events {
-        e.send( &mut event_writers.tile_created);
+        e.send(commands, &mut event_writers.tile_created);
     }
     for e in object_events {
-        e.send(&mut event_writers.object_created);
+        e.send(commands, &mut event_writers.object_created);
     }
 }
 

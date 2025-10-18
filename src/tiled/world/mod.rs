@@ -155,7 +155,7 @@ fn process_loaded_worlds(
 
             TiledEvent::new(world_entity, WorldCreated)
                 .with_world(world_entity, world_handle.0.id())
-                .send(&mut event_writers.world_created);
+                .send(&mut commands, &mut event_writers.world_created);
         }
     }
 }
