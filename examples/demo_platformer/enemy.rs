@@ -1,11 +1,14 @@
 use std::time::Duration;
 
 use avian2d::{math::*, prelude::*};
-use bevy::{prelude::*, sprite::Anchor};
+use bevy::{
+    camera::visibility::RenderLayers, color::palettes::css::RED, prelude::*, sprite::Anchor,
+};
 
 use crate::{
     animation::{Animation, AnimationState, AnimationStateConfig},
     controller::CharacterControllerBundle,
+    minimap::{HideOnMinimap, MINIMAP_RENDER_LAYER},
 };
 
 const ENEMY_SPRITE_FILE: &str =
@@ -57,6 +60,7 @@ fn on_enemy_added(
             }),
             ..Default::default()
         },
+        HideOnMinimap,
         Anchor::from(Vec2::new(0., -0.1)),
         enemy_animation,
         Mass(1_000_000.),
@@ -66,5 +70,15 @@ fn on_enemy_added(
             800.,
             PI * 0.45,
         ),
+        children![(
+            Name::new("Enemy Minimap Marker"),
+            Sprite {
+                custom_size: Some(Vec2::new(32., 96.)),
+                color: Color::Srgba(RED),
+                ..default()
+            },
+            Transform::from_xyz(0., 0., 100.0),
+            RenderLayers::layer(MINIMAP_RENDER_LAYER) // Render on minimap, inherit position from parent
+        )],
     ));
 }

@@ -1,29 +1,72 @@
-use bevy::{camera::{visibility::RenderLayers, Viewport}, prelude::*};
+use bevy::{
+    app::{HierarchyPropagatePlugin, Propagate},
+    asset::RenderAssetUsages,
+    camera::{visibility::RenderLayers, RenderTarget},
+    color::palettes::tailwind::CYAN_100,
+    prelude::*,
+    render::render_resource::{TextureDimension, TextureFormat, TextureUsages},
+};
+use bevy_ecs_tiled::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(Startup, setup_minimap);
+    app.add_plugins(HierarchyPropagatePlugin::<
+        RenderLayers,
+        (Without<TiledImage>, Without<HideOnMinimap>),
+    >::new(Update));
+    app.add_observer(
+        |map_created: On<TiledEvent<MapCreated>>, mut commands: Commands| {
+            commands
+                .entity(map_created.event().origin)
+                .insert(Propagate(RenderLayers::from_layers(&[
+                    DEFAULT_RENDER_LAYER,
+                    MINIMAP_RENDER_LAYER,
+                ])));
+        },
+    );
 }
 
-fn setup_minimap(mut commands: Commands, window: Single<&Window>) {
-    let mut minimap_projection = OrthographicProjection::default_2d();
-    minimap_projection.scale = 16.0;
+pub const DEFAULT_RENDER_LAYER: usize = 0;
+pub const MINIMAP_RENDER_LAYER: usize = 1;
+
+#[derive(Component)]
+pub struct HideOnMinimap;
+
+fn setup_minimap(
+    mut commands: Commands,
+    window: Single<&Window>,
+    mut images: ResMut<Assets<Image>>,
+) {
     let minimap_width = 400;
     let minimap_height = 300;
-    commands.spawn((
-        Name::new("Minimap Camera"),
-        Camera2d,
-        Projection::Orthographic(minimap_projection),
-        Camera {
-            viewport: Some(Viewport {
-                physical_position: UVec2::new(0, 0),
-                physical_size: UVec2::new(minimap_width, minimap_height),
-                ..default()
+
+    let mut image = Image::new_uninit(
+        default(),
+        TextureDimension::D2,
+        TextureFormat::Bgra8UnormSrgb,
+        RenderAssetUsages::all(),
+    );
+    image.texture_descriptor.usage =
+        TextureUsages::TEXTURE_BINDING | TextureUsages::COPY_DST | TextureUsages::RENDER_ATTACHMENT;
+    let image_handle = images.add(image);
+
+    let camera = commands
+        .spawn((
+            Name::new("Minimap Camera"),
+            Camera2d,
+            Projection::Orthographic(OrthographicProjection {
+                scale: 16.,
+                ..OrthographicProjection::default_2d()
             }),
-            order: 1, // After main camera at default order 0
-            ..default()
-        },
-        RenderLayers::layer(1),
-    ));
+            Camera {
+                order: 1, // After main camera at default order 0
+                target: RenderTarget::Image(image_handle.clone().into()),
+                clear_color: ClearColorConfig::Custom(Color::Srgba(CYAN_100).with_alpha(0.6)),
+                ..default()
+            },
+            RenderLayers::layer(MINIMAP_RENDER_LAYER),
+        ))
+        .id();
 
     // Minimap blue-ish background
     commands.spawn((
@@ -35,6 +78,6 @@ fn setup_minimap(mut commands: Commands, window: Single<&Window>) {
             height: Val::Px(minimap_height as f32 / window.resolution.scale_factor()),
             ..default()
         },
-        BackgroundColor(Color::srgba(0.243, 0.361, 0.522, 0.82)),
+        ViewportNode::new(camera),
     ));
 }

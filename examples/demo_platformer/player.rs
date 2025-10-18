@@ -5,11 +5,14 @@ use std::time::Duration;
 use crate::{
     animation::{Animation, AnimationState, AnimationStateConfig},
     controller::{CharacterControllerBundle, MovementAction, MovementEvent},
+    minimap::MINIMAP_RENDER_LAYER,
     trigger::TriggerActor,
     UpdateSystems,
 };
 use avian2d::{math::*, prelude::*};
-use bevy::{camera::visibility::RenderLayers, prelude::*, sprite::Anchor};
+use bevy::{
+    camera::visibility::RenderLayers, color::palettes::css::BLUE, prelude::*, sprite::Anchor,
+};
 
 const PLAYER_SPRITE_FILE: &str =
     "demo_platformer/kenney_platformer-pack-redux/Spritesheets/spritesheet_players.png";
@@ -97,11 +100,11 @@ fn spawn_player_at_spawn_point(
             Name::new("Player Minimap Marker"),
             Sprite {
                 custom_size: Some(Vec2::new(32., 96.)),
-                color: Color::srgb(1.0, 0.0, 0.0),
+                color: Color::Srgba(BLUE),
                 ..default()
             },
             Transform::from_xyz(0., 0., 100.0),
-            RenderLayers::layer(1) // Render on minimap, inherit position from parent
+            RenderLayers::layer(MINIMAP_RENDER_LAYER) // Render on minimap, inherit position from parent
         )],
     ));
 }
