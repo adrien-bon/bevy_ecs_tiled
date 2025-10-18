@@ -22,7 +22,7 @@ use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 
 fn handle_event(
-    mut object_events: EventReader<TiledEvent<ObjectCreated>>,
+    mut object_events: MessageReader<TiledEvent<ObjectCreated>>,
 ) {
     // Even though we receive an event for a Tiled object,
     // we can retrieve information about the Tiled map
@@ -72,7 +72,7 @@ use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 
 fn handle_map_event(
-    mut map_events: EventReader<TiledEvent<MapCreated>>,
+    mut map_events: MessageReader<TiledEvent<MapCreated>>,
     map_query: Query<&Name, With<TiledMap>>,
 ) {
     for e in map_events.read() {

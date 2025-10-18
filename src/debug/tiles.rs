@@ -88,7 +88,7 @@ fn draw_tile_infos(
                     Text2d::new(format!("{}x{}", tile_pos.x, tile_pos.y)),
                     TextColor(config.color),
                     config.font.clone(),
-                    TextLayout::new_with_justify(JustifyText::Center),
+                    TextLayout::new_with_justify(Justify::Center),
                     Transform {
                         translation: Vec3::new(pos.x, pos.y, config.z_offset),
                         scale: config.scale,

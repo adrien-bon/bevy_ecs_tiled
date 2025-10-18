@@ -9,7 +9,7 @@ pub mod chunking;
 pub mod loader;
 pub mod storage;
 
-use crate::{prelude::*, tiled::event::TiledEventWriters};
+use crate::{prelude::*, tiled::event::TiledMessageWriters};
 use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 
 /// Main component for loading and managing a Tiled world in the ECS world.
@@ -105,7 +105,7 @@ fn process_loaded_worlds(
             // it's read each frame by world_chunking() system
         )>,
     >,
-    mut event_writers: TiledEventWriters,
+    mut event_writers: TiledMessageWriters,
 ) {
     for (world_entity, world_handle, mut world_storage) in world_query.iter_mut() {
         if let Some(load_state) = asset_server.get_recursive_dependency_load_state(&world_handle.0)

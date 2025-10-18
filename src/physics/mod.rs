@@ -48,11 +48,11 @@ impl<T: TiledPhysicsBackend> Plugin for TiledPhysicsPlugin<T> {
 }
 
 fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
-    mut layer_event: EventReader<TiledEvent<LayerCreated>>,
+    mut layer_event: MessageReader<TiledEvent<LayerCreated>>,
     mut commands: Commands,
     assets: Res<Assets<TiledMapAsset>>,
     maps_query: Query<(&TiledPhysicsSettings<T>, &TilemapAnchor), With<TiledMap>>,
-    mut event_writer: EventWriter<TiledEvent<ColliderCreated>>,
+    mut event_writer: MessageWriter<TiledEvent<ColliderCreated>>,
 ) {
     for ev in layer_event.read() {
         let (settings, anchor) = ev
@@ -84,11 +84,11 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
 }
 
 fn collider_from_object<T: TiledPhysicsBackend>(
-    mut object_event: EventReader<TiledEvent<ObjectCreated>>,
+    mut object_event: MessageReader<TiledEvent<ObjectCreated>>,
     mut commands: Commands,
     assets: Res<Assets<TiledMapAsset>>,
     maps_query: Query<(&TiledPhysicsSettings<T>, &TilemapAnchor), With<TiledMap>>,
-    mut event_writer: EventWriter<TiledEvent<ColliderCreated>>,
+    mut event_writer: MessageWriter<TiledEvent<ColliderCreated>>,
 ) {
     for ev in object_event.read() {
         let (settings, anchor) = ev

@@ -132,7 +132,7 @@ fn handle_unload(
     }
 }
 
-fn log_transitions(mut transitions: EventReader<StateTransitionEvent<MapState>>) {
+fn log_transitions(mut transitions: MessageReader<StateTransitionEvent<MapState>>) {
     for transition in transitions.read() {
         info!(
             "transition: {:?} => {:?}",

@@ -43,9 +43,9 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .observe(obs_layer_created);
 }
 
-// We fire both an observer and a regular event, so you can also use an [`EventReader`]
+// We fire both an observer and a regular event, so you can also use an [`MessageReader`]
 fn evt_map_created(
-    mut map_events: EventReader<TiledEvent<MapCreated>>,
+    mut map_events: MessageReader<TiledEvent<MapCreated>>,
     map_query: Query<(&Name, &TiledMapStorage), With<TiledMap>>,
     assets: Res<Assets<TiledMapAsset>>,
 ) {
@@ -109,7 +109,7 @@ fn obs_layer_created(
 // Here, we will add a small offset on the Z axis to our objects to demonstrate how to use the
 // `TiledObjectCreated` event.
 fn evt_object_created(
-    mut object_events: EventReader<TiledEvent<ObjectCreated>>,
+    mut object_events: MessageReader<TiledEvent<ObjectCreated>>,
     mut object_query: Query<(&Name, &mut Transform), With<TiledObject>>,
     mut z_offset: Local<f32>,
 ) {

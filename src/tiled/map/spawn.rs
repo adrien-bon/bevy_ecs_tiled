@@ -4,7 +4,7 @@
 //! It handles the creation of map layers, tiles, objects, and their associated components in the ECS world,
 //! enabling the rendering and interaction of Tiled maps within a Bevy application.
 
-use crate::{prelude::*, tiled::event::TiledEventWriters, tiled::layer::TiledLayerParallax};
+use crate::{prelude::*, tiled::event::TiledMessageWriters, tiled::layer::TiledLayerParallax};
 use bevy::{prelude::*, sprite::Anchor};
 use bevy_ecs_tilemap::prelude::{
     AnimatedTile, IsoCoordSystem, TileBundle, TileFlip, TileStorage, TileTextureIndex, TilemapId,
@@ -28,7 +28,7 @@ pub(crate) fn spawn_map(
     map_storage: &mut TiledMapStorage,
     render_settings: &TilemapRenderSettings,
     layer_z_offset: &TiledMapLayerZOffset,
-    event_writers: &mut TiledEventWriters,
+    event_writers: &mut TiledMessageWriters,
     anchor: &TilemapAnchor,
 ) {
     commands.entity(map_entity).insert(Name::new(format!(

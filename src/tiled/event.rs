@@ -294,7 +294,7 @@ pub struct ObjectCreated;
 
 // /// All event writers used when loading a map
 #[derive(SystemParam)]
-pub(crate) struct TiledEventWriters<'w> {
+pub(crate) struct TiledMessageWriters<'w> {
     /// World events writer
     pub world_created: MessageWriter<'w, TiledEvent<WorldCreated>>,
     /// Map events writer
@@ -309,9 +309,9 @@ pub(crate) struct TiledEventWriters<'w> {
     pub object_created: MessageWriter<'w, TiledEvent<ObjectCreated>>,
 }
 
-impl fmt::Debug for TiledEventWriters<'_> {
+impl fmt::Debug for TiledMessageWriters<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("TiledEventWriters").finish()
+        f.debug_struct("TiledMessageWriters").finish()
     }
 }
 

@@ -51,8 +51,9 @@ impl TiledPhysicsBackend for TiledPhysicsRapierBackend {
                 let shared_shapes = multi_polygon_as_triangles(multi_polygon)
                     .iter()
                     .map(|([a, b, c], centroid)| {
+                        let center: Matrix<f32, Const<2>, Const<1>, ArrayStorage<f32, 2, 1>> = (*centroid).into();
                         (
-                            Isometry::<Real>::new((*centroid).into(), 0.),
+                            Isometry::<Real>::new(center, 0.),
                             SharedShape::triangle((*a).into(), (*b).into(), (*c).into()),
                         )
                     })
