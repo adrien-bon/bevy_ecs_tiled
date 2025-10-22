@@ -69,7 +69,7 @@ use bevy::prelude::*;
 // Declare a component and make it reflectable
 #[derive(Component, Reflect, Default)]
 #[reflect(Component, Default)]
-struct BiomeInfos {
+struct Biome {
     block_line_of_sight: bool,
     ty: BiomeType,
 }
@@ -89,7 +89,7 @@ enum BiomeType {
 // Register your top-level struct in the Bevy registry
 fn main() {
     App::new()
-        .register_type::<BiomeInfos>();
+        .register_type::<Biome>();
 }
 ```
 
@@ -133,7 +133,44 @@ When you load the map, the corresponding Bevy entity will have the appropriate `
 
 > **Note:**  
 > Only add properties imported from Bevy. Properties created only in Tiled (ie. not exported from your app) will not be loaded in Bevy.
-> You can also control which properties are exported from Bevy via [`TiledPluginConfig`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/struct.TiledPluginConfig.html)
+> You can also control which properties are exported from your application via [`TiledPluginConfig`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/struct.TiledPluginConfig.html)
+
+---
+
+## Custom Properties Usage with Bevy
+
+When loading a Tiled map with custom properties, a common pattern is to use Bevy `On<Add>` observers to react to the spawn of a particular Tiled element.
+
+When the `On<Add>` observer is triggered, you can then insert additional components or spawn another entity.
+
+```rust,no_run
+use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+// Declare a marker component: assume it will be added to a particular Tiled object
+#[derive(Component, Default, Debug, Reflect)]
+#[reflect(Component, Default)]
+struct PlayerSpawn;
+
+fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn(Camera2d);
+    commands
+      .spawn(TiledMap(asset_server.load("map.tmx")))
+      // We will run this observer for every Tiled object with the `PlayerSpawn` component
+      .observe(|add_player_spawn: On<Add, PlayerSpawn>, mut commands: Commands| {
+         // Retrieve the Tiled object entity
+         let player_spawn_entity = add_player_spawn.event().entity;
+         // Add extra components
+         commands
+            .entity(player_spawn_entity)
+            .insert((
+               ...
+            ));
+      });
+}
+```
+
+You can also have a look to the [dedicated example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/properties_basic.rs).
 
 ---
 
@@ -146,7 +183,3 @@ When you load the map, the corresponding Bevy entity will have the appropriate `
 - You can also add `Resource`s to your map.  
   Since resources are global and not attached to a specific entity, they are only supported as map-level properties.  
   If you add a resource to another Tiled element, it will be ignored.
-
----
-
-With this workflow, you can design your game data visually in Tiled and have it automatically reflected in your Bevy game.

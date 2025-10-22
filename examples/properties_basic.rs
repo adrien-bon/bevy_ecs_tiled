@@ -38,32 +38,33 @@ fn main() {
         // This should not be used directly in your game (but you can always have a look)
         .add_plugins(helper::HelperPlugin)
         // We need to register all the custom types we want to use
-        .register_type::<BiomeInfos>()
-        .register_type::<SpawnType>()
-        .register_type::<ResourceType>()
+        .register_type::<Biome>()
+        .register_type::<SpawnPoint>()
+        .register_type::<Resource>()
         // Add our systems and run the app!
         .add_systems(Startup, startup)
-        .add_systems(Update, display_custom_tiles)
-        .add_systems(Update, display_objects)
         .run();
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d);
-    commands.spawn(TiledMap(
-        asset_server.load("maps/hexagonal/finite_pointy_top_odd.tmx"),
-    ));
+    commands
+        .spawn(TiledMap(
+            asset_server.load("maps/hexagonal/finite_pointy_top_odd.tmx"),
+        ))
+        .observe(on_add_spawn)
+        .observe(on_map_created);
 }
 
 // You just have to define your Components and make sure they are properly registered and reflected.
-// They will be exported in the Tiled .json file so they can be imported then used from Tiled.
+// They will be exported to the Tiled .json file so they can be imported then used from Tiled.
 // Next time you load your map, they will be automatically added as components on tiles / objects / layers entities
 
 #[derive(Component, Default, Debug, Reflect)]
 #[reflect(Component, Default)]
-struct BiomeInfos {
+struct Biome {
     ty: BiomeType,
-    pos: Vec2,
+    move_cost: usize,
     block_line_of_sight: bool,
 }
 
@@ -81,7 +82,7 @@ enum BiomeType {
 
 #[derive(Component, Default, Debug, Reflect)]
 #[reflect(Component, Default)]
-enum SpawnType {
+enum SpawnPoint {
     #[default]
     Unknown,
     Player {
@@ -95,7 +96,7 @@ enum SpawnType {
 
 #[derive(Component, Default, Debug, Reflect)]
 #[reflect(Component, Default)]
-enum ResourceType {
+enum Resource {
     #[default]
     Unknown,
     Wheat,
@@ -105,40 +106,75 @@ enum ResourceType {
     Gold,
 }
 
-// Marker component so we only print each entity once
-#[derive(Component)]
-struct DoNotPrint;
-
-#[allow(clippy::type_complexity)]
-fn display_custom_tiles(
-    mut commands: Commands,
-    q_tile: Query<
-        (Entity, &TilePos, Option<&BiomeInfos>, Option<&ResourceType>),
-        Without<DoNotPrint>,
-    >,
+// This observer will be triggered every time a `SpawnType` component is added to an entity.
+// We can use it to spawn additional entity / insert more components
+fn on_add_spawn(
+    add_spawn: On<Add, SpawnPoint>,
+    spawn_query: Query<(&SpawnPoint, &GlobalTransform)>,
+    mut _commands: Commands,
 ) {
-    for (entity, position, biome_infos, resource_type) in q_tile.iter() {
-        if let Some(i) = biome_infos {
-            // Only print the first tile to avoid flooding the console
-            info_once!("Found BiomeInfos [{:?} @ {:?}]", i, position);
+    // Get the entity that triggered the observer
+    let spawn_entity = add_spawn.event().entity;
+
+    // Retrieve the entity components
+    let Ok((spawn_type, global_transform)) = spawn_query.get(spawn_entity) else {
+        return;
+    };
+
+    info!(
+        "New SpawnPoint [{:?} @ {:?}]",
+        spawn_type,
+        global_transform.translation()
+    );
+
+    // Do some stuff based upon the spawn type value
+    match spawn_type {
+        SpawnPoint::Enemy(_) => {
+            // Spawn another entity
+            // _commands.spawn( ... );
         }
-        if let Some(i) = resource_type {
-            // Only print the first tile to avoid flooding the console
-            info_once!("Found ResourceType [{:?} @ {:?}]", i, position);
+        SpawnPoint::Player { .. } => {
+            // Add other components to the same entity
+            // _commands.entity(spawn_entity).insert( ... );
         }
-        commands.entity(entity).insert(DoNotPrint);
-    }
+        _ => {}
+    };
 }
 
-fn display_objects(
-    mut commands: Commands,
-    q_object: Query<(Entity, &Transform, &SpawnType), Without<DoNotPrint>>,
+// This observer will be triggered after our map is loaded and all custom properties have been inserted
+// We can use it to do some global initialization
+fn on_map_created(
+    map_created: On<TiledEvent<MapCreated>>,
+    map_query: Query<&TiledMapStorage, With<TiledMap>>,
+    tiles_query: Query<(&TilePos, Option<&Biome>, Option<&Resource>)>,
 ) {
-    for (entity, transform, spawn_type) in q_object.iter() {
-        info!(
-            "Found SpawnType [{:?} @ {:?}]",
-            spawn_type, transform.translation
-        );
-        commands.entity(entity).insert(DoNotPrint);
+    // Get the map entity and storage component
+    let map_entity = map_created.event().origin;
+    let Ok(map_storage) = map_query.get(map_entity) else {
+        return;
+    };
+
+    // We will iterate over all tiles from our map and try to access our custom properties
+    for ((_tile_id, _tileset_id), entities_list) in map_storage.tiles() {
+        for tile_entity in entities_list {
+            let Ok((pos, biome, resource)) = tiles_query.get(*tile_entity) else {
+                continue;
+            };
+
+            // Here, we only print the content of our tile but we could also do some
+            // global initialization.
+            // A typical use case would be to initialize a resource so we can map a tile
+            // position to a biome and / or a resource (which could be useful for pathfinding)
+
+            if let Some(i) = biome {
+                // Only print the first tile to avoid flooding the console
+                info_once!("Found Biome [{:?} @ {:?}]", i, pos);
+            }
+
+            if let Some(i) = resource {
+                // Only print the first tile to avoid flooding the console
+                info_once!("Found Resource [{:?} @ {:?}]", i, pos);
+            }
+        }
     }
 }
