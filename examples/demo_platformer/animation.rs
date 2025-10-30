@@ -13,7 +13,7 @@ pub(super) fn plugin(app: &mut App) {
             update_animation_timer.in_set(UpdateSystems::TickTimers),
             (update_animation_movement, update_animation_atlas)
                 .chain()
-                .in_set(UpdateSystems::Update),
+                .in_set(UpdateSystems::UpdateSprite),
         ),
     );
 }
@@ -33,14 +33,14 @@ fn update_animation_movement(
         } else {
             AnimationState::Walking
         };
-        animation.update_state(animation_state);
+        animation.change_state(animation_state);
     }
 }
 
 /// Update the animation timer.
 fn update_animation_timer(time: Res<Time>, mut query: Query<&mut Animation>) {
     for mut animation in &mut query {
-        animation.update_timer(time.delta());
+        animation.update(time.delta());
     }
 }
 
@@ -65,13 +65,7 @@ pub struct Animation {
     frame_index: usize,
     state: AnimationState,
     #[reflect(ignore)]
-    config: HashMap<AnimationState, AnimationStateConfig>,
-}
-
-#[derive(Default, Debug, Clone)]
-pub struct AnimationStateConfig {
-    pub duration: Duration,
-    pub frames: Vec<usize>,
+    config: HashMap<AnimationState, (Duration, Vec<usize>)>,
 }
 
 #[derive(Reflect, Hash, Eq, PartialEq, Default, Debug, Copy, Clone)]
@@ -83,29 +77,34 @@ pub enum AnimationState {
 }
 
 impl Animation {
-    pub fn add_config(&mut self, state: AnimationState, config: AnimationStateConfig) -> Self {
-        self.config.insert(state, config);
+    pub fn add_state(
+        &mut self,
+        state: AnimationState,
+        duration: Duration,
+        frames: Vec<usize>,
+    ) -> Self {
+        self.config.insert(state, (duration, frames));
         self.clone()
     }
 
     /// Update animation timers.
-    pub fn update_timer(&mut self, delta: Duration) {
+    fn update(&mut self, delta: Duration) {
         self.timer.tick(delta);
         if !self.timer.is_finished() {
             return;
         }
-        if let Some(config) = self.config.get(&self.state) {
-            self.frame_index = (self.frame_index + 1) % config.frames.len();
+        if let Some((_, frames)) = self.config.get(&self.state) {
+            self.frame_index = (self.frame_index + 1) % frames.len();
         }
     }
 
     /// Update animation state if it changes.
-    pub fn update_state(&mut self, state: AnimationState) {
+    pub fn change_state(&mut self, state: AnimationState) {
         if self.state != state {
-            if let Some(config) = self.config.get(&state) {
+            if let Some((duration, _)) = self.config.get(&state) {
                 self.state = state;
                 self.frame_index = 0;
-                self.timer = Timer::new(config.duration, TimerMode::Repeating);
+                self.timer = Timer::new(*duration, TimerMode::Repeating);
             }
         }
     }
@@ -120,7 +119,7 @@ impl Animation {
         *self
             .config
             .get(&self.state)
-            .and_then(|c| c.frames.get(self.frame_index))
+            .and_then(|(_, frames)| frames.get(self.frame_index))
             .unwrap_or(&0)
     }
 }

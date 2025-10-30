@@ -2,12 +2,16 @@ use avian2d::prelude::*;
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 
+use crate::UpdateSystems;
+
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<TriggerZone>();
     app.register_type::<TriggerActor>();
     app.add_systems(
         Update,
-        (create_trigger_zone, handle_collision_start).chain(),
+        (create_trigger_zone, handle_collision_start)
+            .chain()
+            .in_set(UpdateSystems::TriggerZones),
     );
 }
 

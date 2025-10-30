@@ -3,7 +3,7 @@
 use std::time::Duration;
 
 use crate::{
-    animation::{Animation, AnimationState, AnimationStateConfig},
+    animation::{Animation, AnimationState},
     controller::{CharacterControllerBundle, MovementAction, MovementEvent},
     minimap::MINIMAP_RENDER_LAYER,
     trigger::TriggerActor,
@@ -60,19 +60,11 @@ fn spawn_player_at_spawn_point(
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
 
     let player_animation = Animation::default()
-        .add_config(
-            AnimationState::Idling,
-            AnimationStateConfig {
-                duration: Duration::from_millis(500),
-                frames: vec![6],
-            },
-        )
-        .add_config(
+        .add_state(AnimationState::Idling, Duration::from_millis(500), vec![6])
+        .add_state(
             AnimationState::Walking,
-            AnimationStateConfig {
-                duration: Duration::from_millis(100),
-                frames: vec![37, 45],
-            },
+            Duration::from_millis(100),
+            vec![37, 45],
         );
 
     commands.spawn((

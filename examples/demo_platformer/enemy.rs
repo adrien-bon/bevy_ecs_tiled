@@ -6,7 +6,7 @@ use bevy::{
 };
 
 use crate::{
-    animation::{Animation, AnimationState, AnimationStateConfig},
+    animation::{Animation, AnimationState},
     controller::CharacterControllerBundle,
     minimap::{HideOnMinimap, MINIMAP_RENDER_LAYER},
 };
@@ -35,19 +35,15 @@ fn on_enemy_added(
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
 
     let enemy_animation = Animation::default()
-        .add_config(
+        .add_state(
             AnimationState::Idling,
-            AnimationStateConfig {
-                duration: Duration::from_millis(100),
-                frames: vec![75, 83],
-            },
+            Duration::from_millis(100),
+            vec![75, 83],
         )
-        .add_config(
+        .add_state(
             AnimationState::Walking,
-            AnimationStateConfig {
-                duration: Duration::from_millis(100),
-                frames: vec![75, 83],
-            },
+            Duration::from_millis(100),
+            vec![75, 83],
         );
 
     commands.entity(add_enemy.event().entity).insert((

@@ -48,7 +48,8 @@ fn main() {
             UpdateSystems::TickTimers,
             UpdateSystems::RecordInput,
             UpdateSystems::ApplyMovement,
-            UpdateSystems::Update,
+            UpdateSystems::TriggerZones,
+            UpdateSystems::UpdateSprite,
         )
             .chain(),
     );
@@ -66,26 +67,30 @@ fn main() {
         minimap::plugin,
     ));
 
+    // Custom directory for exporting user properties
     let mut path = env::current_dir().unwrap();
     path.push("assets");
     path.push("demo_platformer");
     path.push("demo_platformer_types.json");
 
-    app
+    app.add_plugins((
         // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
         // be automatically added as well if it's not already done.
-        .add_plugins((
-            TiledPlugin(TiledPluginConfig {
-                tiled_types_export_file: Some(path),
-                tiled_types_filter: TiledFilter::from(
-                    regex::RegexSet::new([r"^demo_platformer::.*"]).unwrap(),
-                ),
-            }),
-            TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default(),
-            PhysicsPlugins::default().with_length_unit(100.0),
-        ));
+        TiledPlugin(TiledPluginConfig {
+            tiled_types_export_file: Some(path),
+            tiled_types_filter: TiledFilter::from(
+                regex::RegexSet::new([r"^demo_platformer::.*"]).unwrap(),
+            ),
+        }),
+        // Setup physics
+        TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default(),
+        PhysicsPlugins::default().with_length_unit(100.0),
+    ));
 
+    // Set camera default clear color
     app.insert_resource(ClearColor(Color::srgb_u8(196, 237, 240)));
+
+    // Run the app !
     app.run();
 }
 
@@ -99,6 +104,7 @@ enum UpdateSystems {
     /// Record player input.
     RecordInput,
     ApplyMovement,
+    TriggerZones,
     /// Do everything else (consider splitting this into further variants).
-    Update,
+    UpdateSprite,
 }
