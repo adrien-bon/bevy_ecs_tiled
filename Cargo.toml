@@ -76,7 +76,7 @@ denylist = ["png", "bmp", "jpeg", "gif"]
 
 [dev-dependencies]
 bevy = { version = "0.17", features = ["file_watcher"] }
-bevy-inspector-egui = "0.34"
+bevy-inspector-egui = "0.35"
 iyes_perf_ui = { version = "0.5" }
 
 [[example]]
