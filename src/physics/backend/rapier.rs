@@ -42,7 +42,7 @@ impl TiledPhysicsBackend for TiledPhysicsRapierBackend {
     fn spawn_colliders(
         &self,
         commands: &mut Commands,
-        _source: &TiledEvent<ColliderCreated>,
+        source: &TiledEvent<ColliderCreated>,
         multi_polygon: &geo::MultiPolygon<f32>,
     ) -> Vec<Entity> {
         let mut out = vec![];
@@ -62,7 +62,11 @@ impl TiledPhysicsBackend for TiledPhysicsRapierBackend {
                     let collider: Collider = SharedShape::compound(shared_shapes).into();
                     out.push(
                         commands
-                            .spawn((Name::from("Rapier[Triangulation]"), collider))
+                            .spawn((
+                                Name::from("Rapier[Triangulation]"),
+                                ChildOf(*source.event.collider_of),
+                                collider,
+                            ))
                             .id(),
                     );
                 }
@@ -79,7 +83,11 @@ impl TiledPhysicsBackend for TiledPhysicsRapierBackend {
                         .into();
                         out.push(
                             commands
-                                .spawn((Name::from(format!("Rapier[LineStrip {i}]")), collider))
+                                .spawn((
+                                    Name::from(format!("Rapier[LineStrip {i}]")),
+                                    ChildOf(*source.event.collider_of),
+                                    collider,
+                                ))
                                 .id(),
                         );
                     });
@@ -102,7 +110,11 @@ impl TiledPhysicsBackend for TiledPhysicsRapierBackend {
                     let collider: Collider = SharedShape::polyline(vertices, Some(indices)).into();
                     out.push(
                         commands
-                            .spawn((Name::from("Rapier[Polyline]"), collider))
+                            .spawn((
+                                Name::from("Rapier[Polyline]"),
+                                ChildOf(*source.event.collider_of),
+                                collider,
+                            ))
                             .id(),
                     )
                 }

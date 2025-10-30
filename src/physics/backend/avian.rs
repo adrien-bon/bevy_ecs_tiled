@@ -46,7 +46,7 @@ impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
     fn spawn_colliders(
         &self,
         commands: &mut Commands,
-        _source: &TiledEvent<ColliderCreated>,
+        source: &TiledEvent<ColliderCreated>,
         multi_polygon: &geo::MultiPolygon<f32>,
     ) -> Vec<Entity> {
         let mut out = vec![];
@@ -66,7 +66,11 @@ impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
                     let collider: Collider = SharedShape::compound(shared_shapes).into();
                     out.push(
                         commands
-                            .spawn((Name::from("Avian[Triangulation]"), collider))
+                            .spawn((
+                                Name::from("Avian[Triangulation]"),
+                                ChildOf(*source.event.collider_of),
+                                collider,
+                            ))
                             .id(),
                     );
                 }
@@ -83,7 +87,11 @@ impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
                         .into();
                         out.push(
                             commands
-                                .spawn((Name::from(format!("Avian[LineStrip {i}]")), collider))
+                                .spawn((
+                                    Name::from(format!("Avian[LineStrip {i}]")),
+                                    ChildOf(*source.event.collider_of),
+                                    collider,
+                                ))
                                 .id(),
                         );
                     });
@@ -106,7 +114,11 @@ impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
                     let collider: Collider = SharedShape::polyline(vertices, Some(indices)).into();
                     out.push(
                         commands
-                            .spawn((Name::from("Avian[Polyline]"), collider))
+                            .spawn((
+                                Name::from("Avian[Polyline]"),
+                                ChildOf(*source.event.collider_of),
+                                collider,
+                            ))
                             .id(),
                     );
                 }

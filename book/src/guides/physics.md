@@ -164,9 +164,9 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .observe(|collider_created: On<TiledEvent<ColliderCreated>>, mut commands: Commands| {
             // Filter collider created from Tiled objects
             if collider_created.event().event.source == TiledCollider::Object {
-                // Add a RigidBody::Static to the collider parent entity
+                // Add a RigidBody::Static to the collider entity
                 commands
-                    .entity(*collider_created.event().event.collider_of)
+                    .entity(collider_created.event().origin)
                     .insert(RigidBody::Static);
             }
         });

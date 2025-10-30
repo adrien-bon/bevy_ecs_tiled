@@ -58,7 +58,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .observe(
             |collider_created: On<TiledEvent<ColliderCreated>>, mut commands: Commands| {
                 commands
-                    .entity(*collider_created.event().event.collider_of)
+                    .entity(collider_created.event().origin)
                     .insert(RigidBody::Static);
             },
         );
