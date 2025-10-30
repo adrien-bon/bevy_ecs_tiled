@@ -55,7 +55,7 @@ futures-lite = "2.6"
 log = "0.4"
 thiserror = "2.0"
 geo = "0.31"
-regex = "1.11"
+regex = "1.12"
 
 # Optional dependencies, enabled via features.
 bevy_rapier2d = { version = "0.31", optional = true }
