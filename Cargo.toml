@@ -150,5 +150,5 @@ name = "world_chunking"
 required-features = ["debug"]
 
 [patch.crates-io]
-bevy_rapier2d = { git = "https://github.com/lukasfri/bevy_rapier.git", rev = "394257fa8bf8425feebc11fc07d781909838e1cf" }
+bevy_rapier2d = { git = "https://github.com/Deniskore/bevy_rapier.git", rev = "9cae03e3ac29be333609d80abee6fd8e54f413af" }
 iyes_perf_ui = { git = "https://github.com/mgi388/iyes_perf_ui.git", rev = "240b9c31475c9f0ccb0b94d39a7309f9fcc03081" }
