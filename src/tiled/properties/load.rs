@@ -293,11 +293,13 @@ impl DeserializedProperties {
             ("i32", PV::IntValue(i), _) => Ok(Box::new(i)),
             ("i64", PV::IntValue(i), _) => Ok(Box::new(i as i64)),
             ("i128", PV::IntValue(i), _) => Ok(Box::new(i as i128)),
+            ("isize", PV::IntValue(i), _) => Ok(Box::new(isize::try_from(i).unwrap())),
             ("u8", PV::IntValue(i), _) => Ok(Box::new(u8::try_from(i).unwrap())),
             ("u16", PV::IntValue(i), _) => Ok(Box::new(u16::try_from(i).unwrap())),
             ("u32", PV::IntValue(i), _) => Ok(Box::new(u32::try_from(i).unwrap())),
             ("u64", PV::IntValue(i), _) => Ok(Box::new(u64::try_from(i).unwrap())),
             ("u128", PV::IntValue(i), _) => Ok(Box::new(u128::try_from(i).unwrap())),
+            ("usize", PV::IntValue(i), _) => Ok(Box::new(usize::try_from(i).unwrap())),
 
             ("f32", PV::FloatValue(f), _) => Ok(Box::new(f)),
             ("f64", PV::FloatValue(f), _) => Ok(Box::new(f as f64)),

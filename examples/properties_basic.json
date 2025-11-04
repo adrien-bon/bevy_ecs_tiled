@@ -1,6 +1,6 @@
 [
   {
-    "id": 14,
+    "id": 11,
     "name": "bevy_color::color::Color",
     "type": "class",
     "useAs": [
@@ -17,7 +17,7 @@
     ]
   },
   {
-    "id": 3,
+    "id": 1,
     "name": "bevy_ecs::name::Name",
     "type": "class",
     "useAs": [
@@ -37,7 +37,7 @@
     ]
   },
   {
-    "id": 8,
+    "id": 2,
     "name": "bevy_sprite::text2d::Text2d",
     "type": "class",
     "useAs": [
@@ -54,7 +54,7 @@
     ]
   },
   {
-    "id": 2,
+    "id": 3,
     "name": "bevy_text::text::TextColor",
     "type": "class",
     "useAs": [
@@ -71,7 +71,7 @@
     ]
   },
   {
-    "id": 17,
+    "id": 16,
     "name": "core::option::Option<bevy_ecs::entity::Entity>",
     "type": "class",
     "useAs": [
@@ -95,7 +95,7 @@
     ]
   },
   {
-    "id": 15,
+    "id": 14,
     "name": "core::option::Option<bevy_ecs::entity::Entity>:::Variant",
     "type": "enum",
     "storageType": "string",
@@ -106,7 +106,7 @@
     "valuesAsFlags": false
   },
   {
-    "id": 16,
+    "id": 15,
     "name": "core::option::Option<bevy_ecs::entity::Entity>::Some",
     "type": "class",
     "useAs": [
@@ -123,30 +123,8 @@
     ]
   },
   {
-    "id": 13,
-    "name": "glam::Vec2",
-    "type": "class",
-    "useAs": [
-      "property"
-    ],
-    "color": "#000000",
-    "drawFill": true,
-    "members": [
-      {
-        "name": "x",
-        "type": "float",
-        "value": 0.0
-      },
-      {
-        "name": "y",
-        "type": "float",
-        "value": 0.0
-      }
-    ]
-  },
-  {
-    "id": 1,
-    "name": "properties_basic::BiomeInfos",
+    "id": 4,
+    "name": "properties_basic::Biome",
     "type": "class",
     "useAs": [
       "property"
@@ -161,13 +139,9 @@
         "value": "Unknown"
       },
       {
-        "name": "pos",
-        "propertyType": "glam::Vec2",
-        "type": "class",
-        "value": {
-          "x": 0.0,
-          "y": 0.0
-        }
+        "name": "move_cost",
+        "type": "int",
+        "value": 0
       },
       {
         "name": "block_line_of_sight",
@@ -177,7 +151,7 @@
     ]
   },
   {
-    "id": 12,
+    "id": 13,
     "name": "properties_basic::BiomeType",
     "type": "class",
     "useAs": [
@@ -195,7 +169,7 @@
     ]
   },
   {
-    "id": 11,
+    "id": 12,
     "name": "properties_basic::BiomeType:::Variant",
     "type": "enum",
     "storageType": "string",
@@ -210,8 +184,8 @@
     "valuesAsFlags": false
   },
   {
-    "id": 10,
-    "name": "properties_basic::ResourceType",
+    "id": 6,
+    "name": "properties_basic::Resource",
     "type": "class",
     "useAs": [
       "property"
@@ -221,15 +195,15 @@
     "members": [
       {
         "name": ":variant",
-        "propertyType": "properties_basic::ResourceType:::Variant",
+        "propertyType": "properties_basic::Resource:::Variant",
         "type": "class",
         "value": "Unknown"
       }
     ]
   },
   {
-    "id": 9,
-    "name": "properties_basic::ResourceType:::Variant",
+    "id": 5,
+    "name": "properties_basic::Resource:::Variant",
     "type": "enum",
     "storageType": "string",
     "values": [
@@ -243,8 +217,8 @@
     "valuesAsFlags": false
   },
   {
-    "id": 7,
-    "name": "properties_basic::SpawnType",
+    "id": 10,
+    "name": "properties_basic::SpawnPoint",
     "type": "class",
     "useAs": [
       "property"
@@ -254,27 +228,27 @@
     "members": [
       {
         "name": ":variant",
-        "propertyType": "properties_basic::SpawnType:::Variant",
+        "propertyType": "properties_basic::SpawnPoint:::Variant",
         "type": "class",
         "value": "Unknown"
       },
       {
         "name": "Player",
-        "propertyType": "properties_basic::SpawnType::Player",
+        "propertyType": "properties_basic::SpawnPoint::Player",
         "type": "class",
         "value": null
       },
       {
         "name": "Enemy",
-        "propertyType": "properties_basic::SpawnType::Enemy",
+        "propertyType": "properties_basic::SpawnPoint::Enemy",
         "type": "class",
         "value": null
       }
     ]
   },
   {
-    "id": 4,
-    "name": "properties_basic::SpawnType:::Variant",
+    "id": 7,
+    "name": "properties_basic::SpawnPoint:::Variant",
     "type": "enum",
     "storageType": "string",
     "values": [
@@ -286,8 +260,8 @@
     "valuesAsFlags": false
   },
   {
-    "id": 6,
-    "name": "properties_basic::SpawnType::Enemy",
+    "id": 9,
+    "name": "properties_basic::SpawnPoint::Enemy",
     "type": "class",
     "useAs": [
       "property"
@@ -303,8 +277,8 @@
     ]
   },
   {
-    "id": 5,
-    "name": "properties_basic::SpawnType::Player",
+    "id": 8,
+    "name": "properties_basic::SpawnPoint::Player",
     "type": "class",
     "useAs": [
       "property"

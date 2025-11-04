@@ -47,7 +47,12 @@ impl TypeExportRegistry {
     pub(crate) fn from_registry(registry: &TypeRegistry, filter: &TiledFilter) -> Self {
         let mut deps = vec![];
         let mut out = Self::default();
-        for t in registry.iter() {
+
+        // Sort registry before iterating over it so we try to keep IDs as stable as possible
+        let mut sorted_registry = registry.iter().collect::<Vec<_>>();
+        sorted_registry.sort_by(|a, b| a.type_info().type_path().cmp(b.type_info().type_path()));
+
+        for t in sorted_registry {
             if filter.matches(t.type_info().type_path())
                 && (t.data::<ReflectComponent>().is_some()
                     || t.data::<ReflectBundle>().is_some()

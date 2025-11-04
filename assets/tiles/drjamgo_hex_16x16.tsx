@@ -3,8 +3,9 @@
  <image source="drjamgo_hex_16x16.png" width="64" height="80"/>
  <tile id="0">
   <properties>
-   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
+   <property name="Biome" type="class" propertytype="properties_basic::Biome">
     <properties>
+     <property name="move_cost" type="int" value="1"/>
      <property name="ty" type="class" propertytype="properties_basic::BiomeType">
       <properties>
        <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Plain"/>
@@ -16,18 +17,14 @@
  </tile>
  <tile id="1">
   <properties>
-   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
+   <property name="Biome" type="class" propertytype="properties_basic::Biome">
     <properties>
-     <property name="ty" type="class" propertytype="properties_basic::BiomeType">
-      <properties>
-       <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Forest"/>
-      </properties>
-     </property>
+     <property name="move_cost" type="int" value="2"/>
     </properties>
    </property>
-   <property name="ResourceType" type="class" propertytype="properties_basic::ResourceType">
+   <property name="Resource" type="class" propertytype="properties_basic::Resource">
     <properties>
-     <property name=":variant" propertytype="properties_basic::ResourceType:::Variant" value="Wood"/>
+     <property name=":variant" propertytype="properties_basic::Resource:::Variant" value="Wood"/>
     </properties>
    </property>
   </properties>
@@ -37,8 +34,9 @@
  </tile>
  <tile id="2">
   <properties>
-   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
+   <property name="Biome" type="class" propertytype="properties_basic::Biome">
     <properties>
+     <property name="move_cost" type="int" value="3"/>
      <property name="ty" type="class" propertytype="properties_basic::BiomeType">
       <properties>
        <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Mountain"/>
@@ -55,8 +53,9 @@
  </tile>
  <tile id="3">
   <properties>
-   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
+   <property name="Biome" type="class" propertytype="properties_basic::Biome">
     <properties>
+     <property name="move_cost" type="int" value="99"/>
      <property name="ty" type="class" propertytype="properties_basic::BiomeType">
       <properties>
        <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Water"/>
@@ -68,18 +67,28 @@
  </tile>
  <tile id="4">
   <properties>
-   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
-   <property name="ResourceType" type="class" propertytype="properties_basic::ResourceType">
+   <property name="Biome" type="class" propertytype="properties_basic::Biome">
     <properties>
-     <property name=":variant" propertytype="properties_basic::ResourceType:::Variant" value="Strawberry"/>
+     <property name="move_cost" type="int" value="1"/>
+     <property name="ty" type="class" propertytype="properties_basic::BiomeType">
+      <properties>
+       <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Plain"/>
+      </properties>
+     </property>
+    </properties>
+   </property>
+   <property name="Resource" type="class" propertytype="properties_basic::Resource">
+    <properties>
+     <property name=":variant" propertytype="properties_basic::Resource:::Variant" value="Strawberry"/>
     </properties>
    </property>
   </properties>
  </tile>
  <tile id="5">
   <properties>
-   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
+   <property name="Biome" type="class" propertytype="properties_basic::Biome">
     <properties>
+     <property name="move_cost" type="int" value="1"/>
      <property name="ty" type="class" propertytype="properties_basic::BiomeType">
       <properties>
        <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Desert"/>
@@ -91,8 +100,9 @@
  </tile>
  <tile id="6">
   <properties>
-   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
+   <property name="Biome" type="class" propertytype="properties_basic::Biome">
     <properties>
+     <property name="move_cost" type="int" value="99"/>
      <property name="ty" type="class" propertytype="properties_basic::BiomeType">
       <properties>
        <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Water"/>
@@ -104,8 +114,9 @@
  </tile>
  <tile id="7">
   <properties>
-   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos">
+   <property name="Biome" type="class" propertytype="properties_basic::Biome">
     <properties>
+     <property name="move_cost" type="int" value="99"/>
      <property name="ty" type="class" propertytype="properties_basic::BiomeType">
       <properties>
        <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Water"/>
@@ -117,68 +128,10 @@
  </tile>
  <tile id="8">
   <properties>
-   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
-   <property name="ResourceType" type="class" propertytype="properties_basic::ResourceType">
-    <properties>
-     <property name=":variant" propertytype="properties_basic::ResourceType:::Variant" value="Wheat"/>
-    </properties>
-   </property>
-  </properties>
- </tile>
- <tile id="9">
-  <properties>
-   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
-  </properties>
- </tile>
- <tile id="10">
-  <properties>
-   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
-  </properties>
- </tile>
- <tile id="11">
-  <properties>
-   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
-  </properties>
- </tile>
- <tile id="12">
-  <properties>
-   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
-  </properties>
- </tile>
- <tile id="13">
-  <properties>
-   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
-  </properties>
- </tile>
- <tile id="14">
-  <properties>
-   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
-  </properties>
- </tile>
- <tile id="15">
-  <properties>
-   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
-  </properties>
- </tile>
- <tile id="16">
-  <properties>
-   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
-  </properties>
- </tile>
- <tile id="17">
-  <properties>
-   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
-  </properties>
- </tile>
- <tile id="18">
-  <properties>
-   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
+   <property name="Biome" type="class" propertytype="properties_basic::Biome"/>
   </properties>
  </tile>
  <tile id="19">
-  <properties>
-   <property name="BiomeInfos" type="class" propertytype="properties_basic::BiomeInfos"/>
-  </properties>
   <objectgroup draworder="index" id="2">
    <object id="1" x="2" y="2.54545" width="12" height="10.5455"/>
   </objectgroup>
