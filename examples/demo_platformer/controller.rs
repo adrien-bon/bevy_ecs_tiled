@@ -3,6 +3,10 @@ use bevy::{ecs::query::Has, prelude::*};
 
 use crate::UpdateSystems;
 
+// Disclaimer
+// This character controller was stolen from Avian examples:
+// https://github.com/avianphysics/avian/tree/main/crates/avian2d/examples/dynamic_character_2d
+
 pub struct CharacterControllerPlugin;
 
 impl Plugin for CharacterControllerPlugin {
