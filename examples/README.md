@@ -12,7 +12,7 @@ cargo run --example XXX
 > Some examples require one or more feature flags to be enabled.  
 > If you attempt to run such an example without the required features, Cargo will display an error message with the correct command to use.
 
-For a more in-depth explanation of crate concepts, see the [dedicated book](https://adrien-bon.github.io/bevy_ecs_tiled/).
+For a more in-depth explanation of crate concepts, see the [dedicated book](https://adrien-bon.github.io/bevy_ecs_tiled/) or the [demo_platformer](./demo_platformer/) example..
 
 ## Keyboard Controls
 
@@ -26,7 +26,7 @@ Most examples support the following controls:
 > Some keys may differ.  
 > For example, on an AZERTY keyboard, use `A` instead of `Q` and `Z` instead of `W`.
 
-## Example List
+## Examples List
 
 | Name | Required features | Description |
 |------|-------------------|-------------|

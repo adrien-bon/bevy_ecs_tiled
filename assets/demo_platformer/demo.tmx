@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="128" tileheight="128" infinite="1" nextlayerid="7" nextobjectid="7">
+ <tileset firstgid="1" source="tilesets/ground.tsx"/>
+ <tileset firstgid="129" source="tilesets/tiles.tsx"/>
+ <imagelayer id="2" name="Background" offsetx="6.06061" offsety="154.545" parallaxx="0.3" repeatx="1">
+  <image source="kenney_platformer-pack-redux/PNG/Backgrounds/blue_land.png" width="1024" height="1024"/>
+ </imagelayer>
+ <layer id="1" name="Terrain" width="30" height="20">
+  <data encoding="csv">
+   <chunk x="-16" y="0" width="16" height="16">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,225,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,49,49,49,49,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,196,0,0,0,0,0,0,0,49,49,
+0,0,0,0,0,0,204,0,0,0,0,0,0,0,0,0,
+0,0,0,0,9,9,9,9,9,9,9,9,9,9,9,9,
+0,0,0,0,2,2,2,2,2,2,2,2,2,2,2,2,
+0,0,0,0,2,2,2,2,2,2,2,2,2,2,2,2,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+</chunk>
+   <chunk x="0" y="0" width="16" height="16">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,189,0,0,
+0,0,0,0,0,0,0,0,0,0,0,25,9,9,9,0,
+49,0,0,0,0,0,0,0,0,0,25,73,2,2,2,0,
+0,0,0,0,0,0,0,0,0,25,73,2,2,2,2,0,
+9,9,9,9,9,9,9,9,9,73,2,2,2,2,2,0,
+2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,
+2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+</chunk>
+  </data>
+ </layer>
+ <objectgroup id="5" name="Objects">
+  <object id="1" name="Player spawn" x="-622.935" y="428.263">
+   <properties>
+    <property name="PlayerSpawnPoint" type="class" propertytype="demo_platformer::player::PlayerSpawnPoint"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="2" name="Enemy n°1" x="957.576" y="887.879">
+   <properties>
+    <property name="Enemy" type="class" propertytype="demo_platformer::enemy::Enemy"/>
+    <property name="PatrolRoute" type="class" propertytype="demo_platformer::patrol::PatrolRoute">
+     <properties>
+      <property name="0" type="object" value="3"/>
+     </properties>
+    </property>
+   </properties>
+   <point/>
+  </object>
+  <object id="3" name="Patrol route n°1" x="815.152" y="972.727">
+   <polyline points="0,0 -469.697,0 -1027.27,-3.0303"/>
+  </object>
+  <object id="4" name="KillZone" x="-2428.99" y="1412.41" width="5481.67" height="213.721">
+   <properties>
+    <property name="TriggerZone" type="class" propertytype="demo_platformer::trigger::TriggerZone">
+     <properties>
+      <property name=":variant" propertytype="demo_platformer::trigger::TriggerZone:::Variant" value="Kill"/>
+     </properties>
+    </property>
+   </properties>
+  </object>
+  <object id="5" name="TeleportZone" x="-1270.6" y="859.379" width="106.951" height="164.105">
+   <properties>
+    <property name="TriggerZone" type="class" propertytype="demo_platformer::trigger::TriggerZone">
+     <properties>
+      <property name=":variant" propertytype="demo_platformer::trigger::TriggerZone:::Variant" value="Teleport"/>
+      <property name="Teleport" type="class" propertytype="demo_platformer::trigger::TriggerZone::Teleport">
+       <properties>
+        <property name="0" type="object" value="6"/>
+       </properties>
+      </property>
+     </properties>
+    </property>
+   </properties>
+  </object>
+  <object id="6" name="Teleporter Destination" x="-64.4791" y="329.702">
+   <point/>
+  </object>
+ </objectgroup>
+</map>

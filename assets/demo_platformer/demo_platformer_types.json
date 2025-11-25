@@ -1,0 +1,233 @@
+[
+  {
+    "id": 18,
+    "name": "bevy_time::timer::TimerMode",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": ":variant",
+        "propertyType": "bevy_time::timer::TimerMode:::Variant",
+        "type": "class",
+        "value": "Once"
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "name": "bevy_time::timer::TimerMode:::Variant",
+    "type": "enum",
+    "storageType": "string",
+    "values": [
+      "Once",
+      "Repeating"
+    ],
+    "valuesAsFlags": false
+  },
+  {
+    "id": 15,
+    "name": "demo_platformer::animation::AnimationState",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": ":variant",
+        "propertyType": "demo_platformer::animation::AnimationState:::Variant",
+        "type": "class",
+        "value": "Unknown"
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "name": "demo_platformer::animation::AnimationState:::Variant",
+    "type": "enum",
+    "storageType": "string",
+    "values": [
+      "Unknown",
+      "Idling",
+      "Walking"
+    ],
+    "valuesAsFlags": false
+  },
+  {
+    "id": 2,
+    "name": "demo_platformer::enemy::Enemy",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": []
+  },
+  {
+    "id": 3,
+    "name": "demo_platformer::patrol::PatrolProgress",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": "0",
+        "type": "int",
+        "value": 0
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "demo_platformer::patrol::PatrolRoute",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": "0",
+        "type": "object",
+        "value": null
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "demo_platformer::patrol::RequestedDestination",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": "0",
+        "type": "float",
+        "value": null
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "demo_platformer::player::Player",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": []
+  },
+  {
+    "id": 7,
+    "name": "demo_platformer::player::PlayerSpawnPoint",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": []
+  },
+  {
+    "id": 8,
+    "name": "demo_platformer::trigger::TriggerActor",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": []
+  },
+  {
+    "id": 12,
+    "name": "demo_platformer::trigger::TriggerZone",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": ":variant",
+        "propertyType": "demo_platformer::trigger::TriggerZone:::Variant",
+        "type": "class",
+        "value": "Unknown"
+      },
+      {
+        "name": "Damage",
+        "propertyType": "demo_platformer::trigger::TriggerZone::Damage",
+        "type": "class",
+        "value": null
+      },
+      {
+        "name": "Teleport",
+        "propertyType": "demo_platformer::trigger::TriggerZone::Teleport",
+        "type": "class",
+        "value": null
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "name": "demo_platformer::trigger::TriggerZone:::Variant",
+    "type": "enum",
+    "storageType": "string",
+    "values": [
+      "Unknown",
+      "Kill",
+      "Damage",
+      "Teleport"
+    ],
+    "valuesAsFlags": false
+  },
+  {
+    "id": 10,
+    "name": "demo_platformer::trigger::TriggerZone::Damage",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": "0",
+        "type": "float",
+        "value": null
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "name": "demo_platformer::trigger::TriggerZone::Teleport",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": "0",
+        "type": "object",
+        "value": null
+      }
+    ]
+  }
+]

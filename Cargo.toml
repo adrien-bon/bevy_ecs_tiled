@@ -80,6 +80,10 @@ bevy-inspector-egui = "0.35"
 iyes_perf_ui = { version = "0.5" }
 
 [[example]]
+name = "demo_platformer"
+required-features = ["avian", "user_properties"]
+
+[[example]]
 name = "map_basic"
 
 [[example]]
