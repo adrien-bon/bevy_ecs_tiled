@@ -58,7 +58,7 @@ geo = "0.31"
 regex = "1.12"
 
 # Optional dependencies, enabled via features.
-bevy_rapier2d = { version = "0.31", optional = true }
+bevy_rapier2d = { version = "0.32", optional = true }
 avian2d = { version = "0.4", optional = true }
 serde = { version = "1.0", optional = true, features = ["derive"] }
 serde_json = { version = "1.0", optional = true }
@@ -154,5 +154,4 @@ name = "world_chunking"
 required-features = ["debug"]
 
 [patch.crates-io]
-bevy_rapier2d = { git = "https://github.com/Deniskore/bevy_rapier.git", rev = "9cae03e3ac29be333609d80abee6fd8e54f413af" }
 iyes_perf_ui = { git = "https://github.com/mgi388/iyes_perf_ui.git", rev = "240b9c31475c9f0ccb0b94d39a7309f9fcc03081" }
