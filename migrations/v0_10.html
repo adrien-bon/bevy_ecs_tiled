@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Entities hierarchy and marker components - bevy_ecs_tiled Documentation</title>
+        <title>Migration to v0.10 - bevy_ecs_tiled Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -175,67 +175,73 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="entities-hierarchy-and-marker-components"><a class="header" href="#entities-hierarchy-and-marker-components">Entities Hierarchy and Marker Components</a></h1>
-<p>When a map is loaded, it spawns <strong>many</strong> entities: for the map, for layers, for tiles, for objects, for colliders, and more.<br />
-To keep things organized, these entities are structured in a <a href="https://bevy-cheatbook.github.io/fundamentals/hierarchy.html">parent/child hierarchy</a>, and every entity has an associated marker component to help with queries and system targeting.</p>
-<p>Using a hierarchy also enables inheritance of certain components from top-level entities down the tree.<br />
-For example, if you change the <a href="https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html"><code>Visibility</code></a> of a layer entity, it will automatically apply to all entities below it in the hierarchy, such as tiles or objects.</p>
-<hr />
-<h2 id="hierarchy-overview"><a class="header" href="#hierarchy-overview">Hierarchy Overview</a></h2>
-<h3 id="world"><a class="header" href="#world">World</a></h3>
-<p>When loading a <code>.world</code> asset, you get a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/struct.TiledWorld.html"><code>TiledWorld</code></a> entity at the top of the tree, which holds a handle to the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/asset/struct.TiledWorldAsset.html"><code>TiledWorldAsset</code></a> corresponding to your <code>.world</code> asset, along with all settings that apply to it.</p>
-<h3 id="map"><a class="header" href="#map">Map</a></h3>
-<p>When loading a <code>.tmx</code> asset, you get a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMap.html"><code>TiledMap</code></a> entity at the top of the tree, which holds a handle to the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html"><code>TiledMapAsset</code></a> corresponding to your <code>.tmx</code> asset, plus all map-level settings.</p>
-<p>If working with a Tiled world, you will have several maps, each as a child of the top-level world entity.</p>
-<p>Note that all map-level settings can also be added to the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/struct.TiledWorld.html"><code>TiledWorld</code></a> entity as they will be propagated down to the underlying maps.</p>
-<h3 id="layers"><a class="header" href="#layers">Layers</a></h3>
-<p>Below the map, you have the layers.<br />
-Layer entities are identified by the generic <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html"><code>TiledLayer</code></a> component whose value can help distinguish between layer types.</p>
-<h3 id="objects"><a class="header" href="#objects">Objects</a></h3>
-<p>Objects are direct children of their parent <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html#variant.Objects"><code>TiledLayer::Object</code></a>.<br />
-They are identified by the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html"><code>TiledObject</code></a> marker.</p>
-<p>Note that in case of a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html#variant.Tile"><code>TiledObject::Tile</code></a>, the object entity will have another child entity with a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/struct.TiledObjectVisualOf.html"><code>TiledObjectVisualOf</code></a> marker component, holding the actual visual of the object: a <code>Sprite</code> and eventually a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/animation/struct.TiledAnimation.html"><code>TiledAnimation</code></a>.</p>
-<h3 id="tiles"><a class="header" href="#tiles">Tiles</a></h3>
-<p>Tiles have a slightly more complex structure:</p>
+                        <h1 id="migration-to-bevy_ecs_tiled-v010"><a class="header" href="#migration-to-bevy_ecs_tiled-v010">Migration to <code>bevy_ecs_tiled</code> v0.10</a></h1>
+<p>This guide outlines the steps required to migrate your project to version <code>0.10</code> of <code>bevy_ecs_tiled</code>.</p>
+<h2 id="main-changes"><a class="header" href="#main-changes">Main Changes</a></h2>
 <ul>
-<li>Below each <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html#variant.Tiles"><code>TiledLayer::Tiles</code></a>, there is one <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilemap.html"><code>TiledTilemap</code></a> per tileset used in the map. It notably holds the <code>TilemapBundle</code> from <code>bevy_ecs_tilemap</code>.</li>
-<li>Below these tilemaps, you find the actual <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTile.html"><code>TiledTile</code></a> entities, each corresponding to a tile in the layer for a given tileset.</li>
+<li>
+<p><strong>Bevy v0.17 Support:</strong>
+<code>bevy_ecs_tiled</code> now works seamlessly with Bevy v0.17, allowing you to take advantage of the latest engine features and performance improvements. See the <a href="https://bevy.org/news/bevy-0-17/">Bevy 0.17 release notes</a> for details.</p>
+</li>
+<li>
+<p><strong>Enhanced ColliderCreated Event:</strong>
+The <code>ColliderCreated</code> event now includes a direct reference to the collider's parent entity, making it easier to attach additional physics components or interact with spawned colliders. The event previously only contained a <code>TiledColliderOrigin</code>, which has been renamed to <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderSource.html"><code>TiledColliderSource</code></a>.</p>
+</li>
+<li>
+<p><strong>External Type Re-exports:</strong>
+Types from external crates (such as <code>rs-tiled</code>, <code>geo</code>, and <code>regex</code>) are now re-exported through dedicated modules. This avoids name clashes and makes type usage explicit.</p>
+</li>
 </ul>
-<h3 id="physics-colliders"><a class="header" href="#physics-colliders">Physics Colliders</a></h3>
-<p>At the bottom of the hierarchy, you find physics colliders.<br />
-They are spawned as children of their "source" (either a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html#variant.Tiles"><code>TiledLayer::Tiles</code></a> or a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html"><code>TiledObject</code></a>) and can be identified using the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderOrigin.html"><code>TiledColliderOrigin</code></a> marker component.</p>
-<p>Entities responsible for spawning a physics collider will have a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliders.html"><code>TiledColliders</code></a> component containing a list of attached colliders.</p>
-<hr />
-<h2 id="transform-and-visibility-propagation"><a class="header" href="#transform-and-visibility-propagation">Transform and Visibility Propagation</a></h2>
-<p>Bevy automatically propagates <a href="https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html"><code>Transform</code></a> and <a href="https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html"><code>Visibility</code></a> components down the entity hierarchy.</p>
-<p><strong>In practice:</strong><br />
-If you change one of these components for a top-level entity (e.g., a layer), it will propagate down and apply to all child entities. For example:</p>
-<ul>
-<li>Adding <code>Visibility::Hidden</code> to an object layer will hide all objects in that layer.</li>
-<li>Moving an object layer will also move all objects it contains.</li>
-</ul>
-<p><strong>Special case for tiles:</strong><br />
-Tiles are not rendered as individual entities, but as part of a "chunk" of several tiles for performance reasons.<br />
-Each individual tile entity does <strong>not</strong> have its own <a href="https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html"><code>Transform</code></a> or <a href="https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html"><code>Visibility</code></a> component.<br />
-Instead, these components are propagated down to the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilemap.html"><code>TiledTilemap</code></a>, and <code>bevy_ecs_tilemap</code> handles updating the corresponding tile chunks.</p>
+<h2 id="migration-steps"><a class="header" href="#migration-steps">Migration Steps</a></h2>
+<ol>
+<li>
+<p><strong>Update Dependencies in <code>Cargo.toml</code>:</strong></p>
+<pre><code class="language-toml">bevy = "0.17"
+bevy_ecs_tiled = "0.10"
+</code></pre>
 <blockquote>
-<p><strong>Important:</strong><br />
-Even though you technically could, you should <strong>not</strong> add <a href="https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html"><code>Transform</code></a> or <a href="https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html"><code>Visibility</code></a> components to individual tile entities:</p>
-<ul>
-<li>It will not have the intended effect—everything is handled at the tilemap level.</li>
-<li>It may hurt performance significantly.</li>
-</ul>
+<p><strong>Note:</strong> You may also need to update other Bevy-related crates to ensure compatibility.</p>
 </blockquote>
+</li>
+<li>
+<p><strong>Review the <a href="https://bevy.org/learn/migration-guides/0-16-to-0-17/">Bevy Migration Guide</a>:</strong>
+Follow Bevy's official migration steps to update your project for Bevy v0.17.
+This will help you resolve breaking changes and take advantage of new features.</p>
+</li>
+<li>
+<p><strong>Update Usage of External Types:</strong></p>
+<p>If your code uses types from <code>rs-tiled</code>, <code>geo</code>, or <code>regex</code>, you must now reference them via their dedicated modules. This ensures clarity and prevents naming conflicts.</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use bevy_ecs_tiled::prelude::*;
+// For external types, use their module:
+let tiled_id: tiled::TiledId = 10;
+<span class="boring">}</span></code></pre></pre>
+</li>
+<li>
+<p><strong>Update Usage of <code>TiledEvent&lt;ColliderCreated&gt;</code>:</strong></p>
+<p>In previous versions, the event only provided a <code>TiledColliderOrigin</code>.
+In v0.10, this has been renamed to <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderSource.html"><code>TiledColliderSource</code></a>, and the event now also includes a reference to the collider's parent entity.
+This change makes it easier to interact with colliders and attach additional physics components directly after creation.</p>
+</li>
+</ol>
+<h2 id="resources"><a class="header" href="#resources">Resources</a></h2>
+<ul>
+<li><a href="../index.html">Main Documentation</a></li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/">API Reference</a></li>
+<li><a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/README.md">Examples</a></li>
+<li><a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/CHANGELOG.md">Full CHANGELOG</a></li>
+</ul>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../design/why_tiled.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../guides/debug.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../design/z_order.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../migrations/v0_9.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -245,11 +251,11 @@ Even though you technically could, you should <strong>not</strong> add <a href="
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../design/why_tiled.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../guides/debug.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../design/z_order.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../migrations/v0_9.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

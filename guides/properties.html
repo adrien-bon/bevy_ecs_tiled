@@ -208,7 +208,7 @@ This means you can define game logic directly in the Tiled editor and use it sea
 <p>Update your local <code>Cargo.toml</code> file to enable the <code>user_properties</code> feature:</p>
 <pre><code class="language-toml">[dependencies]
 bevy = "0.16"
-bevy_ecs_tiled = { version = "0.9", features = ["user_properties"] }
+bevy_ecs_tiled = { version = "0.10", features = ["user_properties"] }
 </code></pre>
 <blockquote>
 <p><strong>Note:</strong><br />
@@ -229,7 +229,7 @@ If you want to add custom properties to them, these properties should be a <code
 // Declare a component and make it reflectable
 #[derive(Component, Reflect, Default)]
 #[reflect(Component, Default)]
-struct BiomeInfos {
+struct Biome {
     block_line_of_sight: bool,
     ty: BiomeType,
 }
@@ -249,7 +249,7 @@ enum BiomeType {
 // Register your top-level struct in the Bevy registry
 fn main() {
     App::new()
-        .register_type::&lt;BiomeInfos&gt;();
+        .register_type::&lt;Biome&gt;();
 }</code></pre></pre>
 <p><strong>Tip:</strong><br />
 Deriving <code>Default</code> is useful: you don't have to fill all fields in Tiled; missing fields will use the type's default value.</p>
@@ -284,8 +284,40 @@ You can change the filename or disable export via <a href="https://docs.rs/bevy_
 <blockquote>
 <p><strong>Note:</strong><br />
 Only add properties imported from Bevy. Properties created only in Tiled (ie. not exported from your app) will not be loaded in Bevy.
-You can also control which properties are exported from Bevy via <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/struct.TiledPluginConfig.html"><code>TiledPluginConfig</code></a></p>
+You can also control which properties are exported from your application via <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/struct.TiledPluginConfig.html"><code>TiledPluginConfig</code></a></p>
 </blockquote>
+<hr />
+<h2 id="custom-properties-usage-with-bevy"><a class="header" href="#custom-properties-usage-with-bevy">Custom Properties Usage with Bevy</a></h2>
+<p>When loading a Tiled map with custom properties, a common pattern is to use Bevy <code>On&lt;Add&gt;</code> observers to react to the spawn of a particular Tiled element.</p>
+<p>When the <code>On&lt;Add&gt;</code> observer is triggered, you can then insert additional components or spawn another entity.</p>
+<pre><pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+// Declare a marker component: assume it will be added to a particular Tiled object
+#[derive(Component, Default, Debug, Reflect)]
+#[reflect(Component, Default)]
+struct PlayerSpawn;
+
+fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
+    commands.spawn(Camera2d);
+    commands
+      .spawn(TiledMap(asset_server.load("map.tmx")))
+      // We will run this observer for every Tiled object with the `PlayerSpawn` component
+      .observe(|add_player_spawn: On&lt;Add, PlayerSpawn&gt;, mut commands: Commands| {
+         // Retrieve the Tiled object entity
+         let player_spawn_entity = add_player_spawn.event().entity;
+         // Add extra components
+         commands
+            .entity(player_spawn_entity)
+            .insert((
+               ...
+            ));
+      });
+}
+<span class="boring">}</span></code></pre></pre>
+<p>You can also have a look to the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/properties_basic.rs">dedicated example</a>.</p>
 <hr />
 <h2 id="special-considerations"><a class="header" href="#special-considerations">Special Considerations</a></h2>
 <ul>
@@ -297,8 +329,6 @@ We currently do not support adding properties to the tileset itself.</li>
 Since resources are global and not attached to a specific entity, they are only supported as map-level properties.<br />
 If you add a resource to another Tiled element, it will be ignored.</li>
 </ul>
-<hr />
-<p>With this workflow, you can design your game data visually in Tiled and have it automatically reflected in your Bevy game.</p>
 
                     </main>
 

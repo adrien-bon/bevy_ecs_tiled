@@ -194,7 +194,7 @@ This provides more context for each event, including the origin of each particul
 use bevy_ecs_tiled::prelude::*;
 
 fn handle_event(
-    mut object_events: EventReader&lt;TiledEvent&lt;ObjectCreated&gt;&gt;,
+    mut object_events: MessageReader&lt;TiledEvent&lt;ObjectCreated&gt;&gt;,
 ) {
     // Even though we receive an event for a Tiled object,
     // we can retrieve information about the Tiled map
@@ -243,7 +243,7 @@ Emitted once the world has finished loading. Contains information about the worl
 use bevy_ecs_tiled::prelude::*;
 
 fn handle_map_event(
-    mut map_events: EventReader&lt;TiledEvent&lt;MapCreated&gt;&gt;,
+    mut map_events: MessageReader&lt;TiledEvent&lt;MapCreated&gt;&gt;,
     map_query: Query&lt;&amp;Name, With&lt;TiledMap&gt;&gt;,
 ) {
     for e in map_events.read() {
@@ -270,7 +270,7 @@ fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
             asset_server.load("maps/orthogonal/finite.tmx"),
         ))
         // Add an "in-line" observer to detect when the map has finished loading
-        .observe(|trigger: Trigger&lt;TiledEvent&lt;MapCreated&gt;&gt;, map_query: Query&lt;&amp;Name, With&lt;TiledMap&gt;&gt;| {
+        .observe(|_: On&lt;TiledEvent&lt;MapCreated&gt;&gt;, map_query: Query&lt;&amp;Name, With&lt;TiledMap&gt;&gt;| {
             if let Some(map_entity) = e.get_map_entity() {
                 if let Ok(name) = map_query.get(map_entity) {
                     info!("=&gt; Observer TiledMapCreated was triggered for map '{}'", name);

@@ -179,7 +179,7 @@
 <p>Add the required dependencies to your <code>Cargo.toml</code> file:</p>
 <pre><code class="language-toml">[dependencies]
 bevy = "0.16"
-bevy_ecs_tiled = "0.9"
+bevy_ecs_tiled = "0.10"
 </code></pre>
 <h3 id="basic-usage"><a class="header" href="#basic-usage">Basic Usage</a></h3>
 <p>To get started, add the plugin to your app and spawn a map entity.
@@ -243,17 +243,17 @@ fn spawn_map(
         // Add an "in-line" observer to detect when
         // the map has finished loading
         .observe(
-            |trigger: Trigger&lt;TiledEvent&lt;MapCreated&gt;&gt;,
+            |map_created: On&lt;TiledEvent&lt;MapCreated&gt;&gt;,
              assets: Res&lt;Assets&lt;TiledMapAsset&gt;&gt;,
              query: Query&lt;(&amp;Name, &amp;TiledMapStorage), With&lt;TiledMap&gt;&gt;| {
                 // We can access the map components via a regular query
-                let Ok((name, storage)) = query.get(trigger.event().origin) else {
+                let Ok((name, storage)) = query.get(map_created.event().origin) else {
                     return;
                 };
                 info!("=&gt; Observer TiledMapCreated was triggered for map '{name}'");
 
                 // Or directly the underneath raw tiled::Map data
-                let Some(map) = trigger.event().get_map(&amp;assets) else {
+                let Some(map) = map_created.event().get_map(&amp;assets) else {
                     return;
                 };
                 info!("Loaded map: {:?}", map);
@@ -275,7 +275,7 @@ fn spawn_map(
 }
 <span class="boring">}</span></code></pre></pre>
 <h3 id="more-examples"><a class="header" href="#more-examples">More Examples</a></h3>
-<p>For more advanced use cases, such as loading worlds, chunking, custom properties, or integrating with physics, see the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/README.md">examples directory</a> in the repository.</p>
+<p>For more advanced use cases, such as loading worlds, chunking, custom properties, or integrating with physics, see the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/README.md">examples directory</a> in the repository and notably the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/demo_platformer/">demo_platformer</a>.</p>
 <p>You can also refer to the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/">API documentation</a> for details on all available components and configuration options.</p>
 
                     </main>
