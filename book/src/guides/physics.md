@@ -38,7 +38,7 @@ To automatically spawn colliders from Tiled objects, you need to:
 ```toml
 [dependencies]
 bevy = "0.16"
-bevy_ecs_tiled = { version = "0.9", features = ["avian"] }
+bevy_ecs_tiled = { version = "0.10", features = ["avian"] }
 ```
 
 > **Note:**  
