@@ -5,6 +5,7 @@
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/LICENSE)
 [![Crates.io](https://img.shields.io/crates/d/bevy_ecs_tiled)](https://crates.io/crates/bevy_ecs_tiled)
 [![Following released Bevy versions](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://bevyengine.org/learn/quick-start/plugin-development/#main-branch-tracking)
+[![ci](https://github.com/adrien-bon/bevy_ecs_tiled/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/adrien-bon/bevy_ecs_tiled/actions/workflows/ci.yml)
 
 [`bevy_ecs_tiled`](https://github.com/adrien-bon/bevy_ecs_tiled) is a [Bevy](https://bevyengine.org/) plugin for working with 2D tilemaps created using the [Tiled map editor](https://www.mapeditor.org/).
 
