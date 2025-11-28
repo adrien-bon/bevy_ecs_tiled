@@ -19,6 +19,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_10
 
 - Rename `TiledColliderOrigin` to `TiledColliderSource`
 - Improve `ColliderCreated` event so it now includes a direct reference to the collider's parent entity
+- Remove dependency against `iyes_perf_ui` for examples
 
 ## v0.9.6
 

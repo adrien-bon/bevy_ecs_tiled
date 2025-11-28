@@ -77,7 +77,6 @@ denylist = ["png", "bmp", "jpeg", "gif"]
 [dev-dependencies]
 bevy = { version = "0.17", features = ["file_watcher"] }
 bevy-inspector-egui = "0.35"
-iyes_perf_ui = { version = "0.5" }
 
 [[example]]
 name = "demo_platformer"
@@ -152,6 +151,3 @@ name = "world_basic"
 [[example]]
 name = "world_chunking"
 required-features = ["debug"]
-
-[patch.crates-io]
-iyes_perf_ui = { git = "https://github.com/mgi388/iyes_perf_ui.git", rev = "240b9c31475c9f0ccb0b94d39a7309f9fcc03081" }
