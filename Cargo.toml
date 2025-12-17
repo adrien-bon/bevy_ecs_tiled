@@ -54,7 +54,7 @@ tiled = { version = "0.15", features = ["world"] }
 futures-lite = "2.6"
 log = "0.4"
 thiserror = "2.0"
-geo = "0.31"
+geo = "0.32"
 regex = "1.12"
 
 # Optional dependencies, enabled via features.
