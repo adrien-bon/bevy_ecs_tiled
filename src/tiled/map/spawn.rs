@@ -46,96 +46,27 @@ pub(crate) fn spawn_map(
     let mut acc_z_offset = tiled_map.map.layers().len() as f32 * (-layer_z_offset.0);
 
     // Once materials have been created/added we need to then create the layers.
-    for (layer_id, layer) in tiled_map.map.layers().enumerate() {
-        let layer_id = layer_id as u32;
-        let layer_position = Vec2::new(layer.offset_x, -layer.offset_y);
 
-        // Increment Z offset and compute layer transform offset
-        acc_z_offset += layer_z_offset.0;
-        let layer_transform = Transform::from_translation(layer_position.extend(acc_z_offset));
-
-        // Spawn layer entity and attach it to the map entity
-        let layer_entity = commands
-            .spawn((
-                ChildOf(map_entity),
-                TiledMapReference(map_entity),
-                // Apply layer Transform using both layer base Transform and Tiled offset
-                layer_transform,
-                // Determine layer default visibility
-                match &layer.visible {
-                    true => Visibility::Inherited,
-                    false => Visibility::Hidden,
-                },
-            ))
-            .id();
-
-        // Add parallax component if the layer has parallax values
-        if layer.parallax_x != 1.0 || layer.parallax_y != 1.0 {
-            commands.entity(layer_entity).insert(TiledLayerParallax {
-                parallax_x: layer.parallax_x,
-                parallax_y: layer.parallax_y,
-                base_position: layer_position,
-            });
-        }
-
-        let layer_event = map_event
-            .transmute(Some(layer_entity), LayerCreated)
-            .with_layer(layer_entity, layer_id)
-            .to_owned();
-
-        match layer.layer_type() {
-            tiled::LayerType::Tiles(tile_layer) => {
-                commands.entity(layer_entity).insert((
-                    Name::new(format!("TiledMapTileLayer({})", layer.name)),
-                    TiledLayer::Tiles,
-                ));
-                spawn_tiles_layer(
-                    commands,
-                    tiled_map,
-                    &layer_event,
-                    layer,
-                    tile_layer,
-                    render_settings,
-                    &mut map_storage.tiles,
-                    &mut tilemap_events,
-                    &mut tile_events,
-                    anchor,
-                );
-            }
-            tiled::LayerType::Objects(object_layer) => {
-                commands.entity(layer_entity).insert((
-                    Name::new(format!("TiledMapObjectLayer({})", layer.name)),
-                    TiledLayer::Objects,
-                ));
-                spawn_objects_layer(
-                    commands,
-                    tiled_map,
-                    &layer_event,
-                    object_layer,
-                    &mut map_storage.objects,
-                    &mut object_events,
-                    anchor,
-                );
-            }
-            tiled::LayerType::Group(_group_layer) => {
-                commands.entity(layer_entity).insert((
-                    Name::new(format!("TiledMapGroupLayer({})", layer.name)),
-                    TiledLayer::Group,
-                ));
-                warn!("Group layers are not yet implemented");
-            }
-            tiled::LayerType::Image(image_layer) => {
-                commands.entity(layer_entity).insert((
-                    Name::new(format!("TiledMapImageLayer({})", layer.name)),
-                    TiledLayer::Image,
-                ));
-                spawn_image_layer(commands, tiled_map, &layer_event, image_layer, anchor);
-            }
-        };
-
-        map_storage.layers.insert(layer.id(), layer_entity);
-        layer_events.push(layer_event);
-    }
+    spawn_layers(
+        tiled_map.map.layers(),
+        // stack variables
+        map_entity,
+        map_entity,
+        &map_event,
+        &mut acc_z_offset,
+        // system params
+        commands,
+        tiled_map,
+        map_storage,
+        render_settings,
+        layer_z_offset,
+        anchor,
+        // events
+        &mut layer_events,
+        &mut object_events,
+        &mut tilemap_events,
+        &mut tile_events,
+    );
 
     #[cfg(feature = "user_properties")]
     {
@@ -179,6 +110,136 @@ pub(crate) fn spawn_map(
     }
     for e in object_events {
         e.send(commands, &mut message_writers.object_created);
+    }
+}
+
+fn spawn_layers<'a>(
+    // local properties
+    layers: impl ExactSizeIterator<Item = tiled::Layer<'a>>,
+    map_entity: Entity,
+    parent_entity: Entity,
+    map_event: &TiledEvent<MapCreated>,
+    acc_z_offset: &mut f32,
+
+    // forwarded system params
+    commands: &mut Commands,
+    tiled_map: &TiledMapAsset,
+    map_storage: &mut TiledMapStorage,
+    render_settings: &TilemapRenderSettings,
+    layer_z_offset: &TiledMapLayerZOffset,
+    anchor: &TilemapAnchor,
+
+    // events
+    layer_events: &mut Vec<TiledEvent<LayerCreated>>,
+    object_events: &mut Vec<TiledEvent<ObjectCreated>>,
+    tilemap_events: &mut Vec<TiledEvent<TilemapCreated>>,
+    tile_events: &mut Vec<TiledEvent<TileCreated>>,
+) {
+    for layer in layers {
+        let layer_id = layer.id();
+        let layer_position = Vec2::new(layer.offset_x, -layer.offset_y);
+
+        // Increment Z offset and compute layer transform offset
+        *acc_z_offset += layer_z_offset.0;
+        let layer_transform = Transform::from_translation(layer_position.extend(*acc_z_offset));
+
+        // Spawn layer entity and attach it to the map entity
+        let layer_entity = commands
+            .spawn((
+                ChildOf(parent_entity),
+                TiledMapReference(map_entity),
+                // Apply layer Transform using both layer base Transform and Tiled offset
+                layer_transform,
+                // Determine layer default visibility
+                match &layer.visible {
+                    true => Visibility::Inherited,
+                    false => Visibility::Hidden,
+                },
+            ))
+            .id();
+
+        // Add parallax component if the layer has parallax values
+        if layer.parallax_x != 1.0 || layer.parallax_y != 1.0 {
+            commands.entity(layer_entity).insert(TiledLayerParallax {
+                parallax_x: layer.parallax_x,
+                parallax_y: layer.parallax_y,
+                base_position: layer_position,
+            });
+        }
+
+        let layer_event = map_event
+            .transmute(Some(layer_entity), LayerCreated)
+            .with_layer(layer_entity, layer_id)
+            .to_owned();
+
+        match layer.layer_type() {
+            tiled::LayerType::Tiles(tile_layer) => {
+                commands.entity(layer_entity).insert((
+                    Name::new(format!("TiledMapTileLayer({})", layer.name)),
+                    TiledLayer::Tiles,
+                ));
+                spawn_tiles_layer(
+                    commands,
+                    tiled_map,
+                    &layer_event,
+                    layer,
+                    tile_layer,
+                    render_settings,
+                    &mut map_storage.tiles,
+                    tilemap_events,
+                    tile_events,
+                    anchor,
+                );
+            }
+            tiled::LayerType::Objects(object_layer) => {
+                commands.entity(layer_entity).insert((
+                    Name::new(format!("TiledMapObjectLayer({})", layer.name)),
+                    TiledLayer::Objects,
+                ));
+                spawn_objects_layer(
+                    commands,
+                    tiled_map,
+                    &layer_event,
+                    object_layer,
+                    &mut map_storage.objects,
+                    object_events,
+                    anchor,
+                );
+            }
+            tiled::LayerType::Group(group_layer) => {
+                commands.entity(layer_entity).insert((
+                    Name::new(format!("TiledMapGroupLayer({})", layer.name)),
+                    TiledLayer::Group,
+                ));
+                spawn_layers(
+                    group_layer.layers(),
+                    map_entity,
+                    layer_entity,
+                    map_event,
+                    acc_z_offset,
+                    commands,
+                    tiled_map,
+                    map_storage,
+                    render_settings,
+                    layer_z_offset,
+                    anchor,
+                    layer_events,
+                    object_events,
+                    tilemap_events,
+                    tile_events,
+                );
+            }
+            tiled::LayerType::Image(image_layer) => {
+                commands.entity(layer_entity).insert((
+                    Name::new(format!("TiledMapImageLayer({})", layer.name)),
+                    TiledLayer::Image,
+                ));
+                spawn_image_layer(commands, tiled_map, &layer_event, image_layer, anchor);
+            }
+        };
+
+        map_storage.layers.insert(layer.id(), layer_entity);
+        layer_events.push(layer_event);
     }
 }
 
