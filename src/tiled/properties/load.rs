@@ -576,7 +576,7 @@ fn object_ref(
 ) -> Option<Box<dyn PartialReflect>> {
     if obj.represents::<Entity>() {
         let obj = Entity::take_from_reflect(obj.to_dynamic()).unwrap();
-        if let Some(&e) = obj_entity_map.get(&obj.index()) {
+        if let Some(&e) = obj_entity_map.get(&obj.index_u32()) {
             Some(Box::new(e))
         } else {
             panic!(
@@ -589,7 +589,7 @@ fn object_ref(
         Some(Box::new(
             Option::<Entity>::take_from_reflect(obj.to_dynamic())
                 .unwrap()
-                .and_then(|obj| obj_entity_map.get(&obj.index()).copied()),
+                .and_then(|obj| obj_entity_map.get(&obj.index_u32()).copied()),
         ))
     } else {
         None

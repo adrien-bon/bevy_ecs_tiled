@@ -19,6 +19,7 @@ use bevy::{
     prelude::*,
 };
 
+#[derive(TypePath)]
 struct TiledMapLoader {
     cache: TiledResourceCache,
     #[cfg(feature = "user_properties")]
@@ -64,9 +65,9 @@ impl AssetLoader for TiledMapLoader {
         let mut bytes = Vec::new();
         reader.read_to_end(&mut bytes).await?;
 
-        debug!("Start loading map '{}'", load_context.path().display());
+        debug!("Start loading map '{}'", load_context.path());
 
-        let map_path = load_context.path().to_path_buf();
+        let map_path = load_context.path().path().to_path_buf();
         let map = {
             // Allow the loader to also load tileset images.
             let mut loader = tiled::Loader::with_cache_and_reader(
@@ -75,7 +76,7 @@ impl AssetLoader for TiledMapLoader {
             );
             // Load the map and all tiles.
             loader
-                .load_tmx_map(&map_path)
+                .load_tmx_map(map_path)
                 .map_err(|e| std::io::Error::other(format!("Could not load TMX map: {e}")))?
         };
 
@@ -326,7 +327,7 @@ impl AssetLoader for TiledMapLoader {
         };
         debug!(
             "Loaded map '{}': {:?}",
-            load_context.path().display(),
+            load_context.path(),
             &asset_map,
         );
         Ok(asset_map)
