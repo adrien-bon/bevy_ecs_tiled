@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Features
+
+- Add a `TiledName` component to hold the name used in the Tiled editor for layers, tilesets (ie. TiledTilemap entities) and objects (#177)
+
 ## v0.10.0
 
 **BREAKING CHANGES**

@@ -4,6 +4,7 @@
 //! The [`TiledTile`] component marks individual tile entities, while the [`TiledTilemap`] component
 //! is used to group and render collections of tiles as a single texture.
 
+use crate::prelude::*;
 use bevy::prelude::*;
 
 /// Marker [`Component`] for a Tiled map tile.
@@ -29,7 +30,7 @@ pub struct TiledTile;
 /// See [`TilemapBundle`](bevy_ecs_tilemap::prelude::TilemapBundle) for more information on available [`Component`]s.
 #[derive(Component, Default, Reflect, Copy, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
-#[require(Visibility, Transform)]
+#[require(Visibility, Transform, TiledName)]
 pub struct TiledTilemap;
 
 pub(crate) fn plugin(app: &mut App) {
