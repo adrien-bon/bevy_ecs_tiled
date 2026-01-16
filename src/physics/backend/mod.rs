@@ -108,8 +108,8 @@ pub fn multi_polygon_as_line_strings(
 }
 
 pub(crate) fn plugin(_app: &mut App) {
-    #[cfg(feature = "avian")]
-    _app.register_type::<avian::TiledPhysicsAvianBackend>();
-    #[cfg(feature = "rapier")]
-    _app.register_type::<rapier::TiledPhysicsRapierBackend>();
+    // #[cfg(feature = "avian")]
+    // _app.register_type::<avian::TiledPhysicsAvianBackend>();
+    // #[cfg(feature = "rapier")]
+    // _app.register_type::<rapier::TiledPhysicsRapierBackend>();
 }

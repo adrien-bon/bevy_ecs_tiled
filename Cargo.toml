@@ -78,9 +78,9 @@ denylist = ["png", "bmp", "jpeg", "gif"]
 bevy = { version = "0.18", features = ["file_watcher"] }
 bevy-inspector-egui = "0.36"
 
-[[example]]
-name = "demo_platformer"
-required-features = ["avian", "user_properties"]
+# [[example]]
+# name = "demo_platformer"
+# required-features = ["avian", "user_properties"]
 
 [[example]]
 name = "map_basic"
