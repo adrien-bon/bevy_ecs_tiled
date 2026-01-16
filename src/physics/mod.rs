@@ -22,13 +22,14 @@ use bevy::prelude::*;
 ///
 /// // Using Avian backend for demonstration purpose,
 /// // note that we also support TiledPhysicsRapierBackend
-/// App::new()
-///     .add_plugins(TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default());
+// /// App::new()
+// ///     .add_plugins(TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default());
 /// ```
 ///
 /// We provide several [`TiledPhysicsBackend`] that can be used out of the box:
-/// - [`TiledPhysicsAvianBackend`]: for the Avian 2D physics engine
-/// - [`TiledPhysicsRapierBackend`]: for the Rapier 2D physics engine
+/// NOTE: all physics backend have been temporarily disabled
+// /// - [`TiledPhysicsAvianBackend`]: for the Avian 2D physics engine
+// /// - [`TiledPhysicsRapierBackend`]: for the Rapier 2D physics engine
 ///
 #[derive(Default, Copy, Clone, Debug)]
 pub struct TiledPhysicsPlugin<T: TiledPhysicsBackend>(std::marker::PhantomData<T>);
