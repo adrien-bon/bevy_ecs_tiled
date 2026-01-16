@@ -116,11 +116,7 @@ impl AssetLoader for TiledWorldLoader {
             rect: world_rect,
             maps,
         };
-        debug!(
-            "Loaded world '{}': {:?}",
-            load_context.path(),
-            world
-        );
+        debug!("Loaded world '{}': {:?}", load_context.path(), world);
         Ok(world)
     }
 

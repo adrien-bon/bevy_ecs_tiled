@@ -325,11 +325,7 @@ impl AssetLoader for TiledMapLoader {
             #[cfg(feature = "user_properties")]
             properties,
         };
-        debug!(
-            "Loaded map '{}': {:?}",
-            load_context.path(),
-            &asset_map,
-        );
+        debug!("Loaded map '{}': {:?}", load_context.path(), &asset_map,);
         Ok(asset_map)
     }
 
