@@ -532,8 +532,8 @@ This means you can safely query for components and child entities in your event 
 <div style="break-before: page; page-break-before: always;"></div><h1 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h1>
 <p>Add the required dependencies to your <code>Cargo.toml</code> file:</p>
 <pre><code class="language-toml">[dependencies]
-bevy = "0.16"
-bevy_ecs_tiled = "0.10"
+bevy = "0.18"
+bevy_ecs_tiled = "0.11"
 </code></pre>
 <h3 id="basic-usage"><a class="header" href="#basic-usage">Basic Usage</a></h3>
 <p>To get started, add the plugin to your app and spawn a map entity.
@@ -1111,9 +1111,40 @@ fn main() {
 <p><strong>Note:</strong><br />
 For Rapier, you must enable either the <code>debug-render-2d</code> feature on the <code>bevy_rapier2d</code> crate or the <code>rapier_debug</code> feature on <code>bevy_ecs_tiled</code>.</p>
 </blockquote>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="migration-to-bevy_ecs_tiled-v011"><a class="header" href="#migration-to-bevy_ecs_tiled-v011">Migration to <code>bevy_ecs_tiled</code> v0.11</a></h1>
+<p>This guide outlines the steps required to migrate your project to version <code>0.11</code> of <code>bevy_ecs_tiled</code>.</p>
+<h2 id="main-changes"><a class="header" href="#main-changes">Main Changes</a></h2>
+<ul>
+<li><strong>Bevy v0.18 Support:</strong>
+<code>bevy_ecs_tiled</code> now works seamlessly with Bevy v0.18, allowing you to take advantage of the latest engine features and performance improvements. See the <a href="https://bevy.org/news/bevy-0-18/">Bevy 0.18 release notes</a> for details.</li>
+</ul>
+<h2 id="migration-steps"><a class="header" href="#migration-steps">Migration Steps</a></h2>
+<ol>
+<li>
+<p><strong>Update Dependencies in <code>Cargo.toml</code>:</strong></p>
+<pre><code class="language-toml">bevy = "0.18"
+bevy_ecs_tiled = "0.11"
+</code></pre>
+<blockquote>
+<p><strong>Note:</strong> You may also need to update other Bevy-related crates to ensure compatibility.</p>
+</blockquote>
+</li>
+<li>
+<p><strong>Review the <a href="https://bevy.org/learn/migration-guides/0-17-to-0-18/">Bevy Migration Guide</a>:</strong>
+Follow Bevy's official migration steps to update your project for Bevy v0.18.
+This will help you resolve breaking changes and take advantage of new features.</p>
+</li>
+</ol>
+<h2 id="resources"><a class="header" href="#resources">Resources</a></h2>
+<ul>
+<li><a href="migrations/../index.html">Main Documentation</a></li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/">API Reference</a></li>
+<li><a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/README.md">Examples</a></li>
+<li><a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/CHANGELOG.md">Full CHANGELOG</a></li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="migration-to-bevy_ecs_tiled-v010"><a class="header" href="#migration-to-bevy_ecs_tiled-v010">Migration to <code>bevy_ecs_tiled</code> v0.10</a></h1>
 <p>This guide outlines the steps required to migrate your project to version <code>0.10</code> of <code>bevy_ecs_tiled</code>.</p>
-<h2 id="main-changes"><a class="header" href="#main-changes">Main Changes</a></h2>
+<h2 id="main-changes-1"><a class="header" href="#main-changes-1">Main Changes</a></h2>
 <ul>
 <li>
 <p><strong>Bevy v0.17 Support:</strong>
@@ -1128,7 +1159,7 @@ The <code>ColliderCreated</code> event now includes a direct reference to the co
 Types from external crates (such as <code>rs-tiled</code>, <code>geo</code>, and <code>regex</code>) are now re-exported through dedicated modules. This avoids name clashes and makes type usage explicit.</p>
 </li>
 </ul>
-<h2 id="migration-steps"><a class="header" href="#migration-steps">Migration Steps</a></h2>
+<h2 id="migration-steps-1"><a class="header" href="#migration-steps-1">Migration Steps</a></h2>
 <ol>
 <li>
 <p><strong>Update Dependencies in <code>Cargo.toml</code>:</strong></p>
@@ -1161,7 +1192,7 @@ In v0.10, this has been renamed to <a href="https://docs.rs/bevy_ecs_tiled/lates
 This change makes it easier to interact with colliders and attach additional physics components directly after creation.</p>
 </li>
 </ol>
-<h2 id="resources"><a class="header" href="#resources">Resources</a></h2>
+<h2 id="resources-1"><a class="header" href="#resources-1">Resources</a></h2>
 <ul>
 <li><a href="migrations/../index.html">Main Documentation</a></li>
 <li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/">API Reference</a></li>
@@ -1170,7 +1201,7 @@ This change makes it easier to interact with colliders and attach additional phy
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="migration-to-bevy_ecs_tiled-v09"><a class="header" href="#migration-to-bevy_ecs_tiled-v09">Migration to <code>bevy_ecs_tiled</code> v0.9</a></h1>
 <p>This guide outlines the steps required to migrate your project to version <code>0.9</code> of <code>bevy_ecs_tiled</code>.</p>
-<h2 id="main-changes-1"><a class="header" href="#main-changes-1">Main Changes</a></h2>
+<h2 id="main-changes-2"><a class="header" href="#main-changes-2">Main Changes</a></h2>
 <ul>
 <li><strong>Improved Isometric Map Support:</strong><br />
 Isometric maps are now much better supported, including correct physics collider shapes and placement.</li>
@@ -1181,7 +1212,7 @@ Previously, <code>tile_size</code> (the actual size of a tile) and <code>grid_si
 <li><strong>API Renaming for Clarity:</strong><br />
 Several functions and methods have been renamed to improve clarity and expressiveness.</li>
 </ul>
-<h2 id="migration-steps-1"><a class="header" href="#migration-steps-1">Migration steps</a></h2>
+<h2 id="migration-steps-2"><a class="header" href="#migration-steps-2">Migration steps</a></h2>
 <ol>
 <li>
 <p><strong>Update the dependency in <code>Cargo.toml</code></strong>:</p>
@@ -1226,7 +1257,7 @@ The following methods on <code>TiledObject</code> now take 4 additional argument
 </ul>
 </li>
 </ul>
-<h2 id="resources-1"><a class="header" href="#resources-1">Resources</a></h2>
+<h2 id="resources-2"><a class="header" href="#resources-2">Resources</a></h2>
 <ul>
 <li><a href="migrations/../index.html">Main documentation</a></li>
 <li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/">API Reference</a></li>
@@ -1235,7 +1266,7 @@ The following methods on <code>TiledObject</code> now take 4 additional argument
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="migration-to-bevy_ecs_tiled-v08"><a class="header" href="#migration-to-bevy_ecs_tiled-v08">Migration to <code>bevy_ecs_tiled</code> v0.8</a></h1>
 <p>This guide outlines the steps required to migrate your project to version <code>0.8</code> of <code>bevy_ecs_tiled</code>.</p>
-<h2 id="main-changes-2"><a class="header" href="#main-changes-2">Main Changes</a></h2>
+<h2 id="main-changes-3"><a class="header" href="#main-changes-3">Main Changes</a></h2>
 <ul>
 <li><strong>Improved <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/"><code>TiledEvent</code></a> API</strong>: Provides an unified way to handle events and access underlying Tiled data.</li>
 <li><strong>Attach shape information to <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html"><code>TiledObject</code></a></strong>: Direct access to Tiled objects shape information through ECS.</li>
@@ -1246,7 +1277,7 @@ The following methods on <code>TiledObject</code> now take 4 additional argument
 <li><strong>Rationalize naming</strong>: Several types or functions have been renamed to better reflect what they actually do.</li>
 <li><strong>Source code re-organization</strong>: Several files have been moved around or renamed.</li>
 </ul>
-<h2 id="migration-steps-2"><a class="header" href="#migration-steps-2">Migration Steps</a></h2>
+<h2 id="migration-steps-3"><a class="header" href="#migration-steps-3">Migration Steps</a></h2>
 <ol>
 <li>
 <p><strong>Update the dependency in <code>Cargo.toml</code></strong>:</p>
@@ -1324,7 +1355,7 @@ Now, everything is done via the new <a href="https://docs.rs/bevy_ecs_tiled/late
 You should use the provided methods instead of accessing fields directly.</p>
 </li>
 </ol>
-<h2 id="resources-2"><a class="header" href="#resources-2">Resources</a></h2>
+<h2 id="resources-3"><a class="header" href="#resources-3">Resources</a></h2>
 <ul>
 <li><a href="migrations/../index.html">Main documentation</a></li>
 <li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/">API Reference</a></li>

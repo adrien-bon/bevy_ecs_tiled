@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Migration to v0.10 - bevy_ecs_tiled Documentation</title>
+        <title>Migration to v0.11 - bevy_ecs_tiled Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -175,54 +175,28 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="migration-to-bevy_ecs_tiled-v010"><a class="header" href="#migration-to-bevy_ecs_tiled-v010">Migration to <code>bevy_ecs_tiled</code> v0.10</a></h1>
-<p>This guide outlines the steps required to migrate your project to version <code>0.10</code> of <code>bevy_ecs_tiled</code>.</p>
+                        <h1 id="migration-to-bevy_ecs_tiled-v011"><a class="header" href="#migration-to-bevy_ecs_tiled-v011">Migration to <code>bevy_ecs_tiled</code> v0.11</a></h1>
+<p>This guide outlines the steps required to migrate your project to version <code>0.11</code> of <code>bevy_ecs_tiled</code>.</p>
 <h2 id="main-changes"><a class="header" href="#main-changes">Main Changes</a></h2>
 <ul>
-<li>
-<p><strong>Bevy v0.17 Support:</strong>
-<code>bevy_ecs_tiled</code> now works seamlessly with Bevy v0.17, allowing you to take advantage of the latest engine features and performance improvements. See the <a href="https://bevy.org/news/bevy-0-17/">Bevy 0.17 release notes</a> for details.</p>
-</li>
-<li>
-<p><strong>Enhanced ColliderCreated Event:</strong>
-The <code>ColliderCreated</code> event now includes a direct reference to the collider's parent entity, making it easier to attach additional physics components or interact with spawned colliders. The event previously only contained a <code>TiledColliderOrigin</code>, which has been renamed to <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderSource.html"><code>TiledColliderSource</code></a>.</p>
-</li>
-<li>
-<p><strong>External Type Re-exports:</strong>
-Types from external crates (such as <code>rs-tiled</code>, <code>geo</code>, and <code>regex</code>) are now re-exported through dedicated modules. This avoids name clashes and makes type usage explicit.</p>
-</li>
+<li><strong>Bevy v0.18 Support:</strong>
+<code>bevy_ecs_tiled</code> now works seamlessly with Bevy v0.18, allowing you to take advantage of the latest engine features and performance improvements. See the <a href="https://bevy.org/news/bevy-0-18/">Bevy 0.18 release notes</a> for details.</li>
 </ul>
 <h2 id="migration-steps"><a class="header" href="#migration-steps">Migration Steps</a></h2>
 <ol>
 <li>
 <p><strong>Update Dependencies in <code>Cargo.toml</code>:</strong></p>
-<pre><code class="language-toml">bevy = "0.17"
-bevy_ecs_tiled = "0.10"
+<pre><code class="language-toml">bevy = "0.18"
+bevy_ecs_tiled = "0.11"
 </code></pre>
 <blockquote>
 <p><strong>Note:</strong> You may also need to update other Bevy-related crates to ensure compatibility.</p>
 </blockquote>
 </li>
 <li>
-<p><strong>Review the <a href="https://bevy.org/learn/migration-guides/0-16-to-0-17/">Bevy Migration Guide</a>:</strong>
-Follow Bevy's official migration steps to update your project for Bevy v0.17.
+<p><strong>Review the <a href="https://bevy.org/learn/migration-guides/0-17-to-0-18/">Bevy Migration Guide</a>:</strong>
+Follow Bevy's official migration steps to update your project for Bevy v0.18.
 This will help you resolve breaking changes and take advantage of new features.</p>
-</li>
-<li>
-<p><strong>Update Usage of External Types:</strong></p>
-<p>If your code uses types from <code>rs-tiled</code>, <code>geo</code>, or <code>regex</code>, you must now reference them via their dedicated modules. This ensures clarity and prevents naming conflicts.</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use bevy_ecs_tiled::prelude::*;
-// For external types, use their module:
-let tiled_id: tiled::TiledId = 10;
-<span class="boring">}</span></code></pre></pre>
-</li>
-<li>
-<p><strong>Update Usage of <code>TiledEvent&lt;ColliderCreated&gt;</code>:</strong></p>
-<p>In previous versions, the event only provided a <code>TiledColliderOrigin</code>.
-In v0.10, this has been renamed to <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderSource.html"><code>TiledColliderSource</code></a>, and the event now also includes a reference to the collider's parent entity.
-This change makes it easier to interact with colliders and attach additional physics components directly after creation.</p>
 </li>
 </ol>
 <h2 id="resources"><a class="header" href="#resources">Resources</a></h2>
@@ -237,11 +211,11 @@ This change makes it easier to interact with colliders and attach additional phy
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../migrations/v0_11.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../guides/debug.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../migrations/v0_9.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../migrations/v0_10.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -251,11 +225,11 @@ This change makes it easier to interact with colliders and attach additional phy
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../migrations/v0_11.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../guides/debug.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../migrations/v0_9.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../migrations/v0_10.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
