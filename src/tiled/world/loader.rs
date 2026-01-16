@@ -25,6 +25,7 @@ pub enum TiledWorldLoaderError {
     WorldWithInfiniteMap,
 }
 
+#[derive(TypePath)]
 pub(crate) struct TiledWorldLoader {
     cache: TiledResourceCache,
 }
@@ -51,9 +52,9 @@ impl AssetLoader for TiledWorldLoader {
         let mut bytes = Vec::new();
         reader.read_to_end(&mut bytes).await?;
 
-        debug!("Start loading world '{}'", load_context.path().display());
+        debug!("Start loading world '{}'", load_context.path());
 
-        let world_path = load_context.path().to_path_buf();
+        let world_path = load_context.path().path().to_path_buf();
 
         let world = {
             let mut loader = tiled::Loader::with_cache_and_reader(
@@ -115,11 +116,7 @@ impl AssetLoader for TiledWorldLoader {
             rect: world_rect,
             maps,
         };
-        debug!(
-            "Loaded world '{}': {:?}",
-            load_context.path().display(),
-            world
-        );
+        debug!("Loaded world '{}': {:?}", load_context.path(), world);
         Ok(world)
     }
 

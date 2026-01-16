@@ -3,8 +3,8 @@ Add the required dependencies to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-bevy = "0.16"
-bevy_ecs_tiled = "0.10"
+bevy = "0.18"
+bevy_ecs_tiled = "0.11"
 ```
 
 ### Basic Usage

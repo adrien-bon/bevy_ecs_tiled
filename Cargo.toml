@@ -33,10 +33,10 @@ debug = ["bevy/bevy_gizmos", "bevy/bevy_text"]
 
 # Physics
 physics = []
-rapier = ["bevy_rapier2d", "physics"]
-rapier_debug = ["rapier", "bevy_rapier2d/debug-render-2d", "debug"]
-avian = ["dep:avian2d", "physics"]
-avian_debug = ["avian", "debug"]
+# rapier = ["bevy_rapier2d", "physics"]
+# rapier_debug = ["rapier", "bevy_rapier2d/debug-render-2d", "debug"]
+# avian = ["dep:avian2d", "physics"]
+# avian_debug = ["avian", "debug"]
 
 # WASM
 wasm = ["tiled/wasm"]
@@ -46,8 +46,8 @@ user_properties = ["dep:serde", "dep:serde_json"]
 
 [dependencies]
 # Main dependencies
-bevy = { version = "0.17", default-features = false }
-bevy_ecs_tilemap = { version = "0.17", default-features = false }
+bevy = { version = "0.18", default-features = false }
+bevy_ecs_tilemap = { version = "0.18", default-features = false }
 tiled = { version = "0.15", features = ["world"] }
 
 # Utilities
@@ -58,8 +58,8 @@ geo = "0.32"
 regex = "1.12"
 
 # Optional dependencies, enabled via features.
-bevy_rapier2d = { version = "0.32", optional = true }
-avian2d = { version = "0.4", optional = true }
+# bevy_rapier2d = { version = "0.32", optional = true }
+# avian2d = { version = "0.4", optional = true }
 serde = { version = "1.0", optional = true, features = ["derive"] }
 serde_json = { version = "1.0", optional = true }
 
@@ -75,12 +75,12 @@ max_combination_size = 3
 denylist = ["png", "bmp", "jpeg", "gif"]
 
 [dev-dependencies]
-bevy = { version = "0.17", features = ["file_watcher"] }
-bevy-inspector-egui = "0.35"
+bevy = { version = "0.18", features = ["file_watcher"] }
+bevy-inspector-egui = "0.36"
 
-[[example]]
-name = "demo_platformer"
-required-features = ["avian", "user_properties"]
+# [[example]]
+# name = "demo_platformer"
+# required-features = ["avian", "user_properties"]
 
 [[example]]
 name = "map_basic"
@@ -113,33 +113,33 @@ required-features = ["debug"]
 name = "orientation_orthogonal"
 required-features = ["debug"]
 
-[[example]]
-name = "physics_avian_controller"
-required-features = ["avian_debug"]
+# [[example]]
+# name = "physics_avian_controller"
+# required-features = ["avian_debug"]
 
-[[example]]
-name = "physics_avian_settings"
-required-features = ["avian_debug"]
+# [[example]]
+# name = "physics_avian_settings"
+# required-features = ["avian_debug"]
 
-[[example]]
-name = "physics_avian_orientation"
-required-features = ["avian_debug"]
+# [[example]]
+# name = "physics_avian_orientation"
+# required-features = ["avian_debug"]
 
 [[example]]
 name = "physics_custom"
 required-features = ["physics"]
 
-[[example]]
-name = "physics_rapier_controller"
-required-features = ["rapier_debug"]
+# [[example]]
+# name = "physics_rapier_controller"
+# required-features = ["rapier_debug"]
 
-[[example]]
-name = "physics_rapier_orientation"
-required-features = ["rapier_debug"]
+# [[example]]
+# name = "physics_rapier_orientation"
+# required-features = ["rapier_debug"]
 
-[[example]]
-name = "physics_rapier_settings"
-required-features = ["rapier_debug"]
+# [[example]]
+# name = "physics_rapier_settings"
+# required-features = ["rapier_debug"]
 
 [[example]]
 name = "properties_basic"
