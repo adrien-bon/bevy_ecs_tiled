@@ -2,6 +2,12 @@
 
 ## [unreleased]
 
+## v0.11.2
+
+### Documentation
+
+- Fix doc.rs build
+
 ## v0.11.1
 
 ### Features

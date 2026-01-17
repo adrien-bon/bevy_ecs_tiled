@@ -1,7 +1,7 @@
 [package]
 edition = "2021"
 name = "bevy_ecs_tiled"
-version = "0.11.1"
+version = "0.11.2"
 
 authors = ["Steve Pryde <steve@stevepryde.com>", "Adrien Bon"]
 description = "A Bevy plugin for loading Tiled maps"
@@ -65,7 +65,8 @@ serde_json = { version = "1.0", optional = true }
 
 # docs.rs-specific configuration
 [package.metadata.docs.rs]
-features = ["debug","user_properties","physics","avian","rapier"]
+#features = ["debug","user_properties","physics","avian","rapier"]
+features = ["debug","user_properties","physics","avian"]
 
 # cargo-all-features configuration
 [package.metadata.cargo-all-features]
