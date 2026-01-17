@@ -35,8 +35,8 @@ pub mod prelude {
         world_chunk::{TiledDebugWorldChunkConfig, TiledDebugWorldChunkPlugin},
         TiledDebugPluginGroup,
     };
-    // #[cfg(feature = "avian")]
-    // pub use super::physics::backend::avian::TiledPhysicsAvianBackend;
+    #[cfg(feature = "avian")]
+    pub use super::physics::backend::avian::TiledPhysicsAvianBackend;
     // #[cfg(feature = "rapier")]
     // pub use super::physics::backend::rapier::TiledPhysicsRapierBackend;
     #[cfg(feature = "physics")]

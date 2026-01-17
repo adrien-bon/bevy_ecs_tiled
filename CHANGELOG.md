@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Features
+
+- Add back support for Avian physics
+
 ## v0.11.0
 
 **BREAKING CHANGES**
