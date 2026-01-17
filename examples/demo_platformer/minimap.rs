@@ -60,10 +60,10 @@ fn setup_minimap(
             }),
             Camera {
                 order: 1, // After main camera at default order 0
-                target: RenderTarget::Image(image_handle.clone().into()),
                 clear_color: ClearColorConfig::Custom(Color::Srgba(CYAN_100).with_alpha(0.6)),
                 ..default()
             },
+            RenderTarget::Image(image_handle.clone().into()),
             RenderLayers::layer(MINIMAP_RENDER_LAYER),
         ))
         .id();

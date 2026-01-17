@@ -35,8 +35,8 @@ debug = ["bevy/bevy_gizmos", "bevy/bevy_text"]
 physics = []
 # rapier = ["bevy_rapier2d", "physics"]
 # rapier_debug = ["rapier", "bevy_rapier2d/debug-render-2d", "debug"]
-# avian = ["dep:avian2d", "physics"]
-# avian_debug = ["avian", "debug"]
+avian = ["dep:avian2d", "physics"]
+avian_debug = ["avian", "debug"]
 
 # WASM
 wasm = ["tiled/wasm"]
@@ -59,7 +59,7 @@ regex = "1.12"
 
 # Optional dependencies, enabled via features.
 # bevy_rapier2d = { version = "0.32", optional = true }
-# avian2d = { version = "0.4", optional = true }
+avian2d = { version = "0.5", optional = true }
 serde = { version = "1.0", optional = true, features = ["derive"] }
 serde_json = { version = "1.0", optional = true }
 
@@ -78,9 +78,9 @@ denylist = ["png", "bmp", "jpeg", "gif"]
 bevy = { version = "0.18", features = ["file_watcher"] }
 bevy-inspector-egui = "0.36"
 
-# [[example]]
-# name = "demo_platformer"
-# required-features = ["avian", "user_properties"]
+[[example]]
+name = "demo_platformer"
+required-features = ["avian", "user_properties"]
 
 [[example]]
 name = "map_basic"
@@ -113,17 +113,17 @@ required-features = ["debug"]
 name = "orientation_orthogonal"
 required-features = ["debug"]
 
-# [[example]]
-# name = "physics_avian_controller"
-# required-features = ["avian_debug"]
+[[example]]
+name = "physics_avian_controller"
+required-features = ["avian_debug"]
 
-# [[example]]
-# name = "physics_avian_settings"
-# required-features = ["avian_debug"]
+[[example]]
+name = "physics_avian_settings"
+required-features = ["avian_debug"]
 
-# [[example]]
-# name = "physics_avian_orientation"
-# required-features = ["avian_debug"]
+[[example]]
+name = "physics_avian_orientation"
+required-features = ["avian_debug"]
 
 [[example]]
 name = "physics_custom"
