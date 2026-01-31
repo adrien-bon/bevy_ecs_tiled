@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Features
+
+- add basic support for text objects
+
 ## v0.11.2
 
 ### Documentation

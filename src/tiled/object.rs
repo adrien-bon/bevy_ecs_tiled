@@ -4,6 +4,7 @@
 
 use crate::prelude::{geo::Centroid, *};
 use crate::tiled::helpers::iso_projection;
+use ::tiled::{HorizontalAlignment, VerticalAlignment};
 use bevy::prelude::*;
 
 /// Relationship and Marker [`Component`] for the visual representation of a [`TiledObject`].
@@ -72,7 +73,18 @@ pub enum TiledObject {
     /// A text object, which contains text data.
     ///
     /// Not supported yet.
-    Text,
+    Text {
+        /// the width of the text box.
+        width: f32,
+        /// the height of the text box.
+        height: f32,
+        /// the text content.
+        text: String,
+        /// the horizontal alignment of the text.
+        offset: Vec2,
+        /// the font size in pixels.
+        pixel_size: usize,
+    },
 }
 
 impl TiledObject {
@@ -105,9 +117,51 @@ impl TiledObject {
                 tiled::ObjectShape::Polyline { points } => TiledObject::Polyline {
                     vertices: points.into_iter().map(|(x, y)| Vec2::new(x, -y)).collect(),
                 },
-                tiled::ObjectShape::Text { .. } => {
-                    log::warn!("Text objects are not supported yet");
-                    TiledObject::Text
+                tiled::ObjectShape::Text {
+                    width,
+                    height,
+                    text,
+                    valign,
+                    halign,
+                    pixel_size,
+                    ..
+                } => {
+                    let offset = match (valign, halign) {
+                        (VerticalAlignment::Top, HorizontalAlignment::Left)
+                        | (VerticalAlignment::Top, HorizontalAlignment::Justify) => {
+                            Vec2::new(-0.5, 0.5)
+                        }
+                        (VerticalAlignment::Bottom, HorizontalAlignment::Left)
+                        | (VerticalAlignment::Bottom, HorizontalAlignment::Justify) => {
+                            Vec2::new(-0.5, -0.5)
+                        }
+                        (VerticalAlignment::Center, HorizontalAlignment::Left)
+                        | (VerticalAlignment::Center, HorizontalAlignment::Justify) => {
+                            Vec2::new(-0.5, 0.0)
+                        }
+                        (VerticalAlignment::Top, HorizontalAlignment::Right) => Vec2::new(0.5, 0.5),
+                        (VerticalAlignment::Bottom, HorizontalAlignment::Right) => {
+                            Vec2::new(0.5, -0.5)
+                        }
+                        (VerticalAlignment::Center, HorizontalAlignment::Right) => {
+                            Vec2::new(0.5, 0.0)
+                        }
+                        (VerticalAlignment::Top, HorizontalAlignment::Center) => {
+                            Vec2::new(0.0, 0.5)
+                        }
+                        (VerticalAlignment::Bottom, HorizontalAlignment::Center) => {
+                            Vec2::new(0.0, -0.5)
+                        }
+                        (VerticalAlignment::Center, HorizontalAlignment::Center) => Vec2::ZERO,
+                    };
+
+                    TiledObject::Text {
+                        width,
+                        height,
+                        text,
+                        offset,
+                        pixel_size,
+                    }
                 }
             }
         }
@@ -192,7 +246,7 @@ impl TiledObject {
 
         // Generate shape vertices relative to origin
         match self {
-            TiledObject::Point | TiledObject::Text => vec![Vec2::ZERO],
+            TiledObject::Point => vec![Vec2::ZERO],
             TiledObject::Tile { width, height } => {
                 vec![
                     Vec2::new(0., 0.),          // Bottom-left relative to object
@@ -201,7 +255,7 @@ impl TiledObject {
                     Vec2::new(*width, 0.),      // Bottom-right
                 ]
             }
-            TiledObject::Rectangle { width, height } => {
+            TiledObject::Rectangle { width, height } | TiledObject::Text { width, height, .. } => {
                 vec![
                     Vec2::new(0., 0.),           // Top-left relative to object
                     Vec2::new(*width, 0.),       // Top-right
@@ -281,9 +335,10 @@ impl TiledObject {
             offset,
         );
         match self {
-            TiledObject::Point | TiledObject::Text => None,
+            TiledObject::Point => None,
             TiledObject::Ellipse { .. }
             | TiledObject::Rectangle { .. }
+            | TiledObject::Text { .. }
             | TiledObject::Tile { .. }
             | TiledObject::Polygon { .. } => {
                 let mut line_string = geo::LineString::from(coords);
