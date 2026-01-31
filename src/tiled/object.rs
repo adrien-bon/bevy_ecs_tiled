@@ -4,9 +4,8 @@
 
 use crate::prelude::{geo::Centroid, *};
 use crate::tiled::helpers::iso_projection;
-use bevy::prelude::*;
-use bevy::sprite::Anchor;
 use ::tiled::{HorizontalAlignment, VerticalAlignment};
+use bevy::prelude::*;
 
 /// Relationship and Marker [`Component`] for the visual representation of a [`TiledObject`].
 ///
@@ -84,7 +83,7 @@ pub enum TiledObject {
         /// the horizontal alignment of the text.
         offset: Vec2,
         /// the font size in pixels.
-        pixel_size: usize
+        pixel_size: usize,
     },
 }
 
@@ -118,20 +117,51 @@ impl TiledObject {
                 tiled::ObjectShape::Polyline { points } => TiledObject::Polyline {
                     vertices: points.into_iter().map(|(x, y)| Vec2::new(x, -y)).collect(),
                 },
-                tiled::ObjectShape::Text { width, height, text, valign, halign, pixel_size, .. } => {
+                tiled::ObjectShape::Text {
+                    width,
+                    height,
+                    text,
+                    valign,
+                    halign,
+                    pixel_size,
+                    ..
+                } => {
                     let offset = match (valign, halign) {
-                        (VerticalAlignment::Top, HorizontalAlignment::Left) | (VerticalAlignment::Top, HorizontalAlignment::Justify) => Vec2::new(-0.5, 0.5),
-                        (VerticalAlignment::Bottom, HorizontalAlignment::Left) | (VerticalAlignment::Bottom, HorizontalAlignment::Justify) => Vec2::new(-0.5, -0.5),
-                        (VerticalAlignment::Center, HorizontalAlignment::Left) | (VerticalAlignment::Center, HorizontalAlignment::Justify) => Vec2::new(-0.5, 0.0),
+                        (VerticalAlignment::Top, HorizontalAlignment::Left)
+                        | (VerticalAlignment::Top, HorizontalAlignment::Justify) => {
+                            Vec2::new(-0.5, 0.5)
+                        }
+                        (VerticalAlignment::Bottom, HorizontalAlignment::Left)
+                        | (VerticalAlignment::Bottom, HorizontalAlignment::Justify) => {
+                            Vec2::new(-0.5, -0.5)
+                        }
+                        (VerticalAlignment::Center, HorizontalAlignment::Left)
+                        | (VerticalAlignment::Center, HorizontalAlignment::Justify) => {
+                            Vec2::new(-0.5, 0.0)
+                        }
                         (VerticalAlignment::Top, HorizontalAlignment::Right) => Vec2::new(0.5, 0.5),
-                        (VerticalAlignment::Bottom, HorizontalAlignment::Right) => Vec2::new(0.5, -0.5),
-                        (VerticalAlignment::Center, HorizontalAlignment::Right) => Vec2::new(0.5, 0.0),
-                        (VerticalAlignment::Top, HorizontalAlignment::Center) => Vec2::new(0.0, 0.5),
-                        (VerticalAlignment::Bottom, HorizontalAlignment::Center) => Vec2::new(0.0, -0.5),
+                        (VerticalAlignment::Bottom, HorizontalAlignment::Right) => {
+                            Vec2::new(0.5, -0.5)
+                        }
+                        (VerticalAlignment::Center, HorizontalAlignment::Right) => {
+                            Vec2::new(0.5, 0.0)
+                        }
+                        (VerticalAlignment::Top, HorizontalAlignment::Center) => {
+                            Vec2::new(0.0, 0.5)
+                        }
+                        (VerticalAlignment::Bottom, HorizontalAlignment::Center) => {
+                            Vec2::new(0.0, -0.5)
+                        }
                         (VerticalAlignment::Center, HorizontalAlignment::Center) => Vec2::ZERO,
                     };
 
-                    TiledObject::Text { width, height, text, offset, pixel_size: pixel_size }
+                    TiledObject::Text {
+                        width,
+                        height,
+                        text,
+                        offset,
+                        pixel_size,
+                    }
                 }
             }
         }

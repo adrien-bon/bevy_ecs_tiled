@@ -5,8 +5,8 @@
 //! enabling the rendering and interaction of Tiled maps within a Bevy application.
 
 use crate::{prelude::*, tiled::event::TiledMessageWriters, tiled::layer::TiledLayerParallax};
-use bevy::{platform::collections::HashMap, prelude::*, sprite::Anchor};
 use bevy::camera::primitives::Aabb;
+use bevy::{platform::collections::HashMap, prelude::*, sprite::Anchor};
 #[cfg(feature = "render")]
 use bevy_ecs_tilemap::prelude::{TilemapBundle, TilemapSpacing};
 
@@ -426,7 +426,14 @@ fn spawn_objects_layer(
             ))
             .id();
 
-        if let TiledObject::Text { width, height, text, offset, pixel_size} = tiled_object {
+        if let TiledObject::Text {
+            width,
+            height,
+            text,
+            offset,
+            pixel_size,
+        } = tiled_object
+        {
             commands.spawn((
                 ChildOf(object_entity),
                 Aabb::from_min_max(Vec3::ZERO, Vec3::new(width, height, 0.)),
@@ -440,8 +447,12 @@ fn spawn_objects_layer(
                         ..default()
                     },
                     Anchor::from(offset),
-                    Transform::from_translation(Vec3::new(offset.x * width + width / 2., offset.y * height - height / 2., 1.))
-                )]
+                    Transform::from_translation(Vec3::new(
+                        offset.x * width + width / 2.,
+                        offset.y * height - height / 2.,
+                        1.
+                    ))
+                )],
             ));
         }
 
