@@ -27,7 +27,7 @@ pub struct TiledObjectVisuals(Vec<Entity>);
 /// Marker [`Component`] for a Tiled map object.
 #[derive(Component, Default, Reflect, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
-#[require(Visibility, Transform)]
+#[require(Visibility, Transform, TiledName)]
 pub enum TiledObject {
     /// A point shape.
     #[default]

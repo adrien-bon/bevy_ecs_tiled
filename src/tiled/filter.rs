@@ -6,6 +6,20 @@
 use crate::prelude::*;
 use bevy::prelude::*;
 
+/// Component holding the name of a Tiled item as it appears in the Tiled editor.
+///
+/// Apply for Layers, Tilesets and Objects.
+#[derive(Component, Reflect, Clone, Debug, Default)]
+#[reflect(Component, Debug, Default)]
+pub struct TiledName(pub String);
+
+impl TiledName {
+    /// Convenient method to determine if this [`TiledName`] matches the given [`TiledFilter`].
+    pub fn matches(&self, filter: &TiledFilter) -> bool {
+        filter.matches(&self.0)
+    }
+}
+
 /// A filter for efficiently checking if a given name matches a filter specification.
 ///
 /// # Example
@@ -68,4 +82,5 @@ impl TiledFilter {
 
 pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledFilter>();
+    app.register_type::<TiledName>();
 }

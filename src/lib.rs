@@ -37,8 +37,8 @@ pub mod prelude {
     };
     #[cfg(feature = "avian")]
     pub use super::physics::backend::avian::TiledPhysicsAvianBackend;
-    #[cfg(feature = "rapier")]
-    pub use super::physics::backend::rapier::TiledPhysicsRapierBackend;
+    // #[cfg(feature = "rapier")]
+    // pub use super::physics::backend::rapier::TiledPhysicsRapierBackend;
     #[cfg(feature = "physics")]
     pub use super::physics::{
         backend::{multi_polygon_as_line_strings, multi_polygon_as_triangles, TiledPhysicsBackend},
@@ -55,7 +55,7 @@ pub mod prelude {
             LayerCreated, MapCreated, ObjectCreated, TileCreated, TiledEvent, TilemapCreated,
             WorldCreated,
         },
-        filter::TiledFilter,
+        filter::{TiledFilter, TiledName},
         helpers::{
             get_layer_from_map, get_object_from_map, get_tile_from_map, get_tileset_from_map,
             grid_size_from_map, tile_size, tilemap_type_from_map,

@@ -28,7 +28,7 @@ use bevy::prelude::*;
 ///
 /// We provide several [`TiledPhysicsBackend`] that can be used out of the box:
 /// - [`TiledPhysicsAvianBackend`]: for the Avian 2D physics engine
-/// - [`TiledPhysicsRapierBackend`]: for the Rapier 2D physics engine
+// /// - [`TiledPhysicsRapierBackend`]: for the Rapier 2D physics engine
 ///
 #[derive(Default, Copy, Clone, Debug)]
 pub struct TiledPhysicsPlugin<T: TiledPhysicsBackend>(std::marker::PhantomData<T>);
