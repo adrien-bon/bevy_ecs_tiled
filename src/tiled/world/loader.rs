@@ -54,12 +54,16 @@ impl AssetLoader for TiledWorldLoader {
 
         debug!("Start loading world '{}'", load_context.path());
 
+        // Pre-load all external tilesets/templates for WASM compatibility.
+        let external_cache =
+            crate::tiled::reader::preload_external_resources(&bytes, load_context).await;
+
         let world_path = load_context.path().path().to_path_buf();
 
         let world = {
             let mut loader = tiled::Loader::with_cache_and_reader(
                 self.cache.clone(),
-                BytesResourceReader::new(&bytes, load_context),
+                BytesResourceReader::new(&bytes, &external_cache),
             );
             loader
                 .load_world(&world_path)
