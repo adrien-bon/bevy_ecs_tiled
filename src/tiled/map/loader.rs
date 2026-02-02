@@ -167,12 +167,17 @@ impl AssetLoader for TiledMapLoader {
 
         debug!("Start loading map '{}'", load_context.path());
 
+        // Pre-load all external tilesets/templates for WASM compatibility.
+        // This is necessary because we cannot block on async operations in WASM.
+        let external_cache =
+            crate::tiled::reader::preload_external_resources(&bytes, load_context).await;
+
         let map_path = load_context.path().path().to_path_buf();
         let map = {
             // Allow the loader to also load tileset images.
             let mut loader = tiled::Loader::with_cache_and_reader(
                 self.cache.clone(),
-                BytesResourceReader::new(&bytes, load_context),
+                BytesResourceReader::new(&bytes, &external_cache),
             );
             // Load the map and all tiles.
             loader
