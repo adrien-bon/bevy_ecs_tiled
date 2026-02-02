@@ -51,7 +51,7 @@ user_properties = ["dep:serde", "dep:serde_json"]
 # Main dependencies
 bevy = { version = "0.19", default-features = false }
 bevy_ecs_tilemap = { version = "0.19", default-features = false }
-tiled = { version = "0.16", features = ["world"] }
+tiled = { version = "0.16", default-features = false, features = ["world"] }
 
 # Utilities
 futures-lite = "2.6"
