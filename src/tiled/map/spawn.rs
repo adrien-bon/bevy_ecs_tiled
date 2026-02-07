@@ -426,6 +426,7 @@ fn spawn_objects_layer(
             ))
             .id();
 
+        #[cfg(feature = "text")]
         if let TiledObject::Text {
             width,
             height,
