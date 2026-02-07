@@ -5,6 +5,7 @@
 //! enabling the rendering and interaction of Tiled maps within a Bevy application.
 
 use crate::{prelude::*, tiled::event::TiledMessageWriters, tiled::layer::TiledLayerParallax};
+#[cfg(feature = "text")]
 use bevy::camera::primitives::Aabb;
 use bevy::{platform::collections::HashMap, prelude::*, sprite::Anchor};
 #[cfg(feature = "render")]

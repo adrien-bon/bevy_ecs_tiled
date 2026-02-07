@@ -29,7 +29,7 @@ render = ["bevy_ecs_tilemap/render"]
 serde = ["bevy_ecs_tilemap/serde"]
 
 # Text
-text = ["bevy/bevy_text", "bevy/bevy_sprite"]
+text = ["bevy/bevy_text", "bevy/bevy_sprite", "bevy/bevy_camera"]
 
 # Debug
 debug = ["bevy/bevy_gizmos", "bevy/bevy_text"]
