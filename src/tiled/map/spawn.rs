@@ -5,8 +5,9 @@
 //! enabling the rendering and interaction of Tiled maps within a Bevy application.
 
 use crate::{prelude::*, tiled::event::TiledMessageWriters, tiled::layer::TiledLayerParallax};
+#[cfg(feature = "text")]
+use bevy::camera::primitives::Aabb;
 use bevy::{platform::collections::HashMap, prelude::*, sprite::Anchor};
-
 #[cfg(feature = "render")]
 use bevy_ecs_tilemap::prelude::{TilemapBundle, TilemapSpacing};
 
@@ -404,7 +405,7 @@ fn spawn_objects_layer(
         let object_kind = match tiled_object {
             TiledObject::Point => "Point",
             TiledObject::Tile { .. } => "Tile",
-            TiledObject::Text => "Text",
+            TiledObject::Text { .. } => "Text",
             TiledObject::Rectangle { .. } => "Rectangle",
             TiledObject::Ellipse { .. } => "Ellipse",
             TiledObject::Polygon { .. } => "Polygon",
@@ -416,7 +417,7 @@ fn spawn_objects_layer(
                 Name::new(format!("{object_kind}({})", object_data.name)),
                 ChildOf(layer_event.origin),
                 TiledMapReference(layer_event.get_map_entity().unwrap()),
-                tiled_object,
+                tiled_object.clone(),
                 TiledName(object_data.name.clone()),
                 transform,
                 match &object_data.visible {
@@ -425,6 +426,37 @@ fn spawn_objects_layer(
                 },
             ))
             .id();
+
+        #[cfg(feature = "text")]
+        if let TiledObject::Text {
+            width,
+            height,
+            text,
+            offset,
+            pixel_size,
+        } = tiled_object
+        {
+            commands.spawn((
+                ChildOf(object_entity),
+                Aabb::from_min_max(Vec3::ZERO, Vec3::new(width, height, 0.)),
+                Transform::from_translation(Vec3::ZERO),
+                Anchor::TOP_LEFT,
+                children![(
+                    Name::new("TiledObjectText"),
+                    Text2d::new(text),
+                    TextFont {
+                        font_size: pixel_size as f32,
+                        ..default()
+                    },
+                    Anchor::from(offset),
+                    Transform::from_translation(Vec3::new(
+                        offset.x * width + width / 2.,
+                        offset.y * height - height / 2.,
+                        1.
+                    ))
+                )],
+            ));
+        }
 
         // Handle objects containing tile data:
         // we want to add a Sprite component to the object entity

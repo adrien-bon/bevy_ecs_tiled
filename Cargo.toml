@@ -15,7 +15,7 @@ keywords = ["bevy", "tiled", "tilemap", "game", "2d"]
 exclude = ["assets/*", "res/*"]
 
 [features]
-default = ["render", "png"]
+default = ["render", "png", "text"]
 
 # Expose image formats from bevy
 png = ["bevy/png"]
@@ -27,6 +27,9 @@ gif = ["bevy/gif"]
 atlas = ["bevy_ecs_tilemap/atlas"]
 render = ["bevy_ecs_tilemap/render"]
 serde = ["bevy_ecs_tilemap/serde"]
+
+# Text
+text = ["bevy/bevy_text", "bevy/bevy_sprite", "bevy/bevy_camera"]
 
 # Debug
 debug = ["bevy/bevy_gizmos", "bevy/bevy_text"]
