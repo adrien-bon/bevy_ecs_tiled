@@ -555,17 +555,20 @@ fn handle_tile_object(
     };
 
     // Handle the case of an animated tile
-    let animation = tile
-        .get_tile()
-        .and_then(|t| get_animated_tile(&t))
-        .map(|animation| TiledAnimation {
-            start: animation.start as usize,
-            end: animation.end as usize,
-            timer: Timer::from_seconds(
-                1. / (animation.speed * (animation.end - animation.start) as f32),
-                TimerMode::Repeating,
-            ),
-        });
+    let animation = tile.get_tile().and_then(|t| {
+        t.animation.as_ref().map(|frames| {
+            let frame_vec: Vec<(usize, f32)> = frames
+                .iter()
+                .map(|f| (f.tile_id as usize, f.duration as f32 / 1000.0))
+                .collect();
+            let first_duration = frame_vec.first().map(|(_, d)| *d).unwrap_or(0.1);
+            TiledAnimation {
+                frames: frame_vec,
+                current_frame: 0,
+                timer: Timer::from_seconds(first_duration, TimerMode::Once),
+            }
+        })
+    });
 
     (Some((sprite, transform)), animation)
 }
@@ -626,6 +629,9 @@ fn spawn_image_layer(
     }
 }
 
+// Tile-layer animations go through bevy_ecs_tilemap's `AnimatedTile`, which requires
+// consecutive frame IDs and a uniform duration. Object-layer animations use `TiledAnimation`
+// instead, which stores per-frame (index, duration) pairs and has no such constraints.
 fn get_animated_tile(tile: &tiled::Tile) -> Option<AnimatedTile> {
     let Some(animation_data) = &tile.animation else {
         return None;
