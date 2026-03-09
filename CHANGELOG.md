@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Features
+
+- Add back support for Rapier physics
+
 ## v0.11.2
 
 ### Documentation
