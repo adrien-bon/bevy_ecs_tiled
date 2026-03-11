@@ -10,8 +10,8 @@ mod helper;
 fn main() {
     // Use a custom file path to export registered types in Tiled format
     let mut path = env::current_dir().unwrap();
-    path.push("examples");
-    path.push("properties_basic.json");
+    path.push("exports");
+    path.push("properties_basic_types.json");
 
     App::new()
         // Bevy default plugins: prevent blur effect by changing default sampling

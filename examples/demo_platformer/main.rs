@@ -69,8 +69,7 @@ fn main() {
 
     // Custom directory for exporting user properties
     let mut path = env::current_dir().unwrap();
-    path.push("assets");
-    path.push("demo_platformer");
+    path.push("exports");
     path.push("demo_platformer_types.json");
 
     app.add_plugins((
