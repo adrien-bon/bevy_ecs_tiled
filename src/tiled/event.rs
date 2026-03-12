@@ -152,7 +152,7 @@ where
         self.world.and_then(|(_, id)| assets.get(id))
     }
 
-    /// Retrieve the [`World`] associated with this [`TiledEvent`]
+    /// Retrieve the [`tiled::World`] associated with this [`TiledEvent`]
     pub fn get_world(&self, assets: &'a Res<Assets<TiledWorldAsset>>) -> Option<&'a tiled::World> {
         self.get_world_asset(assets).map(|w| &w.world)
     }
