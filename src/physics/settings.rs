@@ -11,7 +11,7 @@ use bevy::prelude::*;
 ///
 /// Allows filtering which objects and tiles receive colliders.
 /// Attach this component to TiledWorld or TiledMap entities to control their physics behavior.
-#[derive(Component, Default, Reflect, Clone, Debug)]
+#[derive(Component, Reflect, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
 pub struct TiledPhysicsSettings<T: TiledPhysicsBackend> {
     /// Specify which Tiled object to add colliders for using their layer name.
@@ -34,8 +34,30 @@ pub struct TiledPhysicsSettings<T: TiledPhysicsBackend> {
     /// Colliders will be automatically added for all tiles collision objects whose name matches this filter.
     /// By default, we add colliders for all collision objects.
     pub tiles_objects_filter: TiledFilter,
+    /// Enables tree reduction (combining) of colliders.
+    ///
+    /// When `true`, complex collision shapes (e.g., multiple overlapping or connected polygons) are reduced
+    /// into simpler, combined shapes using the [`simplify_geometry`] algorithm. This improves physics performance
+    /// by reducing the number of colliders and simplifying collision queries.
+    ///
+    /// When `false`, all collision shapes are kept as-is without simplification. This preserves exact geometry
+    /// but may result in slower physics simulation for highly complex maps with many objects.
+    pub simplify_geometry: bool,
     /// Physics backend to use for adding colliders.
     pub backend: T,
+}
+
+impl<T: TiledPhysicsBackend> Default for TiledPhysicsSettings<T> {
+    fn default() -> Self {
+        Self {
+            objects_layer_filter: TiledFilter::default(),
+            objects_filter: TiledFilter::default(),
+            tiles_layer_filter: TiledFilter::default(),
+            tiles_objects_filter: TiledFilter::default(),
+            simplify_geometry: true,
+            backend: T::default(),
+        }
+    }
 }
 
 pub(crate) fn plugin<T: TiledPhysicsBackend>(app: &mut App) {

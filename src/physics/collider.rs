@@ -4,9 +4,8 @@
 //! It provides types to distinguish between colliders created from tile layers and object layers,
 //! as well as utilities for extracting tile data relevant to collider generation.
 
-use std::collections::VecDeque;
-
-use crate::prelude::{geo::BooleanOps, *};
+use crate::prelude::*;
+use ::geo::BooleanOps;
 use bevy::prelude::*;
 
 /// Marker component for collider's source
@@ -25,6 +24,8 @@ pub enum TiledColliderSource {
 #[derive(Component, Reflect, Copy, PartialEq, Clone, Debug, Deref)]
 #[reflect(Component, Debug)]
 #[relationship(relationship_target = TiledColliders)]
+// TODO: Enable self referential once Bevy #22269 lands
+//#[relationship(relationship_target = TiledColliders, allow_self_referential)]
 pub struct TiledColliderOf(pub Entity);
 
 /// Relationship target [`Component`] pointing to all the child [`TiledColliderOf`]s (eg. entities holding a physics collider).
@@ -33,10 +34,10 @@ pub struct TiledColliderOf(pub Entity);
 #[relationship_target(relationship = TiledColliderOf)]
 pub struct TiledColliders(Vec<Entity>);
 
-/// Collider raw geometry
+/// Physics collider raw geometry
 #[derive(Component, PartialEq, Clone, Debug, Deref)]
 #[require(Transform)]
-pub struct TiledColliderPolygons(pub geo::MultiPolygon<f32>);
+pub struct TiledColliderPolygons(pub Vec<geo::MultiPolygon<f32>>);
 
 /// Event emitted when a collider is created from a Tiled map or world.
 ///
@@ -102,7 +103,7 @@ impl<'a> TiledEvent<ColliderCreated> {
 }
 
 pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
-    backend: &T,
+    settings: &TiledPhysicsSettings<T>,
     commands: &mut Commands,
     assets: &Res<Assets<TiledMapAsset>>,
     anchor: &TilemapAnchor,
@@ -198,20 +199,37 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
     .map(|p| geo::MultiPolygon::new(vec![p]))
     .collect::<Vec<_>>();
 
-    // Try to simplify geometry: merge together adjacent polygons
-    let Some(polygons) = divide_reduce(polygons, |a, b| a.union(&b)) else {
-        return;
+    // Try to simplify geometry by merging together adjacent polygons
+    let polygons = if settings.simplify_geometry {
+        let Some(polygons) = simplify_geometry(polygons, |a, b| a.union(&b)) else {
+            warn!("Failed to simplify geometry, skipping this polygon");
+            return;
+        };
+        vec![polygons]
+    } else {
+        polygons
     };
 
-    // Actually spawn our colliders using provided physics backend
-    for entity in backend.spawn_colliders(commands, &collider_created, &polygons) {
+    // Actually spawn our collider using provided physics backend
+    if let Some(entity) = settings.backend.spawn_colliders(
+        commands,
+        collider_created.event.source,
+        collider_created.event.collider_of.0,
+        polygons.to_owned(),
+    ) {
         // Attach collider to its parent and insert additional components
         commands.entity(entity).insert((
             collider_created.event.source,
-            collider_created.event.collider_of,
-            TiledColliderPolygons(polygons.to_owned()),
-            ChildOf(*collider_created.event.collider_of),
+            TiledColliderPolygons(polygons),
         ));
+
+        // TODO: Enable self referential once Bevy #22269 lands
+        if entity != collider_created.event.collider_of.0 {
+            commands
+                .entity(entity)
+                .insert(collider_created.event.collider_of);
+        }
+
         // Patch origin entity and send collider event
         let mut event = collider_created;
         event.origin = entity;
@@ -251,17 +269,4 @@ fn polygons_from_tile(
         }
     }
     polygons
-}
-
-fn divide_reduce<T>(list: Vec<T>, mut reduction: impl FnMut(T, T) -> T) -> Option<T> {
-    let mut queue = VecDeque::from(list);
-
-    while queue.len() > 1 {
-        for _ in 0..(queue.len() / 2) {
-            let (one, two) = (queue.pop_front().unwrap(), queue.pop_front().unwrap());
-            queue.push_back(reduction(one, two));
-        }
-    }
-
-    queue.pop_back()
 }

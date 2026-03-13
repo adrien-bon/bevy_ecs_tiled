@@ -2,6 +2,18 @@
 
 ## [unreleased]
 
+**BREAKING CHANGES**
+This version brings breaking changes.
+
+### Features
+
+- Rework physics colliders spawning (#179) :
+  - Only send a single `ColliderCreated` event per physics object, not once per collider
+  - Let physics backend decide of the ECS hierarchy, typically for Avian and Rapier will have a collider
+    directly attached to the physics object and not always as child entity
+  - Add a new setting to control geometry simplification / colliders merge (enabled by default)
+
+
 ## v0.11.3
 
 ### Features

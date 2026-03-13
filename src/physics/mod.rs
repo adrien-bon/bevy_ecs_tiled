@@ -6,6 +6,7 @@
 
 pub mod backend;
 pub mod collider;
+pub mod geometry;
 pub mod settings;
 
 use crate::prelude::*;
@@ -69,7 +70,7 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
 
         if settings.tiles_layer_filter.matches(&layer.name) {
             collider::spawn_colliders::<T>(
-                &settings.backend,
+                settings,
                 &mut commands,
                 &assets,
                 anchor,
@@ -109,7 +110,7 @@ fn collider_from_object<T: TiledPhysicsBackend>(
             && settings.objects_filter.matches(&object.name)
         {
             collider::spawn_colliders::<T>(
-                &settings.backend,
+                settings,
                 &mut commands,
                 &assets,
                 anchor,
