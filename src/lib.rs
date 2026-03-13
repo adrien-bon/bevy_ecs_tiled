@@ -37,8 +37,8 @@ pub mod prelude {
     };
     #[cfg(feature = "avian")]
     pub use super::physics::backend::avian::TiledPhysicsAvianBackend;
-    // #[cfg(feature = "rapier")]
-    // pub use super::physics::backend::rapier::TiledPhysicsRapierBackend;
+    #[cfg(feature = "rapier")]
+    pub use super::physics::backend::rapier::TiledPhysicsRapierBackend;
     #[cfg(feature = "physics")]
     pub use super::physics::{
         backend::{multi_polygon_as_line_strings, multi_polygon_as_triangles, TiledPhysicsBackend},

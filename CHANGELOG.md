@@ -14,6 +14,12 @@
 - `TiledAnimation` struct redesigned: `start` and `end` fields replaced with `frames: Vec<(usize, f32)>` (atlas index, duration in seconds) and `current_frame: usize`
 - Tile-layer animations (via `bevy_ecs_tilemap`'s `AnimatedTile`) still require consecutive IDs and uniform duration; a warning is emitted when those constraints are violated
 
+## v0.11.3
+
+### Features
+
+- Add back support for Rapier physics
+
 ## v0.11.2
 
 ### Documentation
