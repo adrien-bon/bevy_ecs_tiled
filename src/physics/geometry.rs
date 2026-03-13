@@ -81,9 +81,11 @@ pub fn multi_polygon_as_line_strings(
 ///
 /// **Combine multiple polygons using boolean union**
 /// ```rust,no_run
-/// use geo::{Polygon, MultiPolygon};
-/// use geo::BooleanOps;
+/// use bevy_ecs_tiled::prelude::{*, geo::BooleanOps};
 ///
+/// let polygon1: geo::MultiPolygon<f32> = geo::MultiPolygon::empty();
+/// let polygon2: geo::MultiPolygon<f32> = geo::MultiPolygon::empty();
+/// let polygon3: geo::MultiPolygon<f32> = geo::MultiPolygon::empty();
 /// let polygons = vec![polygon1, polygon2, polygon3];
 /// let combined = simplify_geometry(polygons, |a, b| {
 ///     // Combine two polygons using boolean union
