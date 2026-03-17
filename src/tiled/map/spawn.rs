@@ -4,7 +4,7 @@
 //! It handles the creation of map layers, tiles, objects, and their associated components in the ECS world,
 //! enabling the rendering and interaction of Tiled maps within a Bevy application.
 
-use crate::{prelude::*, tiled::event::TiledMessageWriters, tiled::layer::TiledLayerParallax};
+use crate::{prelude::*, tiled::event::TiledMessageWriters};
 use bevy::{platform::collections::HashMap, prelude::*, sprite::Anchor};
 
 #[cfg(feature = "render")]
@@ -60,6 +60,7 @@ pub(crate) fn spawn_map(
                 ChildOf(map_entity),
                 TiledMapReference(map_entity),
                 TiledName(layer.name.clone()),
+                TiledLayerId(layer.id()),
                 // Apply layer Transform using both layer base Transform and Tiled offset
                 layer_transform,
                 // Determine layer default visibility
@@ -223,6 +224,7 @@ fn spawn_tiles_layer(
                 Name::new(format!("TiledTilemap({}, {})", layer.name, tileset.name)),
                 TiledMapReference(layer_event.get_map_entity().unwrap()),
                 TiledTilemap,
+                TiledTilesetId(tileset_index),
                 TiledName(tileset.name.clone()),
                 ChildOf(layer_event.origin),
             ))
@@ -318,10 +320,14 @@ fn spawn_tiles(
                 #[cfg(not(feature = "atlas"))]
                 _ => unreachable!(),
             };
+
+            let tile_id = layer_tile.id();
             let tile_entity = commands
                 .spawn((
                     Name::new(format!("TiledMapTile({},{})", tile_pos.x, tile_pos.y)),
                     TiledTile,
+                    TiledTilesetId(tileset_id),
+                    TiledTileId(tile_id),
                     TileBundle {
                         position: tile_pos,
                         tilemap_id: TilemapId(layer_entity),
@@ -341,8 +347,6 @@ fn spawn_tiles(
             if let Some(animated_tile) = get_animated_tile(&tile) {
                 commands.entity(tile_entity).insert(animated_tile);
             }
-
-            let tile_id = layer_tile.id();
 
             // Handle custom tiles (with user properties)
             if !tile.properties.is_empty() {
@@ -416,6 +420,7 @@ fn spawn_objects_layer(
                 Name::new(format!("{object_kind}({})", object_data.name)),
                 ChildOf(layer_event.origin),
                 TiledMapReference(layer_event.get_map_entity().unwrap()),
+                TiledObjectId(object_data.id()),
                 tiled_object,
                 TiledName(object_data.name.clone()),
                 transform,

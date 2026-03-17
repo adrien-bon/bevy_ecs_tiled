@@ -61,15 +61,15 @@ pub mod prelude {
             grid_size_from_map, tile_size, tilemap_type_from_map,
         },
         image::TiledImage,
-        layer::{TiledLayer, TiledLayerParallax, TiledParallaxCamera},
+        layer::{TiledLayer, TiledLayerId, TiledLayerParallax, TiledParallaxCamera},
         map::{
             asset::TiledMapAsset, loader::TiledMapLoaderError, storage::TiledMapStorage,
             RespawnTiledMap, TiledMap, TiledMapImageRepeatMargin, TiledMapLayerZOffset,
             TiledMapReference,
         },
-        object::{TiledObject, TiledObjectVisualOf, TiledObjectVisuals},
+        object::{TiledObject, TiledObjectId, TiledObjectVisualOf, TiledObjectVisuals},
         sets::{TiledPostUpdateSystems, TiledPreUpdateSystems, TiledUpdateSystems},
-        tile::{TiledTile, TiledTilemap},
+        tile::{TiledTile, TiledTileId, TiledTilemap, TiledTilesetId},
         world::{
             asset::TiledWorldAsset, chunking::TiledWorldChunking, loader::TiledWorldLoaderError,
             storage::TiledWorldStorage, RespawnTiledWorld, TiledWorld,

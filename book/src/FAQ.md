@@ -4,7 +4,7 @@
 
 The crate is already quite usable, but it is still under active development.
 
-You may encounter bugs, missing features, or breaking changes as the API evolves.  
+You may encounter bugs, missing features, or breaking changes as the API evolves.
 However, the project follows [semantic versioning](https://semver.org/) and provides a migration guide for each breaking change (for example, when a new Bevy release is supported).
 
 I try to list all known limitations and bugs of the crate as [Github issues](https://github.com/adrien-bon/bevy_ecs_tiled/issues).
@@ -20,7 +20,7 @@ Nearly all map types from Tiled are supported:
 - "Pointy-top" hexagonal
 - "Diamond" isometric
 
-**Not supported:**  
+**Not supported:**
 Isometric "staggered" maps ([see issue #31](https://github.com/adrien-bon/bevy_ecs_tiled/issues/31)).
 
 While we support isometric maps, we currently [do not support isometric tilesets](https://github.com/adrien-bon/bevy_ecs_tiled/issues/129).
@@ -30,7 +30,7 @@ But you can still use an isometric map with an orthogonal tileset.
 
 ## I want a huge map for my game, is it a problem?
 
-If you have performance issues with a single large map, consider using a [Tiled world](https://doc.mapeditor.org/en/stable/manual/worlds/).  
+If you have performance issues with a single large map, consider using a [Tiled world](https://doc.mapeditor.org/en/stable/manual/worlds/).
 A Tiled world is a collection of multiple maps, and you can control which ones are loaded at any given time.
 
 To spawn a Tiled world, use the [`TiledWorld`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/struct.TiledWorld.html) component after loading a `.world` asset:
@@ -88,7 +88,7 @@ See the [custom properties guide](guides/properties.md) for more information.
 
 ## How do I enable map hot-reload?
 
-Enable the Bevy `file_watcher` feature in your project.  
+Enable the Bevy `file_watcher` feature in your project.
 With this enabled, `bevy_ecs_tiled` will automatically reload a map or world whenever it is updated in Tiled.
 
 ---
@@ -97,12 +97,13 @@ With this enabled, `bevy_ecs_tiled` will automatically reload a map or world whe
 
 Sometimes you may need to access the underlying Tiled data, such as a `tiled::ObjectData` or `tiled::TileData`.
 
-You have two main options:
+You have several options:
 
+- Use provided ECS components such as [`TiledLayerId`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/struct.TiledLayerId.html) and associated helper methods.
 - Listen to [map loading events](./design/map_events.md) and use [`TiledEvent<E>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TiledEvent.html) helper methods to access Tiled data.
 - Retrieve the [`TiledMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/storage/struct.TiledMapStorage.html) component from your map entity to get the mapping between Bevy entities and their corresponding Tiled data.
 
-These two options are demonstrated in [examples](https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples) and [debug plugins](https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/src/debug).
+These options are demonstrated in [examples](https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples) and [debug plugins](https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/src/debug).
 
 ---
 
@@ -113,5 +114,5 @@ This crate is still a work in progress, so you may encounter bugs, missing featu
 - Check the [open issues](https://github.com/adrien-bon/bevy_ecs_tiled/issues) to see if your problem is already reported.
 - If not, please open a new issue! I try to address every issue as quickly as possible.
 
-**Contributions are very welcome!**  
+**Contributions are very welcome!**
 If you’d like to contribute, please read the [contribution guide](misc/contributing.md) and feel free to open a PR!
