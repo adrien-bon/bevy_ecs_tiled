@@ -433,7 +433,7 @@ fn spawn_objects_layer(
             height,
             text,
             offset,
-            pixel_size,
+            font_size,
         } = tiled_object
         {
             commands.spawn((
@@ -445,7 +445,7 @@ fn spawn_objects_layer(
                     Name::new("TiledObjectText"),
                     Text2d::new(text),
                     TextFont {
-                        font_size: pixel_size as f32,
+                        font_size: font_size as f32,
                         ..default()
                     },
                     Anchor::from(offset),

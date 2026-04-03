@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="10" height="10" tilewidth="32" tileheight="32" infinite="0" nextlayerid="3" nextobjectid="4">
+ <tileset firstgid="1" source="../../tiles/orthogonal_1.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="10" height="10">
+  <data encoding="csv">
+2,2,2,2,2,2,2,2,2,2,
+2,0,0,0,0,0,0,0,0,2,
+2,0,0,0,0,0,0,0,0,2,
+2,0,0,0,0,0,0,0,0,2,
+2,0,0,0,0,0,0,0,0,2,
+2,0,0,0,0,0,0,0,0,2,
+2,0,0,0,0,0,0,0,0,2,
+2,0,0,0,0,0,0,0,0,2,
+2,0,0,0,0,0,0,0,0,2,
+2,2,2,2,2,2,2,2,2,2
+</data>
+ </layer>
+ <objectgroup id="2" name="Text">
+  <object id="1" x="32" y="32" width="96" height="32">
+   <text wrap="1" halign="center" valign="center">Hello World</text>
+  </object>
+  <object id="2" x="32" y="96" width="128" height="64">
+   <text fontfamily="Segoe UI" pixelsize="21" wrap="1">Hello World</text>
+  </object>
+  <object id="3" x="32" y="64" width="96" height="32">
+   <text fontfamily="Segoe UI" pixelsize="11" wrap="1" halign="right" valign="bottom">Hello World</text>
+  </object>
+ </objectgroup>
+</map>

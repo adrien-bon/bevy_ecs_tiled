@@ -71,8 +71,6 @@ pub enum TiledObject {
         height: f32,
     },
     /// A text object, which contains text data.
-    ///
-    /// Not supported yet.
     Text {
         /// the width of the text box.
         width: f32,
@@ -80,10 +78,10 @@ pub enum TiledObject {
         height: f32,
         /// the text content.
         text: String,
-        /// the horizontal alignment of the text.
+        /// the vertical and horizontal alignment of the text.
         offset: Vec2,
         /// the font size in pixels.
-        pixel_size: usize,
+        font_size: usize,
     },
 }
 
@@ -160,7 +158,7 @@ impl TiledObject {
                         height,
                         text,
                         offset,
-                        pixel_size,
+                        font_size: pixel_size,
                     }
                 }
             }
