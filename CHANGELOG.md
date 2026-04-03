@@ -4,7 +4,13 @@
 
 ### Features
 
-- add basic support for text objects
+- add basic support for text objects (#56)
+
+## v0.11.3
+
+### Features
+
+- Add back support for Rapier physics
 
 ## v0.11.2
 
