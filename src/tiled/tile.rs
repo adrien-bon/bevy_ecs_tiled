@@ -18,6 +18,7 @@ use bevy::prelude::*;
 /// See [`TileBundle`] for more information on available [`Component`]s.
 #[derive(Component, Default, Reflect, Copy, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
+#[require(TiledTileId, TiledTilesetId)]
 pub struct TiledTile;
 
 /// Marker [`Component`] for a Tiled tilemap.
@@ -30,10 +31,26 @@ pub struct TiledTile;
 /// See [`TilemapBundle`] for more information on available [`Component`]s.
 #[derive(Component, Default, Reflect, Copy, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
-#[require(Visibility, Transform, TiledName)]
+#[require(Visibility, Transform, TiledName, TiledTilesetId)]
 pub struct TiledTilemap;
+
+/// Tiled tileset ID associated with this [`TiledTilemap`] or [`TiledTile`].
+///
+/// You can retrieve the corresponding [`tiled::Tileset`] using the [`get_tileset_from_map`] helper function.
+#[derive(Component, Default, Reflect, Copy, Clone, Debug, Deref)]
+#[reflect(Component, Default, Debug)]
+pub struct TiledTilesetId(pub u32);
+
+/// [`tiled::TileId`] associated with this [`TiledTile`].
+///
+/// You can retrieve the corresponding [`tiled::Tile`] using the [`get_tile_from_map`] helper function.
+#[derive(Component, Default, Reflect, Copy, Clone, Debug, Deref)]
+#[reflect(Component, Default, Debug)]
+pub struct TiledTileId(pub tiled::TileId);
 
 pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledTile>();
     app.register_type::<TiledTilemap>();
+    app.register_type::<TiledTilesetId>();
+    app.register_type::<TiledTileId>();
 }
