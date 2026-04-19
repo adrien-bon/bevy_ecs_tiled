@@ -1,10 +1,18 @@
 use bevy::{input::common_conditions::input_toggle_active, prelude::*};
 
-use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
+use bevy_inspector_egui::{
+    bevy_egui::{EguiGlobalSettings, EguiPlugin},
+    quick::WorldInspectorPlugin,
+};
 
 const TOGGLE_INSPECTOR_KEY: KeyCode = KeyCode::F1;
 
 pub(super) fn plugin(app: &mut App) {
+    // We want to render egui on the camera with 'PrimaryEguiContext' component
+    app.insert_resource(EguiGlobalSettings {
+        auto_create_primary_context: false,
+        ..Default::default()
+    });
     app.add_plugins((
         EguiPlugin::default(),
         WorldInspectorPlugin::default().run_if(input_toggle_active(false, TOGGLE_INSPECTOR_KEY)),

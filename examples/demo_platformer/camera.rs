@@ -16,9 +16,10 @@ pub struct MainCamera;
 
 fn setup_camera(mut commands: Commands) {
     commands.spawn((
-        Name::new("Camera"),
+        Name::new("MainCamera"),
         Camera2d,
         MainCamera,
+        bevy_inspector_egui::bevy_egui::PrimaryEguiContext,
         TiledParallaxCamera,
         IsDefaultUiCamera,
     ));
