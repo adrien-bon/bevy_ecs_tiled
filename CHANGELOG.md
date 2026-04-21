@@ -4,7 +4,8 @@
 
 ### Features
 
-- feat: store Tiled IDs as ECS components
+- Store Tiled IDs as ECS components
+- Bump `geo` crate to improve wasm support (#190)
 
 ## v0.11.3
 
