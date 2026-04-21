@@ -236,7 +236,7 @@ Additional topics and tips that don’t fit elsewhere.</li>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="faq"><a class="header" href="#faq">FAQ</a></h1>
 <h2 id="whats-the-current-status-of-the-crate"><a class="header" href="#whats-the-current-status-of-the-crate">What’s the current status of the crate?</a></h2>
 <p>The crate is already quite usable, but it is still under active development.</p>
-<p>You may encounter bugs, missing features, or breaking changes as the API evolves.<br />
+<p>You may encounter bugs, missing features, or breaking changes as the API evolves.
 However, the project follows <a href="https://semver.org/">semantic versioning</a> and provides a migration guide for each breaking change (for example, when a new Bevy release is supported).</p>
 <p>I try to list all known limitations and bugs of the crate as <a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues">Github issues</a>.</p>
 <hr />
@@ -248,13 +248,13 @@ However, the project follows <a href="https://semver.org/">semantic versioning</
 <li>"Pointy-top" hexagonal</li>
 <li>"Diamond" isometric</li>
 </ul>
-<p><strong>Not supported:</strong><br />
+<p><strong>Not supported:</strong>
 Isometric "staggered" maps (<a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues/31">see issue #31</a>).</p>
 <p>While we support isometric maps, we currently <a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues/129">do not support isometric tilesets</a>.
 But you can still use an isometric map with an orthogonal tileset.</p>
 <hr />
 <h2 id="i-want-a-huge-map-for-my-game-is-it-a-problem"><a class="header" href="#i-want-a-huge-map-for-my-game-is-it-a-problem">I want a huge map for my game, is it a problem?</a></h2>
-<p>If you have performance issues with a single large map, consider using a <a href="https://doc.mapeditor.org/en/stable/manual/worlds/">Tiled world</a>.<br />
+<p>If you have performance issues with a single large map, consider using a <a href="https://doc.mapeditor.org/en/stable/manual/worlds/">Tiled world</a>.
 A Tiled world is a collection of multiple maps, and you can control which ones are loaded at any given time.</p>
 <p>To spawn a Tiled world, use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/struct.TiledWorld.html"><code>TiledWorld</code></a> component after loading a <code>.world</code> asset:</p>
 <pre><pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
@@ -295,17 +295,18 @@ The crate will automatically insert the corresponding Bevy <code>Component</code
 <p>See the <a href="guides/properties.html">custom properties guide</a> for more information.</p>
 <hr />
 <h2 id="how-do-i-enable-map-hot-reload"><a class="header" href="#how-do-i-enable-map-hot-reload">How do I enable map hot-reload?</a></h2>
-<p>Enable the Bevy <code>file_watcher</code> feature in your project.<br />
+<p>Enable the Bevy <code>file_watcher</code> feature in your project.
 With this enabled, <code>bevy_ecs_tiled</code> will automatically reload a map or world whenever it is updated in Tiled.</p>
 <hr />
 <h2 id="how-do-i-access-tiled-raw-data"><a class="header" href="#how-do-i-access-tiled-raw-data">How do I access Tiled "raw" data?</a></h2>
 <p>Sometimes you may need to access the underlying Tiled data, such as a <code>tiled::ObjectData</code> or <code>tiled::TileData</code>.</p>
-<p>You have two main options:</p>
+<p>You have several options:</p>
 <ul>
+<li>Use provided ECS components such as <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/struct.TiledLayerId.html"><code>TiledLayerId</code></a> and associated helper methods.</li>
 <li>Listen to <a href="./design/map_events.html">map loading events</a> and use <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TiledEvent.html"><code>TiledEvent&lt;E&gt;</code></a> helper methods to access Tiled data.</li>
 <li>Retrieve the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/storage/struct.TiledMapStorage.html"><code>TiledMapStorage</code></a> component from your map entity to get the mapping between Bevy entities and their corresponding Tiled data.</li>
 </ul>
-<p>These two options are demonstrated in <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples">examples</a> and <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/src/debug">debug plugins</a>.</p>
+<p>These options are demonstrated in <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples">examples</a> and <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/src/debug">debug plugins</a>.</p>
 <hr />
 <h2 id="i-found-a-bug--feature-x-is-missing--how-do-i-do-y"><a class="header" href="#i-found-a-bug--feature-x-is-missing--how-do-i-do-y">I found a bug! / Feature 'X' is missing! / How do I do 'Y'?</a></h2>
 <p>This crate is still a work in progress, so you may encounter bugs, missing features, or have questions about usage.</p>
@@ -313,7 +314,7 @@ With this enabled, <code>bevy_ecs_tiled</code> will automatically reload a map o
 <li>Check the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues">open issues</a> to see if your problem is already reported.</li>
 <li>If not, please open a new issue! I try to address every issue as quickly as possible.</li>
 </ul>
-<p><strong>Contributions are very welcome!</strong><br />
+<p><strong>Contributions are very welcome!</strong>
 If you’d like to contribute, please read the <a href="misc/contributing.html">contribution guide</a> and feel free to open a PR!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="why-use-tiled"><a class="header" href="#why-use-tiled">Why use Tiled?</a></h1>
 <p><a href="https://www.mapeditor.org/">Tiled</a> may feel a bit outdated in terms of "look and feel," especially compared to more modern map editors like <a href="https://ldtk.io/">LDTK</a>.<br />
