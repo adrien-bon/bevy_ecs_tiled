@@ -14,6 +14,13 @@
 - `TiledAnimation` struct redesigned: `start` and `end` fields replaced with `frames: Vec<(usize, f32)>` (atlas index, duration in seconds) and `current_frame: usize`
 - Tile-layer animations (via `bevy_ecs_tilemap`'s `AnimatedTile`) still require consecutive IDs and uniform duration; a warning is emitted when those constraints are violated
 
+## v0.11.4
+
+### Features
+
+- Store Tiled IDs as ECS components
+- Bump `geo` crate to improve wasm support (#190)
+
 ## v0.11.3
 
 ### Features
@@ -158,7 +165,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_8.
 
 ### Features
 
-- Integrate the `geo` crate and rework how we handle physics colliders.  
+- Integrate the `geo` crate and rework how we handle physics colliders.
   Special thanks to @Niashi24 for inspiration on the polygons aggregation code !
 - Colliders entity now have `TiledColliderOrigin` and `TiledColliderPolygons` components
 - Explicit `SystemSet` to allow systems ordering for user applications.
