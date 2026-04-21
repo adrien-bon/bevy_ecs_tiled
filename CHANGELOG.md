@@ -2,6 +2,8 @@
 
 ## [unreleased]
 
+## v0.11.4
+
 ### Features
 
 - Store Tiled IDs as ECS components
