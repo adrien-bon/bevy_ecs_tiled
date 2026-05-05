@@ -17,7 +17,7 @@
 use crate::prelude::*;
 use avian2d::{
     parry::{
-        math::{Isometry, Point, Real},
+        math::{Pose, Vector},
         shape::SharedShape,
     },
     prelude::*,
@@ -55,10 +55,7 @@ impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
                 let shared_shapes = multi_polygon_as_triangles(multi_polygon)
                     .iter()
                     .map(|([a, b, c], centroid)| {
-                        (
-                            Isometry::<Real>::new((*centroid).into(), 0.),
-                            SharedShape::triangle((*a).into(), (*b).into(), (*c).into()),
-                        )
+                        (Pose::new(*centroid, 0.), SharedShape::triangle(*a, *b, *c))
                     })
                     .collect::<Vec<_>>();
 
@@ -81,7 +78,7 @@ impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
                     .enumerate()
                     .for_each(|(i, ls)| {
                         let collider: Collider = SharedShape::polyline(
-                            ls.points().map(|v| Point::new(v.x(), v.y())).collect(),
+                            ls.points().map(|v| Vector::new(v.x(), v.y())).collect(),
                             None,
                         )
                         .into();
@@ -105,8 +102,8 @@ impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
                         ls.lines().for_each(|l| {
                             let points = l.points();
                             let len = vertices.len();
-                            vertices.push(Point::new(points.0.x(), points.0.y()));
-                            vertices.push(Point::new(points.1.x(), points.1.y()));
+                            vertices.push(Vector::new(points.0.x(), points.0.y()));
+                            vertices.push(Vector::new(points.1.x(), points.1.y()));
                             indices.push([len as u32, (len + 1) as u32]);
                         });
                     });
