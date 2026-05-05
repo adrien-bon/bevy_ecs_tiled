@@ -14,6 +14,16 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_12
     directly attached to the physics object and not always as child entity
   - Add a new setting to control geometry simplification / colliders merge (enabled by default)
 
+### Fixed
+
+- Object-layer tile animations with non-consecutive frame IDs now work correctly instead of being silently dropped (#12)
+- Object-layer tile animations with non-uniform per-frame durations now work correctly instead of being silently dropped (#12)
+
+### Changed
+
+- `TiledAnimation` struct redesigned: `start` and `end` fields replaced with `frames: Vec<(usize, f32)>` (atlas index, duration in seconds) and `current_frame: usize`
+- Tile-layer animations (via `bevy_ecs_tilemap`'s `AnimatedTile`) still require consecutive IDs and uniform duration; a warning is emitted when those constraints are violated
+
 ## v0.11.4
 
 ### Features
