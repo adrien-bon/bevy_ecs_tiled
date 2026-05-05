@@ -3,6 +3,7 @@
 ## [unreleased]
 
 **BREAKING CHANGES**
+<<<<<<< animation-tileid-limitation
 
 ### Fixed
 
@@ -13,6 +14,18 @@
 
 - `TiledAnimation` struct redesigned: `start` and `end` fields replaced with `frames: Vec<(usize, f32)>` (atlas index, duration in seconds) and `current_frame: usize`
 - Tile-layer animations (via `bevy_ecs_tilemap`'s `AnimatedTile`) still require consecutive IDs and uniform duration; a warning is emitted when those constraints are violated
+=======
+This version brings breaking changes.
+A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_12.html) is available to help adapt to these.
+
+### Features
+
+- Rework physics colliders spawning (#179) :
+  - Only send a single `ColliderCreated` event per physics object, not once per collider
+  - Let physics backend decide of the ECS hierarchy, typically for Avian and Rapier will have a collider
+    directly attached to the physics object and not always as child entity
+  - Add a new setting to control geometry simplification / colliders merge (enabled by default)
+>>>>>>> dev
 
 ## v0.11.4
 

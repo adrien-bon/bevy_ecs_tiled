@@ -37,8 +37,8 @@ fn setup_minimap(
     window: Single<&Window>,
     mut images: ResMut<Assets<Image>>,
 ) {
-    let minimap_width = 400;
-    let minimap_height = 300;
+    let minimap_width = 300;
+    let minimap_height = 150;
 
     let mut image = Image::new_uninit(
         default(),
@@ -60,6 +60,7 @@ fn setup_minimap(
             }),
             Camera {
                 order: 1, // After main camera at default order 0
+                // Minimap blue-ish background
                 clear_color: ClearColorConfig::Custom(Color::Srgba(CYAN_100).with_alpha(0.6)),
                 ..default()
             },
@@ -68,7 +69,6 @@ fn setup_minimap(
         ))
         .id();
 
-    // Minimap blue-ish background
     commands.spawn((
         Node {
             position_type: PositionType::Absolute,
