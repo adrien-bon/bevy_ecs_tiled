@@ -2,7 +2,6 @@
 
 ## [unreleased]
 
-
 **BREAKING CHANGES**
 This version brings breaking changes.
 A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_12.html) is available to help adapt to these.
@@ -32,7 +31,6 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_12
 
 - Store Tiled IDs as ECS components
 - Bump `geo` crate to improve wasm support (#190)
-
 
 ## v0.11.3
 
