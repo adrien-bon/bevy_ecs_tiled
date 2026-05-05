@@ -15,10 +15,9 @@ target/
 .DS_Store
 .idea
 *.tiled-session*
-*.tiled-project
 
 # Ignore local .devcontainer configuration
 .devcontainer
 
-# Ignore local tiled types export files
+# Ignore default tiled types export files
 tiled_types_export.json

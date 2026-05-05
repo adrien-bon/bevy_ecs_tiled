@@ -23,10 +23,17 @@ pub struct TiledObjectVisualOf(pub Entity);
 #[relationship_target(relationship = TiledObjectVisualOf)]
 pub struct TiledObjectVisuals(Vec<Entity>);
 
+/// Tiled object ID associated with this [`TiledObject`].
+///
+/// You can retrieve the corresponding [`tiled::Object`] using the [`get_object_from_map`] helper function.
+#[derive(Component, Default, Reflect, Copy, Clone, Debug, Deref)]
+#[reflect(Component, Default, Debug)]
+pub struct TiledObjectId(pub u32);
+
 /// Marker [`Component`] for a Tiled map object.
 #[derive(Component, Default, Reflect, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
-#[require(Visibility, Transform, TiledName)]
+#[require(Visibility, Transform, TiledName, TiledObjectId)]
 pub enum TiledObject {
     /// A point shape.
     #[default]
@@ -385,6 +392,7 @@ impl TiledObject {
 
 pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledObject>();
+    app.register_type::<TiledObjectId>();
     app.register_type::<TiledObjectVisualOf>();
     app.register_type::<TiledObjectVisuals>();
 }

@@ -2,9 +2,37 @@
 
 ## [unreleased]
 
+
+**BREAKING CHANGES**
+This version brings breaking changes.
+A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_12.html) is available to help adapt to these.
+
 ### Features
 
-- add basic support for text objects (#56)
+- Rework physics colliders spawning (#179) :
+  - Only send a single `ColliderCreated` event per physics object, not once per collider
+  - Let physics backend decide of the ECS hierarchy, typically for Avian and Rapier will have a collider
+    directly attached to the physics object and not always as child entity
+  - Add a new setting to control geometry simplification / colliders merge (enabled by default)
+- Add basic support for text objects (#56)
+
+### Fixed
+
+- Object-layer tile animations with non-consecutive frame IDs now work correctly instead of being silently dropped (#12)
+- Object-layer tile animations with non-uniform per-frame durations now work correctly instead of being silently dropped (#12)
+
+### Changed
+
+- `TiledAnimation` struct redesigned: `start` and `end` fields replaced with `frames: Vec<(usize, f32)>` (atlas index, duration in seconds) and `current_frame: usize`
+- Tile-layer animations (via `bevy_ecs_tilemap`'s `AnimatedTile`) still require consecutive IDs and uniform duration; a warning is emitted when those constraints are violated
+
+## v0.11.4
+
+### Features
+
+- Store Tiled IDs as ECS components
+- Bump `geo` crate to improve wasm support (#190)
+
 
 ## v0.11.3
 
@@ -150,7 +178,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_8.
 
 ### Features
 
-- Integrate the `geo` crate and rework how we handle physics colliders.  
+- Integrate the `geo` crate and rework how we handle physics colliders.
   Special thanks to @Niashi24 for inspiration on the polygons aggregation code !
 - Colliders entity now have `TiledColliderOrigin` and `TiledColliderPolygons` components
 - Explicit `SystemSet` to allow systems ordering for user applications.

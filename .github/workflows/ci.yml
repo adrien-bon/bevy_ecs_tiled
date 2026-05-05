@@ -11,7 +11,7 @@ env:
   # Reduce compile time and cache size.
   RUSTFLAGS: -Dwarnings -Zshare-generics=y -Zthreads=0 -C debuginfo=line-tables-only
   RUSTDOCFLAGS: -Dwarnings -Zshare-generics=y -Zthreads=0 -C debuginfo=line-tables-only
-  toolchain: nightly-2025-06-26
+  toolchain: nightly-2026-04-18
 
 jobs:
   # Run tests.
