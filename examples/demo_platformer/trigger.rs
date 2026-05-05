@@ -47,15 +47,11 @@ fn handle_collision_start(
     mut message_reader: MessageReader<CollisionStart>,
     mut commands: Commands,
     zone_query: Query<&TriggerZone>,
-    collider_query: Query<&TiledColliderOf>,
     mut actor_query: Query<(Entity, &mut Transform), With<TriggerActor>>,
     teleport_dest_query: Query<&Transform, Without<TriggerActor>>,
 ) {
     for evt in message_reader.read() {
-        let Ok(zone) = collider_query
-            .get(evt.collider1)
-            .and_then(|&collider_of| zone_query.get(*collider_of))
-        else {
+        let Ok(zone) = zone_query.get(evt.collider1) else {
             return;
         };
         let Some(actor_entity) = evt.body2 else {
