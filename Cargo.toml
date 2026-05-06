@@ -59,7 +59,7 @@ regex = "1.12"
 
 # Optional dependencies, enabled via features.
 bevy_rapier2d = { version = "0.33", optional = true }
-avian2d = { version = "0.5", optional = true }
+avian2d = { version = "0.6", optional = true }
 serde = { version = "1.0", optional = true, features = ["derive"] }
 serde_json = { version = "1.0", optional = true }
 
