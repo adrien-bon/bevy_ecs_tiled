@@ -4,6 +4,8 @@
 //! It handles the creation of map layers, tiles, objects, and their associated components in the ECS world,
 //! enabling the rendering and interaction of Tiled maps within a Bevy application.
 
+#[cfg(feature = "text")]
+use crate::tiled::object::{TiledObjectText, TiledObjectTextBox};
 use crate::{prelude::*, tiled::event::TiledMessageWriters};
 #[cfg(feature = "text")]
 use bevy::camera::primitives::Aabb;
@@ -444,11 +446,15 @@ fn spawn_objects_layer(
         {
             commands.spawn((
                 ChildOf(object_entity),
+                Name::new("TiledObjectTextBox"),
+                TiledObjectTextBox,
                 Aabb::from_min_max(Vec3::ZERO, Vec3::new(width, height, 0.)),
                 Transform::from_translation(Vec3::ZERO),
                 Anchor::TOP_LEFT,
+                Visibility::Inherited,
                 children![(
                     Name::new("TiledObjectText"),
+                    TiledObjectText,
                     Text2d::new(text),
                     TextFont {
                         font_size: font_size as f32,
@@ -459,7 +465,8 @@ fn spawn_objects_layer(
                         offset.x * width + width / 2.,
                         offset.y * height - height / 2.,
                         1.
-                    ))
+                    )),
+                    Visibility::Inherited,
                 )],
             ));
         }

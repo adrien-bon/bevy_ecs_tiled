@@ -30,6 +30,14 @@ pub struct TiledObjectVisuals(Vec<Entity>);
 #[reflect(Component, Default, Debug)]
 pub struct TiledObjectId(pub u32);
 
+/// Marker [`Component`] for a [`TiledObject`]'s text box.
+#[derive(Component, Reflect, Copy, Clone, Debug)]
+pub struct TiledObjectTextBox;
+
+/// Marker [`Component`] for a [`TiledObjectTextBox`]'s inner text.
+#[derive(Component, Reflect, Copy, Clone, Debug)]
+pub struct TiledObjectText;
+
 /// Marker [`Component`] for a Tiled map object.
 #[derive(Component, Default, Reflect, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
