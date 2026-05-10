@@ -13,6 +13,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_12
   - Let physics backend decide of the ECS hierarchy, typically for Avian and Rapier will have a collider
     directly attached to the physics object and not always as child entity
   - Add a new setting to control geometry simplification / colliders merge (enabled by default)
+- Add basic support for text objects (#56)
 
 ### Fixed
 
