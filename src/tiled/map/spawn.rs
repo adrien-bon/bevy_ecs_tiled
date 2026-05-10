@@ -4,8 +4,6 @@
 //! It handles the creation of map layers, tiles, objects, and their associated components in the ECS world,
 //! enabling the rendering and interaction of Tiled maps within a Bevy application.
 
-#[cfg(feature = "text")]
-use crate::tiled::object::{TiledObjectText, TiledObjectTextBox};
 use crate::{prelude::*, tiled::event::TiledMessageWriters};
 #[cfg(feature = "text")]
 use bevy::camera::primitives::Aabb;

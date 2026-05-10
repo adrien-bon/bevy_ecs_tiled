@@ -68,7 +68,10 @@ pub mod prelude {
             RespawnTiledMap, TiledMap, TiledMapImageRepeatMargin, TiledMapLayerZOffset,
             TiledMapReference,
         },
-        object::{TiledObject, TiledObjectId, TiledObjectVisualOf, TiledObjectVisuals},
+        object::{
+            TiledObject, TiledObjectId, TiledObjectText, TiledObjectTextBox, TiledObjectVisualOf,
+            TiledObjectVisuals,
+        },
         sets::{TiledPostUpdateSystems, TiledPreUpdateSystems, TiledUpdateSystems},
         tile::{TiledTile, TiledTileId, TiledTilemap, TiledTilesetId},
         world::{
