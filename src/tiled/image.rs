@@ -27,7 +27,10 @@ pub(crate) fn plugin(app: &mut App) {
 fn update_image_position_and_size(
     mut image_query: Query<(&TiledImage, &ChildOf, &mut Transform, &mut Sprite), With<TiledImage>>,
     map_query: Query<&TiledMapImageRepeatMargin, With<TiledMap>>,
-    layer_query: Query<(&GlobalTransform, &ChildOf), (With<TiledLayer>, Without<TiledImage>)>,
+    layer_query: Query<
+        (&GlobalTransform, &TiledMapReference),
+        (With<TiledLayer>, Without<TiledImage>),
+    >,
     camera_query: Query<(&Projection, &GlobalTransform), With<Camera2d>>,
 ) {
     // Early exit in case we don't have any image
@@ -50,7 +53,7 @@ fn update_image_position_and_size(
             })
         });
 
-    for (image, child_of, mut transform, mut sprite) in image_query.iter_mut() {
+    for (image, child_of_image, mut transform, mut sprite) in image_query.iter_mut() {
         let (repeat_x, repeat_y) = match sprite.image_mode {
             SpriteImageMode::Tiled { tile_x, tile_y, .. } => (tile_x, tile_y),
             _ => continue,
@@ -63,8 +66,10 @@ fn update_image_position_and_size(
 
         // Retrieve layer transform from layer entity and image repeat margin from map entity
         let Ok((layer_transform, repeat_margin)) = layer_query
-            .get(child_of.parent())
-            .and_then(|(t, c)| map_query.get(c.parent()).map(|m| (t, m)))
+            .get(child_of_image.parent())
+            .and_then(|(transform, &map_ref)| {
+                map_query.get(*map_ref).map(|margin| (transform, margin))
+            })
         else {
             continue;
         };
