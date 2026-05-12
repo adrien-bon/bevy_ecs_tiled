@@ -57,20 +57,20 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
             }
         };
 
-        Some(
-            commands
-                .entity(origin)
-                .with_child(Name::from(name))
-                // In this specific case we want to draw a mesh which require access
-                // to `Assets<Mesh>` and `Assets<ColorMaterial>` resources.
-                // We'll wrap everything in a custom command to get access to `World`
-                // so we can retrieve these resources.
-                .queue(CustomColliderCommand {
-                    color,
-                    multi_polygons_list: multi_polygons_list.clone(),
-                })
-                .id(),
-        )
+        // Spawn a child entity that will hold our mesh
+        let mut child = commands.spawn((ChildOf(origin), Name::from(name)));
+
+        // In this specific case we want to draw a mesh which require access
+        // to `Assets<Mesh>` and `Assets<ColorMaterial>` resources.
+        // We'll wrap everything in a custom command to get access to `World`
+        // so we can retrieve these resources.
+        child.queue(CustomColliderCommand {
+            color,
+            multi_polygons_list: multi_polygons_list.clone(),
+        });
+
+        // Return the entity we spawned
+        Some(child.id())
     }
 }
 
