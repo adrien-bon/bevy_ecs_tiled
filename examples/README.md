@@ -8,8 +8,8 @@ To run an example, use the following command, replacing `XXX` with the example n
 cargo run --example XXX
 ```
 
-> **Note:**  
-> Some examples require one or more feature flags to be enabled.  
+> **Note:**
+> Some examples require one or more feature flags to be enabled.
 > If you attempt to run such an example without the required features, Cargo will display an error message with the correct command to use.
 
 For a more in-depth explanation of crate concepts, see the [dedicated book](https://adrien-bon.github.io/bevy_ecs_tiled/) or the [demo_platformer](./demo_platformer/) example..
@@ -22,8 +22,8 @@ Most examples support the following controls:
 - **Z/X**: Zoom out / zoom in
 - **A/E**: Rotate the map (not just the camera)
 
-> **Note for non-QWERTY layouts:**  
-> Some keys may differ.  
+> **Note for non-QWERTY layouts:**
+> Some keys may differ.
 > For example, on an AZERTY keyboard, use `A` instead of `Q` and `Z` instead of `W`.
 
 ## Examples List
@@ -37,6 +37,7 @@ Most examples support the following controls:
 | `map_reload` | None | This example demonstrates how to load and unload maps. |
 | `map_settings` | None | This example cycles through different map settings that can be applied. |
 | `map_spawn_delay` | None | This example will delay map spawn from asset loading to demonstrate both are decoupled. |
+| `map_text` | text | This example demonstrates loading a map with a Tiled text. |
 | `orientation_hexagonal` | `debug` | This example cycles through different kinds of hexagonal maps. |
 | `orientation_isometric` | `debug` | This example cycles through different kinds of isometric maps. |
 | `orientation_orthogonal` | `debug` | This example cycles through different kinds of orthogonal maps. |
