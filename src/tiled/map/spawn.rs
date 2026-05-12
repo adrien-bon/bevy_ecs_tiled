@@ -345,7 +345,7 @@ fn spawn_tiles(
     commands: &mut Commands,
     tiled_map: &TiledMapAsset,
     layer_event: &TiledEvent<TilemapCreated>,
-    layer_entity: Entity,
+    tilemap_entity: Entity,
     tilemap_texture: &TilemapTexture,
     tileset_id: u32,
     tiles_layer: &tiled::TileLayer,
@@ -393,7 +393,7 @@ fn spawn_tiles(
                     TiledTileId(tile_id),
                     TileBundle {
                         position: tile_pos,
-                        tilemap_id: TilemapId(layer_entity),
+                        tilemap_id: TilemapId(tilemap_entity),
                         texture_index: TileTextureIndex(texture_index),
                         flip: TileFlip {
                             x: layer_tile_data.flip_h,
@@ -402,7 +402,7 @@ fn spawn_tiles(
                         },
                         ..default()
                     },
-                    ChildOf(layer_entity),
+                    ChildOf(tilemap_entity),
                 ))
                 .id();
 
