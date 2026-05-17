@@ -31,7 +31,7 @@ impl TiledMapStorage {
     /// Clear the [`TiledMapStorage`], removing all children layers in the process
     pub fn clear(&mut self, commands: &mut Commands) {
         for layer_entity in self.layers.values() {
-            commands.entity(*layer_entity).despawn();
+            commands.entity(*layer_entity).try_despawn();
         }
         self.layers.clear();
         self.objects.clear();

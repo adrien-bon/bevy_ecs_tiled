@@ -11,9 +11,28 @@ use bevy_ecs_tilemap::prelude::{HexCoordSystem, IsoCoordSystem};
 
 /// Retrieves a [`tiled::Layer`] from a [`tiled::Map`] given a layer ID.
 ///
-/// Returns `Some(tiled::Layer)` if the layer exists, or `None` if the ID is out of bounds.
+/// Returns `Some(tiled::Layer)` if the layer exists, or `None` if it does not
 pub fn get_layer_from_map(map: &tiled::Map, layer_id: u32) -> Option<tiled::Layer<'_>> {
-    map.get_layer(layer_id as usize)
+    fn find_layer_by_id<'a, T: 'a + ExactSizeIterator<Item = tiled::Layer<'a>>>(
+        layers: T,
+        layer_id: u32,
+    ) -> Option<tiled::Layer<'a>> {
+        layers
+            .filter_map(|l| match l.layer_type() {
+                tiled::LayerType::Group(group_layer) => {
+                    find_layer_by_id(group_layer.layers(), layer_id)
+                }
+                _ => {
+                    if l.id() == layer_id {
+                        Some(l)
+                    } else {
+                        None
+                    }
+                }
+            })
+            .next()
+    }
+    find_layer_by_id(map.layers(), layer_id)
 }
 
 /// Retrieves a [`tiled::Tileset`] from a [`tiled::Map`] given a tileset ID.
@@ -43,15 +62,23 @@ pub fn get_tile_from_map(
 ///
 /// Searches all object layers for the specified object ID and returns it if found.
 pub fn get_object_from_map(map: &tiled::Map, object_id: u32) -> Option<tiled::Object<'_>> {
-    for layer in map.layers() {
-        let obj = layer
-            .as_object_layer()
-            .and_then(|l| l.objects().find(|o| o.id() == object_id));
-        if obj.is_some() {
-            return obj;
-        }
+    fn find_object_by_id<'a, T: 'a + ExactSizeIterator<Item = tiled::Layer<'a>>>(
+        layers: T,
+        object_id: u32,
+    ) -> Option<tiled::Object<'a>> {
+        layers
+            .filter_map(|l| match l.layer_type() {
+                tiled::LayerType::Group(group_layer) => {
+                    find_object_by_id(group_layer.layers(), object_id)
+                }
+                tiled::LayerType::Objects(object_layer) => {
+                    object_layer.objects().find(|o| o.id() == object_id)
+                }
+                _ => None,
+            })
+            .next()
     }
-    None
+    find_object_by_id(map.layers(), object_id)
 }
 
 /// Converts a [`tiled::Map`]'s [`tiled::Orientation`] to a [`TilemapType`].
