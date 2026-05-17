@@ -9,6 +9,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_12
 ### Features
 
 - Add basic support for text objects (#56)
+- Add support for group layers (#17)
 
 ### Fixed
 
