@@ -1,6 +1,5 @@
 use avian2d::prelude::*;
 use bevy::prelude::*;
-use bevy_ecs_tiled::prelude::*;
 
 use crate::UpdateSystems;
 
@@ -9,14 +8,13 @@ pub(super) fn plugin(app: &mut App) {
     app.register_type::<TriggerActor>();
     app.add_systems(
         Update,
-        (create_trigger_zone, handle_collision_start)
-            .chain()
-            .in_set(UpdateSystems::TriggerZones),
+        handle_collision_start.in_set(UpdateSystems::TriggerZones),
     );
 }
 
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq, Reflect)]
 #[reflect(Component, Default)]
+#[require(CollisionEventsEnabled, Sensor)]
 pub enum TriggerZone {
     #[default]
     Unknown,
@@ -29,20 +27,6 @@ pub enum TriggerZone {
 #[reflect(Component, Default)]
 pub struct TriggerActor;
 
-fn create_trigger_zone(
-    mut commands: Commands,
-    mut message_reader: MessageReader<TiledEvent<ColliderCreated>>,
-    zone_query: Query<Entity, With<TriggerZone>>,
-) {
-    for evt in message_reader.read() {
-        if zone_query.get(*evt.event.collider_of).is_ok() {
-            commands
-                .entity(evt.origin)
-                .insert((Sensor, CollisionEventsEnabled));
-        }
-    }
-}
-
 fn handle_collision_start(
     mut message_reader: MessageReader<CollisionStart>,
     mut commands: Commands,
@@ -51,13 +35,10 @@ fn handle_collision_start(
     teleport_dest_query: Query<&Transform, Without<TriggerActor>>,
 ) {
     for evt in message_reader.read() {
-        let Ok(zone) = zone_query.get(evt.collider1) else {
+        let Ok(zone) = zone_query.get(evt.collider2) else {
             return;
         };
-        let Some(actor_entity) = evt.body2 else {
-            return;
-        };
-        let Ok((actor, mut transform)) = actor_query.get_mut(actor_entity) else {
+        let Ok((actor, mut transform)) = actor_query.get_mut(evt.collider1) else {
             return;
         };
         match zone {

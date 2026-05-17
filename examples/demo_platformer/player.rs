@@ -30,7 +30,7 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
-#[require(Transform, Visibility)]
+#[require(Transform, Visibility, CollisionEventsEnabled)]
 #[reflect(Component)]
 pub struct Player;
 
