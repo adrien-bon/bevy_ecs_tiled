@@ -95,6 +95,6 @@ fn move_player(
             direction /= direction.length();
         }
 
-        rb_vels.linvel = direction * MOVE_SPEED;
+        rb_vels.linear = direction * MOVE_SPEED;
     }
 }
