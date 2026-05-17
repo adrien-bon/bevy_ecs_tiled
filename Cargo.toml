@@ -61,7 +61,7 @@ geo = "0.33"
 regex = "1.12"
 
 # Optional dependencies, enabled via features.
-bevy_rapier2d = { version = "0.33", optional = true }
+bevy_rapier2d = { version = "0.34", optional = true }
 avian2d = { version = "0.6", optional = true }
 serde = { version = "1.0", optional = true, features = ["derive"] }
 serde_json = { version = "1.0", optional = true }
