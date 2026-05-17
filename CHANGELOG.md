@@ -15,6 +15,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_12
   - Add a new setting to control geometry simplification / colliders merge (enabled by default)
 - Add basic support for text objects (#56)
 - Bump bevy_rapier to v0.34
+- Bump avian to v0.6
 
 ### Fixed
 
