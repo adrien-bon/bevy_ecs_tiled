@@ -34,9 +34,16 @@ use bevy::prelude::*;
 #[derive(Default, Copy, Clone, Debug)]
 pub struct TiledPhysicsPlugin<T: TiledPhysicsBackend>(std::marker::PhantomData<T>);
 
+/// When added to a Tiled entity, will prevent tree reduction (combining) of colliders.
+///
+/// See also [TiledPhysicsSettings::simplify_geometry].
+#[derive(Component, Reflect, Copy, PartialEq, Clone, Debug)]
+pub struct TiledPhysicsDisableGeometrySimplification;
+
 impl<T: TiledPhysicsBackend> Plugin for TiledPhysicsPlugin<T> {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.register_type::<T>();
+        app.register_type::<TiledPhysicsDisableGeometrySimplification>();
         app.add_systems(
             PreUpdate,
             (collider_from_tiles_layer::<T>, collider_from_object::<T>)
@@ -49,6 +56,7 @@ impl<T: TiledPhysicsBackend> Plugin for TiledPhysicsPlugin<T> {
 
 fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
     mut layer_created: MessageReader<TiledEvent<LayerCreated>>,
+    layer_query: Query<Option<&TiledPhysicsDisableGeometrySimplification>, With<TiledLayer>>,
     mut commands: Commands,
     assets: Res<Assets<TiledMapAsset>>,
     maps_query: Query<(&TiledPhysicsSettings<T>, &TilemapAnchor), With<TiledMap>>,
@@ -68,6 +76,10 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
             continue;
         };
 
+        let Ok(disable_geometry_simplification) = layer_query.get(ev.origin) else {
+            continue;
+        };
+
         if settings.tiles_layer_filter.matches(&layer.name) {
             collider::spawn_colliders::<T>(
                 settings,
@@ -80,6 +92,7 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
                     ColliderCreated::new(TiledColliderSource::TilesLayer, ev.origin),
                 ),
                 &mut message_writer,
+                disable_geometry_simplification.is_some(),
             );
         }
     }
@@ -87,6 +100,7 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
 
 fn collider_from_object<T: TiledPhysicsBackend>(
     mut object_created: MessageReader<TiledEvent<ObjectCreated>>,
+    object_query: Query<Option<&TiledPhysicsDisableGeometrySimplification>, With<TiledObject>>,
     mut commands: Commands,
     assets: Res<Assets<TiledMapAsset>>,
     maps_query: Query<(&TiledPhysicsSettings<T>, &TilemapAnchor), With<TiledMap>>,
@@ -103,6 +117,10 @@ fn collider_from_object<T: TiledPhysicsBackend>(
         };
 
         let Some(object) = ev.get_object(&assets) else {
+            continue;
+        };
+
+        let Ok(disable_geometry_simplification) = object_query.get(ev.origin) else {
             continue;
         };
 
@@ -123,6 +141,7 @@ fn collider_from_object<T: TiledPhysicsBackend>(
                     ColliderCreated::new(TiledColliderSource::Object, ev.origin),
                 ),
                 &mut message_writer,
+                disable_geometry_simplification.is_some(),
             );
         }
     }

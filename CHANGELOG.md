@@ -16,6 +16,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_12
 - Add basic support for text objects (#56)
 - Bump bevy_rapier to v0.34
 - Bump avian to v0.6
+- Add capability to prevent simplifying geometry (ie. aggregating physics colliders) for a given Tiled item, using `TiledPhysicsDisableGeometrySimplification` component
 
 ### Fixed
 

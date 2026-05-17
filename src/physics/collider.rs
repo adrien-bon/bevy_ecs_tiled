@@ -110,6 +110,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
     filter: &TiledFilter,
     collider_created: TiledEvent<ColliderCreated>,
     message_writer: &mut MessageWriter<TiledEvent<ColliderCreated>>,
+    disable_geometry_simplification: bool,
 ) {
     let Some(map_asset) = collider_created.get_map_asset(assets) else {
         return;
@@ -204,7 +205,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
     }
 
     // Try to simplify geometry by merging together adjacent polygons
-    let polygons = if settings.simplify_geometry {
+    let polygons = if !disable_geometry_simplification && settings.simplify_geometry {
         let Some(polygons) = simplify_geometry(polygons, |a, b| a.union(&b)) else {
             warn!(
                 "Failed to simplify geometry, skipping this polygon (entity {})",
