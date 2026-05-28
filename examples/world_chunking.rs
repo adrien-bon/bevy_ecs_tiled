@@ -44,14 +44,14 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn((
             Text::new("[+/-] Chunking: "),
             TextFont {
-                font_size: 24.,
+                font_size: FontSize::Px(24.),
                 ..default()
             },
         ))
         .with_child((
             TextSpan::default(),
             TextFont {
-                font_size: 24.,
+                font_size: FontSize::Px(24.),
                 ..default()
             },
             HelperText,
