@@ -6,12 +6,16 @@ use bevy::{
     reflect::{
         array::ArrayInfo,
         enums::{EnumInfo, VariantInfo},
+        list::ListInfo,
+        map::MapInfo,
+        set::SetInfo,
         structs::StructInfo,
         tuple::TupleInfo,
         tuple_struct::TupleStructInfo,
         NamedField, ReflectRef, TypeInfo, TypeRegistration, TypeRegistry, UnnamedField,
     },
 };
+use serde_json::Value;
 use std::borrow::Cow;
 use thiserror::Error;
 
@@ -22,14 +26,8 @@ type ExportConversionResult = Result<Vec<TypeExport>, ExportConversionError>;
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Error)]
 enum ExportConversionError {
-    #[error("lists fields are not supported")]
-    ListUnsupported,
-    #[error("map fields are not supported")]
-    MapUnsupported,
     #[error("field of type {0} is not supported")]
     UnsupportedValue(&'static str),
-    #[error("set fields are not supported")]
-    SetUnsupported,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -172,14 +170,14 @@ impl TypeExportRegistry {
             TypeInfo::Tuple(info) => {
                 self.generate_tuple_export(info, registry, default_value, use_as)
             }
-            TypeInfo::List(_) => Err(ExportConversionError::ListUnsupported),
+            TypeInfo::List(info) => self.generate_list_export(info, registry, use_as),
             TypeInfo::Array(info) => self.generate_array_export(info, registry, use_as),
-            TypeInfo::Map(_) => Err(ExportConversionError::MapUnsupported),
+            TypeInfo::Map(info) => self.generate_map_export(info, registry, use_as),
             TypeInfo::Enum(info) => {
                 self.generate_enum_export(info, registry, default_value, use_as)
             }
             TypeInfo::Opaque(_) => Ok(vec![]),
-            TypeInfo::Set(_) => Err(ExportConversionError::SetUnsupported),
+            TypeInfo::Set(info) => self.generate_set_export(info, registry, use_as),
         }
     }
 
@@ -243,6 +241,165 @@ impl TypeExportRegistry {
                         value: Default::default(),
                     })
                     .collect(),
+            }),
+        };
+
+        Ok(vec![root])
+    }
+
+    fn generate_list_export(
+        &mut self,
+        info: &ListInfo,
+        registry: &TypeRegistry,
+        use_as: Vec<UseAs>,
+    ) -> ExportConversionResult {
+        let item_registry =
+            registry
+                .get(info.item_ty().id())
+                .ok_or(ExportConversionError::UnsupportedValue(
+                    info.item_ty().path(),
+                ))?;
+        let default_value = item_registry.data::<ReflectDefault>().map(|d| d.default());
+        let (type_field, property_type) = type_to_field(item_registry)?;
+
+        let root = TypeExport {
+            id: self.next_id(),
+            name: info.type_path().to_string(),
+            type_data: TypeData::Class(Class {
+                use_as,
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: vec![Member {
+                    name: "list".to_string(),
+                    property_type: None,
+                    type_field: FieldType::List,
+                    value: Value::Array(vec![serde_json::to_value(ListItem {
+                        property_type: property_type.clone(),
+                        type_field,
+                        value: default_value
+                            .map(|v| value_to_json(v.as_partial_reflect()))
+                            .unwrap_or_default(),
+                    })
+                    .unwrap()]),
+                }],
+            }),
+        };
+
+        Ok(vec![root])
+    }
+
+    fn generate_map_export(
+        &mut self,
+        info: &MapInfo,
+        registry: &TypeRegistry,
+        use_as: Vec<UseAs>,
+    ) -> ExportConversionResult {
+        let value_registry =
+            registry
+                .get(info.value_ty().id())
+                .ok_or(ExportConversionError::UnsupportedValue(
+                    info.value_ty().path(),
+                ))?;
+        let default_value = value_registry.data::<ReflectDefault>().map(|d| d.default());
+        let (value_type_field, value_property_type) = type_to_field(value_registry)?;
+        let key_registry =
+            registry
+                .get(info.key_ty().id())
+                .ok_or(ExportConversionError::UnsupportedValue(
+                    info.key_ty().path(),
+                ))?;
+        let default_key = key_registry.data::<ReflectDefault>().map(|d| d.default());
+        let (key_type_field, key_property_type) = type_to_field(key_registry)?;
+
+        let map_item_property_type = format!("{}:::MapItem", info.type_path());
+
+        let map_item = TypeExport {
+            id: self.next_id(),
+            name: map_item_property_type.clone(),
+            type_data: TypeData::Class(Class {
+                use_as: USE_AS_PROPERTY.to_vec(),
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: vec![
+                    Member {
+                        name: "key".to_string(),
+                        property_type: key_property_type.clone(),
+                        type_field: key_type_field,
+                        value: default_key
+                            .map(|v| value_to_json(v.as_partial_reflect()))
+                            .unwrap_or_default(),
+                    },
+                    Member {
+                        name: "value".to_string(),
+                        property_type: value_property_type.clone(),
+                        type_field: value_type_field,
+                        value: default_value
+                            .map(|v| value_to_json(v.as_partial_reflect()))
+                            .unwrap_or_default(),
+                    },
+                ],
+            }),
+        };
+
+        let root = TypeExport {
+            id: self.next_id(),
+            name: info.type_path().to_string(),
+            type_data: TypeData::Class(Class {
+                use_as,
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: vec![Member {
+                    name: "map".to_string(),
+                    property_type: None,
+                    type_field: FieldType::List,
+                    value: Value::Array(vec![serde_json::to_value(ListItem {
+                        property_type: Some(map_item_property_type),
+                        type_field: FieldType::Class,
+                        value: Default::default(),
+                    })
+                    .unwrap()]),
+                }],
+            }),
+        };
+
+        Ok(vec![root, map_item])
+    }
+
+    fn generate_set_export(
+        &mut self,
+        info: &SetInfo,
+        registry: &TypeRegistry,
+        use_as: Vec<UseAs>,
+    ) -> ExportConversionResult {
+        let value_registry =
+            registry
+                .get(info.value_ty().id())
+                .ok_or(ExportConversionError::UnsupportedValue(
+                    info.value_ty().path(),
+                ))?;
+        let default_value = value_registry.data::<ReflectDefault>().map(|d| d.default());
+        let (type_field, property_type) = type_to_field(value_registry)?;
+
+        let root = TypeExport {
+            id: self.next_id(),
+            name: info.type_path().to_string(),
+            type_data: TypeData::Class(Class {
+                use_as,
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: vec![Member {
+                    name: "set".to_string(),
+                    property_type: None,
+                    type_field: FieldType::List,
+                    value: Value::Array(vec![serde_json::to_value(ListItem {
+                        property_type: property_type.clone(),
+                        type_field,
+                        value: default_value
+                            .map(|v| value_to_json(v.as_partial_reflect()))
+                            .unwrap_or_default(),
+                    })
+                    .unwrap()]),
+                }],
             }),
         };
 
@@ -600,11 +757,6 @@ fn type_to_field(
     t: &TypeRegistration,
 ) -> Result<(FieldType, Option<String>), ExportConversionError> {
     let info = t.type_info();
-    if matches!(info, TypeInfo::List(_)) {
-        return Err(ExportConversionError::ListUnsupported);
-    } else if matches!(info, TypeInfo::Map(_)) {
-        return Err(ExportConversionError::MapUnsupported);
-    }
     Ok(match info.type_path() {
         "bool" => (FieldType::Bool, None),
         "f32" | "f64" => (FieldType::Float, None),

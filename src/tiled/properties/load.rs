@@ -1,3 +1,4 @@
+use crate::prelude::tiled::PropertyValue as PV;
 use crate::prelude::*;
 use bevy::{
     asset::LoadContext,
@@ -7,6 +8,9 @@ use bevy::{
     reflect::{
         array::DynamicArray,
         enums::{DynamicEnum, DynamicVariant, VariantInfo, VariantType},
+        list::DynamicList,
+        map::DynamicMap,
+        set::DynamicSet,
         structs::DynamicStruct,
         tuple::DynamicTuple,
         tuple_struct::DynamicTupleStruct,
@@ -14,9 +18,9 @@ use bevy::{
         UnnamedField,
     },
 };
+use std::alloc;
+use std::collections::HashSet;
 use std::path::PathBuf;
-
-use crate::prelude::tiled::PropertyValue as PV;
 
 #[derive(Debug, Clone)]
 pub(crate) struct DeserializedMapProperties<const HYDRATED: bool = false> {
@@ -333,11 +337,9 @@ impl DeserializedProperties {
                     Ok(Box::new(Entity::from_raw_u32(o).expect("Wrong entity ID")))
                 }
             }
-            ("core::option::Option<bevy_ecs::entity::Entity>", PV::ObjectValue(o), _) => {
-                Ok(Box::new(
-                    Some(Entity::from_raw_u32(o).expect("Wrong entity ID")).filter(|_| o != 0),
-                ))
-            }
+            ("core::option::Option<bevy_ecs::entity::Entity>", PV::ObjectValue(o), _) => Ok(
+                Box::new((o != 0).then_some(Entity::from_raw_u32(o).expect("Wrong entity ID"))),
+            ),
             (_, PV::StringValue(s), TypeInfo::Enum(info)) => {
                 let Some(variant) = info.variant(&s) else {
                     return Err(format!("no variant `{s}` for `{}`", info.type_path()));
@@ -545,14 +547,155 @@ impl DeserializedProperties {
                     info.type_path()
                 ))
             }
-            (_, PV::ClassValue { .. }, TypeInfo::List(_)) => {
-                Err("lists are currently unsupported".to_string())
+            (_, PV::ClassValue { mut properties, .. }, TypeInfo::List(info)) => {
+                let mut list = Vec::new();
+
+                let Some(reg) = registry.get(info.item_ty().id()) else {
+                    return Err(format!(
+                        "type `{}` is not registered",
+                        info.item_ty().path()
+                    ));
+                };
+
+                let Some(pv) = properties.remove("list") else {
+                    return Err(format!(
+                        "missing property on `{}`: `list`",
+                        info.type_path(),
+                    ));
+                };
+
+                let PV::ListValue(items) = pv else {
+                    return Err(format!(
+                        "wrong property type on `{}`: `list`",
+                        info.type_path(),
+                    ));
+                };
+
+                for item in items {
+                    let value =
+                        Self::deserialize_property(item, reg, registry, load_cx, default_value)?;
+                    list.push(value)
+                }
+
+                let mut out = DynamicList::from_iter(list);
+                out.set_represented_type(Some(registration.type_info()));
+
+                Ok(Box::new(out))
             }
-            (_, PV::ClassValue { .. }, TypeInfo::Map(_)) => {
-                Err("maps are currently unsupported".to_string())
+            (_, PV::ClassValue { mut properties, .. }, TypeInfo::Set(info)) => {
+                let mut list = Vec::new();
+
+                let Some(reg) = registry.get(info.value_ty().id()) else {
+                    return Err(format!(
+                        "type `{}` is not registered",
+                        info.value_ty().path()
+                    ));
+                };
+
+                let Some(pv) = properties.remove("set") else {
+                    return Err(format!("missing property on `{}`: `set`", info.type_path(),));
+                };
+
+                let PV::ListValue(items) = pv else {
+                    return Err(format!(
+                        "wrong property type on `{}`: `set`",
+                        info.type_path(),
+                    ));
+                };
+
+                for item in items {
+                    let value =
+                        Self::deserialize_property(item, reg, registry, load_cx, default_value)?;
+                    list.push(value);
+                }
+
+                let mut out = DynamicSet::from_iter(list);
+                out.set_represented_type(Some(registration.type_info()));
+
+                Ok(Box::new(out))
             }
-            (_, PV::ClassValue { .. }, TypeInfo::Set(_)) => {
-                Err("sets are currently unsupported".to_string())
+            (_, PV::ClassValue { mut properties, .. }, TypeInfo::Map(info)) => {
+                let mut list = Vec::new();
+
+                let Some(key_reg) = registry.get(info.key_ty().id()) else {
+                    return Err(format!(
+                        "key type `{}` is not registered",
+                        info.key_ty().path()
+                    ));
+                };
+
+                let Some(value_reg) = registry.get(info.value_ty().id()) else {
+                    return Err(format!(
+                        "value type `{}` is not registered",
+                        info.value_ty().path()
+                    ));
+                };
+
+                let Some(pv) = properties.remove("map") else {
+                    return Err(format!("missing property on `{}`: `map`", info.type_path(),));
+                };
+
+                let PV::ListValue(items) = pv else {
+                    return Err(format!(
+                        "wrong property type on `{}`: `map`",
+                        info.type_path(),
+                    ));
+                };
+
+                for item in items {
+                    let PV::ClassValue { mut properties, .. } = item else {
+                        return Err("wrong property type for map item".to_string());
+                    };
+
+                    let key;
+
+                    if let Some(key_prop) = properties.remove("key") {
+                        key = Self::deserialize_property(
+                            key_prop,
+                            key_reg,
+                            registry,
+                            load_cx,
+                            default_value,
+                        )?;
+                    } else if let Some(def) =
+                        default_value_from_type_path(registry, info.key_ty().path())
+                    {
+                        key = def.into_partial_reflect()
+                    } else {
+                        return Err(format!(
+                            "missing key for map item on type  {}",
+                            info.type_path()
+                        ));
+                    }
+
+                    let value;
+
+                    if let Some(value_prop) = properties.remove("value") {
+                        value = Self::deserialize_property(
+                            value_prop,
+                            value_reg,
+                            registry,
+                            load_cx,
+                            default_value,
+                        )?;
+                    } else if let Some(def) =
+                        default_value_from_type_path(registry, info.value_ty().path())
+                    {
+                        value = def.into_partial_reflect()
+                    } else {
+                        return Err(format!(
+                            "missing value for map item on type  {}",
+                            info.type_path()
+                        ));
+                    }
+
+                    list.push((key, value));
+                }
+
+                let mut out = DynamicMap::from_iter(list);
+                out.set_represented_type(Some(registration.type_info()));
+
+                Ok(Box::new(out))
             }
             // Note: ClassValue and TypeInfo::Value is not included
             (a, b, c) => Err(format!(

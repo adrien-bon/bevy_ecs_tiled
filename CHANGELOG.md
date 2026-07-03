@@ -4,6 +4,10 @@
 
 ### Features
 
+- add support for list properties (#212)
+
+### Features
+
 - Update tiled-rs v0.16
 - Add support for capsule objects
 - Allow self-referential for physics colliders

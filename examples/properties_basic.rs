@@ -59,11 +59,10 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 // You just have to define your Components and make sure they are properly registered and reflected.
 // They will be exported to the Tiled .json file so they can be imported then used from Tiled.
 // Next time you load your map, they will be automatically added as components on tiles / objects / layers entities
-
 #[derive(Component, Default, Debug, Reflect)]
 #[reflect(Component, Default)]
 struct Biome {
-    ty: BiomeType,
+    types: Vec<BiomeType>,
     move_cost: usize,
     block_line_of_sight: bool,
 }

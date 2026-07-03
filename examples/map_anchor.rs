@@ -71,7 +71,7 @@ fn change_anchor(
 ) {
     if key.just_pressed(KeyCode::Space) {
         let new_anchor = helper::anchor::rotate_right(&anchor);
-        *writer.text(*label, 1) = format!("{:?}", &new_anchor);
+        *writer.text(*label, 1) = format!("{:?}", new_anchor);
         **anchor = new_anchor;
     }
 }
