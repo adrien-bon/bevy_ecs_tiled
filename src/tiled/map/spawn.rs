@@ -516,7 +516,7 @@ fn spawn_objects_layer(
                     TiledObjectText,
                     Text2d::new(text),
                     TextFont {
-                        font_size: font_size as f32,
+                        font_size: FontSize::Px(font_size as f32),
                         ..default()
                     },
                     Anchor::from(offset),

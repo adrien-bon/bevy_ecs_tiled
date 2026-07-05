@@ -4,8 +4,12 @@ use bevy::{
     platform::collections::HashMap,
     prelude::*,
     reflect::{
-        ArrayInfo, EnumInfo, NamedField, ReflectRef, StructInfo, TupleInfo, TupleStructInfo,
-        TypeInfo, TypeRegistration, TypeRegistry, UnnamedField, VariantInfo,
+        array::ArrayInfo,
+        enums::{EnumInfo, VariantInfo},
+        structs::StructInfo,
+        tuple::TupleInfo,
+        tuple_struct::TupleStructInfo,
+        NamedField, ReflectRef, TypeInfo, TypeRegistration, TypeRegistry, UnnamedField,
     },
 };
 use std::borrow::Cow;

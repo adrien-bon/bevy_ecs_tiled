@@ -82,7 +82,9 @@ struct CustomColliderCommand {
 }
 
 impl EntityCommand for CustomColliderCommand {
-    fn apply(self, mut entity: EntityWorldMut) {
+    type Out = ();
+
+    fn apply(self, mut entity: EntityWorldMut) -> Self::Out {
         for multi_polygon in self.multi_polygons_list {
             let mut vertices = vec![];
             multi_polygon_as_line_strings(&multi_polygon)
