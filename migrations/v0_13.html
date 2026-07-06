@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Migration to v0.12 - bevy_ecs_tiled Documentation</title>
+        <title>Migration to v0.13 - bevy_ecs_tiled Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -175,92 +175,30 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="migration-to-bevy_ecs_tiled-v012"><a class="header" href="#migration-to-bevy_ecs_tiled-v012">Migration to <code>bevy_ecs_tiled</code> v0.12</a></h1>
-<p>This guide outlines the steps required to migrate your project to version <code>0.12</code> of <code>bevy_ecs_tiled</code>.</p>
+                        <h1 id="migration-to-bevy_ecs_tiled-v011"><a class="header" href="#migration-to-bevy_ecs_tiled-v011">Migration to <code>bevy_ecs_tiled</code> v0.11</a></h1>
+<p>This guide outlines the steps required to migrate your project to version <code>0.13</code> of <code>bevy_ecs_tiled</code>.</p>
 <h2 id="main-changes"><a class="header" href="#main-changes">Main Changes</a></h2>
 <ul>
-<li><strong><code>TiledAnimation</code> API redesign</strong> for non-consecutive frame support</li>
-<li><strong>Physics colliders spawning rework</strong> with simplified geometry control</li>
-<li><strong>Support for Text Objects and Group Layer</strong></li>
+<li><strong>Bevy v0.19 Support:</strong>
+<code>bevy_ecs_tiled</code> now works seamlessly with Bevy v0.19, allowing you to take advantage of the latest engine features and performance improvements. See the <a href="https://bevy.org/news/bevy-0-19/">Bevy 0.19 release notes</a> for details.</li>
 </ul>
 <h2 id="migration-steps"><a class="header" href="#migration-steps">Migration Steps</a></h2>
-<h3 id="1-update-dependencies"><a class="header" href="#1-update-dependencies">1. Update Dependencies</a></h3>
-<p>Update your <code>Cargo.toml</code> to use version 0.12 and compatible physics backends:</p>
-<pre><code class="language-toml">bevy = "0.18"
-bevy_ecs_tiled = "0.12"
-avian2d = "0.6"      # if using Avian physics
-bevy_rapier2d = "0.34" # if using Rapier physics
+<ol>
+<li>
+<p><strong>Update Dependencies in <code>Cargo.toml</code>:</strong></p>
+<pre><code class="language-toml">bevy = "0.19"
+bevy_ecs_tiled = "0.13"
 </code></pre>
-<h3 id="2-update-tiledanimation-usage"><a class="header" href="#2-update-tiledanimation-usage">2. Update <code>TiledAnimation</code> Usage</a></h3>
-<p>The animation API has been completely redesigned to support <strong>non-consecutive frame IDs</strong> and <strong>per-frame durations</strong>:</p>
-<p><strong>Before (v0.11):</strong></p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub struct TiledAnimation {
-    pub start: usize,
-    pub end: usize,
-    pub frame_duration: f32,
-}
-<span class="boring">}</span></code></pre></pre>
-<p><strong>After (v0.12):</strong></p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub struct TiledAnimation {
-    pub frames: Vec&lt;(usize, f32)&gt;, // (atlas_index, duration_in_seconds)
-    pub current_frame: usize,
-}
-<span class="boring">}</span></code></pre></pre>
-<p><strong>Impact:</strong> Update any code that creates or manipulates <code>TiledAnimation</code> components to use the new <code>frames</code> vector format. Each tuple contains the atlas frame index and its duration in seconds.</p>
 <blockquote>
-<p><strong>Important:</strong> Tile-layer animations via <code>bevy_ecs_tilemap::AnimatedTile</code> still require consecutive IDs and uniform durations. Violations will now emit warnings instead of silently dropping frames.</p>
+<p><strong>Note:</strong> You may also need to update other Bevy-related crates to ensure compatibility.</p>
 </blockquote>
-<h3 id="3-update-physics-colliders-spawning"><a class="header" href="#3-update-physics-colliders-spawning">3. Update Physics Colliders Spawning</a></h3>
-<p>Physics collider handling has been significantly reworked.
-This change should allow to better handle most physics use cases (for instance <a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues/169">#169</a>)</p>
-<p><strong>Key Changes:</strong></p>
-<ul>
-<li><strong>One event per object:</strong> Only a single <code>ColliderCreated</code> event is sent per physics object, not per collider</li>
-<li><strong>Backend control:</strong> Physics backends now decide the ECS hierarchy structure (colliders may be directly attached to the physics object rather than as child entities)</li>
-<li><strong>Geometry simplification control:</strong> Two new options for controlling collider aggregation:
-<ul>
-<li>Global setting: <code>TiledPhysicsSettings::&lt;T&gt;::simplify_geometry</code></li>
-<li>Per-item override: <code>TiledPhysicsDisableGeometrySimplification</code> component</li>
-</ul>
 </li>
-</ul>
-<p><strong>Update your physics event handlers:</strong></p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>// Old: Could receive multiple ColliderCreated events per object
-fn on_collider_created(mut events: EventReader&lt;ColliderCreated&gt;) {
-    for event in events.read() {
-        // Handle each collider individually
-    }
-}
-
-// New: Single event per object, check the collider structure in physics backend
-fn on_collider_created(mut events: EventReader&lt;ColliderCreated&gt;) {
-    for event in events.read() {
-        // Event now provides direct reference to parent entity
-        let parent = event.parent_entity;
-    }
-}
-<span class="boring">}</span></code></pre></pre>
-<p><strong>Disable geometry simplification per-object when needed:</strong></p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>// Prevent merging colliders for a specific object
-commands.entity(object_entity)
-    .insert(TiledPhysicsDisableGeometrySimplification);
-<span class="boring">}</span></code></pre></pre>
-<h3 id="4-support-for-text-objects-and-group-layers-optional"><a class="header" href="#4-support-for-text-objects-and-group-layers-optional">4. Support for Text Objects and Group Layers (Optional)</a></h3>
-<p>Version 0.12 adds support for <strong>text objects</strong> and <strong>group layers</strong>:</p>
-<ul>
-<li><strong>Text objects:</strong> Tiled text objects are now spawned with <code>TiledObjectText</code> and <code>TiledObjectTextBox</code> components</li>
-<li><strong>Group layers:</strong> Hierarchical layer organization is now fully supported. Use <code>get_layer_from_map()</code> and <code>get_object_from_map()</code> helpers which now traverse group layers</li>
-</ul>
-<p>No migration action required unless you're explicitly working with these features.</p>
-<hr />
+<li>
+<p><strong>Review the <a href="https://bevy.org/learn/migration-guides/0-18-to-0-19/">Bevy Migration Guide</a>:</strong>
+Follow Bevy's official migration steps to update your project for Bevy v0.18.
+This will help you resolve breaking changes and take advantage of new features.</p>
+</li>
+</ol>
 <h2 id="resources"><a class="header" href="#resources">Resources</a></h2>
 <ul>
 <li><a href="../index.html">Main Documentation</a></li>
@@ -273,11 +211,11 @@ commands.entity(object_entity)
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../migrations/v0_13.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../guides/debug.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../migrations/v0_11.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../migrations/v0_12.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -287,11 +225,11 @@ commands.entity(object_entity)
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../migrations/v0_13.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../guides/debug.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../migrations/v0_11.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../migrations/v0_12.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
