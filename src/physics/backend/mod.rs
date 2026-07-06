@@ -5,8 +5,8 @@
 //!
 //! Built-in support is provided for Rapier and Avian backends via feature flags.
 
-#[cfg(feature = "rapier")]
-pub mod rapier;
+// #[cfg(feature = "rapier")]
+// pub mod rapier;
 
 #[cfg(feature = "avian")]
 pub mod avian;
@@ -56,6 +56,6 @@ pub trait TiledPhysicsBackend:
 pub(crate) fn plugin(_app: &mut App) {
     #[cfg(feature = "avian")]
     _app.register_type::<avian::TiledPhysicsAvianBackend>();
-    #[cfg(feature = "rapier")]
-    _app.register_type::<rapier::TiledPhysicsRapierBackend>();
+    // #[cfg(feature = "rapier")]
+    // _app.register_type::<rapier::TiledPhysicsRapierBackend>();
 }

@@ -27,7 +27,9 @@ pub(crate) struct InsertProperties {
 }
 
 impl Command for InsertProperties {
-    fn apply(self, world: &mut World) {
+    type Out = ();
+
+    fn apply(self, world: &mut World) -> Self::Out {
         let binding = world.get_resource::<AppTypeRegistry>().unwrap().clone();
 
         for property in self.properties.properties {
@@ -50,11 +52,6 @@ fn insert_reflect(
     let Some(type_registration) = type_registry.get_with_type_path(type_path) else {
         panic!("Could not get type registration (for property type {type_path}) because it doesn't exist in the TypeRegistry.");
     };
-
-    if let Some(reflect_resource) = type_registration.data::<ReflectResource>() {
-        reflect_resource.insert(world, property.as_partial_reflect(), type_registry);
-        return;
-    }
 
     let Ok(mut entity) = world.get_entity_mut(entity) else {
         panic!("error[B0003]: Could not insert a reflected property (of type {type_path}) for entity {entity:?} because it doesn't exist in this World. See: https://bevyengine.org/learn/errors/#b0003");

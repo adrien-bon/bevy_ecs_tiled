@@ -5,9 +5,13 @@ use bevy::{
     platform::collections::HashMap,
     prelude::*,
     reflect::{
-        DynamicArray, DynamicEnum, DynamicStruct, DynamicTuple, DynamicTupleStruct, DynamicVariant,
+        array::DynamicArray,
+        enums::{DynamicEnum, DynamicVariant, VariantInfo, VariantType},
+        structs::DynamicStruct,
+        tuple::DynamicTuple,
+        tuple_struct::DynamicTupleStruct,
         NamedField, Reflect, ReflectMut, ReflectRef, TypeInfo, TypeRegistration, TypeRegistry,
-        UnnamedField, VariantInfo, VariantType,
+        UnnamedField,
     },
 };
 use std::path::PathBuf;
@@ -148,7 +152,7 @@ impl DeserializedProperties {
                     properties: _,
                 } => (property_type, registry.get_with_type_path(property_type)),
                 PV::FileValue(file) => {
-                    props.push(Box::new(load_cx.loader().with_unknown_type().load(file)));
+                    props.push(Box::new(load_cx.load_builder().load_untyped(file)));
                     continue;
                 }
                 _ => {
@@ -317,7 +321,7 @@ impl DeserializedProperties {
             ("std::path::PathBuf", PV::FileValue(s), _) => Ok(Box::new(PathBuf::from(s))),
             (a, PV::FileValue(s), _) if a.starts_with("bevy_asset::handle::Handle") => {
                 if let Some(cx) = load_cx.as_mut() {
-                    Ok(Box::new(cx.loader().with_unknown_type().load(s)))
+                    Ok(Box::new(cx.load_builder().load_untyped(s)))
                 } else {
                     Err("No LoadContext provided: cannot load Handle<T>".to_string())
                 }

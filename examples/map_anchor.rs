@@ -41,7 +41,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         TilemapAnchor::Center,
     ));
 
-    let font_size = 20.0;
+    let font_size = FontSize::Px(20.0);
     commands
         .spawn((
             Text::new("[Space] Anchor: "),
@@ -49,7 +49,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 font_size,
                 ..default()
             },
-            TextLayout::new_with_justify(Justify::Left),
+            TextLayout::justify(Justify::Left),
             AnchorLabel,
         ))
         .with_children(|parent| {
