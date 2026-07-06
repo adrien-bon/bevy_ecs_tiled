@@ -17,19 +17,19 @@ This plugin aims to provide a simple and ergonomic workflow for integrating Tile
 
 ## Features
 
-- **Comprehensive Map Support:**  
+- **Comprehensive Map Support:**
   Load orthogonal, isometric, or hexagonal maps, with finite or infinite layers, using either external or embedded tilesets, atlases, or multiple images.
-- **Rich Tiled Feature Integration:**  
+- **Rich Tiled Feature Integration:**
   Supports animated tiles, image layers, tile objects, and [Tiled worlds](https://doc.mapeditor.org/en/stable/manual/worlds/) for multi-map projects.
-- **Entity-Based Architecture:**  
+- **Entity-Based Architecture:**
   Every Tiled item (layer, tile, object, etc.) is represented as a Bevy entity, organized in a clear hierarchy: layers are children of the map entity, tiles and objects are children of their respective layers. `Visibility` and `Transform` are automatically propagated.
-- **Flexible Map Lifecycle:**  
+- **Flexible Map Lifecycle:**
   Control how maps are spawned and despawned. Use Bevy events and observers to customize scene setup or react when a map is loaded and ready.
-- **Automatic Physics Integration:**  
+- **Automatic Physics Integration:**
   Automatically spawn [Rapier](https://rapier.rs/) or [Avian](https://github.com/Jondolf/avian) physics colliders for tiles and objects, with support for custom backends.
-- **Custom Properties as Components:**  
+- **Custom Properties as Components:**
   Use [Tiled custom properties](https://doc.mapeditor.org/en/stable/manual/custom-properties/) to automatically insert your own components on objects, tiles, or layers, enabling powerful data-driven workflows.
-- **Hot-Reloading:**  
+- **Hot-Reloading:**
   Edit your maps in Tiled and see updates reflected live in your Bevy game, without recompiling or restarting.
 
 ---
@@ -64,8 +64,8 @@ Add the required dependencies to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-bevy = "0.18"
-bevy_ecs_tiled = "0.11"
+bevy = "0.19"
+bevy_ecs_tiled = "0.13"
 ```
 
 ### Basic Usage
@@ -180,6 +180,7 @@ You can also refer to the [API documentation](https://docs.rs/bevy_ecs_tiled/lat
 
 |bevy|bevy_ecs_tilemap|bevy_ecs_tiled|
 |---|---|---|
+|0.19|0.19|0.13|
 |0.18|0.18|0.11|
 |0.17|0.17|0.10|
 |0.16|0.16|0.7 - 0.9|

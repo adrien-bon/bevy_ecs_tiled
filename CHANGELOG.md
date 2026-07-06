@@ -2,6 +2,16 @@
 
 ## [unreleased]
 
+## v0.13.0
+
+**BREAKING CHANGES**
+This version brings breaking changes.
+A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_13.html) is available to help adapt to these.
+
+### Features
+
+- Update for Bevy v0.19
+
 ## v0.12.0
 
 **BREAKING CHANGES**
