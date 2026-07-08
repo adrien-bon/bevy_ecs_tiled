@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="128" tileheight="128" infinite="1" nextlayerid="7" nextobjectid="7">
+<map version="1.10" tiledversion="1.12.2" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="128" tileheight="128" infinite="1" nextlayerid="7" nextobjectid="8">
  <tileset firstgid="1" source="tilesets/ground.tsx"/>
  <tileset firstgid="129" source="tilesets/tiles.tsx"/>
  <imagelayer id="2" name="Background" offsetx="6.06061" offsety="154.545" parallaxx="0.3" repeatx="1">
@@ -91,6 +91,9 @@
   </object>
   <object id="6" name="Teleporter Destination" x="-64.4791" y="329.702">
    <point/>
+  </object>
+  <object id="7" x="595.771" y="767.347" width="213.161" height="481.918" rotation="119.091">
+   <capsule/>
   </object>
  </objectgroup>
 </map>

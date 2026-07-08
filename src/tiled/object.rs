@@ -98,10 +98,70 @@ pub enum TiledObject {
         /// the font size in pixels.
         font_size: usize,
     },
+    /// A capsule shape.
+    Capsule {
+        /// The width of the capsule.
+        width: f32,
+        /// The height of the capsule.
+        height: f32,
+    },
 }
 
 impl TiledObject {
     const ELLIPSE_NUM_POINTS: u32 = 20;
+
+    fn capsule_vertices(width: f32, height: f32) -> Vec<Vec2> {
+        let num_points = Self::ELLIPSE_NUM_POINTS;
+
+        if width >= height {
+            let radius = height / 2.0;
+            let center_y = -height / 2.0;
+            let left_center = Vec2::new(radius, center_y);
+            let right_center = Vec2::new(width - radius, center_y);
+            let mut points = Vec::with_capacity((num_points * 2) as usize);
+
+            for i in 0..=num_points {
+                let theta = -std::f32::consts::PI / 2.0
+                    + std::f32::consts::PI * (i as f32 / num_points as f32);
+                let x = left_center.x - radius * theta.cos();
+                let y = left_center.y + radius * theta.sin();
+                points.push(Vec2::new(x, y));
+            }
+
+            for i in 0..=num_points {
+                let theta = std::f32::consts::PI / 2.0
+                    - std::f32::consts::PI * (i as f32 / num_points as f32);
+                let x = right_center.x + radius * theta.cos();
+                let y = right_center.y + radius * theta.sin();
+                points.push(Vec2::new(x, y));
+            }
+
+            points
+        } else {
+            let radius = width / 2.0;
+            let center_x = width / 2.0;
+            let top_center = Vec2::new(center_x, -radius);
+            let bottom_center = Vec2::new(center_x, -(height - radius));
+            let mut points = Vec::with_capacity((num_points * 2) as usize);
+
+            for i in 0..=num_points {
+                let theta =
+                    std::f32::consts::PI - std::f32::consts::PI * (i as f32 / num_points as f32);
+                let x = top_center.x + radius * theta.cos();
+                let y = top_center.y + radius * theta.sin();
+                points.push(Vec2::new(x, y));
+            }
+
+            for i in 0..=num_points {
+                let theta = std::f32::consts::PI * (i as f32 / num_points as f32);
+                let x = bottom_center.x + radius * theta.cos();
+                let y = bottom_center.y - radius * theta.sin();
+                points.push(Vec2::new(x, y));
+            }
+
+            points
+        }
+    }
 
     /// Creates a new [`TiledObject`] from the provided [`tiled::ObjectData`].
     pub fn from_object_data(object_data: &tiled::ObjectData) -> Self {
@@ -175,6 +235,9 @@ impl TiledObject {
                         offset,
                         font_size: pixel_size,
                     }
+                }
+                tiled::ObjectShape::Capsule { width, height } => {
+                    TiledObject::Capsule { width, height }
                 }
             }
         }
@@ -285,6 +348,7 @@ impl TiledObject {
                     Vec2::new(local_x, local_y)
                 })
                 .collect(),
+            TiledObject::Capsule { width, height } => Self::capsule_vertices(*width, *height),
             TiledObject::Polyline { vertices } | TiledObject::Polygon { vertices } => {
                 vertices.clone()
             }
@@ -353,7 +417,8 @@ impl TiledObject {
             | TiledObject::Rectangle { .. }
             | TiledObject::Text { .. }
             | TiledObject::Tile { .. }
-            | TiledObject::Polygon { .. } => {
+            | TiledObject::Polygon { .. }
+            | TiledObject::Capsule { .. } => {
                 let mut line_string = geo::LineString::from(coords);
                 line_string.close();
                 Some(line_string)
