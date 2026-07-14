@@ -48,21 +48,44 @@ impl tiled::ResourceReader for BytesResourceReader<'_> {
         if let Some(extension) = path.extension() {
             if extension == "tsx" || extension == "tx" {
                 // Look up in pre-loaded cache
-                if let Some(data) = self.cache.get(path) {
-                    return Ok(Box::new(Cursor::new(data.clone())));
-                }
-                return Err(IoError::new(
-                    ErrorKind::NotFound,
-                    format!(
-                        "External tileset/template '{}' not found in cache. \
-                        For WASM builds, all external tilesets must be pre-loaded.",
-                        path.display()
-                    ),
-                ));
+                // Normalize path to resolve `..` components (e.g. `maps/../tilesets/x.tsx` → `tilesets/x.tsx`)
+                // so it matches the keys stored during pre-loading.
+                let normalized = normalize_path(path);
+                let data = self.cache.get(&normalized).ok_or_else(|| {
+                    IoError::new(
+                        ErrorKind::NotFound,
+                        format!(
+                            "External tileset/template '{}' not found in cache. For WASM builds, all external tilesets must be pre-loaded.",
+                            path.display()
+                        ),
+                    )
+                })?;
+                return Ok(Box::new(Cursor::new(data.clone())));
             }
         }
         Ok(Box::new(Cursor::new(self.bytes.clone())))
     }
+}
+
+/// Normalizes a path by resolving `.` and `..` components in place,
+/// e.g. `maps/../tilesets/collision.tsx` → `tilesets/collision.tsx`.
+fn normalize_path(path: &Path) -> PathBuf {
+    let mut result = PathBuf::new();
+    for component in path.components() {
+        match component {
+            std::path::Component::ParentDir => {
+                result.pop();
+            }
+            std::path::Component::CurDir => {}
+            std::path::Component::Normal(s) => {
+                result.push(s);
+            }
+            _ => {
+                result.push(component);
+            }
+        }
+    }
+    result
 }
 
 /// Extract external tileset/template paths from TMX/TSX/TX XML content.
