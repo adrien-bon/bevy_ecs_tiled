@@ -111,7 +111,7 @@ impl TiledObject {
     const ELLIPSE_NUM_POINTS: u32 = 20;
 
     fn capsule_vertices(width: f32, height: f32) -> Vec<Vec2> {
-        let num_points = Self::ELLIPSE_NUM_POINTS;
+        let num_points = Self::ELLIPSE_NUM_POINTS / 2;
 
         if width >= height {
             let radius = height / 2.0;
