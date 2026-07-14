@@ -2,6 +2,11 @@
 
 ## [unreleased]
 
+### Features
+
+- Update tiled-rs v0.16
+- Add support for capsule objects
+
 ## v0.13.1
 
 ### Features

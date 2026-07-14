@@ -106,6 +106,9 @@ pub fn tilemap_type_from_map(map: &tiled::Map) -> TilemapType {
         tiled::Orientation::Staggered => {
             panic!("Isometric (Staggered) map is not supported");
         }
+        tiled::Orientation::Oblique => {
+            panic!("Oblique map is not supported");
+        }
     }
 }
 
