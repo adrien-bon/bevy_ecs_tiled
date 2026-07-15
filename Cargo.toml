@@ -36,10 +36,8 @@ debug = ["bevy/bevy_gizmos", "bevy/bevy_text"]
 
 # Physics
 physics = []
-#rapier = ["bevy_rapier2d", "physics"]
-rapier = ["physics"]
-#rapier_debug = ["rapier", "bevy_rapier2d/debug-render-2d", "debug"]
-rapier_debug = ["rapier", "debug"]
+rapier = ["bevy_rapier2d", "physics"]
+rapier_debug = ["rapier", "bevy_rapier2d/debug-render-2d", "debug"]
 avian = ["dep:avian2d", "physics"]
 avian_debug = ["avian", "debug"]
 
@@ -63,7 +61,7 @@ geo = "0.33"
 regex = "1.13"
 
 # Optional dependencies, enabled via features.
-#bevy_rapier2d = { version = "0.34", optional = true }
+bevy_rapier2d = { version = "0.35", optional = true }
 avian2d = { version = "0.7", optional = true }
 serde = { version = "1.0", optional = true, features = ["derive"] }
 serde_json = { version = "1.0", optional = true }
@@ -138,17 +136,17 @@ required-features = ["avian_debug"]
 name = "physics_custom"
 required-features = ["physics"]
 
-#[[example]]
-#name = "physics_rapier_controller"
-#required-features = ["rapier_debug"]
+[[example]]
+name = "physics_rapier_controller"
+required-features = ["rapier_debug"]
 
-#[[example]]
-#name = "physics_rapier_orientation"
-#required-features = ["rapier_debug"]
+[[example]]
+name = "physics_rapier_orientation"
+required-features = ["rapier_debug"]
 
-#[[example]]
-#name = "physics_rapier_settings"
-#required-features = ["rapier_debug"]
+[[example]]
+name = "physics_rapier_settings"
+required-features = ["rapier_debug"]
 
 [[example]]
 name = "properties_basic"
