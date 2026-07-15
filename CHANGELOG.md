@@ -2,6 +2,8 @@
 
 ## [unreleased]
 
+## v0.13.1
+
 ### Features
 
 - Add back support for Rapier physics
