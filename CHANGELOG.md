@@ -6,6 +6,7 @@
 
 - Update tiled-rs v0.16
 - Add support for capsule objects
+- Allow self-referential for physics colliders
 
 ## v0.13.1
 
