@@ -38,6 +38,23 @@
     ]
   },
   {
+    "id": 3,
+    "name": "bevy_color::color::Color",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": "0",
+        "type": "color",
+        "value": "#ffffffff"
+      }
+    ]
+  },
+  {
     "id": 4,
     "name": "bevy_text::text::TextColor",
     "type": "class",
@@ -149,7 +166,7 @@
     ]
   },
   {
-    "id": 11,
+    "id": 10,
     "name": "core::option::Option<bevy_ecs::entity::Entity>:::Variant",
     "type": "enum",
     "storageType": "string",
@@ -160,7 +177,7 @@
     "valuesAsFlags": false
   },
   {
-    "id": 12,
+    "id": 11,
     "name": "core::option::Option<bevy_ecs::entity::Entity>::Some",
     "type": "class",
     "useAs": [
@@ -177,7 +194,7 @@
     ]
   },
   {
-    "id": 13,
+    "id": 12,
     "name": "core::option::Option<bevy_ecs::entity::Entity>",
     "type": "class",
     "useAs": [
@@ -201,24 +218,7 @@
     ]
   },
   {
-    "id": 14,
-    "name": "bevy_color::color::Color",
-    "type": "class",
-    "useAs": [
-      "property"
-    ],
-    "color": "#000000",
-    "drawFill": true,
-    "members": [
-      {
-        "name": "0",
-        "type": "color",
-        "value": "#ffffffff"
-      }
-    ]
-  },
-  {
-    "id": 15,
+    "id": 13,
     "name": "properties_basic::SpawnPoint:::Variant",
     "type": "enum",
     "storageType": "string",
@@ -231,7 +231,7 @@
     "valuesAsFlags": false
   },
   {
-    "id": 16,
+    "id": 14,
     "name": "properties_basic::SpawnPoint::Player",
     "type": "class",
     "useAs": [
@@ -258,7 +258,7 @@
     ]
   },
   {
-    "id": 17,
+    "id": 15,
     "name": "properties_basic::SpawnPoint::Enemy",
     "type": "class",
     "useAs": [
@@ -275,7 +275,7 @@
     ]
   },
   {
-    "id": 18,
+    "id": 16,
     "name": "properties_basic::SpawnPoint",
     "type": "class",
     "useAs": [

@@ -11,97 +11,9 @@
     ],
     "propertyTypes": [
         {
+            "color": "#ff000000",
+            "drawFill": true,
             "id": 1,
-            "name": "bevy_time::timer::TimerMode:::Variant",
-            "storageType": "string",
-            "type": "enum",
-            "values": [
-                "Once",
-                "Repeating"
-            ],
-            "valuesAsFlags": false
-        },
-        {
-            "color": "#ff000000",
-            "drawFill": true,
-            "id": 2,
-            "members": [
-                {
-                    "name": ":variant",
-                    "propertyType": "bevy_time::timer::TimerMode:::Variant",
-                    "type": "string",
-                    "value": "Once"
-                }
-            ],
-            "name": "bevy_time::timer::TimerMode",
-            "type": "class",
-            "useAs": [
-                "property"
-            ]
-        },
-        {
-            "id": 3,
-            "name": "demo_platformer::animation::AnimationState:::Variant",
-            "storageType": "string",
-            "type": "enum",
-            "values": [
-                "Unknown",
-                "Idling",
-                "Walking"
-            ],
-            "valuesAsFlags": false
-        },
-        {
-            "color": "#ff000000",
-            "drawFill": true,
-            "id": 4,
-            "members": [
-                {
-                    "name": ":variant",
-                    "propertyType": "demo_platformer::animation::AnimationState:::Variant",
-                    "type": "string",
-                    "value": "Unknown"
-                }
-            ],
-            "name": "demo_platformer::animation::AnimationState",
-            "type": "class",
-            "useAs": [
-                "property"
-            ]
-        },
-        {
-            "color": "#ff000000",
-            "drawFill": true,
-            "id": 5,
-            "members": [
-                {
-                    "name": "frame_index",
-                    "type": "int",
-                    "value": 0
-                },
-                {
-                    "name": "state",
-                    "propertyType": "demo_platformer::animation::AnimationState",
-                    "type": "class",
-                    "value": {
-                    }
-                },
-                {
-                    "name": "timer",
-                    "type": "std::nullptr_t",
-                    "value": null
-                }
-            ],
-            "name": "demo_platformer::animation::Animation",
-            "type": "class",
-            "useAs": [
-                "property"
-            ]
-        },
-        {
-            "color": "#ff000000",
-            "drawFill": true,
-            "id": 6,
             "members": [
             ],
             "name": "demo_platformer::enemy::Enemy",
@@ -113,7 +25,7 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 7,
+            "id": 2,
             "members": [
                 {
                     "name": "0",
@@ -130,7 +42,7 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 8,
+            "id": 3,
             "members": [
                 {
                     "name": "0",
@@ -147,7 +59,7 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 9,
+            "id": 4,
             "members": [
                 {
                     "name": "0",
@@ -164,7 +76,7 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 10,
+            "id": 5,
             "members": [
             ],
             "name": "demo_platformer::player::Player",
@@ -176,7 +88,7 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 11,
+            "id": 6,
             "members": [
             ],
             "name": "demo_platformer::player::PlayerSpawnPoint",
@@ -188,7 +100,7 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 12,
+            "id": 7,
             "members": [
             ],
             "name": "demo_platformer::trigger::TriggerActor",
@@ -198,7 +110,7 @@
             ]
         },
         {
-            "id": 13,
+            "id": 8,
             "name": "demo_platformer::trigger::TriggerZone:::Variant",
             "storageType": "string",
             "type": "enum",
@@ -213,7 +125,7 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 14,
+            "id": 9,
             "members": [
                 {
                     "name": "0",
@@ -230,7 +142,7 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 15,
+            "id": 10,
             "members": [
                 {
                     "name": "0",
@@ -247,7 +159,7 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 16,
+            "id": 11,
             "members": [
                 {
                     "name": ":variant",
