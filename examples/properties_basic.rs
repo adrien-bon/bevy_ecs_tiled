@@ -71,20 +71,18 @@ struct Biome {
 #[derive(Default, Reflect, Debug)]
 #[reflect(Default)]
 enum BiomeType {
-    #[default]
-    Unknown,
     Plain,
     Desert,
     Forest,
     Mountain,
     Water,
+    #[default]
+    Unknown,
 }
 
 #[derive(Component, Default, Debug, Reflect)]
 #[reflect(Component, Default)]
 enum SpawnPoint {
-    #[default]
-    Unknown,
     Player {
         color: Color,
         id: u32,
@@ -92,18 +90,20 @@ enum SpawnPoint {
     },
     Enemy(Color),
     Friendly,
+    #[default]
+    Unknown,
 }
 
 #[derive(Component, Default, Debug, Reflect)]
 #[reflect(Component, Default)]
 enum Resource {
-    #[default]
-    Unknown,
     Wheat,
     Strawberry,
     Wood,
     Copper,
     Gold,
+    #[default]
+    Unknown,
 }
 
 // This observer will be triggered every time a `SpawnType` component is added to an entity.

@@ -167,7 +167,9 @@ impl TypeExportRegistry {
             TypeInfo::List(_) => Err(ExportConversionError::ListUnsupported),
             TypeInfo::Array(info) => self.generate_array_export(info, registry, use_as),
             TypeInfo::Map(_) => Err(ExportConversionError::MapUnsupported),
-            TypeInfo::Enum(info) => self.generate_enum_export(info, registry, use_as),
+            TypeInfo::Enum(info) => {
+                self.generate_enum_export(info, registry, default_value, use_as)
+            }
             TypeInfo::Opaque(_) => Ok(vec![]),
             TypeInfo::Set(_) => Err(ExportConversionError::SetUnsupported),
         }
@@ -315,6 +317,7 @@ impl TypeExportRegistry {
         &mut self,
         info: &EnumInfo,
         registry: &TypeRegistry,
+        default_value: Option<&dyn Reflect>,
         _use_as: Vec<UseAs>,
     ) -> ExportConversionResult {
         // Creates types for:
@@ -341,10 +344,19 @@ impl TypeExportRegistry {
             // and put it at the top of the fields (they are alphabetized in the editor)
             name: ":variant".to_string(),
             property_type: Some(variants_name),
-            type_field: FieldType::Class,
+            type_field: FieldType::String,
             value: info
                 .iter()
-                .next()
+                // Find the default variant name
+                .find(|variant| {
+                    let Some(default_value) = default_value else {
+                        return true;
+                    };
+                    match default_value.as_partial_reflect().reflect_ref() {
+                        ReflectRef::Enum(value) => value.variant_name().eq(variant.name()),
+                        _ => true,
+                    }
+                })
                 .map(|s| serde_json::Value::String(s.name().to_string()))
                 .unwrap_or_default(),
         });
@@ -504,12 +516,9 @@ fn value_to_json(value: &dyn PartialReflect) -> serde_json::Value {
             let c = value.try_downcast_ref::<Color>().unwrap();
             serde_json::json!(format!("#{:08x}", c.to_linear().as_u32()))
         }
-        (_, TypeInfo::Enum(info), ReflectRef::Enum(v)) => {
-            if info.iter().all(|v| matches!(v, VariantInfo::Unit(_))) {
-                serde_json::json!(v.variant_name())
-            } else {
-                serde_json::Value::default()
-            }
+        (_, TypeInfo::Enum(_), ReflectRef::Enum(_)) => {
+            // Special case for enums: the value is held by the ':::variant' type
+            serde_json::json!({})
         }
         (_, TypeInfo::Struct(info), _) => info
             .iter()
@@ -610,25 +619,9 @@ fn type_to_field(
                 return Err(ExportConversionError::UnsupportedValue(info.type_path()));
             }
 
-            (
-                if is_enum_and_simple(t) {
-                    FieldType::String
-                } else {
-                    FieldType::Class
-                },
-                Some(path.to_string()),
-            )
+            (FieldType::Class, Some(path.to_string()))
         }
     })
-}
-
-fn is_enum_and_simple(t: &TypeRegistration) -> bool {
-    match t.type_info() {
-        TypeInfo::Enum(info) => info
-            .iter()
-            .all(|variant| matches!(variant, VariantInfo::Unit(_))),
-        _ => false,
-    }
 }
 
 fn dependencies(registration: &TypeRegistration, registry: &TypeRegistry) -> Vec<&'static str> {
