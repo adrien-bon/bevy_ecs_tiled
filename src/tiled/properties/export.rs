@@ -771,7 +771,7 @@ mod tests {
                 members: vec![Member {
                     name: ":variant".to_string(),
                     property_type: Some(EnumComponent::type_path().to_string() + ":::Variant"),
-                    type_field: FieldType::Class,
+                    type_field: FieldType::String,
                     value: serde_json::json!("VarA"),
                 },],
             }),
@@ -843,15 +843,15 @@ mod tests {
                     Member {
                         name: "an_enum".to_string(),
                         property_type: Some(TestEnum::type_path().to_string()),
-                        type_field: FieldType::String,
-                        value: serde_json::json!("VarB"),
+                        type_field: FieldType::Class,
+                        value: serde_json::json!({}),
                     },
                     Member {
                         name: "a_struct".to_string(),
                         property_type: Some(InnerStruct::type_path().to_string()),
                         type_field: FieldType::Class,
                         value: serde_json::json!({
-                            "another_enum": "VarC",
+                            "another_enum": {},
                             "another_float": 123.456,
                             "another_integer": 42
                         })
@@ -1025,7 +1025,7 @@ mod tests {
                     Member {
                         name: ":variant".to_string(),
                         property_type: Some(EnumComponent::type_path().to_string() + ":::Variant"),
-                        type_field: FieldType::Class,
+                        type_field: FieldType::String,
                         value: serde_json::json!("VarA"),
                     },
                     Member {
