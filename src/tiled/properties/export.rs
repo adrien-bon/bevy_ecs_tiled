@@ -30,8 +30,6 @@ enum ExportConversionError {
     UnsupportedValue(&'static str),
     #[error("set fields are not supported")]
     SetUnsupported,
-    #[error("a dependency is not supported")]
-    DependencyError,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -44,38 +42,70 @@ impl TypeExportRegistry {
     #[allow(clippy::wrong_self_convention)]
     pub(crate) fn to_vec(self) -> Vec<TypeExport> {
         let mut out = self.types.into_values().flatten().collect::<Vec<_>>();
-        out.sort_by(|a, b| a.name.cmp(&b.name));
+        out.sort_by_key(|e| e.id);
         out
     }
 
     pub(crate) fn from_registry(registry: &TypeRegistry, filter: &TiledFilter) -> Self {
-        let mut deps = vec![];
         let mut out = Self::default();
 
         // Sort registry before iterating over it so we try to keep IDs as stable as possible
         let mut sorted_registry = registry.iter().collect::<Vec<_>>();
         sorted_registry.sort_by(|a, b| a.type_info().type_path().cmp(b.type_info().type_path()));
 
-        for t in sorted_registry {
-            if filter.matches(t.type_info().type_path())
-                && (t.data::<ReflectComponent>().is_some()
-                    || t.data::<ReflectBundle>().is_some()
-                    || t.data::<ReflectResource>().is_some())
+        // Create an ordered list of types to export
+        // List is ordered with "leaf" dependencies at the beginning
+        let mut all_types_to_export: Vec<&TypeRegistration> = vec![];
+        for type_to_export in sorted_registry {
+            // Check if this type is either a component, a bundle or a resources
+            if type_to_export.data::<ReflectComponent>().is_none()
+                && type_to_export.data::<ReflectBundle>().is_none()
+                && type_to_export.data::<ReflectResource>().is_none()
             {
-                let mut new_deps =
-                    out.register_from_type_registration(t, registry, USE_AS_PROPERTY.to_vec());
-                deps.append(&mut new_deps);
-            }
-        }
-
-        for d in deps {
-            if out.types.contains_key(d) {
                 continue;
             }
-            if let Some(t) = registry.get_with_type_path(d) {
-                // We should have a dedicated 'useAs' flags so we cannot add these dependencies
-                // directly as objects properties (only usable when nested inside another type)
-                out.register_from_type_registration(t, registry, USE_AS_PROPERTY.to_vec());
+
+            // ... that it matches provided filter ...
+            if !filter.matches(type_to_export.type_info().type_path()) {
+                continue;
+            }
+
+            // ... and that we don't already know about it
+            if all_types_to_export.iter().any(|t| {
+                t.type_info()
+                    .type_path()
+                    .eq(type_to_export.type_info().type_path())
+            }) {
+                continue;
+            }
+
+            // Then extract its dependencies
+            let deps = dependencies(type_to_export, registry);
+            for d in deps {
+                if let Some(type_dependency) = registry.get_with_type_path(d) {
+                    if !all_types_to_export.iter().any(|t| {
+                        t.type_info()
+                            .type_path()
+                            .eq(type_to_export.type_info().type_path())
+                    }) {
+                        all_types_to_export.push(type_dependency);
+                    }
+                }
+            }
+
+            // And add it
+            all_types_to_export.push(type_to_export);
+        }
+
+        for t in all_types_to_export {
+            debug!("Exporting type '{}'", t.type_info().type_path());
+            match out.generate_export(t, registry, USE_AS_PROPERTY.to_vec()) {
+                Ok(export) => {
+                    out.types.insert(t.type_info().type_path(), export);
+                }
+                Err(e) => {
+                    warn!("Export error for {}: {}", t.type_info().type_path(), e);
+                }
             }
         }
 
@@ -85,40 +115,6 @@ impl TypeExportRegistry {
     fn next_id(&mut self) -> u32 {
         self.id += 1;
         self.id
-    }
-
-    fn register_from_type_registration(
-        &mut self,
-        registration: &TypeRegistration,
-        registry: &TypeRegistry,
-        use_as: Vec<UseAs>,
-    ) -> Vec<&'static str> {
-        let mut deps = vec![];
-        match self.generate_export(registration, registry, use_as, &mut deps) {
-            Ok(export) => {
-                if !export.is_empty() {
-                    self.types
-                        .insert(registration.type_info().type_path(), export);
-                }
-                deps
-            }
-            Err(_) => {
-                self.remove_with_dependency(registration.type_info().type_path());
-                vec![]
-            }
-        }
-    }
-
-    fn is_supported(registration: &TypeRegistration) -> bool {
-        matches!(
-            registration.type_info(),
-            TypeInfo::TupleStruct(_)
-                | TypeInfo::Struct(_)
-                | TypeInfo::Tuple(_)
-                | TypeInfo::Array(_)
-                | TypeInfo::Enum(_)
-                | TypeInfo::Opaque(_)
-        )
     }
 
     fn is_simple(registration: &TypeRegistration) -> bool {
@@ -133,7 +129,6 @@ impl TypeExportRegistry {
         registration: &TypeRegistration,
         registry: &TypeRegistry,
         use_as: Vec<UseAs>,
-        deps: &mut Vec<&'static str>,
     ) -> ExportConversionResult {
         let tmp = registration.data::<ReflectDefault>().map(|v| v.default());
         let default_value = tmp.as_deref();
@@ -159,7 +154,7 @@ impl TypeExportRegistry {
             }]);
         }
 
-        let out = match registration.type_info() {
+        match registration.type_info() {
             TypeInfo::TupleStruct(info) => {
                 self.generate_tuple_struct_export(info, registry, default_value, use_as)
             }
@@ -175,45 +170,6 @@ impl TypeExportRegistry {
             TypeInfo::Enum(info) => self.generate_enum_export(info, registry, use_as),
             TypeInfo::Opaque(_) => Ok(vec![]),
             TypeInfo::Set(_) => Err(ExportConversionError::SetUnsupported),
-        };
-
-        if out.is_ok() {
-            let mut new_deps = dependencies(registration, registry);
-            if new_deps.iter().all(|n| {
-                if let Some(t) = registry.get_with_type_path(n) {
-                    return Self::is_supported(t);
-                }
-                false
-            }) {
-                deps.append(&mut new_deps);
-                return out;
-            } else {
-                return Err(ExportConversionError::DependencyError);
-            }
-        }
-        out
-    }
-
-    fn remove_with_dependency(&mut self, type_path: &str) {
-        let mut to_remove = vec![type_path.to_string()];
-        while let Some(type_path) = to_remove.pop() {
-            self.types.retain(|_, export| {
-                export.iter().all(|export| match &export.type_data {
-                    TypeData::Enum(_) => true,
-                    TypeData::Class(class) => {
-                        if class.members.iter().any(|m| {
-                            m.property_type
-                                .as_ref()
-                                .is_some_and(|s| s.as_str() == type_path)
-                        }) {
-                            to_remove.push(export.name.clone());
-                            false
-                        } else {
-                            true
-                        }
-                    }
-                })
-            })
         }
     }
 
@@ -574,10 +530,10 @@ fn value_to_json(value: &dyn PartialReflect) -> serde_json::Value {
             })
             .collect(),
         _ => {
-            // warn!(
-            //     "cannot convert type '{}' to a JSON value",
-            //     type_info.type_path()
-            // );
+            warn!(
+                "cannot convert type '{}' to a JSON value",
+                type_info.type_path()
+            );
             serde_json::Value::default()
         }
     }
@@ -702,7 +658,8 @@ fn dependencies(registration: &TypeRegistration, registry: &TypeRegistry) -> Vec
     for d in deps {
         if let Some(t) = registry.get_with_type_path(d) {
             let mut new_deps = dependencies(t, registry);
-            all_deps.append(&mut new_deps);
+            new_deps.append(&mut all_deps);
+            all_deps = new_deps;
         }
     }
     all_deps
