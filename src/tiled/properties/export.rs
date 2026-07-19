@@ -1050,4 +1050,35 @@ mod tests {
             })
         );
     }
+
+    #[test]
+    fn exports_dependencies_before_dependents() {
+        #[derive(Component, Reflect)]
+        #[reflect(Component)]
+        struct Dependency;
+
+        #[derive(Component, Reflect)]
+        #[reflect(Component)]
+        struct Dependent {
+            dependency: Dependency,
+        }
+
+        let mut registry = TypeRegistry::new();
+        registry.register::<Dependency>();
+        registry.register::<Dependent>();
+
+        let exports = TypeExportRegistry::from_registry(&registry, &TiledFilter::All).to_vec();
+        let exported_names = exports
+            .iter()
+            .map(|export| export.name.clone())
+            .collect::<Vec<_>>();
+
+        assert_eq!(
+            exported_names,
+            vec![
+                Dependency::type_path().to_string(),
+                Dependent::type_path().to_string(),
+            ]
+        );
+    }
 }
