@@ -496,6 +496,10 @@ fn value_to_json(value: &dyn PartialReflect) -> serde_json::Value {
         ("alloc::borrow::Cow<str>", _, ReflectRef::Opaque(v)) => {
             serde_json::json!(*v.try_downcast_ref::<Cow<str>>().unwrap())
         }
+        // Special case for bevy "Name" which use a HashedStr instead of a regular string
+        ("bevy_platform::hash::Hashed<alloc::borrow::Cow<str>, bevy_platform::hash::FixedHasher>", _, ReflectRef::Opaque(_)) => {
+            serde_json::json!("")
+        }
         ("bevy_color::color::Color", _, _) => {
             let c = value.try_downcast_ref::<Color>().unwrap();
             serde_json::json!(format!("#{:08x}", c.to_linear().as_u32()))
