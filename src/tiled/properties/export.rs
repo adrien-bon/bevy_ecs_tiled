@@ -53,58 +53,66 @@ impl TypeExportRegistry {
         let mut sorted_registry = registry.iter().collect::<Vec<_>>();
         sorted_registry.sort_by(|a, b| a.type_info().type_path().cmp(b.type_info().type_path()));
 
-        // Create an ordered list of types to export
-        // List is ordered with "leaf" dependencies at the beginning
-        let mut all_types_to_export: Vec<&TypeRegistration> = vec![];
-        for type_to_export in sorted_registry {
+        for top_level_type in sorted_registry {
+            let mut types_to_export: Vec<&TypeRegistration> = vec![];
+
             // Check if this type is either a component, a bundle or a resources
-            if type_to_export.data::<ReflectComponent>().is_none()
-                && type_to_export.data::<ReflectBundle>().is_none()
-                && type_to_export.data::<ReflectResource>().is_none()
+            if top_level_type.data::<ReflectComponent>().is_none()
+                && top_level_type.data::<ReflectBundle>().is_none()
+                && top_level_type.data::<ReflectResource>().is_none()
             {
                 continue;
             }
 
             // ... that it matches provided filter ...
-            if !filter.matches(type_to_export.type_info().type_path()) {
+            if !filter.matches(top_level_type.type_info().type_path()) {
                 continue;
             }
 
             // ... and that we don't already know about it
-            if all_types_to_export.iter().any(|t| {
-                t.type_info()
-                    .type_path()
-                    .eq(type_to_export.type_info().type_path())
-            }) {
+            if out
+                .types
+                .contains_key(top_level_type.type_info().type_path())
+            {
                 continue;
             }
 
-            // Then extract its dependencies
-            let deps = dependencies(type_to_export, registry);
+            // Build a list with top-level type and associated dependencies
+            // List is ordered with "leaf" dependencies at the beginning
+            let deps = dependencies(top_level_type, registry);
             for d in deps {
-                if let Some(type_dependency) = registry.get_with_type_path(d) {
-                    if !all_types_to_export.iter().any(|t| {
-                        t.type_info()
-                            .type_path()
-                            .eq(type_to_export.type_info().type_path())
-                    }) {
-                        all_types_to_export.push(type_dependency);
+                if let Some(dep_registration) = registry.get_with_type_path(d) {
+                    if !out
+                        .types
+                        .contains_key(dep_registration.type_info().type_path())
+                    {
+                        types_to_export.push(dep_registration);
                     }
                 }
             }
+            types_to_export.push(top_level_type);
 
-            // And add it
-            all_types_to_export.push(type_to_export);
-        }
-
-        for t in all_types_to_export {
-            debug!("Exporting type '{}'", t.type_info().type_path());
-            match out.generate_export(t, registry, USE_AS_PROPERTY.to_vec()) {
-                Ok(export) => {
-                    out.types.insert(t.type_info().type_path(), export);
+            // Try to build an export with our types
+            // If any export fails, remove all related types
+            if types_to_export.iter().any(|t| {
+                debug!("Exporting type '{}'", t.type_info().type_path());
+                match out.generate_export(t, registry, USE_AS_PROPERTY.to_vec()) {
+                    Ok(export) => {
+                        out.types.insert(t.type_info().type_path(), export);
+                        false
+                    }
+                    Err(e) => {
+                        warn!("Export error for '{}': {}", t.type_info().type_path(), e);
+                        true
+                    }
                 }
-                Err(e) => {
-                    warn!("Export error for {}: {}", t.type_info().type_path(), e);
+            }) {
+                warn!(
+                    "'{}' will not be exported",
+                    top_level_type.type_info().type_path()
+                );
+                for t in types_to_export {
+                    out.types.remove(t.type_info().type_path());
                 }
             }
         }
