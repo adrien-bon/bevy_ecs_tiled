@@ -42,7 +42,11 @@ avian = ["dep:avian2d", "physics"]
 avian_debug = ["avian", "debug"]
 
 # WASM
-wasm = ["tiled/wasm"]
+# Note: The library compiles for WASM out of the box. This feature is kept for
+# compatibility but is currently empty. We intentionally don't enable tiled/wasm
+# because it pulls in zstd which has C dependencies that don't compile for WASM.
+# Maps using zstd compression won't be loadable on WASM; use zlib or uncompressed instead.
+wasm = []
 
 # User Properties
 user_properties = ["dep:serde", "dep:serde_json"]
@@ -51,10 +55,9 @@ user_properties = ["dep:serde", "dep:serde_json"]
 # Main dependencies
 bevy = { version = "0.19", default-features = false }
 bevy_ecs_tilemap = { version = "0.19", default-features = false }
-tiled = { version = "0.16", features = ["world"] }
+tiled = { version = "0.16", default-features = false, features = ["world"] }
 
 # Utilities
-futures-lite = "2.6"
 log = "0.4"
 thiserror = "2.0"
 geo = "0.33"
