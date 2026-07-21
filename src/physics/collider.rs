@@ -23,9 +23,7 @@ pub enum TiledColliderSource {
 /// Relationship [`Component`] for the collider of a [`TiledObject`] or [`TiledLayer::Tiles`].
 #[derive(Component, Reflect, Copy, PartialEq, Clone, Debug, Deref)]
 #[reflect(Component, Debug)]
-#[relationship(relationship_target = TiledColliders)]
-// TODO: Enable self referential once Bevy #22269 lands
-//#[relationship(relationship_target = TiledColliders, allow_self_referential)]
+#[relationship(relationship_target = TiledColliders, allow_self_referential)]
 pub struct TiledColliderOf(pub Entity);
 
 /// Relationship target [`Component`] pointing to all the child [`TiledColliderOf`]s (eg. entities holding a physics collider).
@@ -229,14 +227,8 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
         commands.entity(entity).insert((
             collider_created.event.source,
             TiledColliderPolygons(polygons),
+            collider_created.event.collider_of,
         ));
-
-        // TODO: Enable self referential once Bevy #22269 lands
-        if entity != collider_created.event.collider_of.0 {
-            commands
-                .entity(entity)
-                .insert(collider_created.event.collider_of);
-        }
 
         // Patch origin entity and send collider event
         let mut event = collider_created;
