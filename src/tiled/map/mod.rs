@@ -37,7 +37,7 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 ///     commands.spawn(TiledMap(asset_server.load("map.tmx")));
 /// }
 /// ```
-#[derive(Component, Reflect, Clone, Debug, Deref)]
+#[derive(Component, Reflect, Clone, Debug, Deref, FromTemplate)]
 #[reflect(Component, Debug)]
 #[require(
     TiledMapStorage,

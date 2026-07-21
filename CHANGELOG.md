@@ -8,6 +8,7 @@
 - Add support for capsule objects
 - Allow self-referential for physics colliders
 - Use gizmos for rendering TiledDebugTilesPlugin text
+- Make `TiledMap` and `TiledWorld` components useable with bsn!()
 
 ## v0.13.1
 
