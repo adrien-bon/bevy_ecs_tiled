@@ -89,6 +89,9 @@ required-features = ["avian", "user_properties"]
 name = "map_basic"
 
 [[example]]
+name = "map_bsn"
+
+[[example]]
 name = "map_text"
 required-features = ["text"]
 

@@ -9,6 +9,7 @@
 - Allow self-referential for physics colliders
 - Use gizmos for rendering TiledDebugTilesPlugin text
 - Add support for list properties (#212)
+- Make `TiledMap` and `TiledWorld` components useable with bsn!()
 
 ## v0.13.1
 
