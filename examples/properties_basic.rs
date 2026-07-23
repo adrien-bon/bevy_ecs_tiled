@@ -59,11 +59,10 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 // You just have to define your Components and make sure they are properly registered and reflected.
 // They will be exported to the Tiled .json file so they can be imported then used from Tiled.
 // Next time you load your map, they will be automatically added as components on tiles / objects / layers entities
-
 #[derive(Component, Default, Debug, Reflect)]
 #[reflect(Component, Default)]
 struct Biome {
-    ty: BiomeType,
+    types: Vec<BiomeType>,
     move_cost: usize,
     block_line_of_sight: bool,
 }
@@ -71,20 +70,18 @@ struct Biome {
 #[derive(Default, Reflect, Debug)]
 #[reflect(Default)]
 enum BiomeType {
-    #[default]
-    Unknown,
     Plain,
     Desert,
     Forest,
     Mountain,
     Water,
+    #[default]
+    Unknown,
 }
 
 #[derive(Component, Default, Debug, Reflect)]
 #[reflect(Component, Default)]
 enum SpawnPoint {
-    #[default]
-    Unknown,
     Player {
         color: Color,
         id: u32,
@@ -92,18 +89,20 @@ enum SpawnPoint {
     },
     Enemy(Color),
     Friendly,
+    #[default]
+    Unknown,
 }
 
 #[derive(Component, Default, Debug, Reflect)]
 #[reflect(Component, Default)]
 enum Resource {
-    #[default]
-    Unknown,
     Wheat,
     Strawberry,
     Wood,
     Copper,
     Gold,
+    #[default]
+    Unknown,
 }
 
 // This observer will be triggered every time a `SpawnType` component is added to an entity.

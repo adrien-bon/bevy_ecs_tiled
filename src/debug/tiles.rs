@@ -12,26 +12,20 @@ use bevy::{color::palettes::css::FUCHSIA, prelude::*};
 /// Configuration for the [`TiledDebugTilesPlugin`].
 ///
 /// Allows customization of the appearance and placement of the tile index text.
-#[derive(Resource, Reflect, Clone, Debug)]
+#[derive(Resource, Reflect, Copy, Clone, Debug)]
 #[reflect(Resource, Debug)]
 pub struct TiledDebugTilesConfig {
     /// [`Color`] of the tile index text.
-    pub color: Color,
-    /// [`TextFont`] used for the tile index text.
-    pub font: TextFont,
-    /// Absolute Z-axis offset for the tile index text (controls rendering order).
-    pub z_offset: f32,
-    /// Scale to apply to the tile index text.
-    pub scale: Vec3,
+    pub text_color: Color,
+    /// Font size of the tile index text.
+    pub text_size: f32,
 }
 
 impl Default for TiledDebugTilesConfig {
     fn default() -> Self {
         Self {
-            color: bevy::prelude::Color::Srgba(FUCHSIA),
-            font: TextFont::from_font_size(10.),
-            z_offset: 500.,
-            scale: Vec3::splat(0.5),
+            text_color: bevy::prelude::Color::Srgba(FUCHSIA),
+            text_size: 10.,
         }
     }
 }
@@ -51,23 +45,24 @@ impl Default for TiledDebugTilesConfig {
 /// ```
 ///
 /// You can customize the appearance of the text using [`TiledDebugTilesConfig`].
-#[derive(Default, Clone, Debug)]
+#[derive(Default, Clone, Copy, Debug)]
 pub struct TiledDebugTilesPlugin(pub TiledDebugTilesConfig);
 
 impl Plugin for TiledDebugTilesPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.register_type::<TiledDebugTilesConfig>()
-            .insert_resource(self.0.clone())
+            .insert_resource(self.0)
             .add_systems(Update, draw_tile_infos);
     }
 }
 
 fn draw_tile_infos(
-    mut commands: Commands,
     config: Res<TiledDebugTilesConfig>,
     assets: Res<Assets<TiledMapAsset>>,
     map_query: Query<(&TiledMap, &TiledMapStorage, &TilemapAnchor)>,
-    tile_query: Query<(Entity, &TilePos), (With<TiledTile>, Without<Text2d>)>,
+    tilemap_query: Query<&GlobalTransform, With<TiledTilemap>>,
+    tile_query: Query<(&TilePos, &ChildOf), With<TiledTile>>,
+    mut gizmos: Gizmos,
 ) {
     for (tiled_map, storage, anchor) in map_query.iter() {
         let Some(map_asset) = assets.get(&tiled_map.0) else {
@@ -76,25 +71,31 @@ fn draw_tile_infos(
 
         for (_, entities) in storage.tiles() {
             for entity in entities {
-                let Ok((entity, tile_pos)) = tile_query.get(*entity) else {
+                let Ok((tile_pos, child_of)) = tile_query.get(*entity) else {
                     continue;
                 };
-                let Some(tile) = storage.get_tile(&map_asset.map, entity) else {
+                let Some(tile) = storage.get_tile(&map_asset.map, *entity) else {
                     continue;
                 };
 
-                let pos = map_asset.tile_relative_position(tile_pos, &tile_size(&tile), anchor);
-                commands.entity(entity).insert((
-                    Text2d::new(format!("{}x{}", tile_pos.x, tile_pos.y)),
-                    TextColor(config.color),
-                    config.font.clone(),
-                    TextLayout::justify(Justify::Center),
-                    Transform {
-                        translation: Vec3::new(pos.x, pos.y, config.z_offset),
-                        scale: config.scale,
-                        ..default()
-                    },
-                ));
+                // Compute the tile's world position (center) relative to its tilemap
+                let tile_rel_pos =
+                    map_asset.tile_relative_position(tile_pos, &tile_size(&tile), anchor);
+
+                // To get the tile's global transform, combine with the parent tilemap's transform
+                let Ok(parent_transform) = tilemap_query.get(child_of.parent()) else {
+                    continue;
+                };
+                let tile_transform =
+                    *parent_transform * Transform::from_translation(tile_rel_pos.extend(0.));
+
+                gizmos.text_2d(
+                    Isometry2d::from_translation(tile_transform.translation().truncate()),
+                    &format!("{}x{}", tile_pos.x, tile_pos.y),
+                    config.text_size,
+                    Vec2::ZERO,
+                    config.text_color,
+                );
             }
         }
     }

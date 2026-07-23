@@ -476,6 +476,7 @@ fn spawn_objects_layer(
             TiledObject::Ellipse { .. } => "Ellipse",
             TiledObject::Polygon { .. } => "Polygon",
             TiledObject::Polyline { .. } => "Polyline",
+            TiledObject::Capsule { .. } => "Capsule",
         };
 
         let object_entity = commands

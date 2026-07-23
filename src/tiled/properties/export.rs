@@ -6,12 +6,16 @@ use bevy::{
     reflect::{
         array::ArrayInfo,
         enums::{EnumInfo, VariantInfo},
+        list::ListInfo,
+        map::MapInfo,
+        set::SetInfo,
         structs::StructInfo,
         tuple::TupleInfo,
         tuple_struct::TupleStructInfo,
         NamedField, ReflectRef, TypeInfo, TypeRegistration, TypeRegistry, UnnamedField,
     },
 };
+use serde_json::Value;
 use std::borrow::Cow;
 use thiserror::Error;
 
@@ -22,16 +26,8 @@ type ExportConversionResult = Result<Vec<TypeExport>, ExportConversionError>;
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Error)]
 enum ExportConversionError {
-    #[error("lists fields are not supported")]
-    ListUnsupported,
-    #[error("map fields are not supported")]
-    MapUnsupported,
     #[error("field of type {0} is not supported")]
     UnsupportedValue(&'static str),
-    #[error("set fields are not supported")]
-    SetUnsupported,
-    #[error("a dependency is not supported")]
-    DependencyError,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -44,38 +40,78 @@ impl TypeExportRegistry {
     #[allow(clippy::wrong_self_convention)]
     pub(crate) fn to_vec(self) -> Vec<TypeExport> {
         let mut out = self.types.into_values().flatten().collect::<Vec<_>>();
-        out.sort_by(|a, b| a.name.cmp(&b.name));
+        out.sort_by_key(|e| e.id);
         out
     }
 
     pub(crate) fn from_registry(registry: &TypeRegistry, filter: &TiledFilter) -> Self {
-        let mut deps = vec![];
         let mut out = Self::default();
 
         // Sort registry before iterating over it so we try to keep IDs as stable as possible
         let mut sorted_registry = registry.iter().collect::<Vec<_>>();
         sorted_registry.sort_by(|a, b| a.type_info().type_path().cmp(b.type_info().type_path()));
 
-        for t in sorted_registry {
-            if filter.matches(t.type_info().type_path())
-                && (t.data::<ReflectComponent>().is_some()
-                    || t.data::<ReflectBundle>().is_some()
-                    || t.data::<ReflectResource>().is_some())
-            {
-                let mut new_deps =
-                    out.register_from_type_registration(t, registry, USE_AS_PROPERTY.to_vec());
-                deps.append(&mut new_deps);
-            }
-        }
+        for top_level_type in sorted_registry {
+            let mut types_to_export: Vec<&TypeRegistration> = vec![];
 
-        for d in deps {
-            if out.types.contains_key(d) {
+            // Check if this type is either a component, a bundle or a resources
+            if top_level_type.data::<ReflectComponent>().is_none()
+                && top_level_type.data::<ReflectBundle>().is_none()
+                && top_level_type.data::<ReflectResource>().is_none()
+            {
                 continue;
             }
-            if let Some(t) = registry.get_with_type_path(d) {
-                // We should have a dedicated 'useAs' flags so we cannot add these dependencies
-                // directly as objects properties (only usable when nested inside another type)
-                out.register_from_type_registration(t, registry, USE_AS_PROPERTY.to_vec());
+
+            // ... that it matches provided filter ...
+            if !filter.matches(top_level_type.type_info().type_path()) {
+                continue;
+            }
+
+            // ... and that we don't already know about it
+            if out
+                .types
+                .contains_key(top_level_type.type_info().type_path())
+            {
+                continue;
+            }
+
+            // Build a list with top-level type and associated dependencies
+            // List is ordered with "leaf" dependencies at the beginning
+            let deps = dependencies(top_level_type, registry);
+            for d in deps {
+                if let Some(dep_registration) = registry.get_with_type_path(d) {
+                    if !out
+                        .types
+                        .contains_key(dep_registration.type_info().type_path())
+                    {
+                        types_to_export.push(dep_registration);
+                    }
+                }
+            }
+            types_to_export.push(top_level_type);
+
+            // Try to build an export with our types
+            // If any export fails, remove all related types
+            if types_to_export.iter().any(|t| {
+                debug!("Exporting type '{}'", t.type_info().type_path());
+                match out.generate_export(t, registry, USE_AS_PROPERTY.to_vec()) {
+                    Ok(export) => {
+                        out.types.insert(t.type_info().type_path(), export);
+                        false
+                    }
+                    Err(e) => {
+                        warn!("Export error for '{}': {}", t.type_info().type_path(), e);
+                        true
+                    }
+                }
+            }) {
+                warn!(
+                    "'{}' will not be exported",
+                    top_level_type.type_info().type_path()
+                );
+                for t in types_to_export {
+                    out.types.remove(t.type_info().type_path());
+                }
             }
         }
 
@@ -85,40 +121,6 @@ impl TypeExportRegistry {
     fn next_id(&mut self) -> u32 {
         self.id += 1;
         self.id
-    }
-
-    fn register_from_type_registration(
-        &mut self,
-        registration: &TypeRegistration,
-        registry: &TypeRegistry,
-        use_as: Vec<UseAs>,
-    ) -> Vec<&'static str> {
-        let mut deps = vec![];
-        match self.generate_export(registration, registry, use_as, &mut deps) {
-            Ok(export) => {
-                if !export.is_empty() {
-                    self.types
-                        .insert(registration.type_info().type_path(), export);
-                }
-                deps
-            }
-            Err(_) => {
-                self.remove_with_dependency(registration.type_info().type_path());
-                vec![]
-            }
-        }
-    }
-
-    fn is_supported(registration: &TypeRegistration) -> bool {
-        matches!(
-            registration.type_info(),
-            TypeInfo::TupleStruct(_)
-                | TypeInfo::Struct(_)
-                | TypeInfo::Tuple(_)
-                | TypeInfo::Array(_)
-                | TypeInfo::Enum(_)
-                | TypeInfo::Opaque(_)
-        )
     }
 
     fn is_simple(registration: &TypeRegistration) -> bool {
@@ -133,7 +135,6 @@ impl TypeExportRegistry {
         registration: &TypeRegistration,
         registry: &TypeRegistry,
         use_as: Vec<UseAs>,
-        deps: &mut Vec<&'static str>,
     ) -> ExportConversionResult {
         let tmp = registration.data::<ReflectDefault>().map(|v| v.default());
         let default_value = tmp.as_deref();
@@ -159,7 +160,7 @@ impl TypeExportRegistry {
             }]);
         }
 
-        let out = match registration.type_info() {
+        match registration.type_info() {
             TypeInfo::TupleStruct(info) => {
                 self.generate_tuple_struct_export(info, registry, default_value, use_as)
             }
@@ -169,51 +170,14 @@ impl TypeExportRegistry {
             TypeInfo::Tuple(info) => {
                 self.generate_tuple_export(info, registry, default_value, use_as)
             }
-            TypeInfo::List(_) => Err(ExportConversionError::ListUnsupported),
+            TypeInfo::List(info) => self.generate_list_export(info, registry, use_as),
             TypeInfo::Array(info) => self.generate_array_export(info, registry, use_as),
-            TypeInfo::Map(_) => Err(ExportConversionError::MapUnsupported),
-            TypeInfo::Enum(info) => self.generate_enum_export(info, registry, use_as),
-            TypeInfo::Opaque(_) => Ok(vec![]),
-            TypeInfo::Set(_) => Err(ExportConversionError::SetUnsupported),
-        };
-
-        if out.is_ok() {
-            let mut new_deps = dependencies(registration, registry);
-            if new_deps.iter().all(|n| {
-                if let Some(t) = registry.get_with_type_path(n) {
-                    return Self::is_supported(t);
-                }
-                false
-            }) {
-                deps.append(&mut new_deps);
-                return out;
-            } else {
-                return Err(ExportConversionError::DependencyError);
+            TypeInfo::Map(info) => self.generate_map_export(info, registry, use_as),
+            TypeInfo::Enum(info) => {
+                self.generate_enum_export(info, registry, default_value, use_as)
             }
-        }
-        out
-    }
-
-    fn remove_with_dependency(&mut self, type_path: &str) {
-        let mut to_remove = vec![type_path.to_string()];
-        while let Some(type_path) = to_remove.pop() {
-            self.types.retain(|_, export| {
-                export.iter().all(|export| match &export.type_data {
-                    TypeData::Enum(_) => true,
-                    TypeData::Class(class) => {
-                        if class.members.iter().any(|m| {
-                            m.property_type
-                                .as_ref()
-                                .is_some_and(|s| s.as_str() == type_path)
-                        }) {
-                            to_remove.push(export.name.clone());
-                            false
-                        } else {
-                            true
-                        }
-                    }
-                })
-            })
+            TypeInfo::Opaque(_) => Ok(vec![]),
+            TypeInfo::Set(info) => self.generate_set_export(info, registry, use_as),
         }
     }
 
@@ -277,6 +241,165 @@ impl TypeExportRegistry {
                         value: Default::default(),
                     })
                     .collect(),
+            }),
+        };
+
+        Ok(vec![root])
+    }
+
+    fn generate_list_export(
+        &mut self,
+        info: &ListInfo,
+        registry: &TypeRegistry,
+        use_as: Vec<UseAs>,
+    ) -> ExportConversionResult {
+        let item_registry =
+            registry
+                .get(info.item_ty().id())
+                .ok_or(ExportConversionError::UnsupportedValue(
+                    info.item_ty().path(),
+                ))?;
+        let default_value = item_registry.data::<ReflectDefault>().map(|d| d.default());
+        let (type_field, property_type) = type_to_field(item_registry)?;
+
+        let root = TypeExport {
+            id: self.next_id(),
+            name: info.type_path().to_string(),
+            type_data: TypeData::Class(Class {
+                use_as,
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: vec![Member {
+                    name: "list".to_string(),
+                    property_type: None,
+                    type_field: FieldType::List,
+                    value: Value::Array(vec![serde_json::to_value(ListItem {
+                        property_type: property_type.clone(),
+                        type_field,
+                        value: default_value
+                            .map(|v| value_to_json(v.as_partial_reflect()))
+                            .unwrap_or_default(),
+                    })
+                    .unwrap()]),
+                }],
+            }),
+        };
+
+        Ok(vec![root])
+    }
+
+    fn generate_map_export(
+        &mut self,
+        info: &MapInfo,
+        registry: &TypeRegistry,
+        use_as: Vec<UseAs>,
+    ) -> ExportConversionResult {
+        let value_registry =
+            registry
+                .get(info.value_ty().id())
+                .ok_or(ExportConversionError::UnsupportedValue(
+                    info.value_ty().path(),
+                ))?;
+        let default_value = value_registry.data::<ReflectDefault>().map(|d| d.default());
+        let (value_type_field, value_property_type) = type_to_field(value_registry)?;
+        let key_registry =
+            registry
+                .get(info.key_ty().id())
+                .ok_or(ExportConversionError::UnsupportedValue(
+                    info.key_ty().path(),
+                ))?;
+        let default_key = key_registry.data::<ReflectDefault>().map(|d| d.default());
+        let (key_type_field, key_property_type) = type_to_field(key_registry)?;
+
+        let map_item_property_type = format!("{}:::MapItem", info.type_path());
+
+        let map_item = TypeExport {
+            id: self.next_id(),
+            name: map_item_property_type.clone(),
+            type_data: TypeData::Class(Class {
+                use_as: USE_AS_PROPERTY.to_vec(),
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: vec![
+                    Member {
+                        name: "key".to_string(),
+                        property_type: key_property_type.clone(),
+                        type_field: key_type_field,
+                        value: default_key
+                            .map(|v| value_to_json(v.as_partial_reflect()))
+                            .unwrap_or_default(),
+                    },
+                    Member {
+                        name: "value".to_string(),
+                        property_type: value_property_type.clone(),
+                        type_field: value_type_field,
+                        value: default_value
+                            .map(|v| value_to_json(v.as_partial_reflect()))
+                            .unwrap_or_default(),
+                    },
+                ],
+            }),
+        };
+
+        let root = TypeExport {
+            id: self.next_id(),
+            name: info.type_path().to_string(),
+            type_data: TypeData::Class(Class {
+                use_as,
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: vec![Member {
+                    name: "map".to_string(),
+                    property_type: None,
+                    type_field: FieldType::List,
+                    value: Value::Array(vec![serde_json::to_value(ListItem {
+                        property_type: Some(map_item_property_type),
+                        type_field: FieldType::Class,
+                        value: Default::default(),
+                    })
+                    .unwrap()]),
+                }],
+            }),
+        };
+
+        Ok(vec![root, map_item])
+    }
+
+    fn generate_set_export(
+        &mut self,
+        info: &SetInfo,
+        registry: &TypeRegistry,
+        use_as: Vec<UseAs>,
+    ) -> ExportConversionResult {
+        let value_registry =
+            registry
+                .get(info.value_ty().id())
+                .ok_or(ExportConversionError::UnsupportedValue(
+                    info.value_ty().path(),
+                ))?;
+        let default_value = value_registry.data::<ReflectDefault>().map(|d| d.default());
+        let (type_field, property_type) = type_to_field(value_registry)?;
+
+        let root = TypeExport {
+            id: self.next_id(),
+            name: info.type_path().to_string(),
+            type_data: TypeData::Class(Class {
+                use_as,
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: vec![Member {
+                    name: "set".to_string(),
+                    property_type: None,
+                    type_field: FieldType::List,
+                    value: Value::Array(vec![serde_json::to_value(ListItem {
+                        property_type: property_type.clone(),
+                        type_field,
+                        value: default_value
+                            .map(|v| value_to_json(v.as_partial_reflect()))
+                            .unwrap_or_default(),
+                    })
+                    .unwrap()]),
+                }],
             }),
         };
 
@@ -359,6 +482,7 @@ impl TypeExportRegistry {
         &mut self,
         info: &EnumInfo,
         registry: &TypeRegistry,
+        default_value: Option<&dyn Reflect>,
         _use_as: Vec<UseAs>,
     ) -> ExportConversionResult {
         // Creates types for:
@@ -385,10 +509,19 @@ impl TypeExportRegistry {
             // and put it at the top of the fields (they are alphabetized in the editor)
             name: ":variant".to_string(),
             property_type: Some(variants_name),
-            type_field: FieldType::Class,
+            type_field: FieldType::String,
             value: info
                 .iter()
-                .next()
+                // Find the default variant name
+                .find(|variant| {
+                    let Some(default_value) = default_value else {
+                        return true;
+                    };
+                    match default_value.as_partial_reflect().reflect_ref() {
+                        ReflectRef::Enum(value) => value.variant_name().eq(variant.name()),
+                        _ => true,
+                    }
+                })
                 .map(|s| serde_json::Value::String(s.name().to_string()))
                 .unwrap_or_default(),
         });
@@ -540,16 +673,17 @@ fn value_to_json(value: &dyn PartialReflect) -> serde_json::Value {
         ("alloc::borrow::Cow<str>", _, ReflectRef::Opaque(v)) => {
             serde_json::json!(*v.try_downcast_ref::<Cow<str>>().unwrap())
         }
+        // Special case for bevy "Name" which use a HashedStr instead of a regular string
+        ("bevy_platform::hash::Hashed<alloc::borrow::Cow<str>, bevy_platform::hash::FixedHasher>", _, ReflectRef::Opaque(_)) => {
+            serde_json::json!("")
+        }
         ("bevy_color::color::Color", _, _) => {
             let c = value.try_downcast_ref::<Color>().unwrap();
             serde_json::json!(format!("#{:08x}", c.to_linear().as_u32()))
         }
-        (_, TypeInfo::Enum(info), ReflectRef::Enum(v)) => {
-            if info.iter().all(|v| matches!(v, VariantInfo::Unit(_))) {
-                serde_json::json!(v.variant_name())
-            } else {
-                serde_json::Value::default()
-            }
+        (_, TypeInfo::Enum(_), ReflectRef::Enum(_)) => {
+            // Special case for enums: the value is held by the ':::variant' type
+            serde_json::json!({})
         }
         (_, TypeInfo::Struct(info), _) => info
             .iter()
@@ -574,10 +708,10 @@ fn value_to_json(value: &dyn PartialReflect) -> serde_json::Value {
             })
             .collect(),
         _ => {
-            // warn!(
-            //     "cannot convert type '{}' to a JSON value",
-            //     type_info.type_path()
-            // );
+            warn!(
+                "cannot convert type '{}' to a JSON value",
+                type_info.type_path()
+            );
             serde_json::Value::default()
         }
     }
@@ -623,11 +757,6 @@ fn type_to_field(
     t: &TypeRegistration,
 ) -> Result<(FieldType, Option<String>), ExportConversionError> {
     let info = t.type_info();
-    if matches!(info, TypeInfo::List(_)) {
-        return Err(ExportConversionError::ListUnsupported);
-    } else if matches!(info, TypeInfo::Map(_)) {
-        return Err(ExportConversionError::MapUnsupported);
-    }
     Ok(match info.type_path() {
         "bool" => (FieldType::Bool, None),
         "f32" | "f64" => (FieldType::Float, None),
@@ -650,25 +779,9 @@ fn type_to_field(
                 return Err(ExportConversionError::UnsupportedValue(info.type_path()));
             }
 
-            (
-                if is_enum_and_simple(t) {
-                    FieldType::String
-                } else {
-                    FieldType::Class
-                },
-                Some(path.to_string()),
-            )
+            (FieldType::Class, Some(path.to_string()))
         }
     })
-}
-
-fn is_enum_and_simple(t: &TypeRegistration) -> bool {
-    match t.type_info() {
-        TypeInfo::Enum(info) => info
-            .iter()
-            .all(|variant| matches!(variant, VariantInfo::Unit(_))),
-        _ => false,
-    }
 }
 
 fn dependencies(registration: &TypeRegistration, registry: &TypeRegistry) -> Vec<&'static str> {
@@ -702,7 +815,8 @@ fn dependencies(registration: &TypeRegistration, registry: &TypeRegistry) -> Vec
     for d in deps {
         if let Some(t) = registry.get_with_type_path(d) {
             let mut new_deps = dependencies(t, registry);
-            all_deps.append(&mut new_deps);
+            new_deps.append(&mut all_deps);
+            all_deps = new_deps;
         }
     }
     all_deps
@@ -809,7 +923,7 @@ mod tests {
                 members: vec![Member {
                     name: ":variant".to_string(),
                     property_type: Some(EnumComponent::type_path().to_string() + ":::Variant"),
-                    type_field: FieldType::Class,
+                    type_field: FieldType::String,
                     value: serde_json::json!("VarA"),
                 },],
             }),
@@ -881,15 +995,15 @@ mod tests {
                     Member {
                         name: "an_enum".to_string(),
                         property_type: Some(TestEnum::type_path().to_string()),
-                        type_field: FieldType::String,
-                        value: serde_json::json!("VarB"),
+                        type_field: FieldType::Class,
+                        value: serde_json::json!({}),
                     },
                     Member {
                         name: "a_struct".to_string(),
                         property_type: Some(InnerStruct::type_path().to_string()),
                         type_field: FieldType::Class,
                         value: serde_json::json!({
-                            "another_enum": "VarC",
+                            "another_enum": {},
                             "another_float": 123.456,
                             "another_integer": 42
                         })
@@ -1063,7 +1177,7 @@ mod tests {
                     Member {
                         name: ":variant".to_string(),
                         property_type: Some(EnumComponent::type_path().to_string() + ":::Variant"),
-                        type_field: FieldType::Class,
+                        type_field: FieldType::String,
                         value: serde_json::json!("VarA"),
                     },
                     Member {
@@ -1086,6 +1200,37 @@ mod tests {
                     },
                 ],
             })
+        );
+    }
+
+    #[test]
+    fn exports_dependencies_before_dependents() {
+        #[derive(Component, Reflect)]
+        #[reflect(Component)]
+        struct Dependency;
+
+        #[derive(Component, Reflect)]
+        #[reflect(Component)]
+        struct Dependent {
+            dependency: Dependency,
+        }
+
+        let mut registry = TypeRegistry::new();
+        registry.register::<Dependency>();
+        registry.register::<Dependent>();
+
+        let exports = TypeExportRegistry::from_registry(&registry, &TiledFilter::All).to_vec();
+        let exported_names = exports
+            .iter()
+            .map(|export| export.name.clone())
+            .collect::<Vec<_>>();
+
+        assert_eq!(
+            exported_names,
+            vec![
+                Dependency::type_path().to_string(),
+                Dependent::type_path().to_string(),
+            ]
         );
     }
 }

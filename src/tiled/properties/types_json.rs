@@ -35,6 +35,16 @@ pub(crate) struct Member {
     pub value: serde_json::Value,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ListItem {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub property_type: Option<String>,
+    #[serde(rename = "type")]
+    pub type_field: FieldType,
+    pub value: serde_json::Value,
+}
+
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct Enum {
@@ -60,6 +70,7 @@ pub(crate) enum FieldType {
     Int,
     Object,
     String,
+    List,
     Class,
 }
 

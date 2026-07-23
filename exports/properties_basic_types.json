@@ -1,22 +1,5 @@
 [
   {
-    "id": 11,
-    "name": "bevy_color::color::Color",
-    "type": "class",
-    "useAs": [
-      "property"
-    ],
-    "color": "#000000",
-    "drawFill": true,
-    "members": [
-      {
-        "name": "0",
-        "type": "color",
-        "value": "#ffffffff"
-      }
-    ]
-  },
-  {
     "id": 1,
     "name": "bevy_ecs::name::Name",
     "type": "class",
@@ -31,7 +14,7 @@
         "type": "string",
         "value": {
           "0": {
-            "0": null
+            "0": ""
           }
         }
       }
@@ -56,6 +39,23 @@
   },
   {
     "id": 3,
+    "name": "bevy_color::color::Color",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": "0",
+        "type": "color",
+        "value": "#ffffffff"
+      }
+    ]
+  },
+  {
+    "id": 4,
     "name": "bevy_text::text::TextColor",
     "type": "class",
     "useAs": [
@@ -72,8 +72,23 @@
     ]
   },
   {
-    "id": 16,
-    "name": "core::option::Option<bevy_ecs::entity::Entity>",
+    "id": 5,
+    "name": "properties_basic::BiomeType:::Variant",
+    "type": "enum",
+    "storageType": "string",
+    "values": [
+      "Plain",
+      "Desert",
+      "Forest",
+      "Mountain",
+      "Water",
+      "Unknown"
+    ],
+    "valuesAsFlags": false
+  },
+  {
+    "id": 6,
+    "name": "properties_basic::BiomeType",
     "type": "class",
     "useAs": [
       "property"
@@ -83,20 +98,98 @@
     "members": [
       {
         "name": ":variant",
-        "propertyType": "core::option::Option<bevy_ecs::entity::Entity>:::Variant",
-        "type": "class",
-        "value": "None"
-      },
-      {
-        "name": "Some",
-        "propertyType": "core::option::Option<bevy_ecs::entity::Entity>::Some",
-        "type": "class",
-        "value": null
+        "propertyType": "properties_basic::BiomeType:::Variant",
+        "type": "string",
+        "value": "Unknown"
       }
     ]
   },
   {
-    "id": 14,
+    "id": 7,
+    "name": "alloc::vec::Vec<properties_basic::BiomeType>",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": "list",
+        "type": "list",
+        "value": [
+          {
+            "propertyType": "properties_basic::BiomeType",
+            "type": "class",
+            "value": {}
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "name": "properties_basic::Biome",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": "types",
+        "propertyType": "alloc::vec::Vec<properties_basic::BiomeType>",
+        "type": "class",
+        "value": null
+      },
+      {
+        "name": "move_cost",
+        "type": "int",
+        "value": 0
+      },
+      {
+        "name": "block_line_of_sight",
+        "type": "bool",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "name": "properties_basic::Resource:::Variant",
+    "type": "enum",
+    "storageType": "string",
+    "values": [
+      "Wheat",
+      "Strawberry",
+      "Wood",
+      "Copper",
+      "Gold",
+      "Unknown"
+    ],
+    "valuesAsFlags": false
+  },
+  {
+    "id": 10,
+    "name": "properties_basic::Resource",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": ":variant",
+        "propertyType": "properties_basic::Resource:::Variant",
+        "type": "string",
+        "value": "Unknown"
+      }
+    ]
+  },
+  {
+    "id": 11,
     "name": "core::option::Option<bevy_ecs::entity::Entity>:::Variant",
     "type": "enum",
     "storageType": "string",
@@ -107,7 +200,7 @@
     "valuesAsFlags": false
   },
   {
-    "id": 15,
+    "id": 12,
     "name": "core::option::Option<bevy_ecs::entity::Entity>::Some",
     "type": "class",
     "useAs": [
@@ -124,36 +217,8 @@
     ]
   },
   {
-    "id": 4,
-    "name": "properties_basic::Biome",
-    "type": "class",
-    "useAs": [
-      "property"
-    ],
-    "color": "#000000",
-    "drawFill": true,
-    "members": [
-      {
-        "name": "ty",
-        "propertyType": "properties_basic::BiomeType",
-        "type": "string",
-        "value": "Unknown"
-      },
-      {
-        "name": "move_cost",
-        "type": "int",
-        "value": 0
-      },
-      {
-        "name": "block_line_of_sight",
-        "type": "bool",
-        "value": false
-      }
-    ]
-  },
-  {
     "id": 13,
-    "name": "properties_basic::BiomeType",
+    "name": "core::option::Option<bevy_ecs::entity::Entity>",
     "type": "class",
     "useAs": [
       "property"
@@ -163,122 +228,33 @@
     "members": [
       {
         "name": ":variant",
-        "propertyType": "properties_basic::BiomeType:::Variant",
-        "type": "class",
-        "value": "Unknown"
-      }
-    ]
-  },
-  {
-    "id": 12,
-    "name": "properties_basic::BiomeType:::Variant",
-    "type": "enum",
-    "storageType": "string",
-    "values": [
-      "Unknown",
-      "Plain",
-      "Desert",
-      "Forest",
-      "Mountain",
-      "Water"
-    ],
-    "valuesAsFlags": false
-  },
-  {
-    "id": 6,
-    "name": "properties_basic::Resource",
-    "type": "class",
-    "useAs": [
-      "property"
-    ],
-    "color": "#000000",
-    "drawFill": true,
-    "members": [
-      {
-        "name": ":variant",
-        "propertyType": "properties_basic::Resource:::Variant",
-        "type": "class",
-        "value": "Unknown"
-      }
-    ]
-  },
-  {
-    "id": 5,
-    "name": "properties_basic::Resource:::Variant",
-    "type": "enum",
-    "storageType": "string",
-    "values": [
-      "Unknown",
-      "Wheat",
-      "Strawberry",
-      "Wood",
-      "Copper",
-      "Gold"
-    ],
-    "valuesAsFlags": false
-  },
-  {
-    "id": 10,
-    "name": "properties_basic::SpawnPoint",
-    "type": "class",
-    "useAs": [
-      "property"
-    ],
-    "color": "#000000",
-    "drawFill": true,
-    "members": [
-      {
-        "name": ":variant",
-        "propertyType": "properties_basic::SpawnPoint:::Variant",
-        "type": "class",
-        "value": "Unknown"
+        "propertyType": "core::option::Option<bevy_ecs::entity::Entity>:::Variant",
+        "type": "string",
+        "value": "None"
       },
       {
-        "name": "Player",
-        "propertyType": "properties_basic::SpawnPoint::Player",
-        "type": "class",
-        "value": null
-      },
-      {
-        "name": "Enemy",
-        "propertyType": "properties_basic::SpawnPoint::Enemy",
+        "name": "Some",
+        "propertyType": "core::option::Option<bevy_ecs::entity::Entity>::Some",
         "type": "class",
         "value": null
       }
     ]
   },
   {
-    "id": 7,
+    "id": 14,
     "name": "properties_basic::SpawnPoint:::Variant",
     "type": "enum",
     "storageType": "string",
     "values": [
-      "Unknown",
       "Player",
       "Enemy",
-      "Friendly"
+      "Friendly",
+      "Unknown"
     ],
     "valuesAsFlags": false
   },
   {
-    "id": 9,
-    "name": "properties_basic::SpawnPoint::Enemy",
-    "type": "class",
-    "useAs": [
-      "property"
-    ],
-    "color": "#000000",
-    "drawFill": true,
-    "members": [
-      {
-        "name": "0",
-        "type": "color",
-        "value": null
-      }
-    ]
-  },
-  {
-    "id": 8,
+    "id": 15,
     "name": "properties_basic::SpawnPoint::Player",
     "type": "class",
     "useAs": [
@@ -300,6 +276,53 @@
       {
         "name": "other_obj",
         "type": "object",
+        "value": null
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "name": "properties_basic::SpawnPoint::Enemy",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": "0",
+        "type": "color",
+        "value": null
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "name": "properties_basic::SpawnPoint",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": ":variant",
+        "propertyType": "properties_basic::SpawnPoint:::Variant",
+        "type": "string",
+        "value": "Unknown"
+      },
+      {
+        "name": "Player",
+        "propertyType": "properties_basic::SpawnPoint::Player",
+        "type": "class",
+        "value": null
+      },
+      {
+        "name": "Enemy",
+        "propertyType": "properties_basic::SpawnPoint::Enemy",
+        "type": "class",
         "value": null
       }
     ]

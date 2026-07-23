@@ -1,14 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.10" tiledversion="1.11.0" name="drjamgo_hex_16x16" tilewidth="16" tileheight="16" tilecount="20" columns="4">
+<tileset version="1.10" tiledversion="1.12.2" name="drjamgo_hex_16x16" tilewidth="16" tileheight="16" tilecount="20" columns="4">
  <image source="drjamgo_hex_16x16.png" width="64" height="80"/>
  <tile id="0">
   <properties>
    <property name="Biome" type="class" propertytype="properties_basic::Biome">
     <properties>
      <property name="move_cost" type="int" value="1"/>
-     <property name="ty" type="class" propertytype="properties_basic::BiomeType">
+     <property name="types" type="class" propertytype="alloc::vec::Vec&lt;properties_basic::BiomeType&gt;">
       <properties>
-       <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Plain"/>
+       <property name="list" type="list">
+        <item type="class" propertytype="properties_basic::BiomeType">
+         <properties>
+          <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Plain"/>
+         </properties>
+        </item>
+       </property>
       </properties>
      </property>
     </properties>
@@ -20,6 +26,17 @@
    <property name="Biome" type="class" propertytype="properties_basic::Biome">
     <properties>
      <property name="move_cost" type="int" value="2"/>
+     <property name="types" type="class" propertytype="alloc::vec::Vec&lt;properties_basic::BiomeType&gt;">
+      <properties>
+       <property name="list" type="list">
+        <item type="class" propertytype="properties_basic::BiomeType">
+         <properties>
+          <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Plain"/>
+         </properties>
+        </item>
+       </property>
+      </properties>
+     </property>
     </properties>
    </property>
    <property name="Resource" type="class" propertytype="properties_basic::Resource">
@@ -37,9 +54,15 @@
    <property name="Biome" type="class" propertytype="properties_basic::Biome">
     <properties>
      <property name="move_cost" type="int" value="3"/>
-     <property name="ty" type="class" propertytype="properties_basic::BiomeType">
+     <property name="types" type="class" propertytype="alloc::vec::Vec&lt;properties_basic::BiomeType&gt;">
       <properties>
-       <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Mountain"/>
+       <property name="list" type="list">
+        <item type="class" propertytype="properties_basic::BiomeType">
+         <properties>
+          <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Mountain"/>
+         </properties>
+        </item>
+       </property>
       </properties>
      </property>
     </properties>
@@ -56,9 +79,15 @@
    <property name="Biome" type="class" propertytype="properties_basic::Biome">
     <properties>
      <property name="move_cost" type="int" value="99"/>
-     <property name="ty" type="class" propertytype="properties_basic::BiomeType">
+     <property name="types" type="class" propertytype="alloc::vec::Vec&lt;properties_basic::BiomeType&gt;">
       <properties>
-       <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Water"/>
+       <property name="list" type="list">
+        <item type="class" propertytype="properties_basic::BiomeType">
+         <properties>
+          <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Water"/>
+         </properties>
+        </item>
+       </property>
       </properties>
      </property>
     </properties>
@@ -70,9 +99,15 @@
    <property name="Biome" type="class" propertytype="properties_basic::Biome">
     <properties>
      <property name="move_cost" type="int" value="1"/>
-     <property name="ty" type="class" propertytype="properties_basic::BiomeType">
+     <property name="types" type="class" propertytype="alloc::vec::Vec&lt;properties_basic::BiomeType&gt;">
       <properties>
-       <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Plain"/>
+       <property name="list" type="list">
+        <item type="class" propertytype="properties_basic::BiomeType">
+         <properties>
+          <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Forest"/>
+         </properties>
+        </item>
+       </property>
       </properties>
      </property>
     </properties>
@@ -89,9 +124,15 @@
    <property name="Biome" type="class" propertytype="properties_basic::Biome">
     <properties>
      <property name="move_cost" type="int" value="1"/>
-     <property name="ty" type="class" propertytype="properties_basic::BiomeType">
+     <property name="types" type="class" propertytype="alloc::vec::Vec&lt;properties_basic::BiomeType&gt;">
       <properties>
-       <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Desert"/>
+       <property name="list" type="list">
+        <item type="class" propertytype="properties_basic::BiomeType">
+         <properties>
+          <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Desert"/>
+         </properties>
+        </item>
+       </property>
       </properties>
      </property>
     </properties>
@@ -103,9 +144,15 @@
    <property name="Biome" type="class" propertytype="properties_basic::Biome">
     <properties>
      <property name="move_cost" type="int" value="99"/>
-     <property name="ty" type="class" propertytype="properties_basic::BiomeType">
+     <property name="types" type="class" propertytype="alloc::vec::Vec&lt;properties_basic::BiomeType&gt;">
       <properties>
-       <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Water"/>
+       <property name="list" type="list">
+        <item type="class" propertytype="properties_basic::BiomeType">
+         <properties>
+          <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Water"/>
+         </properties>
+        </item>
+       </property>
       </properties>
      </property>
     </properties>
@@ -117,9 +164,15 @@
    <property name="Biome" type="class" propertytype="properties_basic::Biome">
     <properties>
      <property name="move_cost" type="int" value="99"/>
-     <property name="ty" type="class" propertytype="properties_basic::BiomeType">
+     <property name="types" type="class" propertytype="alloc::vec::Vec&lt;properties_basic::BiomeType&gt;">
       <properties>
-       <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Water"/>
+       <property name="list" type="list">
+        <item type="class" propertytype="properties_basic::BiomeType">
+         <properties>
+          <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Water"/>
+         </properties>
+        </item>
+       </property>
       </properties>
      </property>
     </properties>
@@ -128,7 +181,22 @@
  </tile>
  <tile id="8">
   <properties>
-   <property name="Biome" type="class" propertytype="properties_basic::Biome"/>
+   <property name="Biome" type="class" propertytype="properties_basic::Biome">
+    <properties>
+     <property name="move_cost" type="int" value="1"/>
+     <property name="types" type="class" propertytype="alloc::vec::Vec&lt;properties_basic::BiomeType&gt;">
+      <properties>
+       <property name="list" type="list">
+        <item type="class" propertytype="properties_basic::BiomeType">
+         <properties>
+          <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Plain"/>
+         </properties>
+        </item>
+       </property>
+      </properties>
+     </property>
+    </properties>
+   </property>
   </properties>
  </tile>
  <tile id="19">
