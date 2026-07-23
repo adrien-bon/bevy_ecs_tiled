@@ -106,6 +106,29 @@
   },
   {
     "id": 7,
+    "name": "alloc::vec::Vec<properties_basic::BiomeType>",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": "list",
+        "type": "list",
+        "value": [
+          {
+            "propertyType": "properties_basic::BiomeType",
+            "type": "class",
+            "value": {}
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 8,
     "name": "properties_basic::Biome",
     "type": "class",
     "useAs": [
@@ -115,10 +138,10 @@
     "drawFill": true,
     "members": [
       {
-        "name": "ty",
-        "propertyType": "properties_basic::BiomeType",
+        "name": "types",
+        "propertyType": "alloc::vec::Vec<properties_basic::BiomeType>",
         "type": "class",
-        "value": {}
+        "value": null
       },
       {
         "name": "move_cost",
@@ -133,7 +156,7 @@
     ]
   },
   {
-    "id": 8,
+    "id": 9,
     "name": "properties_basic::Resource:::Variant",
     "type": "enum",
     "storageType": "string",
@@ -148,7 +171,7 @@
     "valuesAsFlags": false
   },
   {
-    "id": 9,
+    "id": 10,
     "name": "properties_basic::Resource",
     "type": "class",
     "useAs": [
@@ -166,7 +189,7 @@
     ]
   },
   {
-    "id": 10,
+    "id": 11,
     "name": "core::option::Option<bevy_ecs::entity::Entity>:::Variant",
     "type": "enum",
     "storageType": "string",
@@ -177,7 +200,7 @@
     "valuesAsFlags": false
   },
   {
-    "id": 11,
+    "id": 12,
     "name": "core::option::Option<bevy_ecs::entity::Entity>::Some",
     "type": "class",
     "useAs": [
@@ -194,7 +217,7 @@
     ]
   },
   {
-    "id": 12,
+    "id": 13,
     "name": "core::option::Option<bevy_ecs::entity::Entity>",
     "type": "class",
     "useAs": [
@@ -218,7 +241,7 @@
     ]
   },
   {
-    "id": 13,
+    "id": 14,
     "name": "properties_basic::SpawnPoint:::Variant",
     "type": "enum",
     "storageType": "string",
@@ -231,7 +254,7 @@
     "valuesAsFlags": false
   },
   {
-    "id": 14,
+    "id": 15,
     "name": "properties_basic::SpawnPoint::Player",
     "type": "class",
     "useAs": [
@@ -258,7 +281,7 @@
     ]
   },
   {
-    "id": 15,
+    "id": 16,
     "name": "properties_basic::SpawnPoint::Enemy",
     "type": "class",
     "useAs": [
@@ -275,7 +298,7 @@
     ]
   },
   {
-    "id": 16,
+    "id": 17,
     "name": "properties_basic::SpawnPoint",
     "type": "class",
     "useAs": [
