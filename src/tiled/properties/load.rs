@@ -18,8 +18,6 @@ use bevy::{
         UnnamedField,
     },
 };
-use std::alloc;
-use std::collections::HashSet;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
