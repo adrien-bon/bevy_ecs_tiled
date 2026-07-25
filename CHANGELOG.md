@@ -11,6 +11,10 @@
 - Add support for list properties (#212)
 - Make `TiledMap` and `TiledWorld` components useable with bsn!()
 
+### Fixed
+
+- Improve error handling for tilesets not compatible with the `atlas` feature (#225)
+
 ## v0.13.1
 
 ### Features
