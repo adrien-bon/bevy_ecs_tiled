@@ -374,7 +374,7 @@ fn tileset_to_tiled_map_tileset(
         None => {
             #[cfg(feature = "atlas")]
             {
-                info!("Skipping image collection tileset '{}' which is incompatible with atlas feature", tileset.name);
+                warn!("Skipping image collection tileset '{}' which is incompatible with atlas feature", tileset.name);
                 return None;
             }
 

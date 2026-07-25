@@ -267,14 +267,12 @@ fn spawn_tiles_layer(
     for (tileset_index, tileset) in tiled_map.map.tilesets().iter().enumerate() {
         let tileset_index = tileset_index as u32;
         let Some(label) = tiled_map.tilesets_label_by_index.get(&tileset_index) else {
-            log::warn!("Skipped creating layer with missing tilemap textures (index {tileset_index} not found).");
+            log::warn!("Skipped layer with missing tileset (index: {tileset_index})");
             continue;
         };
 
         let Some(t) = tiled_map.tilesets.get(label) else {
-            log::warn!(
-                "Skipped creating layer with missing tilemap textures (label {label:?} not found)."
-            );
+            log::warn!("Skipped layer with missing tileset (label: {label:?})");
             continue;
         };
 
@@ -584,14 +582,19 @@ fn handle_tile_object(
     let label = match tile.tileset_location() {
         tiled::TilesetLocation::Map(tileset_index) => {
             let tileset_index = *tileset_index as u32;
-            tiled_map
-                .tilesets_label_by_index
-                .get(&tileset_index)
-                .expect("Cannot find tileset path for object tile")
+            let Some(label) = tiled_map.tilesets_label_by_index.get(&tileset_index) else {
+                log::warn!("Skipped object with missing tileset (index: {tileset_index})");
+                return (None, None);
+            };
+            label
         }
-        tiled::TilesetLocation::Template(tileset) => &tileset_label(tileset)
-            .expect("Cannot find object tile from Template")
-            .to_owned(),
+        tiled::TilesetLocation::Template(tileset) => {
+            let Some(label) = tileset_label(tileset) else {
+                log::warn!("Skipped object with missing template");
+                return (None, None);
+            };
+            &label.to_owned()
+        }
     };
 
     let Some(transform) = tile.get_tile().map(|t| {
