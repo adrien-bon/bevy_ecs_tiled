@@ -4,14 +4,11 @@
 
 ### Features
 
-- add support for list properties (#212)
-
-### Features
-
 - Update tiled-rs v0.16
 - Add support for capsule objects
 - Allow self-referential for physics colliders
 - Use gizmos for rendering TiledDebugTilesPlugin text
+- Add support for list properties (#212)
 
 ## v0.13.1
 

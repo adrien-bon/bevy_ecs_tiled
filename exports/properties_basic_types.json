@@ -82,6 +82,7 @@
       "Forest",
       "Mountain",
       "Water",
+      "DeepWater",
       "Unknown"
     ],
     "valuesAsFlags": false

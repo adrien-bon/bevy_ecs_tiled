@@ -13,7 +13,7 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 17,
+            "id": 1,
             "members": [
                 {
                     "name": "0",
@@ -30,7 +30,7 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 18,
+            "id": 2,
             "members": [
                 {
                     "name": "0",
@@ -47,7 +47,7 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 19,
+            "id": 3,
             "members": [
                 {
                     "name": "0",
@@ -64,7 +64,7 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 20,
+            "id": 4,
             "members": [
                 {
                     "name": "0",
@@ -79,7 +79,7 @@
             ]
         },
         {
-            "id": 21,
+            "id": 5,
             "name": "properties_basic::BiomeType:::Variant",
             "storageType": "string",
             "type": "enum",
@@ -89,6 +89,7 @@
                 "Forest",
                 "Mountain",
                 "Water",
+                "DeepWater",
                 "Unknown"
             ],
             "valuesAsFlags": false
@@ -96,7 +97,7 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 22,
+            "id": 6,
             "members": [
                 {
                     "name": ":variant",
@@ -114,13 +115,14 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 23,
+            "id": 7,
             "members": [
                 {
                     "name": "list",
                     "type": "list",
                     "value": [
                         {
+                            "propertyType": "properties_basic::BiomeType",
                             "type": "class",
                             "value": {
                             }
@@ -137,7 +139,7 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 24,
+            "id": 8,
             "members": [
                 {
                     "name": "block_line_of_sight",
@@ -164,7 +166,7 @@
             ]
         },
         {
-            "id": 25,
+            "id": 9,
             "name": "properties_basic::Resource:::Variant",
             "storageType": "string",
             "type": "enum",
@@ -181,7 +183,7 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 26,
+            "id": 10,
             "members": [
                 {
                     "name": ":variant",
@@ -197,7 +199,7 @@
             ]
         },
         {
-            "id": 27,
+            "id": 11,
             "name": "core::option::Option<bevy_ecs::entity::Entity>:::Variant",
             "storageType": "string",
             "type": "enum",
@@ -210,7 +212,7 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 28,
+            "id": 12,
             "members": [
                 {
                     "name": "0",
@@ -227,7 +229,7 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 29,
+            "id": 13,
             "members": [
                 {
                     "name": ":variant",
@@ -250,7 +252,7 @@
             ]
         },
         {
-            "id": 30,
+            "id": 14,
             "name": "properties_basic::SpawnPoint:::Variant",
             "storageType": "string",
             "type": "enum",
@@ -265,7 +267,7 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 31,
+            "id": 15,
             "members": [
                 {
                     "name": "color",
@@ -292,7 +294,7 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 32,
+            "id": 16,
             "members": [
                 {
                     "name": "0",
@@ -309,7 +311,7 @@
         {
             "color": "#ff000000",
             "drawFill": true,
-            "id": 33,
+            "id": 17,
             "members": [
                 {
                     "name": ":variant",

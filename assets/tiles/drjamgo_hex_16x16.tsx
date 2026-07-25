@@ -14,6 +14,11 @@
           <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Plain"/>
          </properties>
         </item>
+        <item type="class" propertytype="properties_basic::BiomeType">
+         <properties>
+          <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Forest"/>
+         </properties>
+        </item>
        </property>
       </properties>
      </property>
@@ -32,6 +37,11 @@
         <item type="class" propertytype="properties_basic::BiomeType">
          <properties>
           <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Plain"/>
+         </properties>
+        </item>
+        <item type="class" propertytype="properties_basic::BiomeType">
+         <properties>
+          <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Forest"/>
          </properties>
         </item>
        </property>
@@ -152,6 +162,11 @@
           <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Water"/>
          </properties>
         </item>
+        <item type="class" propertytype="properties_basic::BiomeType">
+         <properties>
+          <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="DeepWater"/>
+         </properties>
+        </item>
        </property>
       </properties>
      </property>
@@ -170,6 +185,11 @@
         <item type="class" propertytype="properties_basic::BiomeType">
          <properties>
           <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="Water"/>
+         </properties>
+        </item>
+        <item type="class" propertytype="properties_basic::BiomeType">
+         <properties>
+          <property name=":variant" propertytype="properties_basic::BiomeType:::Variant" value="DeepWater"/>
          </properties>
         </item>
        </property>

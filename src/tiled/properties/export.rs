@@ -707,6 +707,9 @@ fn value_to_json(value: &dyn PartialReflect) -> serde_json::Value {
                 )
             })
             .collect(),
+        (_, TypeInfo::List(_), _) => serde_json::Value::default(),
+        (_, TypeInfo::Map(_), _) => serde_json::Value::default(),
+        (_, TypeInfo::Set(_), _) => serde_json::Value::default(),
         _ => {
             warn!(
                 "cannot convert type '{}' to a JSON value",
@@ -825,7 +828,9 @@ fn dependencies(registration: &TypeRegistration, registry: &TypeRegistry) -> Vec
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bevy::render::render_resource::encase::rts_array::Length;
+    use bevy::{
+        platform::collections::HashSet, render::render_resource::encase::rts_array::Length,
+    };
 
     #[test]
     fn generate_with_entity() {
@@ -1231,6 +1236,158 @@ mod tests {
                 Dependency::type_path().to_string(),
                 Dependent::type_path().to_string(),
             ]
+        );
+    }
+
+    #[test]
+    fn generate_list_properties() {
+        #[derive(Reflect, Default)]
+        #[reflect(Default)]
+        struct TestTuple(f32);
+
+        #[derive(Reflect, Default, Eq, PartialEq, Hash)]
+        #[reflect(Default)]
+        enum TestEnum {
+            VarA,
+            #[default]
+            VarB,
+            VarC,
+        }
+
+        #[derive(Reflect, Default, Component)]
+        #[reflect(Default, Component)]
+        struct MyComponent {
+            a_list: Vec<TestTuple>,
+            a_set: HashSet<TestEnum>,
+            a_map: HashMap<TestEnum, TestTuple>,
+        }
+
+        let mut registry = TypeRegistry::new();
+        registry.register::<TestEnum>();
+        registry.register::<TestTuple>();
+        registry.register::<MyComponent>();
+
+        let exports = TypeExportRegistry::from_registry(&registry, &TiledFilter::All);
+
+        // Vec
+        let export_type = &exports.types.get(Vec::<TestTuple>::type_path()).unwrap();
+        assert_eq!(export_type.length(), 1);
+        assert_eq!(
+            export_type[0].name,
+            Vec::<TestTuple>::type_path().to_string()
+        );
+        assert_eq!(
+            export_type[0].type_data,
+            TypeData::Class(Class {
+                use_as: USE_AS_PROPERTY.to_vec(),
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: vec![Member {
+                    name: "list".to_string(),
+                    property_type: None,
+                    type_field: FieldType::List,
+                    value: serde_json::json!([
+                        {
+                            "propertyType": serde_json::Value::String(TestTuple::type_path().to_string()),
+                            "type": "class",
+                            "value": {
+                                "0": 0.0
+                            }
+                        }
+                    ])
+                }]
+            })
+        );
+
+        // HashSet
+        let export_type = &exports.types.get(HashSet::<TestEnum>::type_path()).unwrap();
+        dbg!(&export_type);
+        assert_eq!(export_type.length(), 1);
+        assert_eq!(
+            export_type[0].name,
+            HashSet::<TestEnum>::type_path().to_string()
+        );
+        assert_eq!(
+            export_type[0].type_data,
+            TypeData::Class(Class {
+                use_as: USE_AS_PROPERTY.to_vec(),
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: vec![Member {
+                    name: "set".to_string(),
+                    property_type: None,
+                    type_field: FieldType::List,
+                    value: serde_json::json!([
+                        {
+                            "propertyType": serde_json::Value::String(TestEnum::type_path().to_string()),
+                            "type": "class",
+                            "value": {}
+                        }
+                    ])
+                }]
+            })
+        );
+
+        // HashMap
+        let export_type = &exports
+            .types
+            .get(HashMap::<TestEnum, TestTuple>::type_path())
+            .unwrap();
+        assert_eq!(export_type.length(), 2);
+        assert!(export_type[0].id > export_type[1].id);
+
+        assert_eq!(
+            export_type[0].name,
+            HashMap::<TestEnum, TestTuple>::type_path().to_string()
+        );
+        assert_eq!(
+            export_type[0].type_data,
+            TypeData::Class(Class {
+                use_as: USE_AS_PROPERTY.to_vec(),
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: vec![Member {
+                    name: "map".to_string(),
+                    property_type: None,
+                    type_field: FieldType::List,
+                    value: serde_json::json!([
+                        {
+                            "propertyType": serde_json::Value::String(HashMap::<TestEnum, TestTuple>::type_path().to_string() + ":::MapItem"),
+                            "type": "class",
+                            "value": serde_json::Value::Null
+                        }
+                    ])
+                }]
+            })
+        );
+
+        assert_eq!(
+            export_type[1].name,
+            HashMap::<TestEnum, TestTuple>::type_path().to_string() + ":::MapItem"
+        );
+        assert_eq!(
+            export_type[1].type_data,
+            TypeData::Class(Class {
+                use_as: USE_AS_PROPERTY.to_vec(),
+                color: DEFAULT_COLOR.to_string(),
+                draw_fill: true,
+                members: vec![
+                    Member {
+                        name: "key".to_string(),
+                        property_type: Some(TestEnum::type_path().to_string()),
+                        type_field: FieldType::Class,
+                        value: serde_json::json!({})
+                    },
+                    Member {
+                        name: "value".to_string(),
+                        property_type: Some(TestTuple::type_path().to_string()),
+                        type_field: FieldType::Class,
+                        value: serde_json::json!({
+                            "0": 0.0
+                        })
+                    }
+                ]
+            })
         );
     }
 }

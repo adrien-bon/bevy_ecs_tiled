@@ -75,6 +75,7 @@ enum BiomeType {
     Forest,
     Mountain,
     Water,
+    DeepWater,
     #[default]
     Unknown,
 }
