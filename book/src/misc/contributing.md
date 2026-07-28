@@ -1,11 +1,11 @@
 # Contributing
 
-Thank you for your interest in contributing to `bevy_ecs_tiled`!  
+Thank you for your interest in contributing to `bevy_ecs_tiled`!
 Whether you're fixing bugs, adding features, improving documentation, or helping other users, your contributions are greatly appreciated.
 
 ## Where to Start
 
-If you're unsure where to begin, check out the [GitHub issues](https://github.com/adrien-bon/bevy_ecs_tiled/issues) page.  
+If you're unsure where to begin, check out the [GitHub issues](https://github.com/adrien-bon/bevy_ecs_tiled/issues) page.
 You might find it helpful to look at issues:
 
 - [tagged with the `enhancement` label](https://github.com/adrien-bon/bevy_ecs_tiled/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement)
@@ -23,17 +23,17 @@ Other valuable ways to contribute include:
 
 When submitting a pull request, please ensure that:
 
-- **CI passes:**  
-  Run `./tools/ci_check.sh` locally to check formatting, linting, and tests.
-- **Documentation:**  
+- **CI passes:**
+  Run `just check` locally to check formatting, linting, and tests.
+- **Documentation:**
   Add or update in-code documentation for any new features or changes.
-- **Changelog:**  
+- **Changelog:**
   Update the `CHANGELOG.md` file with a description of your fix or feature.
-- **Examples:**  
+- **Examples:**
   If you add a new example:
   - Update `examples/README.md` with a description of your example.
   - Add your example to the workspace `Cargo.toml` (and specify any required features).
-- **Assets:**  
+- **Assets:**
   If you add a new map, update `assets/README.md` with its characteristics.
   If you add a new asset, update the "Assets credits" section of the main `README.md` and ensure you have the right to use it.
 
