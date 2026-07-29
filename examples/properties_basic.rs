@@ -1,17 +1,40 @@
 //! This example shows how to map custom tiles and objects properties from Tiled to Bevy Components.
 
-use std::env;
-
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 
 mod helper;
 
 fn main() {
-    // Use a custom file path to export registered types in Tiled format
-    let mut path = env::current_dir().unwrap();
-    path.push("exports");
-    path.push("properties_basic_types.json");
+    let mut config = TiledPluginConfig::default();
+
+    // If WASM is enabled, do not export user properties
+    // Note: properties will still be loaded from the map
+    #[cfg(feature = "wasm")]
+    {
+        config.tiled_types_export_file = None;
+    }
+
+    // Only export properties when the `wasm` feature is disabled
+    #[cfg(not(feature = "wasm"))]
+    {
+        // Custom directory for exporting user properties
+        let mut path = std::env::current_dir().unwrap();
+        path.push("exports");
+        path.push("properties_basic_types.json");
+        config.tiled_types_export_file = Some(path);
+
+        // Custom filter to chose which properties should be exported
+        config.tiled_types_filter = TiledFilter::from(
+            regex::RegexSet::new([
+                r"^properties_basic::.*",
+                r"^bevy_sprite::text2d::Text2d$",
+                r"^bevy_text::text::TextColor$",
+                r"^bevy_ecs::name::Name$",
+            ])
+            .unwrap(),
+        );
+    }
 
     App::new()
         // Bevy default plugins: prevent blur effect by changing default sampling
@@ -19,21 +42,7 @@ fn main() {
         // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
         // be automatically added as well if it's not already done
         // For demonstration purpose, provide a custom path where to export registered types
-        .add_plugins(TiledPlugin(TiledPluginConfig {
-            // Note: if you set this setting to `None`
-            // properties won't be exported anymore but
-            // you will still be able to load them from the map
-            tiled_types_export_file: Some(path),
-            tiled_types_filter: TiledFilter::from(
-                regex::RegexSet::new([
-                    r"^properties_basic::.*",
-                    r"^bevy_sprite::text2d::Text2d$",
-                    r"^bevy_text::text::TextColor$",
-                    r"^bevy_ecs::name::Name$",
-                ])
-                .unwrap(),
-            ),
-        }))
+        .add_plugins(TiledPlugin(config))
         // Examples helper plugins, such as the logic to pan and zoom the camera
         // This should not be used directly in your game (but you can always have a look)
         .add_plugins(helper::HelperPlugin)
