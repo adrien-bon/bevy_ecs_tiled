@@ -5,6 +5,7 @@ use bevy_ecs_tiled::prelude::*;
 mod animation;
 mod camera;
 mod controller;
+#[cfg(feature = "debug")]
 mod debug;
 mod enemy;
 mod level;
@@ -55,6 +56,7 @@ fn main() {
     app.add_plugins((
         animation::plugin,
         camera::plugin,
+        #[cfg(feature = "debug")]
         debug::plugin,
         player::plugin,
         enemy::plugin,
