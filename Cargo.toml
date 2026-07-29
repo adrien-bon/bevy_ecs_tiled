@@ -40,12 +40,7 @@ rapier = ["bevy_rapier2d", "physics"]
 rapier_debug = ["rapier", "bevy_rapier2d/debug-render-2d", "debug"]
 avian = ["dep:avian2d", "physics"]
 avian_debug = ["avian", "debug"]
-
-# WASM
-# Note: We intentionally don't enable tiled/wasm because it pulls in zstd which has
-# C dependencies that don't compile for WASM.
-# Maps using zstd compression won't be loadable on WASM; use zlib or uncompressed instead.
-wasm = ["getrandom/wasm_js"]
+wasm = ["getrandom/wasm_js", "tiled/wasm"]
 
 # User Properties
 user_properties = ["dep:serde", "dep:serde_json"]
