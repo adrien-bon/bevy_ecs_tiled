@@ -93,6 +93,20 @@ With this enabled, `bevy_ecs_tiled` will automatically reload a map or world whe
 
 ---
 
+## Is this crate WASM compatible?
+
+Yes it is!
+
+All you have to do is to enable the `wasm` feature flag.
+
+If you want to run one of the crate example you can use the [Bevy CLI](https://github.com/TheBevyFlock/bevy_cli) :
+
+```bash
+bevy run --example map_basic --features=wasm web
+```
+
+---
+
 ## How do I access Tiled "raw" data?
 
 Sometimes you may need to access the underlying Tiled data, such as a `tiled::ObjectData` or `tiled::TileData`.

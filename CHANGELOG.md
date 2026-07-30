@@ -5,6 +5,7 @@
 ### Features
 
 - use `just` for project commands (#222)
+- improve WASM support (#117)
 
 ## v0.13.2
 

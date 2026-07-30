@@ -1,5 +1,3 @@
-use std::env;
-
 use avian2d::prelude::*;
 use bevy::{asset::AssetMetaCheck, prelude::*};
 use bevy_ecs_tiled::prelude::*;
@@ -7,6 +5,7 @@ use bevy_ecs_tiled::prelude::*;
 mod animation;
 mod camera;
 mod controller;
+#[cfg(feature = "debug")]
 mod debug;
 mod enemy;
 mod level;
@@ -57,6 +56,7 @@ fn main() {
     app.add_plugins((
         animation::plugin,
         camera::plugin,
+        #[cfg(feature = "debug")]
         debug::plugin,
         player::plugin,
         enemy::plugin,
@@ -67,20 +67,33 @@ fn main() {
         minimap::plugin,
     ));
 
-    // Custom directory for exporting user properties
-    let mut path = env::current_dir().unwrap();
-    path.push("exports");
-    path.push("demo_platformer_types.json");
+    let mut config = TiledPluginConfig::default();
+
+    // If WASM is enabled, do not export user properties
+    // Note: properties will still be loaded from the map
+    #[cfg(feature = "wasm")]
+    {
+        config.tiled_types_export_file = None;
+    }
+
+    // Only export properties when WASM is disabled
+    #[cfg(not(feature = "wasm"))]
+    {
+        // Custom directory for exporting user properties
+        let mut path = std::env::current_dir().unwrap();
+        path.push("exports");
+        path.push("demo_platformer_types.json");
+        config.tiled_types_export_file = Some(path);
+
+        // Custom filter to chose which properties should be exported
+        config.tiled_types_filter =
+            TiledFilter::from(regex::RegexSet::new([r"^demo_platformer::.*"]).unwrap());
+    }
 
     app.add_plugins((
         // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
         // be automatically added as well if it's not already done.
-        TiledPlugin(TiledPluginConfig {
-            tiled_types_export_file: Some(path),
-            tiled_types_filter: TiledFilter::from(
-                regex::RegexSet::new([r"^demo_platformer::.*"]).unwrap(),
-            ),
-        }),
+        TiledPlugin(config),
         // Setup physics
         TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default(),
         PhysicsPlugins::default().with_length_unit(100.0),
