@@ -240,6 +240,13 @@ The crate will automatically insert the corresponding Bevy <code>Component</code
 <p>Enable the Bevy <code>file_watcher</code> feature in your project.
 With this enabled, <code>bevy_ecs_tiled</code> will automatically reload a map or world whenever it is updated in Tiled.</p>
 <hr />
+<h2 id="is-this-crate-wasm-compatible"><a class="header" href="#is-this-crate-wasm-compatible">Is this crate WASM compatible?</a></h2>
+<p>Yes it is!</p>
+<p>All you have to do is to enable the <code>wasm</code> feature flag.</p>
+<p>If you want to run one of the crate example you can use the <a href="https://github.com/TheBevyFlock/bevy_cli">Bevy CLI</a> :</p>
+<pre><code class="language-bash">bevy run --example map_basic --features=wasm web
+</code></pre>
+<hr />
 <h2 id="how-do-i-access-tiled-raw-data"><a class="header" href="#how-do-i-access-tiled-raw-data">How do I access Tiled "raw" data?</a></h2>
 <p>Sometimes you may need to access the underlying Tiled data, such as a <code>tiled::ObjectData</code> or <code>tiled::TileData</code>.</p>
 <p>You have several options:</p>

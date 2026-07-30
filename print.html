@@ -298,6 +298,13 @@ The crate will automatically insert the corresponding Bevy <code>Component</code
 <p>Enable the Bevy <code>file_watcher</code> feature in your project.
 With this enabled, <code>bevy_ecs_tiled</code> will automatically reload a map or world whenever it is updated in Tiled.</p>
 <hr />
+<h2 id="is-this-crate-wasm-compatible"><a class="header" href="#is-this-crate-wasm-compatible">Is this crate WASM compatible?</a></h2>
+<p>Yes it is!</p>
+<p>All you have to do is to enable the <code>wasm</code> feature flag.</p>
+<p>If you want to run one of the crate example you can use the <a href="https://github.com/TheBevyFlock/bevy_cli">Bevy CLI</a> :</p>
+<pre><code class="language-bash">bevy run --example map_basic --features=wasm web
+</code></pre>
+<hr />
 <h2 id="how-do-i-access-tiled-raw-data"><a class="header" href="#how-do-i-access-tiled-raw-data">How do I access Tiled "raw" data?</a></h2>
 <p>Sometimes you may need to access the underlying Tiled data, such as a <code>tiled::ObjectData</code> or <code>tiled::TileData</code>.</p>
 <p>You have several options:</p>
@@ -1757,10 +1764,10 @@ You should now use the new <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_e
 <li><a href="https://clintbellanger.net/articles/isometric_math/">Some maths regarding isometric tiles</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="contributing"><a class="header" href="#contributing">Contributing</a></h1>
-<p>Thank you for your interest in contributing to <code>bevy_ecs_tiled</code>!<br />
+<p>Thank you for your interest in contributing to <code>bevy_ecs_tiled</code>!
 Whether you're fixing bugs, adding features, improving documentation, or helping other users, your contributions are greatly appreciated.</p>
 <h2 id="where-to-start"><a class="header" href="#where-to-start">Where to Start</a></h2>
-<p>If you're unsure where to begin, check out the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues">GitHub issues</a> page.<br />
+<p>If you're unsure where to begin, check out the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues">GitHub issues</a> page.
 You might find it helpful to look at issues:</p>
 <ul>
 <li><a href="https://github.com/adrien-bon/bevy_ecs_tiled/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement">tagged with the <code>enhancement</code> label</a></li>
@@ -1776,20 +1783,20 @@ You might find it helpful to look at issues:</p>
 <h2 id="contribution-guidelines"><a class="header" href="#contribution-guidelines">Contribution Guidelines</a></h2>
 <p>When submitting a pull request, please ensure that:</p>
 <ul>
-<li><strong>CI passes:</strong><br />
-Run <code>./tools/ci_check.sh</code> locally to check formatting, linting, and tests.</li>
-<li><strong>Documentation:</strong><br />
+<li><strong>CI passes:</strong>
+Run <code>just check</code> locally to check formatting, linting, and tests.</li>
+<li><strong>Documentation:</strong>
 Add or update in-code documentation for any new features or changes.</li>
-<li><strong>Changelog:</strong><br />
+<li><strong>Changelog:</strong>
 Update the <code>CHANGELOG.md</code> file with a description of your fix or feature.</li>
-<li><strong>Examples:</strong><br />
+<li><strong>Examples:</strong>
 If you add a new example:
 <ul>
 <li>Update <code>examples/README.md</code> with a description of your example.</li>
 <li>Add your example to the workspace <code>Cargo.toml</code> (and specify any required features).</li>
 </ul>
 </li>
-<li><strong>Assets:</strong><br />
+<li><strong>Assets:</strong>
 If you add a new map, update <code>assets/README.md</code> with its characteristics.
 If you add a new asset, update the "Assets credits" section of the main <code>README.md</code> and ensure you have the right to use it.</li>
 </ul>
