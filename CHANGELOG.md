@@ -2,6 +2,8 @@
 
 ## [unreleased]
 
+## v0.13.3
+
 ### Features
 
 - use `just` for project commands (#222)
