@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Fixed
+
+- Load nested external templates when Tiled resolves them through equivalent paths containing `..`
+
 ## v0.13.3
 
 ### Features
