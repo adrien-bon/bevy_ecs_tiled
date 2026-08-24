@@ -2,6 +2,8 @@
 
 ## [unreleased]
 
+## v0.13.4
+
 ### Features
 
 - Bump bevy_rapier to v0.36
