@@ -47,8 +47,9 @@ impl tiled::ResourceReader for BytesResourceReader<'_> {
     fn read_from(&mut self, path: &Path) -> std::result::Result<Self::Resource, Self::Error> {
         if let Some(extension) = path.extension() {
             if extension == "tsx" || extension == "tx" {
-                // Look up in pre-loaded cache
-                if let Some(data) = self.cache.get(path) {
+                // Tiled may reach the same nested resource through a different lexical path.
+                // Normalize both cache keys and lookups so equivalent paths share an entry.
+                if let Some(data) = self.cache.get(&normalize_path(path)) {
                     return Ok(Box::new(Cursor::new(data.clone())));
                 }
                 return Err(IoError::new(
@@ -66,19 +67,20 @@ impl tiled::ResourceReader for BytesResourceReader<'_> {
 }
 
 /// Extract external tileset/template paths from TMX/TSX/TX XML content.
-/// This does a simple regex-free parse to find source attributes.
+/// This does a simple regex-free parse to find source and template attributes.
 pub(crate) fn extract_external_paths(xml_content: &[u8]) -> Vec<PathBuf> {
     let mut paths = Vec::new();
     let content = String::from_utf8_lossy(xml_content);
 
-    // Find tileset sources: <tileset ... source="path.tsx" ...>
     for line in content.lines() {
-        if let Some(start) = line.find("source=\"") {
-            let rest = &line[start + 8..];
-            if let Some(end) = rest.find('"') {
-                let path = &rest[..end];
-                if path.ends_with(".tsx") || path.ends_with(".tx") {
-                    paths.push(PathBuf::from(path));
+        for marker in ["source=\"", "template=\""] {
+            if let Some(start) = line.find(marker) {
+                let rest = &line[start + marker.len()..];
+                if let Some(end) = rest.find('"') {
+                    let path = &rest[..end];
+                    if path.ends_with(".tsx") || path.ends_with(".tx") {
+                        paths.push(PathBuf::from(path));
+                    }
                 }
             }
         }
@@ -87,29 +89,30 @@ pub(crate) fn extract_external_paths(xml_content: &[u8]) -> Vec<PathBuf> {
     paths
 }
 
+/// Normalize `.` and `..` components without accessing the filesystem.
+fn normalize_path(path: &Path) -> PathBuf {
+    let mut components = Vec::new();
+    for component in path.components() {
+        match component {
+            std::path::Component::ParentDir => {
+                components.pop();
+            }
+            std::path::Component::CurDir => {}
+            component => components.push(component),
+        }
+    }
+    components.iter().collect()
+}
+
 /// Resolve a relative path against the asset's parent directory.
 /// For example, if the asset is at `maps/01_first_street.tmx` and the
 /// relative path is `../tilesets/kilowatt_tiles.tsx`, this returns
 /// `tilesets/kilowatt_tiles.tsx`.
 fn resolve_relative_path(asset_path: &Path, relative_path: &Path) -> PathBuf {
-    if let Some(parent) = asset_path.parent() {
-        // Join the parent directory with the relative path and normalize
-        let joined = parent.join(relative_path);
-        // Normalize the path by resolving .. and . components
-        let mut components = Vec::new();
-        for component in joined.components() {
-            match component {
-                std::path::Component::ParentDir => {
-                    components.pop();
-                }
-                std::path::Component::CurDir => {}
-                c => components.push(c),
-            }
-        }
-        components.iter().collect()
-    } else {
-        relative_path.to_path_buf()
-    }
+    normalize_path(&asset_path.parent().map_or_else(
+        || relative_path.to_path_buf(),
+        |parent| parent.join(relative_path),
+    ))
 }
 
 /// Pre-load all external resources referenced by the given XML content.
@@ -121,19 +124,12 @@ pub(crate) async fn preload_external_resources(
     let mut cache = HashMap::default();
     let paths = extract_external_paths(xml_content);
     let asset_path = load_context.path().path().to_path_buf();
-    let asset_parent = asset_path.parent().map(|p| p.to_path_buf());
 
     for relative_path in paths {
         // Resolve the relative path against the asset's directory for loading
         let resolved_path = resolve_relative_path(&asset_path, &relative_path);
 
-        // Tiled will look up the path as: parent_dir/relative_path (e.g., "maps/../tilesets/foo.tsx")
-        // So we need to store with that key, not the normalized path
-        let cache_key = if let Some(ref parent) = asset_parent {
-            parent.join(&relative_path)
-        } else {
-            relative_path.clone()
-        };
+        let cache_key = resolved_path.clone();
 
         match load_context.read_asset_bytes(resolved_path.clone()).await {
             Ok(bytes) => {
@@ -142,12 +138,7 @@ pub(crate) async fn preload_external_resources(
                 for nested_relative in nested {
                     // Resolve nested paths relative to the tileset's location for loading
                     let nested_resolved = resolve_relative_path(&resolved_path, &nested_relative);
-                    // Cache key for nested: tileset's parent dir + nested relative path
-                    let nested_cache_key = if let Some(tileset_parent) = resolved_path.parent() {
-                        tileset_parent.join(&nested_relative)
-                    } else {
-                        nested_relative.clone()
-                    };
+                    let nested_cache_key = nested_resolved.clone();
                     if !cache.contains_key(&nested_cache_key) {
                         if let Ok(nested_bytes) =
                             load_context.read_asset_bytes(nested_resolved).await
@@ -170,4 +161,34 @@ pub(crate) async fn preload_external_resources(
     }
 
     cache
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn reads_nested_template_from_equivalent_normalized_cache_path() {
+        let template_path = PathBuf::from("../templates/tree_base_collision.tx");
+        assert_eq!(
+            extract_external_paths(br#"<object template="../templates/tree_base_collision.tx"/>"#),
+            vec![template_path]
+        );
+
+        let expected = b"nested template";
+        let cache = HashMap::from([(
+            PathBuf::from("tiled/templates/tree_base_collision.tx"),
+            expected.to_vec(),
+        )]);
+        let mut reader = BytesResourceReader::new(b"", &cache);
+        let mut resource = tiled::ResourceReader::read_from(
+            &mut reader,
+            Path::new("tiled/grassland/../tilesets/../templates/tree_base_collision.tx"),
+        )
+        .expect("equivalent external resource paths should share one cache entry");
+        let mut actual = Vec::new();
+        resource.read_to_end(&mut actual).unwrap();
+
+        assert_eq!(actual, expected);
+    }
 }
