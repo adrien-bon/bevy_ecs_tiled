@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Features
+
+- Bump bevy_rapier to v0.36
+
 ### Fixed
 
 - Load nested external templates when Tiled resolves them through equivalent paths containing `..`
