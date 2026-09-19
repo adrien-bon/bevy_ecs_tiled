@@ -3,3 +3,9 @@ authors = ["Adrien BON"]
 language = "en"
 src = "src"
 title = "bevy_ecs_tiled Documentation"
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"
+
+[output.html]
+additional-js = ["mermaid.min.js", "mermaid-init.js"]

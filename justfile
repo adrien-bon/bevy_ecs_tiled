@@ -64,3 +64,7 @@ book-build:
 
 book-serve:
     mdbook --version &>/dev/null && (cd ./book && mdbook serve)
+
+book-prepare-env:
+    cargo install mdbook
+    cargo install mdbook-mermaid
