@@ -21,7 +21,9 @@ pub struct TiledWorldStorage {
 
 impl TiledWorldStorage {
     /// Clear the [`TiledWorldStorage`], removing all children maps in the process
-    pub fn clear(&mut self, commands: &mut Commands) {
+    ///
+    /// To respawn a world, insert the [`RespawnTiledWorld`] component on the world entity instead.
+    pub(crate) fn clear(&mut self, commands: &mut Commands) {
         for (_, map_entity) in self.maps.iter() {
             commands.entity(*map_entity).despawn();
         }
@@ -29,8 +31,8 @@ impl TiledWorldStorage {
     }
 
     /// Returns an iterator over the map index and [`TiledMap`] [`Entity`] associations
-    pub fn maps(&self) -> bevy::platform::collections::hash_map::Iter<'_, u32, Entity> {
-        self.maps.iter()
+    pub fn maps(&self) -> impl Iterator<Item = (u32, Entity)> + '_ {
+        self.maps.iter().map(|(&idx, &entity)| (idx, entity))
     }
 
     /// Retrieve the [`TiledMap`] [`Entity`] associated with this map index
