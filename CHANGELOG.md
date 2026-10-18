@@ -18,6 +18,7 @@
 - `TiledMapStorage::clear()` and `TiledWorldStorage::clear()` are no longer public: use `RespawnTiledMap` / `RespawnTiledWorld` to respawn a map or a world
 - `TiledEvent` accessors drop their `get_` prefix to follow Rust API guidelines: `get_map_entity()` becomes `map_entity()`, `get_map()` becomes `map()`, `get_object()` becomes `object()`, etc.
   Same for `TiledEvent<ColliderCreated>::get_tiles()`, now `tiles()`.
+- `TiledMapStorage` and `TiledWorldStorage` lookup methods drop their `get_` prefix as well, eg. `get_object_entity()` becomes `object_entity()`, `get_tile_entities()` becomes `tile_entities()` and `get_map_id()` becomes `map_id()`.
 
 ### Fixed
 

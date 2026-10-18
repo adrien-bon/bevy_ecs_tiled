@@ -36,12 +36,12 @@ impl TiledWorldStorage {
     }
 
     /// Retrieve the [`TiledMap`] [`Entity`] associated with this map index
-    pub fn get_map_entity(&self, map_id: u32) -> Option<Entity> {
+    pub fn map_entity(&self, map_id: u32) -> Option<Entity> {
         self.maps.get(&map_id).cloned()
     }
 
     /// Retrieve the map index associated with this [`TiledMap`] [`Entity`]
-    pub fn get_map_id(&self, entity: Entity) -> Option<u32> {
+    pub fn map_id(&self, entity: Entity) -> Option<u32> {
         self.maps
             .iter()
             .find(|(_, e)| **e == entity)
