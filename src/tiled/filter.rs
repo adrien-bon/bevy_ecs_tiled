@@ -73,7 +73,11 @@ impl TiledFilter {
     pub fn matches(&self, name: &str) -> bool {
         match self {
             Self::All => true,
-            Self::Names(names) => names.contains(&name.trim().to_lowercase()),
+            Self::Names(names) => {
+                // Normalize both sides: stored names may have been provided with uppercase letters
+                let name = name.trim().to_lowercase();
+                names.iter().any(|n| n.trim().to_lowercase() == name)
+            }
             Self::RegexSet(set) => set.is_match(name),
             Self::None => false,
         }
@@ -83,4 +87,25 @@ impl TiledFilter {
 pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledFilter>();
     app.register_type::<TiledName>();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn names_filter_is_case_insensitive() {
+        let filter = TiledFilter::from(vec!["Player", "  Enemy "]);
+        assert!(filter.matches("player"));
+        assert!(filter.matches("PLAYER"));
+        assert!(filter.matches(" Player "));
+        assert!(filter.matches("enemy"));
+        assert!(!filter.matches("npc"));
+    }
+
+    #[test]
+    fn names_filter_built_from_variant_is_case_insensitive() {
+        let filter = TiledFilter::Names(vec!["Player".to_string()]);
+        assert!(filter.matches("player"));
+    }
 }
