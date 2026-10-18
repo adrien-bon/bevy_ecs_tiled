@@ -40,7 +40,7 @@ pub struct TiledMapAsset {
     pub largest_tile_size: TilemapTileSize,
     /// Map bounding box, unanchored, in pixels.
     ///
-    /// Origin it map bottom-left.
+    /// Origin is map bottom-left.
     /// Minimum is `(0., 0.)`
     /// Maximum is `(map_size.x, map_size.y)`
     pub rect: Rect,

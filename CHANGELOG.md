@@ -20,6 +20,10 @@
 - Physics: do not panic when a layer or object event refers to a map that was despawned or has no `TiledPhysicsSettings`, log a warning instead
 - User properties: invalid values coming from Tiled (out of range integers, empty `char`, reference to a missing object, ...) no longer panic, an error is logged and the property is skipped
 
+### Documentation
+
+- Fix inaccurate API documentation: `TiledEvent` world / map / object getters, `TiledWorldStorage` keys (map index, not Tiled ID), `TiledPhysicsBackend::spawn_colliders` arguments and return value
+
 ## v0.14.0
 
 **BREAKING CHANGES**

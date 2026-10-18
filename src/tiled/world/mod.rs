@@ -19,7 +19,7 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 ///
 /// Required components (automatically added with default value if missing):
 /// - [`TiledWorldChunking`]: Controls chunking and streaming of maps within the world.
-/// - [`TiledMapLayerZOffset`], [`TiledMapImageRepeatMargin`], [`TilemapAnchor`], [`TilemapRenderSettings`], [`Visibility`], [`Transform`]: Required components for the underlying [`TiledMap`]Required components for the underlying [`TiledMap`].
+/// - [`TiledMapLayerZOffset`], [`TiledMapImageRepeatMargin`], [`TilemapAnchor`], [`TilemapRenderSettings`], [`Visibility`], [`Transform`]: Required components for the underlying [`TiledMap`]s.
 ///
 /// Example:
 /// ```rust,no_run

@@ -139,7 +139,7 @@ impl<'a, E> TiledEvent<E>
 where
     E: Debug + Clone + Copy + Reflect,
 {
-    /// Retrieve the [`TiledMap`] [`Entity`] associated with this [`TiledEvent`]
+    /// Retrieve the [`TiledWorld`] [`Entity`] associated with this [`TiledEvent`]
     pub fn get_world_entity(&self) -> Option<Entity> {
         self.world.map(|(e, _)| e)
     }
@@ -157,7 +157,7 @@ where
         self.get_world_asset(assets).map(|w| &w.world)
     }
 
-    /// Retrive the [`TiledWorld`] [`Entity`] associated with this [`TiledEvent`]
+    /// Retrieve the [`TiledMap`] [`Entity`] associated with this [`TiledEvent`]
     pub fn get_map_entity(&self) -> Option<Entity> {
         self.map.map(|(e, _)| e)
     }
@@ -249,7 +249,7 @@ where
         self.object.map(|(_, id)| id)
     }
 
-    /// Retrieve the tilemap [`tiled::Tileset`] associated with this [`TiledEvent`]
+    /// Retrieve the [`tiled::Object`] associated with this [`TiledEvent`]
     pub fn get_object(&self, assets: &'a Res<Assets<TiledMapAsset>>) -> Option<tiled::Object<'a>> {
         self.get_map(assets).and_then(|map| {
             self.get_object_id()

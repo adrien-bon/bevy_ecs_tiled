@@ -9,13 +9,13 @@ use crate::prelude::*;
 use bevy::{platform::collections::HashMap, prelude::*};
 
 /// [`Component`] storing all the Tiled maps that are composing this world.
-/// Makes the association between Tiled ID and corresponding Bevy [`Entity`].
+/// Makes the association between the map index in the `.world` file and corresponding Bevy [`Entity`].
 ///
 /// Should not be manually inserted but can be accessed from the world [`Entity`].
 #[derive(Component, Default, Reflect, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
 pub struct TiledWorldStorage {
-    /// Mapping between a Tiled map ID with corresponding [`TiledMap`] [`Entity`]
+    /// Mapping between a map index (in the `.world` file) with corresponding [`TiledMap`] [`Entity`]
     pub(crate) maps: HashMap<u32, Entity>,
 }
 
@@ -28,17 +28,17 @@ impl TiledWorldStorage {
         self.maps.clear();
     }
 
-    /// Returns an iterator over the [`TiledMap`] [`Entity`] and map ID associations
+    /// Returns an iterator over the map index and [`TiledMap`] [`Entity`] associations
     pub fn maps(&self) -> bevy::platform::collections::hash_map::Iter<'_, u32, Entity> {
         self.maps.iter()
     }
 
-    /// Retrieve the [`TiledMap`] [`Entity`] associated with this map ID
+    /// Retrieve the [`TiledMap`] [`Entity`] associated with this map index
     pub fn get_map_entity(&self, map_id: u32) -> Option<Entity> {
         self.maps.get(&map_id).cloned()
     }
 
-    /// Retrieve the map ID associated with this [`TiledMap`] [`Entity`]
+    /// Retrieve the map index associated with this [`TiledMap`] [`Entity`]
     pub fn get_map_id(&self, entity: Entity) -> Option<u32> {
         self.maps
             .iter()

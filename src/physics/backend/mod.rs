@@ -38,12 +38,13 @@ pub trait TiledPhysicsBackend:
     ///
     /// # Arguments
     /// * `commands` - The Bevy [`Commands`] instance for spawning entities.
-    /// * `source` - The event describing the collider to be created.
-    /// * `multi_polygon` - The [`geo::MultiPolygon<f32>`] geometry representing the collider shape.
+    /// * `source` - The kind of Tiled item the collider is created for.
+    /// * `origin` - The [`Entity`] of the Tiled item (layer or object) the collider is created for.
+    /// * `multi_polygons_list` - The [`geo::MultiPolygon<f32>`] geometries representing the collider shapes.
     ///
     /// # Returns
-    /// A vector of [`Entity`] of the spawned colliders.
-    /// If the provided collider is not supported, the function should return an empty vector.
+    /// The [`Entity`] holding the spawned collider(s), which can be `origin` itself.
+    /// If the provided collider is not supported, the function should return [`None`].
     fn spawn_colliders(
         &self,
         commands: &mut Commands,
