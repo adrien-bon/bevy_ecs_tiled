@@ -6,6 +6,7 @@
 
 - World chunking no longer despawns all visible maps on frames where no camera moved
 - `TiledFilter::Names` matching is now really case-insensitive: names provided with uppercase letters were never matched
+- Physics: do not panic when a layer or object event refers to a map that was despawned or has no `TiledPhysicsSettings`, log a warning instead
 
 ## v0.14.0
 

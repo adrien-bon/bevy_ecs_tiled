@@ -63,10 +63,14 @@ fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
     mut message_writer: MessageWriter<TiledEvent<ColliderCreated>>,
 ) {
     for ev in layer_created.read() {
-        let (settings, anchor) = ev
-            .get_map_entity()
-            .and_then(|e| maps_query.get(e).ok())
-            .expect("TiledPhysicsSettings<T> component should be on map entity");
+        let Some((settings, anchor)) = ev.get_map_entity().and_then(|e| maps_query.get(e).ok())
+        else {
+            warn!(
+                "Cannot spawn colliders for entity {}: parent map is missing or has no TiledPhysicsSettings",
+                ev.origin
+            );
+            continue;
+        };
 
         let Some(layer) = ev.get_layer(&assets) else {
             continue;
@@ -107,10 +111,14 @@ fn collider_from_object<T: TiledPhysicsBackend>(
     mut message_writer: MessageWriter<TiledEvent<ColliderCreated>>,
 ) {
     for ev in object_created.read() {
-        let (settings, anchor) = ev
-            .get_map_entity()
-            .and_then(|e| maps_query.get(e).ok())
-            .expect("TiledPhysicsSettings<T> component should be on map entity");
+        let Some((settings, anchor)) = ev.get_map_entity().and_then(|e| maps_query.get(e).ok())
+        else {
+            warn!(
+                "Cannot spawn colliders for entity {}: parent map is missing or has no TiledPhysicsSettings",
+                ev.origin
+            );
+            continue;
+        };
 
         let Some(layer) = ev.get_layer(&assets) else {
             continue;
