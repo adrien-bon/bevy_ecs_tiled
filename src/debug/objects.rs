@@ -84,7 +84,7 @@ fn draw_debug_gizmos(
             continue;
         };
         for (idx, (_, entity)) in storage.objects().enumerate() {
-            let Ok((object, transform)) = object_query.get(*entity) else {
+            let Ok((object, transform)) = object_query.get(entity) else {
                 continue;
             };
             let color = config.objects_colors_list[idx % config.objects_colors_list.len()];

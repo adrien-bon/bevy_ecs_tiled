@@ -29,7 +29,9 @@ pub struct TiledMapStorage {
 
 impl TiledMapStorage {
     /// Clear the [`TiledMapStorage`], removing all children layers in the process
-    pub fn clear(&mut self, commands: &mut Commands) {
+    ///
+    /// To respawn a map, insert the [`RespawnTiledMap`] component on the map entity instead.
+    pub(crate) fn clear(&mut self, commands: &mut Commands) {
         for layer_entity in self.layers.values() {
             commands.entity(*layer_entity).try_despawn();
         }
@@ -40,9 +42,9 @@ impl TiledMapStorage {
 }
 
 impl<'a> TiledMapStorage {
-    /// Returns an iterator over the [`TiledLayer`] [`Entity`] and layer ID associations
-    pub fn layers(&self) -> bevy::platform::collections::hash_map::Iter<'_, u32, Entity> {
-        self.layers.iter()
+    /// Returns an iterator over the layer ID and [`TiledLayer`] [`Entity`] associations
+    pub fn layers(&self) -> impl Iterator<Item = (u32, Entity)> + '_ {
+        self.layers.iter().map(|(&id, &entity)| (id, entity))
     }
 
     /// Retrieve the [`TiledLayer`] [`Entity`] associated with this layer ID
@@ -64,19 +66,19 @@ impl<'a> TiledMapStorage {
             .and_then(|id| get_layer_from_map(map, id))
     }
 
-    /// Returns an iterator over the [`TiledTile`] [`Entity`] and tileset ID + [`tiled::TileId`] associations
-    pub fn tiles(
-        &self,
-    ) -> bevy::platform::collections::hash_map::Iter<'_, (u32, tiled::TileId), Vec<Entity>> {
-        self.tiles.iter()
+    /// Returns an iterator over the tileset ID + [`tiled::TileId`] and [`TiledTile`] [`Entity`]s associations
+    pub fn tiles(&self) -> impl Iterator<Item = ((u32, tiled::TileId), &[Entity])> + '_ {
+        self.tiles
+            .iter()
+            .map(|(&id, entities)| (id, entities.as_slice()))
     }
 
     /// Retrieve the [`TiledTile`] [`Entity`] list associated with this tileset ID and [`tiled::TileId`]
-    pub fn get_tile_entities(&self, tileset_id: u32, tile_id: tiled::TileId) -> Vec<Entity> {
+    pub fn get_tile_entities(&self, tileset_id: u32, tile_id: tiled::TileId) -> &[Entity] {
         self.tiles
             .get(&(tileset_id, tile_id))
-            .cloned()
-            .unwrap_or_default()
+            .map(Vec::as_slice)
+            .unwrap_or(&[])
     }
 
     /// Retrieve the tileset ID and [`tiled::TileId`] associated with this [`TiledTile`] [`Entity`]
@@ -93,9 +95,9 @@ impl<'a> TiledMapStorage {
             .and_then(|(tileset_id, tile_id)| get_tile_from_map(map, tileset_id, tile_id))
     }
 
-    /// Returns an iterator over the [`TiledObject`] [`Entity`] and object ID associations
-    pub fn objects(&self) -> bevy::platform::collections::hash_map::Iter<'_, u32, Entity> {
-        self.objects.iter()
+    /// Returns an iterator over the object ID and [`TiledObject`] [`Entity`] associations
+    pub fn objects(&self) -> impl Iterator<Item = (u32, Entity)> + '_ {
+        self.objects.iter().map(|(&id, &entity)| (id, entity))
     }
 
     /// Retrieve the [`TiledObject`] [`Entity`] associated with this object ID
@@ -120,4 +122,34 @@ impl<'a> TiledMapStorage {
 
 pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledMapStorage>();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn storage_accessors() {
+        let mut world = World::new();
+        let (a, b, c) = (
+            world.spawn_empty().id(),
+            world.spawn_empty().id(),
+            world.spawn_empty().id(),
+        );
+
+        let mut storage = TiledMapStorage::default();
+        storage.layers.insert(1, a);
+        storage.objects.insert(7, b);
+        storage.tiles.insert((0, 3), vec![b, c]);
+
+        assert_eq!(storage.layers().collect::<Vec<_>>(), vec![(1, a)]);
+        assert_eq!(storage.objects().collect::<Vec<_>>(), vec![(7, b)]);
+        assert_eq!(
+            storage.tiles().collect::<Vec<_>>(),
+            vec![((0, 3), [b, c].as_slice())]
+        );
+        assert_eq!(storage.get_tile_entities(0, 3), &[b, c]);
+        assert!(storage.get_tile_entities(0, 4).is_empty());
+        assert_eq!(storage.get_tile_id(c), Some((0, 3)));
+    }
 }
