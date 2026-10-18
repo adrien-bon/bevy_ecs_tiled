@@ -16,6 +16,8 @@
 - `TiledMapStorage` and `TiledWorldStorage` iterators (`layers()`, `objects()`, `tiles()`, `maps()`) now return `impl Iterator` yielding owned IDs and entities (and `&[Entity]` for tiles) instead of exposing the inner `HashMap` iterator
 - `TiledMapStorage::get_tile_entities()` now returns a `&[Entity]` instead of cloning a `Vec<Entity>`
 - `TiledMapStorage::clear()` and `TiledWorldStorage::clear()` are no longer public: use `RespawnTiledMap` / `RespawnTiledWorld` to respawn a map or a world
+- `TiledEvent` accessors drop their `get_` prefix to follow Rust API guidelines: `get_map_entity()` becomes `map_entity()`, `get_map()` becomes `map()`, `get_object()` becomes `object()`, etc.
+  Same for `TiledEvent<ColliderCreated>::get_tiles()`, now `tiles()`.
 
 ### Fixed
 

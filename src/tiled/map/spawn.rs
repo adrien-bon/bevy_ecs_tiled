@@ -259,7 +259,7 @@ impl SpawnContext<'_, '_, '_> {
                 .commands
                 .spawn((
                     Name::new(format!("TiledTilemap({}, {})", layer.name, tileset.name)),
-                    TiledMapReference(layer_event.get_map_entity().unwrap()),
+                    TiledMapReference(layer_event.map_entity().unwrap()),
                     TiledTilemap,
                     TiledTilesetId(tileset_index),
                     TiledName(tileset.name.clone()),
@@ -454,7 +454,7 @@ impl SpawnContext<'_, '_, '_> {
                 .spawn((
                     Name::new(format!("{object_kind}({})", object_data.name)),
                     ChildOf(layer_event.origin),
-                    TiledMapReference(layer_event.get_map_entity().unwrap()),
+                    TiledMapReference(layer_event.map_entity().unwrap()),
                     TiledObjectId(object_data.id()),
                     tiled_object.clone(),
                     TiledName(object_data.name.clone()),
@@ -548,7 +548,7 @@ impl SpawnContext<'_, '_, '_> {
         let anchor = self.anchor;
         if let Some(image) = &image_layer.image {
             let Some(handle) = layer_event
-                .get_layer_id()
+                .layer_id()
                 .and_then(|id| tiled_map.images.get(&id))
             else {
                 return;
@@ -578,7 +578,7 @@ impl SpawnContext<'_, '_, '_> {
                     base_size: image_size,
                 },
                 ChildOf(layer_event.origin),
-                TiledMapReference(layer_event.get_map_entity().unwrap()),
+                TiledMapReference(layer_event.map_entity().unwrap()),
                 Sprite {
                     image: handle.clone(),
                     custom_size: Some(image_size),
