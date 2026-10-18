@@ -48,12 +48,12 @@ impl<'a> TiledMapStorage {
     }
 
     /// Retrieve the [`TiledLayer`] [`Entity`] associated with this layer ID
-    pub fn get_layer_entity(&self, layer_id: u32) -> Option<Entity> {
+    pub fn layer_entity(&self, layer_id: u32) -> Option<Entity> {
         self.layers.get(&layer_id).cloned()
     }
 
     /// Retrieve the layer ID associated with this [`TiledLayer`] [`Entity`]
-    pub fn get_layer_id(&self, entity: Entity) -> Option<u32> {
+    pub fn layer_id(&self, entity: Entity) -> Option<u32> {
         self.layers
             .iter()
             .find(|(_, e)| **e == entity)
@@ -61,8 +61,8 @@ impl<'a> TiledMapStorage {
     }
 
     /// Retrieve the [`tiled::Layer`] associated with this [`TiledLayer`] [`Entity`]
-    pub fn get_layer(&self, map: &'a tiled::Map, entity: Entity) -> Option<tiled::Layer<'a>> {
-        self.get_layer_id(entity)
+    pub fn layer(&self, map: &'a tiled::Map, entity: Entity) -> Option<tiled::Layer<'a>> {
+        self.layer_id(entity)
             .and_then(|id| get_layer_from_map(map, id))
     }
 
@@ -74,7 +74,7 @@ impl<'a> TiledMapStorage {
     }
 
     /// Retrieve the [`TiledTile`] [`Entity`] list associated with this tileset ID and [`tiled::TileId`]
-    pub fn get_tile_entities(&self, tileset_id: u32, tile_id: tiled::TileId) -> &[Entity] {
+    pub fn tile_entities(&self, tileset_id: u32, tile_id: tiled::TileId) -> &[Entity] {
         self.tiles
             .get(&(tileset_id, tile_id))
             .map(Vec::as_slice)
@@ -82,7 +82,7 @@ impl<'a> TiledMapStorage {
     }
 
     /// Retrieve the tileset ID and [`tiled::TileId`] associated with this [`TiledTile`] [`Entity`]
-    pub fn get_tile_id(&self, entity: Entity) -> Option<(u32, tiled::TileId)> {
+    pub fn tile_id(&self, entity: Entity) -> Option<(u32, tiled::TileId)> {
         self.tiles
             .iter()
             .find(|(_, v)| v.contains(&entity))
@@ -90,8 +90,8 @@ impl<'a> TiledMapStorage {
     }
 
     /// Retrieve the [`tiled::Tile`] associated with this [`TiledTile`] [`Entity`]
-    pub fn get_tile(&self, map: &'a tiled::Map, entity: Entity) -> Option<tiled::Tile<'a>> {
-        self.get_tile_id(entity)
+    pub fn tile(&self, map: &'a tiled::Map, entity: Entity) -> Option<tiled::Tile<'a>> {
+        self.tile_id(entity)
             .and_then(|(tileset_id, tile_id)| get_tile_from_map(map, tileset_id, tile_id))
     }
 
@@ -101,12 +101,12 @@ impl<'a> TiledMapStorage {
     }
 
     /// Retrieve the [`TiledObject`] [`Entity`] associated with this object ID
-    pub fn get_object_entity(&self, object_id: u32) -> Option<Entity> {
+    pub fn object_entity(&self, object_id: u32) -> Option<Entity> {
         self.objects.get(&object_id).cloned()
     }
 
     /// Retrieve the object ID associated with this [`TiledObject`] [`Entity`]
-    pub fn get_object_id(&self, entity: Entity) -> Option<u32> {
+    pub fn object_id(&self, entity: Entity) -> Option<u32> {
         self.objects
             .iter()
             .find(|(_, e)| **e == entity)
@@ -114,8 +114,8 @@ impl<'a> TiledMapStorage {
     }
 
     /// Retrieve the [`tiled::Object`] associated with this [`TiledObject`] [`Entity`]
-    pub fn get_object(&self, map: &'a tiled::Map, entity: Entity) -> Option<tiled::Object<'a>> {
-        self.get_object_id(entity)
+    pub fn object(&self, map: &'a tiled::Map, entity: Entity) -> Option<tiled::Object<'a>> {
+        self.object_id(entity)
             .and_then(|id| get_object_from_map(map, id))
     }
 }
@@ -148,8 +148,8 @@ mod tests {
             storage.tiles().collect::<Vec<_>>(),
             vec![((0, 3), [b, c].as_slice())]
         );
-        assert_eq!(storage.get_tile_entities(0, 3), &[b, c]);
-        assert!(storage.get_tile_entities(0, 4).is_empty());
-        assert_eq!(storage.get_tile_id(c), Some((0, 3)));
+        assert_eq!(storage.tile_entities(0, 3), &[b, c]);
+        assert!(storage.tile_entities(0, 4).is_empty());
+        assert_eq!(storage.tile_id(c), Some((0, 3)));
     }
 }

@@ -74,7 +74,7 @@ fn draw_tile_infos(
                 let Ok((tile_pos, child_of)) = tile_query.get(*entity) else {
                     continue;
                 };
-                let Some(tile) = storage.get_tile(&map_asset.map, *entity) else {
+                let Some(tile) = storage.tile(&map_asset.map, *entity) else {
                     continue;
                 };
 

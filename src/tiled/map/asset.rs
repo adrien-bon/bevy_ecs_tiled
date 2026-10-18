@@ -390,7 +390,7 @@ impl TiledMapAsset {
     ///         for (_, entities) in storage.tiles() {
     ///             for entity in entities {
     ///                 let Ok((tile_pos, child_of)) = tile_query.get(*entity) else { continue; };
-    ///                 let Some(tile) = storage.get_tile(&map_asset.map, *entity) else { continue; };
+    ///                 let Some(tile) = storage.tile(&map_asset.map, *entity) else { continue; };
     ///                 // Compute the tile's world position (center) relative to its tilemap
     ///                 let tile_rel_pos = map_asset.tile_relative_position(
     ///                     tile_pos,
