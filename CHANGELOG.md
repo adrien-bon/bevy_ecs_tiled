@@ -19,6 +19,7 @@
 - `TiledEvent` accessors drop their `get_` prefix to follow Rust API guidelines: `get_map_entity()` becomes `map_entity()`, `get_map()` becomes `map()`, `get_object()` becomes `object()`, etc.
   Same for `TiledEvent<ColliderCreated>::get_tiles()`, now `tiles()`.
 - `TiledMapStorage` and `TiledWorldStorage` lookup methods drop their `get_` prefix as well, eg. `get_object_entity()` becomes `object_entity()`, `get_tile_entities()` becomes `tile_entities()` and `get_map_id()` becomes `map_id()`.
+- Helper functions are renamed for consistency: `get_layer_from_map()`, `get_tileset_from_map()`, `get_tile_from_map()` and `get_object_from_map()` become `layer_from_map()`, `tileset_from_map()`, `tile_from_map()` and `object_from_map()`.
 
 ### Fixed
 

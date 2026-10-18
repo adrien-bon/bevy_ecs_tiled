@@ -62,8 +62,7 @@ impl<'a> TiledMapStorage {
 
     /// Retrieve the [`tiled::Layer`] associated with this [`TiledLayer`] [`Entity`]
     pub fn layer(&self, map: &'a tiled::Map, entity: Entity) -> Option<tiled::Layer<'a>> {
-        self.layer_id(entity)
-            .and_then(|id| get_layer_from_map(map, id))
+        self.layer_id(entity).and_then(|id| layer_from_map(map, id))
     }
 
     /// Returns an iterator over the tileset ID + [`tiled::TileId`] and [`TiledTile`] [`Entity`]s associations
@@ -92,7 +91,7 @@ impl<'a> TiledMapStorage {
     /// Retrieve the [`tiled::Tile`] associated with this [`TiledTile`] [`Entity`]
     pub fn tile(&self, map: &'a tiled::Map, entity: Entity) -> Option<tiled::Tile<'a>> {
         self.tile_id(entity)
-            .and_then(|(tileset_id, tile_id)| get_tile_from_map(map, tileset_id, tile_id))
+            .and_then(|(tileset_id, tile_id)| tile_from_map(map, tileset_id, tile_id))
     }
 
     /// Returns an iterator over the object ID and [`TiledObject`] [`Entity`] associations
@@ -116,7 +115,7 @@ impl<'a> TiledMapStorage {
     /// Retrieve the [`tiled::Object`] associated with this [`TiledObject`] [`Entity`]
     pub fn object(&self, map: &'a tiled::Map, entity: Entity) -> Option<tiled::Object<'a>> {
         self.object_id(entity)
-            .and_then(|id| get_object_from_map(map, id))
+            .and_then(|id| object_from_map(map, id))
     }
 }
 

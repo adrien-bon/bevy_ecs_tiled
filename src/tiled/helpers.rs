@@ -12,7 +12,7 @@ use bevy_ecs_tilemap::prelude::{HexCoordSystem, IsoCoordSystem};
 /// Retrieves a [`tiled::Layer`] from a [`tiled::Map`] given a layer ID.
 ///
 /// Returns `Some(tiled::Layer)` if the layer exists, or `None` if it does not
-pub fn get_layer_from_map(map: &tiled::Map, layer_id: u32) -> Option<tiled::Layer<'_>> {
+pub fn layer_from_map(map: &tiled::Map, layer_id: u32) -> Option<tiled::Layer<'_>> {
     fn find_layer_by_id<'a, T: 'a + ExactSizeIterator<Item = tiled::Layer<'a>>>(
         layers: T,
         layer_id: u32,
@@ -38,7 +38,7 @@ pub fn get_layer_from_map(map: &tiled::Map, layer_id: u32) -> Option<tiled::Laye
 /// Retrieves a [`tiled::Tileset`] from a [`tiled::Map`] given a tileset ID.
 ///
 /// Returns a reference to the tileset if found, or `None` if the ID is invalid.
-pub fn get_tileset_from_map(map: &tiled::Map, tileset_id: u32) -> Option<&Arc<tiled::Tileset>> {
+pub fn tileset_from_map(map: &tiled::Map, tileset_id: u32) -> Option<&Arc<tiled::Tileset>> {
     for (id, tileset) in map.tilesets().iter().enumerate() {
         if id == tileset_id as usize {
             return Some(tileset);
@@ -50,18 +50,18 @@ pub fn get_tileset_from_map(map: &tiled::Map, tileset_id: u32) -> Option<&Arc<ti
 /// Retrieves a [`tiled::Tile`] from a [`tiled::Map`] given a tileset ID and a [`tiled::TileId`].
 ///
 /// Returns `Some(tiled::Tile)` if the tile exists in the specified tileset, or `None` otherwise.
-pub fn get_tile_from_map(
+pub fn tile_from_map(
     map: &tiled::Map,
     tileset_id: u32,
     tile_id: tiled::TileId,
 ) -> Option<tiled::Tile<'_>> {
-    get_tileset_from_map(map, tileset_id).and_then(|t| t.get_tile(tile_id))
+    tileset_from_map(map, tileset_id).and_then(|t| t.get_tile(tile_id))
 }
 
 /// Retrieves an [`tiled::Object`] from a [`tiled::Map`] given an object ID.
 ///
 /// Searches all object layers for the specified object ID and returns it if found.
-pub fn get_object_from_map(map: &tiled::Map, object_id: u32) -> Option<tiled::Object<'_>> {
+pub fn object_from_map(map: &tiled::Map, object_id: u32) -> Option<tiled::Object<'_>> {
     fn find_object_by_id<'a, T: 'a + ExactSizeIterator<Item = tiled::Layer<'a>>>(
         layers: T,
         object_id: u32,

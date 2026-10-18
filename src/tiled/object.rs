@@ -25,7 +25,7 @@ pub struct TiledObjectVisuals(Vec<Entity>);
 
 /// Tiled object ID associated with this [`TiledObject`].
 ///
-/// You can retrieve the corresponding [`tiled::Object`] using the [`get_object_from_map`] helper function.
+/// You can retrieve the corresponding [`tiled::Object`] using the [`object_from_map`] helper function.
 #[derive(Component, Default, Reflect, Copy, Clone, Debug, Deref)]
 #[reflect(Component, Default, Debug)]
 pub struct TiledObjectId(pub u32);

@@ -38,7 +38,7 @@ pub enum TiledLayer {
 
 /// Tiled layer ID associated with this [`TiledLayer`].
 ///
-/// You can retrieve the corresponding [`tiled::Layer`] using the [`get_layer_from_map`] helper function.
+/// You can retrieve the corresponding [`tiled::Layer`] using the [`layer_from_map`] helper function.
 #[derive(Component, Default, Clone, Copy, Reflect, Debug, Deref)]
 #[reflect(Component, Default, Debug)]
 pub struct TiledLayerId(pub u32);

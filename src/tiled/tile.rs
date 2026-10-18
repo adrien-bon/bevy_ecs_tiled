@@ -36,14 +36,14 @@ pub struct TiledTilemap;
 
 /// Tiled tileset ID associated with this [`TiledTilemap`] or [`TiledTile`].
 ///
-/// You can retrieve the corresponding [`tiled::Tileset`] using the [`get_tileset_from_map`] helper function.
+/// You can retrieve the corresponding [`tiled::Tileset`] using the [`tileset_from_map`] helper function.
 #[derive(Component, Default, Reflect, Copy, Clone, Debug, Deref)]
 #[reflect(Component, Default, Debug)]
 pub struct TiledTilesetId(pub u32);
 
 /// [`tiled::TileId`] associated with this [`TiledTile`].
 ///
-/// You can retrieve the corresponding [`tiled::Tile`] using the [`get_tile_from_map`] helper function.
+/// You can retrieve the corresponding [`tiled::Tile`] using the [`tile_from_map`] helper function.
 #[derive(Component, Default, Reflect, Copy, Clone, Debug, Deref)]
 #[reflect(Component, Default, Debug)]
 pub struct TiledTileId(pub tiled::TileId);
