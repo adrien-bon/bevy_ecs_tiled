@@ -308,18 +308,18 @@ impl DeserializedProperties {
         ) {
             ("bool", PV::BoolValue(b), _) => Ok(Box::new(b)),
 
-            ("i8", PV::IntValue(i), _) => Ok(Box::new(i8::try_from(i).unwrap())),
-            ("i16", PV::IntValue(i), _) => Ok(Box::new(i16::try_from(i).unwrap())),
+            ("i8", PV::IntValue(i), _) => int_property::<i8>(i),
+            ("i16", PV::IntValue(i), _) => int_property::<i16>(i),
             ("i32", PV::IntValue(i), _) => Ok(Box::new(i)),
             ("i64", PV::IntValue(i), _) => Ok(Box::new(i as i64)),
             ("i128", PV::IntValue(i), _) => Ok(Box::new(i as i128)),
-            ("isize", PV::IntValue(i), _) => Ok(Box::new(isize::try_from(i).unwrap())),
-            ("u8", PV::IntValue(i), _) => Ok(Box::new(u8::try_from(i).unwrap())),
-            ("u16", PV::IntValue(i), _) => Ok(Box::new(u16::try_from(i).unwrap())),
-            ("u32", PV::IntValue(i), _) => Ok(Box::new(u32::try_from(i).unwrap())),
-            ("u64", PV::IntValue(i), _) => Ok(Box::new(u64::try_from(i).unwrap())),
-            ("u128", PV::IntValue(i), _) => Ok(Box::new(u128::try_from(i).unwrap())),
-            ("usize", PV::IntValue(i), _) => Ok(Box::new(usize::try_from(i).unwrap())),
+            ("isize", PV::IntValue(i), _) => int_property::<isize>(i),
+            ("u8", PV::IntValue(i), _) => int_property::<u8>(i),
+            ("u16", PV::IntValue(i), _) => int_property::<u16>(i),
+            ("u32", PV::IntValue(i), _) => int_property::<u32>(i),
+            ("u64", PV::IntValue(i), _) => int_property::<u64>(i),
+            ("u128", PV::IntValue(i), _) => int_property::<u128>(i),
+            ("usize", PV::IntValue(i), _) => int_property::<usize>(i),
 
             ("f32", PV::FloatValue(f), _) => Ok(Box::new(f)),
             ("f64", PV::FloatValue(f), _) => Ok(Box::new(f as f64)),
@@ -333,7 +333,11 @@ impl DeserializedProperties {
             ("alloc::string::String" | "alloc::borrow::Cow<str>", PV::StringValue(s), _) => {
                 Ok(Box::new(s))
             }
-            ("char", PV::StringValue(s), _) => Ok(Box::new(s.chars().next().unwrap())),
+            ("char", PV::StringValue(s), _) => s
+                .chars()
+                .next()
+                .map(|c| Box::new(c) as Box<dyn PartialReflect>)
+                .ok_or_else(|| "empty string cannot be converted to `char`".to_string()),
             ("std::path::PathBuf", PV::FileValue(s), _) => Ok(Box::new(PathBuf::from(s))),
             (a, PV::FileValue(s), _) if a.starts_with("bevy_asset::handle::Handle") => {
                 if let Some(cx) = load_cx.as_mut() {
@@ -346,12 +350,17 @@ impl DeserializedProperties {
                 if o == 0 {
                     Err("empty object reference".to_string())
                 } else {
-                    Ok(Box::new(Entity::from_raw_u32(o).expect("Wrong entity ID")))
+                    entity_from_object_id(o).map(|e| Box::new(e) as Box<dyn PartialReflect>)
                 }
             }
-            ("core::option::Option<bevy_ecs::entity::Entity>", PV::ObjectValue(o), _) => Ok(
-                Box::new((o != 0).then_some(Entity::from_raw_u32(o).expect("Wrong entity ID"))),
-            ),
+            ("core::option::Option<bevy_ecs::entity::Entity>", PV::ObjectValue(o), _) => {
+                let entity = if o == 0 {
+                    None
+                } else {
+                    Some(entity_from_object_id(o)?)
+                };
+                Ok(Box::new(entity))
+            }
             (_, PV::StringValue(s), TypeInfo::Enum(info)) => {
                 let Some(variant) = info.variant(&s) else {
                     return Err(format!("no variant `{s}` for `{}`", info.type_path()));
@@ -723,6 +732,26 @@ impl DeserializedProperties {
     }
 }
 
+/// Convert a Tiled integer property into the target integer type, failing if out of range
+fn int_property<T>(i: i32) -> Result<Box<dyn PartialReflect>, String>
+where
+    T: TryFrom<i32> + PartialReflect,
+{
+    T::try_from(i)
+        .map(|v| Box::new(v) as Box<dyn PartialReflect>)
+        .map_err(|_| {
+            format!(
+                "value `{i}` is out of range for `{}`",
+                std::any::type_name::<T>()
+            )
+        })
+}
+
+/// Temporary [`Entity`] holding a Tiled object ID, replaced by the actual entity on hydration
+fn entity_from_object_id(object_id: u32) -> Result<Entity, String> {
+    Entity::from_raw_u32(object_id).ok_or_else(|| format!("invalid object reference `{object_id}`"))
+}
+
 fn default_value_from_type_path(registry: &TypeRegistry, path: &str) -> Option<Box<dyn Reflect>> {
     registry
         .get_with_type_path(path)
@@ -739,10 +768,11 @@ fn object_ref(
         if let Some(&e) = obj_entity_map.get(&obj.index_u32()) {
             Some(Box::new(e))
         } else {
-            panic!(
-                "error hydrating properties: missing entity for object {}",
+            bevy::log::error!(
+                "error hydrating properties: missing entity for object {}, using Entity::PLACEHOLDER",
                 obj.index()
             );
+            Some(Box::new(Entity::PLACEHOLDER))
         }
     } else if obj.represents::<Option<Entity>>() {
         // maybe the map get should panic actually
@@ -808,8 +838,10 @@ fn hydrate(object: &mut dyn PartialReflect, obj_entity_map: &HashMap<u32, Entity
             for (k, v) in s.drain().iter_mut() {
                 let k = k.as_partial_reflect();
                 let v = v.as_partial_reflect_mut();
-                if object_ref(k, obj_entity_map).is_some() {
-                    panic!("Unable to hydrate a key in a map!");
+                if k.represents::<Entity>() || k.represents::<Option<Entity>>() {
+                    bevy::log::error!(
+                        "error hydrating properties: object references cannot be used as map keys, keeping raw value"
+                    );
                 }
                 hydrate(v, obj_entity_map);
                 s.insert_boxed(
@@ -970,5 +1002,48 @@ mod tests {
 
         let v: Result<StructComponent, _> = FromReflect::take_from_reflect(res);
         assert_eq!(v.unwrap(), raw_value);
+    }
+
+    fn deserialize_primitive<T: Reflect + TypePath + bevy::reflect::GetTypeRegistration>(
+        value: PV,
+    ) -> Result<T, String> {
+        let mut registry = TypeRegistry::new();
+        registry.register::<T>();
+        let res = DeserializedProperties::deserialize_property(
+            value,
+            registry.get_with_type_path(T::type_path()).unwrap(),
+            &registry,
+            &mut None,
+            None,
+        )?;
+        res.try_take::<T>()
+            .map_err(|_| "unexpected deserialized type".to_string())
+    }
+
+    #[test]
+    fn deserialize_out_of_range_integer_returns_error() {
+        assert_eq!(deserialize_primitive::<u8>(PV::IntValue(200)), Ok(200));
+        assert!(deserialize_primitive::<u8>(PV::IntValue(300)).is_err());
+        assert!(deserialize_primitive::<u32>(PV::IntValue(-1)).is_err());
+        assert!(deserialize_primitive::<i8>(PV::IntValue(-129)).is_err());
+    }
+
+    #[test]
+    fn deserialize_empty_char_returns_error() {
+        assert_eq!(
+            deserialize_primitive::<char>(PV::StringValue("ab".to_string())),
+            Ok('a')
+        );
+        assert!(deserialize_primitive::<char>(PV::StringValue(String::new())).is_err());
+    }
+
+    #[test]
+    fn hydrate_missing_object_uses_placeholder() {
+        let mut property: Box<dyn PartialReflect> = Box::new(Entity::from_raw_u32(42).unwrap());
+        hydrate(property.as_mut(), &HashMap::default());
+        assert_eq!(
+            property.try_take::<Entity>().ok(),
+            Some(Entity::PLACEHOLDER)
+        );
     }
 }
