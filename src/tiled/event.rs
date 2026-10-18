@@ -18,7 +18,7 @@ use bevy::{ecs::system::SystemParam, prelude::*};
 
 #[allow(unused_imports)]
 use crate::tiled::{
-    helpers::{get_layer_from_map, get_object_from_map, get_tile_from_map, get_tileset_from_map},
+    helpers::{layer_from_map, object_from_map, tile_from_map, tileset_from_map},
     layer::TiledLayer,
     map::{TiledMap, asset::TiledMapAsset},
     object::TiledObject,
@@ -182,7 +182,7 @@ where
     /// Retrieve the [`tiled::Layer`] associated with this [`TiledEvent`]
     pub fn layer(&self, assets: &'a Assets<TiledMapAsset>) -> Option<tiled::Layer<'a>> {
         self.map(assets)
-            .and_then(|map| self.layer_id().and_then(|id| get_layer_from_map(map, id)))
+            .and_then(|map| self.layer_id().and_then(|id| layer_from_map(map, id)))
     }
 
     /// Retrieve the [`TiledTilemap`] [`Entity`] associated with this [`TiledEvent`]
@@ -202,7 +202,7 @@ where
     ) -> Option<&'a Arc<tiled::Tileset>> {
         self.map(assets).and_then(|map| {
             self.tilemap_tileset_id()
-                .and_then(|id| get_tileset_from_map(map, id))
+                .and_then(|id| tileset_from_map(map, id))
         })
     }
 
@@ -226,7 +226,7 @@ where
         self.map(assets).and_then(|map| {
             self.tilemap_tileset_id().and_then(|tileset_id| {
                 self.tile_id()
-                    .and_then(|id| get_tile_from_map(map, tileset_id, id))
+                    .and_then(|id| tile_from_map(map, tileset_id, id))
             })
         })
     }
@@ -244,7 +244,7 @@ where
     /// Retrieve the [`tiled::Object`] associated with this [`TiledEvent`]
     pub fn object(&self, assets: &'a Assets<TiledMapAsset>) -> Option<tiled::Object<'a>> {
         self.map(assets)
-            .and_then(|map| self.object_id().and_then(|id| get_object_from_map(map, id)))
+            .and_then(|map| self.object_id().and_then(|id| object_from_map(map, id)))
     }
 }
 
