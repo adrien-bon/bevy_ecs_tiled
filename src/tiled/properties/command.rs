@@ -30,7 +30,10 @@ impl Command for InsertProperties {
     type Out = ();
 
     fn apply(self, world: &mut World) -> Self::Out {
-        let binding = world.get_resource::<AppTypeRegistry>().unwrap().clone();
+        let Some(binding) = world.get_resource::<AppTypeRegistry>().cloned() else {
+            error!("Could not insert properties: AppTypeRegistry resource is missing");
+            return;
+        };
 
         for property in self.properties.properties {
             insert_reflect(world, self.entity, binding.0.read().deref(), property);
@@ -45,20 +48,20 @@ fn insert_reflect(
     type_registry: &TypeRegistry,
     property: Box<dyn PartialReflect>,
 ) {
-    let type_info = property
-        .get_represented_type_info()
-        .expect("property should represent a type.");
+    let Some(type_info) = property.get_represented_type_info() else {
+        error!("Could not insert a property for entity {entity:?}: it does not represent any type");
+        return;
+    };
     let type_path = type_info.type_path();
     let Some(type_registration) = type_registry.get_with_type_path(type_path) else {
-        panic!(
-            "Could not get type registration (for property type {type_path}) because it doesn't exist in the TypeRegistry."
-        );
+        error!("Could not get type registration (for property type {type_path}) because it doesn't exist in the TypeRegistry.");
+        return;
     };
 
     let Ok(mut entity) = world.get_entity_mut(entity) else {
-        panic!(
-            "error[B0003]: Could not insert a reflected property (of type {type_path}) for entity {entity:?} because it doesn't exist in this World. See: https://bevyengine.org/learn/errors/#b0003"
-        );
+        // Entity may have been despawned before the command was applied (eg. map despawned right after spawn)
+        warn!("Could not insert a reflected property (of type {type_path}) for entity {entity:?} because it doesn't exist in this World.");
+        return;
     };
 
     if let Some(reflect_component) = type_registration.data::<ReflectComponent>() {
@@ -66,8 +69,6 @@ fn insert_reflect(
     } else if let Some(reflect_bundle) = type_registration.data::<ReflectBundle>() {
         reflect_bundle.insert(&mut entity, property.as_partial_reflect(), type_registry);
     } else {
-        panic!(
-            "Could not get ReflectComponent data (for component type {type_path}) because it doesn't exist in this TypeRegistration."
-        );
+        error!("Could not get ReflectComponent data (for component type {type_path}) because it doesn't exist in this TypeRegistration.");
     }
 }
