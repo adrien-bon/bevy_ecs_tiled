@@ -45,10 +45,17 @@ impl FromWorld for TiledMapLoader {
 
 /// [`TiledMapAsset`] loading error.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum TiledMapLoaderError {
     /// An [`IO`](std::io) Error
     #[error("Could not load Tiled file: {0}")]
     Io(#[from] std::io::Error),
+    /// The Tiled map (or one of its dependencies) could not be parsed
+    #[error("Could not load TMX map: {0}")]
+    Tiled(#[from] tiled::Error),
+    /// The map orientation is not supported by this plugin
+    #[error("Unsupported map orientation: {0:?}")]
+    UnsupportedOrientation(tiled::Orientation),
 }
 
 fn process_layers<'a>(
@@ -180,12 +187,12 @@ impl AssetLoader for TiledMapLoader {
                 BytesResourceReader::new(&bytes, &external_cache),
             );
             // Load the map and all tiles.
-            loader
-                .load_tmx_map(map_path)
-                .map_err(|e| std::io::Error::other(format!("Could not load TMX map: {e}")))?
+            loader.load_tmx_map(map_path)?
         };
 
-        let map_type = tilemap_type_from_map(&map);
+        let Some(map_type) = try_tilemap_type_from_map(&map) else {
+            return Err(TiledMapLoaderError::UnsupportedOrientation(map.orientation));
+        };
         let grid_size = grid_size_from_map(&map);
         let mut tilesets = HashMap::default();
         let mut tilesets_label_by_index = HashMap::<u32, String>::default();
@@ -275,7 +282,7 @@ impl AssetLoader for TiledMapLoader {
                         y: -topleft.1 as f32 * tiled::ChunkData::HEIGHT as f32 * grid_size.y,
                     },
                     TilemapType::Isometric(IsoCoordSystem::Staggered) => {
-                        panic!("Isometric (Staggered) map is not supported");
+                        unreachable!("staggered maps are rejected above")
                     }
                     _ => unreachable!(),
                 },
@@ -323,7 +330,7 @@ impl AssetLoader for TiledMapLoader {
                     2. * (topright - topleft)
                 }
                 TilemapType::Isometric(IsoCoordSystem::Staggered) => {
-                    panic!("Isometric (Staggered) map is not supported");
+                    unreachable!("staggered maps are rejected above")
                 }
                 _ => unreachable!(),
             },
@@ -455,4 +462,42 @@ fn tileset_to_tiled_map_tileset(
 
 pub(crate) fn plugin(app: &mut App) {
     app.init_asset_loader::<TiledMapLoader>();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use bevy::asset::LoadState;
+    use std::time::{Duration, Instant};
+
+    #[test]
+    fn unsupported_orientation_is_a_load_error() {
+        let mut app = App::new();
+        app.add_plugins((MinimalPlugins, AssetPlugin::default()));
+        app.add_plugins((
+            crate::tiled::cache::plugin,
+            crate::tiled::map::asset::plugin,
+            plugin,
+        ));
+
+        let handle: Handle<TiledMapAsset> = app
+            .world()
+            .resource::<AssetServer>()
+            .load("tests/loader/staggered_map.tmx");
+
+        let deadline = Instant::now() + Duration::from_secs(10);
+        let error = loop {
+            assert!(Instant::now() < deadline, "test map did not load in time");
+            app.update();
+            match app.world().resource::<AssetServer>().load_state(&handle) {
+                LoadState::Failed(error) => break error,
+                LoadState::Loaded => panic!("staggered map should not load"),
+                _ => std::thread::sleep(Duration::from_millis(1)),
+            }
+        };
+        assert!(
+            error.to_string().contains("Unsupported map orientation"),
+            "unexpected error: {error}"
+        );
+    }
 }

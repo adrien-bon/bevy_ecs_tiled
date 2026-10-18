@@ -83,33 +83,36 @@ pub fn get_object_from_map(map: &tiled::Map, object_id: u32) -> Option<tiled::Ob
 
 /// Converts a [`tiled::Map`]'s [`tiled::Orientation`] to a [`TilemapType`].
 ///
-/// Panics if the orientation is [`tiled::Orientation::Staggered`] which is not supported by this plugin.
-pub fn tilemap_type_from_map(map: &tiled::Map) -> TilemapType {
+/// Returns [`None`] if the orientation is not supported by this plugin, ie.
+/// [`tiled::Orientation::Staggered`] or [`tiled::Orientation::Oblique`].
+pub fn try_tilemap_type_from_map(map: &tiled::Map) -> Option<TilemapType> {
     match map.orientation {
-        tiled::Orientation::Orthogonal => TilemapType::Square,
-        tiled::Orientation::Hexagonal => match map.stagger_axis {
-            tiled::StaggerAxis::X if map.stagger_index == tiled::StaggerIndex::Even => {
-                TilemapType::Hexagon(HexCoordSystem::ColumnOdd)
-            }
-            tiled::StaggerAxis::X if map.stagger_index == tiled::StaggerIndex::Odd => {
-                TilemapType::Hexagon(HexCoordSystem::ColumnEven)
-            }
-            tiled::StaggerAxis::Y if map.stagger_index == tiled::StaggerIndex::Even => {
-                TilemapType::Hexagon(HexCoordSystem::RowOdd)
-            }
-            tiled::StaggerAxis::Y if map.stagger_index == tiled::StaggerIndex::Odd => {
-                TilemapType::Hexagon(HexCoordSystem::RowEven)
-            }
-            _ => unreachable!(),
-        },
-        tiled::Orientation::Isometric => TilemapType::Isometric(IsoCoordSystem::Diamond),
-        tiled::Orientation::Staggered => {
-            panic!("Isometric (Staggered) map is not supported");
-        }
-        tiled::Orientation::Oblique => {
-            panic!("Oblique map is not supported");
-        }
+        tiled::Orientation::Orthogonal => Some(TilemapType::Square),
+        tiled::Orientation::Hexagonal => Some(TilemapType::Hexagon(
+            match (map.stagger_axis, map.stagger_index) {
+                (tiled::StaggerAxis::X, tiled::StaggerIndex::Even) => HexCoordSystem::ColumnOdd,
+                (tiled::StaggerAxis::X, tiled::StaggerIndex::Odd) => HexCoordSystem::ColumnEven,
+                (tiled::StaggerAxis::Y, tiled::StaggerIndex::Even) => HexCoordSystem::RowOdd,
+                (tiled::StaggerAxis::Y, tiled::StaggerIndex::Odd) => HexCoordSystem::RowEven,
+            },
+        )),
+        tiled::Orientation::Isometric => Some(TilemapType::Isometric(IsoCoordSystem::Diamond)),
+        tiled::Orientation::Staggered | tiled::Orientation::Oblique => None,
     }
+}
+
+/// Converts a [`tiled::Map`]'s [`tiled::Orientation`] to a [`TilemapType`].
+///
+/// Maps with an unsupported orientation are rejected by the map loader with
+/// [`TiledMapLoaderError::UnsupportedOrientation`], so this function never panics
+/// for a map coming from a [`TiledMapAsset`].
+///
+/// # Panics
+/// Panics if the orientation is [`tiled::Orientation::Staggered`] or [`tiled::Orientation::Oblique`],
+/// which are not supported by this plugin. See [`try_tilemap_type_from_map`] for a non-panicking version.
+pub fn tilemap_type_from_map(map: &tiled::Map) -> TilemapType {
+    try_tilemap_type_from_map(map)
+        .unwrap_or_else(|| panic!("{:?} map orientation is not supported", map.orientation))
 }
 
 /// Converts a [`tiled::Map`]'s grid size to a [`TilemapGridSize`].

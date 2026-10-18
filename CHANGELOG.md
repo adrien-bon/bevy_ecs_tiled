@@ -2,6 +2,16 @@
 
 ## [unreleased]
 
+### Features
+
+- Add `try_tilemap_type_from_map()` helper, a non-panicking version of `tilemap_type_from_map()`
+
+### Changed
+
+- Maps with an unsupported orientation (staggered or oblique) now fail to load with `TiledMapLoaderError::UnsupportedOrientation` instead of panicking
+- Tiled parsing errors are now reported as `TiledMapLoaderError::Tiled` / `TiledWorldLoaderError::Tiled` (holding the original `tiled::Error`) instead of being converted to `std::io::Error`
+- `TiledMapLoaderError` and `TiledWorldLoaderError` are now `#[non_exhaustive]`
+
 ### Fixed
 
 - World chunking no longer despawns all visible maps on frames where no camera moved

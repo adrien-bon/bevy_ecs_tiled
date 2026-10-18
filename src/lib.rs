@@ -60,7 +60,7 @@ pub mod prelude {
         filter::{TiledFilter, TiledName},
         helpers::{
             get_layer_from_map, get_object_from_map, get_tile_from_map, get_tileset_from_map,
-            grid_size_from_map, tile_size, tilemap_type_from_map,
+            grid_size_from_map, tile_size, tilemap_type_from_map, try_tilemap_type_from_map,
         },
         image::TiledImage,
         layer::{TiledLayer, TiledLayerId, TiledLayerParallax, TiledParallaxCamera},
