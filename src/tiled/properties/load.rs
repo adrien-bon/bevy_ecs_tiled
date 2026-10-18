@@ -463,7 +463,7 @@ impl DeserializedProperties {
                     ));
                 };
 
-                for i in 0..array.capacity() {
+                for i in 0..info.capacity() {
                     let Some(pv) = properties.remove(&format!("[{i}]")) else {
                         return Err(format!("missing property on `{}`: `{i}`", info.type_path(),));
                     };
@@ -1035,6 +1035,30 @@ mod tests {
             Ok('a')
         );
         assert!(deserialize_primitive::<char>(PV::StringValue(String::new())).is_err());
+    }
+
+    #[test]
+    fn deserialize_array() {
+        let tiled_value = PV::ClassValue {
+            property_type: <[u8; 3]>::type_path().to_string(),
+            properties: std::collections::HashMap::from([
+                ("[0]".to_string(), PV::IntValue(1)),
+                ("[1]".to_string(), PV::IntValue(2)),
+                ("[2]".to_string(), PV::IntValue(3)),
+            ]),
+        };
+        let mut registry = TypeRegistry::new();
+        registry.register::<[u8; 3]>();
+        let res = DeserializedProperties::deserialize_property(
+            tiled_value,
+            registry.get_with_type_path(<[u8; 3]>::type_path()).unwrap(),
+            &registry,
+            &mut None,
+            None,
+        )
+        .unwrap();
+        let v: Option<[u8; 3]> = FromReflect::from_reflect(res.as_ref());
+        assert_eq!(v, Some([1, 2, 3]));
     }
 
     #[test]

@@ -19,6 +19,7 @@
 - `TiledFilter::Names` matching is now really case-insensitive: names provided with uppercase letters were never matched
 - Physics: do not panic when a layer or object event refers to a map that was despawned or has no `TiledPhysicsSettings`, log a warning instead
 - User properties: invalid values coming from Tiled (out of range integers, empty `char`, reference to a missing object, ...) no longer panic, an error is logged and the property is skipped
+- User properties: fixed-size array properties (`[T; N]`) were always deserialized as empty arrays
 
 ### Documentation
 
