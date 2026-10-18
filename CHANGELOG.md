@@ -12,6 +12,7 @@
 - Tiled parsing errors are now reported as `TiledMapLoaderError::Tiled` / `TiledWorldLoaderError::Tiled` (holding the original `tiled::Error`) instead of being converted to `std::io::Error`
 - `TiledMapLoaderError` and `TiledWorldLoaderError` are now `#[non_exhaustive]`
 - `export_types()` now returns a `std::io::Result<()>` instead of panicking; failing to export types at startup logs an error instead of crashing the application
+- `TiledEvent` accessors (`get_map()`, `get_layer()`, `get_object()`, ...) and `TiledEvent<ColliderCreated>::get_tiles()` now take a `&Assets<T>` instead of a `&Res<Assets<T>>`, so they can also be used outside of systems (eg. from a `World` or a `Command`). Existing calls passing `&Res<Assets<T>>` still compile thanks to deref coercion
 
 ### Fixed
 

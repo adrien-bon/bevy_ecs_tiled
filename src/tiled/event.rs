@@ -147,13 +147,13 @@ where
     /// Retrieve the [`TiledWorldAsset`] associated with this [`TiledEvent`]
     pub fn get_world_asset(
         &self,
-        assets: &'a Res<Assets<TiledWorldAsset>>,
+        assets: &'a Assets<TiledWorldAsset>,
     ) -> Option<&'a TiledWorldAsset> {
         self.world.and_then(|(_, id)| assets.get(id))
     }
 
     /// Retrieve the [`tiled::World`] associated with this [`TiledEvent`]
-    pub fn get_world(&self, assets: &'a Res<Assets<TiledWorldAsset>>) -> Option<&'a tiled::World> {
+    pub fn get_world(&self, assets: &'a Assets<TiledWorldAsset>) -> Option<&'a tiled::World> {
         self.get_world_asset(assets).map(|w| &w.world)
     }
 
@@ -163,15 +163,12 @@ where
     }
 
     /// Retrieve the [`TiledMapAsset`] associated with this [`TiledEvent`]
-    pub fn get_map_asset(
-        &self,
-        assets: &'a Res<Assets<TiledMapAsset>>,
-    ) -> Option<&'a TiledMapAsset> {
+    pub fn get_map_asset(&self, assets: &'a Assets<TiledMapAsset>) -> Option<&'a TiledMapAsset> {
         self.map.and_then(|(_, id)| assets.get(id))
     }
 
     /// Retrieve the [`tiled::Map`] associated with this [`TiledEvent`]
-    pub fn get_map(&self, assets: &'a Res<Assets<TiledMapAsset>>) -> Option<&'a tiled::Map> {
+    pub fn get_map(&self, assets: &'a Assets<TiledMapAsset>) -> Option<&'a tiled::Map> {
         self.get_map_asset(assets).map(|m| &m.map)
     }
 
@@ -186,7 +183,7 @@ where
     }
 
     /// Retrieve the [`tiled::Layer`] associated with this [`TiledEvent`]
-    pub fn get_layer(&self, assets: &'a Res<Assets<TiledMapAsset>>) -> Option<tiled::Layer<'a>> {
+    pub fn get_layer(&self, assets: &'a Assets<TiledMapAsset>) -> Option<tiled::Layer<'a>> {
         self.get_map(assets).and_then(|map| {
             self.get_layer_id()
                 .and_then(|id| get_layer_from_map(map, id))
@@ -206,7 +203,7 @@ where
     /// Retrieve the tilemap [`tiled::Tileset`] associated with this [`TiledEvent`]
     pub fn get_tilemap_tileset(
         &self,
-        assets: &'a Res<Assets<TiledMapAsset>>,
+        assets: &'a Assets<TiledMapAsset>,
     ) -> Option<&'a Arc<tiled::Tileset>> {
         self.get_map(assets).and_then(|map| {
             self.get_tilemap_tileset_id()
@@ -230,7 +227,7 @@ where
     }
 
     /// Retrieve the [`tiled::Tile`] associated with this [`TiledEvent`]
-    pub fn get_tile(&self, assets: &'a Res<Assets<TiledMapAsset>>) -> Option<tiled::Tile<'a>> {
+    pub fn get_tile(&self, assets: &'a Assets<TiledMapAsset>) -> Option<tiled::Tile<'a>> {
         self.get_map(assets).and_then(|map| {
             self.get_tilemap_tileset_id().and_then(|tileset_id| {
                 self.get_tile_id()
@@ -250,7 +247,7 @@ where
     }
 
     /// Retrieve the [`tiled::Object`] associated with this [`TiledEvent`]
-    pub fn get_object(&self, assets: &'a Res<Assets<TiledMapAsset>>) -> Option<tiled::Object<'a>> {
+    pub fn get_object(&self, assets: &'a Assets<TiledMapAsset>) -> Option<tiled::Object<'a>> {
         self.get_map(assets).and_then(|map| {
             self.get_object_id()
                 .and_then(|id| get_object_from_map(map, id))
@@ -336,4 +333,51 @@ pub(crate) fn plugin(app: &mut App) {
         .register_type::<TiledEvent<TileCreated>>();
     app.add_message::<TiledEvent<ObjectCreated>>()
         .register_type::<TiledEvent<ObjectCreated>>();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::{Duration, Instant};
+
+    #[test]
+    fn accessors_can_be_used_with_assets_from_world() {
+        let mut app = App::new();
+        app.add_plugins((MinimalPlugins, AssetPlugin::default()));
+        app.add_plugins((
+            crate::tiled::cache::plugin,
+            crate::tiled::map::asset::plugin,
+            crate::tiled::map::loader::plugin,
+        ));
+
+        let handle: Handle<TiledMapAsset> = app
+            .world()
+            .resource::<AssetServer>()
+            .load("tests/chunking/empty_map.tmx");
+        let deadline = Instant::now() + Duration::from_secs(10);
+        while !app
+            .world()
+            .resource::<AssetServer>()
+            .is_loaded_with_dependencies(&handle)
+        {
+            assert!(Instant::now() < deadline, "test map did not load in time");
+            app.update();
+            std::thread::sleep(Duration::from_millis(1));
+        }
+
+        let entity = app.world_mut().spawn_empty().id();
+        let event = TiledEvent::new(entity, LayerCreated)
+            .with_map(entity, handle.id())
+            .with_layer(entity, 1)
+            .to_owned();
+
+        // No system involved: assets are borrowed directly from the World
+        let assets = app.world().resource::<Assets<TiledMapAsset>>();
+        assert!(event.get_map(assets).is_some());
+        assert_eq!(
+            event.get_layer(assets).map(|layer| layer.name.clone()),
+            Some("ground".to_string())
+        );
+        assert!(event.get_object(assets).is_none());
+    }
 }

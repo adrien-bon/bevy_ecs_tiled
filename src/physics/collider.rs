@@ -73,7 +73,7 @@ impl<'a> TiledEvent<ColliderCreated> {
     /// relative position from their parent [`crate::tiled::tile::TiledTilemap`] [`Entity``].
     pub fn get_tiles(
         &self,
-        assets: &'a Res<Assets<TiledMapAsset>>,
+        assets: &'a Assets<TiledMapAsset>,
         anchor: &TilemapAnchor,
     ) -> Vec<(Vec2, tiled::Tile<'a>)> {
         let Some(map_asset) = self.get_map_asset(assets) else {
@@ -103,7 +103,7 @@ impl<'a> TiledEvent<ColliderCreated> {
 pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
     settings: &TiledPhysicsSettings<T>,
     commands: &mut Commands,
-    assets: &Res<Assets<TiledMapAsset>>,
+    assets: &Assets<TiledMapAsset>,
     anchor: &TilemapAnchor,
     filter: &TiledFilter,
     collider_created: TiledEvent<ColliderCreated>,
