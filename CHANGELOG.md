@@ -25,6 +25,10 @@
 - User properties: invalid values coming from Tiled (out of range integers, empty `char`, reference to a missing object, ...) no longer panic, an error is logged and the property is skipped
 - User properties: fixed-size array properties (`[T; N]`) were always deserialized as empty arrays
 
+### Internal
+
+- Refactor map spawning around a `SpawnContext` struct instead of passing up to 16 arguments to each function, and drop the crate-wide `clippy::too_many_arguments` allow
+
 ### Documentation
 
 - Fix inaccurate API documentation: `TiledEvent` world / map / object getters, `TiledWorldStorage` keys (map index, not Tiled ID), `TiledPhysicsBackend::spawn_colliders` arguments and return value
