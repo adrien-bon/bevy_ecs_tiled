@@ -11,6 +11,7 @@
 - Maps with an unsupported orientation (staggered or oblique) now fail to load with `TiledMapLoaderError::UnsupportedOrientation` instead of panicking
 - Tiled parsing errors are now reported as `TiledMapLoaderError::Tiled` / `TiledWorldLoaderError::Tiled` (holding the original `tiled::Error`) instead of being converted to `std::io::Error`
 - `TiledMapLoaderError` and `TiledWorldLoaderError` are now `#[non_exhaustive]`
+- `export_types()` now returns a `std::io::Result<()>` instead of panicking; failing to export types at startup logs an error instead of crashing the application
 
 ### Fixed
 

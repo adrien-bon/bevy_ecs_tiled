@@ -54,13 +54,17 @@ fn insert_reflect(
     };
     let type_path = type_info.type_path();
     let Some(type_registration) = type_registry.get_with_type_path(type_path) else {
-        error!("Could not get type registration (for property type {type_path}) because it doesn't exist in the TypeRegistry.");
+        error!(
+            "Could not get type registration (for property type {type_path}) because it doesn't exist in the TypeRegistry."
+        );
         return;
     };
 
     let Ok(mut entity) = world.get_entity_mut(entity) else {
         // Entity may have been despawned before the command was applied (eg. map despawned right after spawn)
-        warn!("Could not insert a reflected property (of type {type_path}) for entity {entity:?} because it doesn't exist in this World.");
+        warn!(
+            "Could not insert a reflected property (of type {type_path}) for entity {entity:?} because it doesn't exist in this World."
+        );
         return;
     };
 
@@ -69,6 +73,8 @@ fn insert_reflect(
     } else if let Some(reflect_bundle) = type_registration.data::<ReflectBundle>() {
         reflect_bundle.insert(&mut entity, property.as_partial_reflect(), type_registry);
     } else {
-        error!("Could not get ReflectComponent data (for component type {type_path}) because it doesn't exist in this TypeRegistration.");
+        error!(
+            "Could not get ReflectComponent data (for component type {type_path}) because it doesn't exist in this TypeRegistration."
+        );
     }
 }
