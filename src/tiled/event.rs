@@ -140,122 +140,114 @@ where
     E: Debug + Clone + Copy + Reflect,
 {
     /// Retrieve the [`TiledWorld`] [`Entity`] associated with this [`TiledEvent`]
-    pub fn get_world_entity(&self) -> Option<Entity> {
+    pub fn world_entity(&self) -> Option<Entity> {
         self.world.map(|(e, _)| e)
     }
 
     /// Retrieve the [`TiledWorldAsset`] associated with this [`TiledEvent`]
-    pub fn get_world_asset(
-        &self,
-        assets: &'a Assets<TiledWorldAsset>,
-    ) -> Option<&'a TiledWorldAsset> {
+    pub fn world_asset(&self, assets: &'a Assets<TiledWorldAsset>) -> Option<&'a TiledWorldAsset> {
         self.world.and_then(|(_, id)| assets.get(id))
     }
 
     /// Retrieve the [`tiled::World`] associated with this [`TiledEvent`]
-    pub fn get_world(&self, assets: &'a Assets<TiledWorldAsset>) -> Option<&'a tiled::World> {
-        self.get_world_asset(assets).map(|w| &w.world)
+    pub fn world(&self, assets: &'a Assets<TiledWorldAsset>) -> Option<&'a tiled::World> {
+        self.world_asset(assets).map(|w| &w.world)
     }
 
     /// Retrieve the [`TiledMap`] [`Entity`] associated with this [`TiledEvent`]
-    pub fn get_map_entity(&self) -> Option<Entity> {
+    pub fn map_entity(&self) -> Option<Entity> {
         self.map.map(|(e, _)| e)
     }
 
     /// Retrieve the [`TiledMapAsset`] associated with this [`TiledEvent`]
-    pub fn get_map_asset(&self, assets: &'a Assets<TiledMapAsset>) -> Option<&'a TiledMapAsset> {
+    pub fn map_asset(&self, assets: &'a Assets<TiledMapAsset>) -> Option<&'a TiledMapAsset> {
         self.map.and_then(|(_, id)| assets.get(id))
     }
 
     /// Retrieve the [`tiled::Map`] associated with this [`TiledEvent`]
-    pub fn get_map(&self, assets: &'a Assets<TiledMapAsset>) -> Option<&'a tiled::Map> {
-        self.get_map_asset(assets).map(|m| &m.map)
+    pub fn map(&self, assets: &'a Assets<TiledMapAsset>) -> Option<&'a tiled::Map> {
+        self.map_asset(assets).map(|m| &m.map)
     }
 
     /// Retrieve the [`TiledLayer`] [`Entity`] associated with this [`TiledEvent`]
-    pub fn get_layer_entity(&self) -> Option<Entity> {
+    pub fn layer_entity(&self) -> Option<Entity> {
         self.layer.map(|(e, _)| e)
     }
 
     /// Retrieve the layer ID associated with this [`TiledEvent`]
-    pub fn get_layer_id(&self) -> Option<u32> {
+    pub fn layer_id(&self) -> Option<u32> {
         self.layer.map(|(_, id)| id)
     }
 
     /// Retrieve the [`tiled::Layer`] associated with this [`TiledEvent`]
-    pub fn get_layer(&self, assets: &'a Assets<TiledMapAsset>) -> Option<tiled::Layer<'a>> {
-        self.get_map(assets).and_then(|map| {
-            self.get_layer_id()
-                .and_then(|id| get_layer_from_map(map, id))
-        })
+    pub fn layer(&self, assets: &'a Assets<TiledMapAsset>) -> Option<tiled::Layer<'a>> {
+        self.map(assets)
+            .and_then(|map| self.layer_id().and_then(|id| get_layer_from_map(map, id)))
     }
 
     /// Retrieve the [`TiledTilemap`] [`Entity`] associated with this [`TiledEvent`]
-    pub fn get_tilemap_entity(&self) -> Option<Entity> {
+    pub fn tilemap_entity(&self) -> Option<Entity> {
         self.tilemap.map(|(e, _)| e)
     }
 
     /// Retrieve the tilemap tileset ID associated with this [`TiledEvent`]
-    pub fn get_tilemap_tileset_id(&self) -> Option<u32> {
+    pub fn tilemap_tileset_id(&self) -> Option<u32> {
         self.tilemap.map(|(_, id)| id)
     }
 
     /// Retrieve the tilemap [`tiled::Tileset`] associated with this [`TiledEvent`]
-    pub fn get_tilemap_tileset(
+    pub fn tilemap_tileset(
         &self,
         assets: &'a Assets<TiledMapAsset>,
     ) -> Option<&'a Arc<tiled::Tileset>> {
-        self.get_map(assets).and_then(|map| {
-            self.get_tilemap_tileset_id()
+        self.map(assets).and_then(|map| {
+            self.tilemap_tileset_id()
                 .and_then(|id| get_tileset_from_map(map, id))
         })
     }
 
     /// Retrieve the [`TiledTile`] [`Entity`] associated with this [`TiledEvent`]
-    pub fn get_tile_entity(&self) -> Option<Entity> {
+    pub fn tile_entity(&self) -> Option<Entity> {
         self.tile.map(|(e, _, _)| e)
     }
 
     /// Retrieve the [`TilePos`] associated with this [`TiledEvent`]
-    pub fn get_tile_pos(&self) -> Option<TilePos> {
+    pub fn tile_pos(&self) -> Option<TilePos> {
         self.tile.map(|(_, pos, _)| pos)
     }
 
     /// Retrieve the [`tiled::TileId`] associated with this [`TiledEvent`]
-    pub fn get_tile_id(&self) -> Option<tiled::TileId> {
+    pub fn tile_id(&self) -> Option<tiled::TileId> {
         self.tile.map(|(_, _, id)| id)
     }
 
     /// Retrieve the [`tiled::Tile`] associated with this [`TiledEvent`]
-    pub fn get_tile(&self, assets: &'a Assets<TiledMapAsset>) -> Option<tiled::Tile<'a>> {
-        self.get_map(assets).and_then(|map| {
-            self.get_tilemap_tileset_id().and_then(|tileset_id| {
-                self.get_tile_id()
+    pub fn tile(&self, assets: &'a Assets<TiledMapAsset>) -> Option<tiled::Tile<'a>> {
+        self.map(assets).and_then(|map| {
+            self.tilemap_tileset_id().and_then(|tileset_id| {
+                self.tile_id()
                     .and_then(|id| get_tile_from_map(map, tileset_id, id))
             })
         })
     }
 
     /// Retrieve the [`TiledObject`] [`Entity`] associated with this [`TiledEvent`]
-    pub fn get_object_entity(&self) -> Option<Entity> {
+    pub fn object_entity(&self) -> Option<Entity> {
         self.object.map(|(e, _)| e)
     }
 
     /// Retrieve the object ID associated with this [`TiledEvent`]
-    pub fn get_object_id(&self) -> Option<u32> {
+    pub fn object_id(&self) -> Option<u32> {
         self.object.map(|(_, id)| id)
     }
 
     /// Retrieve the [`tiled::Object`] associated with this [`TiledEvent`]
-    pub fn get_object(&self, assets: &'a Assets<TiledMapAsset>) -> Option<tiled::Object<'a>> {
-        self.get_map(assets).and_then(|map| {
-            self.get_object_id()
-                .and_then(|id| get_object_from_map(map, id))
-        })
+    pub fn object(&self, assets: &'a Assets<TiledMapAsset>) -> Option<tiled::Object<'a>> {
+        self.map(assets)
+            .and_then(|map| self.object_id().and_then(|id| get_object_from_map(map, id)))
     }
 }
 
-/// A [`TiledWorld`] was created
 ///
 /// See also [`TiledEvent`]
 #[derive(Clone, Copy, PartialEq, Debug, Reflect)]
@@ -373,11 +365,11 @@ mod tests {
 
         // No system involved: assets are borrowed directly from the World
         let assets = app.world().resource::<Assets<TiledMapAsset>>();
-        assert!(event.get_map(assets).is_some());
+        assert!(event.map(assets).is_some());
         assert_eq!(
-            event.get_layer(assets).map(|layer| layer.name.clone()),
+            event.layer(assets).map(|layer| layer.name.clone()),
             Some("ground".to_string())
         );
-        assert!(event.get_object(assets).is_none());
+        assert!(event.object(assets).is_none());
     }
 }

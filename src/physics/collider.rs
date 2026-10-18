@@ -71,15 +71,15 @@ pub(crate) fn plugin(app: &mut App) {
 impl<'a> TiledEvent<ColliderCreated> {
     /// Returns a vector containing [`tiled::Tile`]s in this layer as well as their
     /// relative position from their parent [`crate::tiled::tile::TiledTilemap`] [`Entity``].
-    pub fn get_tiles(
+    pub fn tiles(
         &self,
         assets: &'a Assets<TiledMapAsset>,
         anchor: &TilemapAnchor,
     ) -> Vec<(Vec2, tiled::Tile<'a>)> {
-        let Some(map_asset) = self.get_map_asset(assets) else {
+        let Some(map_asset) = self.map_asset(assets) else {
             return vec![];
         };
-        self.get_layer(assets)
+        self.layer(assets)
             .and_then(|layer| layer.as_tile_layer())
             .map(|layer| {
                 let mut out = vec![];
@@ -111,13 +111,13 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
     message_writer: &mut MessageWriter<TiledEvent<ColliderCreated>>,
     disable_geometry_simplification: bool,
 ) {
-    let Some(map_asset) = collider_created.get_map_asset(assets) else {
+    let Some(map_asset) = collider_created.map_asset(assets) else {
         return;
     };
 
     let polygons = match collider_created.event.source {
         TiledColliderSource::Object => {
-            if let Some(object) = collider_created.get_object(assets) {
+            if let Some(object) = collider_created.object(assets) {
                 match object.get_tile() {
                     // If the object does not have a tile, we can create a collider directly from itself
                     None => {
@@ -177,7 +177,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
             let mut acc = vec![];
 
             // Iterate over all tiles in the layer and create colliders for each
-            for (tile_position, tile) in collider_created.get_tiles(assets, anchor) {
+            for (tile_position, tile) in collider_created.tiles(assets, anchor) {
                 if let Some(collision) = &tile.collision {
                     let tile_size = tile_size(&tile);
                     acc.extend(polygons_from_tile(

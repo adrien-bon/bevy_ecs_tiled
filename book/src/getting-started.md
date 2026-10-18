@@ -85,7 +85,7 @@ fn spawn_map(
                 info!("=> Observer TiledMapCreated was triggered for map '{name}'");
 
                 // Or directly the underneath raw tiled::Map data
-                let Some(map) = map_created.event().get_map(&assets) else {
+                let Some(map) = map_created.event().map(&assets) else {
                     return;
                 };
                 info!("Loaded map: {:?}", map);

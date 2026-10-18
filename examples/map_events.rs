@@ -56,7 +56,7 @@ fn evt_map_created(
         };
 
         // Or directly the underneath tiled Map data
-        let Some(map) = e.get_map(&assets) else {
+        let Some(map) = e.map(&assets) else {
             return;
         };
 
@@ -91,7 +91,7 @@ fn obs_layer_created(
     };
 
     // Or directly the underneath tiled Layer data
-    let Some(layer) = layer_created.event().get_layer(&assets) else {
+    let Some(layer) = layer_created.event().layer(&assets) else {
         return;
     };
 
@@ -102,7 +102,7 @@ fn obs_layer_created(
     info!("Loaded layer: {:?}", layer);
 
     // Moreover, we can retrieve the TiledMapCreated event data from here
-    let _map = layer_created.event().get_map(&assets);
+    let _map = layer_created.event().map(&assets);
 }
 
 // A typical usecase for regular events is to update components associated with tiles, objects or layers.
