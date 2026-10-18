@@ -100,6 +100,7 @@ impl<'a> TiledEvent<ColliderCreated> {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
     settings: &TiledPhysicsSettings<T>,
     commands: &mut Commands,

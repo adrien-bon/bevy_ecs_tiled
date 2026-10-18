@@ -14,7 +14,6 @@
 #![deny(unsafe_code)]
 #![deny(missing_copy_implementations)]
 #![deny(missing_debug_implementations)]
-#![allow(clippy::too_many_arguments)]
 #![allow(clippy::type_complexity)]
 
 pub mod tiled;
