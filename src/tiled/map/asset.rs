@@ -144,7 +144,7 @@ impl TiledMapAsset {
                     }
                 }
                 TilemapType::Isometric(IsoCoordSystem::Staggered) => {
-                    panic!("Isometric (Staggered) map is not supported");
+                    unreachable!("staggered maps are rejected by the map loader")
                 }
                 _ => unreachable!(),
             }

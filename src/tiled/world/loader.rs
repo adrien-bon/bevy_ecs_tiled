@@ -13,10 +13,14 @@ use bevy::{
 
 /// [`TiledWorldAsset`] loading error.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum TiledWorldLoaderError {
     /// An [`IO`](std::io) Error
     #[error("Could not load Tiled file: {0}")]
     Io(#[from] std::io::Error),
+    /// The Tiled world could not be parsed
+    #[error("Could not load Tiled world: {0}")]
+    Tiled(#[from] tiled::Error),
     /// No map was found in this world
     #[error("No map found in this world")]
     EmptyWorld,
@@ -65,9 +69,7 @@ impl AssetLoader for TiledWorldLoader {
                 self.cache.clone(),
                 BytesResourceReader::new(&bytes, &external_cache),
             );
-            loader
-                .load_world(&world_path)
-                .map_err(|e| std::io::Error::other(format!("Could not load Tiled world: {e}")))?
+            loader.load_world(&world_path)?
         };
 
         if world.maps.is_empty() {
