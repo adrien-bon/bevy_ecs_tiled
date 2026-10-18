@@ -37,7 +37,9 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 fn handle_world_chunking(
-    camera_query: Query<&Transform, (With<Camera>, Changed<Transform>)>,
+    // Do not filter on `Changed<Transform>`: we need all cameras every frame, otherwise
+    // a frame where no camera moved would be seen as "no map visible" and despawn every map.
+    camera_query: Query<&Transform, With<Camera>>,
     worlds: Res<Assets<TiledWorldAsset>>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
@@ -158,6 +160,71 @@ fn handle_world_chunking(
                 idx, handle, map_entity
             );
             storage.maps.insert(idx, map_entity);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::{Duration, Instant};
+
+    fn chunking_app() -> App {
+        let mut app = App::new();
+        app.add_plugins((MinimalPlugins, AssetPlugin::default()));
+        app.add_plugins((
+            crate::tiled::cache::plugin,
+            crate::tiled::map::asset::plugin,
+            crate::tiled::map::loader::plugin,
+            crate::tiled::world::asset::plugin,
+            crate::tiled::world::loader::plugin,
+        ));
+        app.add_systems(PostUpdate, handle_world_chunking);
+        app
+    }
+
+    fn wait_until_loaded(app: &mut App, handle: &Handle<TiledWorldAsset>) {
+        let deadline = Instant::now() + Duration::from_secs(10);
+        while !app
+            .world()
+            .resource::<AssetServer>()
+            .is_loaded_with_dependencies(handle)
+        {
+            assert!(Instant::now() < deadline, "test world did not load in time");
+            app.update();
+            std::thread::sleep(Duration::from_millis(1));
+        }
+    }
+
+    #[test]
+    fn static_camera_keeps_visible_maps_spawned() {
+        let mut app = chunking_app();
+        let handle: Handle<TiledWorldAsset> = app
+            .world()
+            .resource::<AssetServer>()
+            .load("tests/chunking/two_maps.world");
+        wait_until_loaded(&mut app, &handle);
+
+        // Camera at origin only overlaps the first map (second one is 1000px away)
+        app.world_mut()
+            .spawn((Camera::default(), Transform::default()));
+        let world_entity = app
+            .world_mut()
+            .spawn((TiledWorld(handle), TiledWorldChunking::new(100., 100.)))
+            .id();
+
+        // The camera never moves: maps must stay spawned over several frames
+        for frame in 0..5 {
+            app.update();
+            let storage = app
+                .world()
+                .get::<TiledWorldStorage>(world_entity)
+                .expect("world entity should have a storage");
+            assert_eq!(
+                storage.maps.keys().copied().collect::<Vec<_>>(),
+                vec![0],
+                "unexpected spawned maps at frame {frame}"
+            );
         }
     }
 }
