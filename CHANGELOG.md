@@ -4,6 +4,7 @@
 
 ### Features
 
+- Add `TiledDebugMapAabbPlugin` debug plugin to display maps bounding boxes
 - Add `try_tilemap_type_from_map()` helper, a non-panicking version of `tilemap_type_from_map()`
 
 ### Changed
