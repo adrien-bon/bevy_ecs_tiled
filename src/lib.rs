@@ -30,6 +30,7 @@ pub mod prelude {
     pub use super::debug::{
         TiledDebugPluginGroup,
         axis::TiledDebugAxisPlugin,
+        map_aabb::{TiledDebugMapAabbConfig, TiledDebugMapAabbPlugin},
         objects::{TiledDebugObjectsConfig, TiledDebugObjectsPlugin},
         tiles::{TiledDebugTilesConfig, TiledDebugTilesPlugin},
         world_chunk::{TiledDebugWorldChunkConfig, TiledDebugWorldChunkPlugin},

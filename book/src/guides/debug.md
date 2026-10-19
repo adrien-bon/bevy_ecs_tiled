@@ -2,7 +2,7 @@
 
 ## Logging
 
-Bevy uses the `tracing` crate for logging, which is very powerful for debugging and profiling.  
+Bevy uses the `tracing` crate for logging, which is very powerful for debugging and profiling.
 You can find more information in the [official documentation](https://docs.rs/tracing/).
 
 To get detailed information about what's happening in your app, set the `RUST_LOG` environment variable to `trace`:
@@ -11,7 +11,7 @@ To get detailed information about what's happening in your app, set the `RUST_LO
 RUST_LOG=trace cargo run
 ```
 
-This will show all logs at the `trace` level, but it can be very verbose.  
+This will show all logs at the `trace` level, but it can be very verbose.
 To filter logs and only display information from `bevy_ecs_tiled`, use:
 
 ```sh
@@ -44,7 +44,41 @@ Or add them individually as needed:
 - [`TiledDebugObjectsPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/objects/index.html): Displays an `arrow_2d` and a polyline outline `Gizmos` at each Tiled object's position and shape.
 - [`TiledDebugTilesPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/tiles/index.html): Shows the `bevy_ecs_tilemap` tile index (`TilePos`) above each tile.
 - [`TiledDebugWorldChunkPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/world_chunk/index.html): Draws a `Gizmos` rectangle for each map boundary and world render chunk.
+- [`TiledDebugMapAabbPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/map_aabb/index.html): Draws `Gizmos` rectangles for each map axis-aligned bounding box (AABB).
 - [`TiledDebugAxisPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/axis/index.html): Displays a `Gizmos` axes marker at the world origin.
+
+### Map bounding boxes
+
+The `TiledDebugMapAabbPlugin` draws two rectangles for each map:
+
+- in orange, the AABB of the tiles grid as computed by `bevy_ecs_tilemap` (ie. where tiles are actually rendered);
+- in aqua, the AABB obtained by converting the map corners from Tiled coordinates to world space.
+
+Both rectangles should overlap, whatever the map orientation or `TilemapAnchor`.
+If they do not, there is probably an issue with coordinates conversion: objects and image layers may not be positioned where you expect them.
+This plugin is especially useful when checking map placement and anchoring.
+
+> **Note:**
+> For infinite maps, the AABB only covers the chunks containing tiles: objects located outside of these chunks will lie outside of the AABB.
+
+You can change the colors, or hide one of the rectangles by setting its color to `None`, using the `TiledDebugMapAabbConfig`:
+
+```rust,no_run
+use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn main() {
+    App::new()
+        .add_plugins(TiledDebugMapAabbPlugin(TiledDebugMapAabbConfig {
+            // Only display the AABB computed from Tiled coordinates
+            tilemap_aabb_color: None,
+            tiled_aabb_color: Some(Color::WHITE),
+        }))
+        .run();
+}
+```
+
+Since the configuration is a `Resource`, you can also update it at runtime.
 
 For more details, see the [API reference](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/index.html).
 
@@ -120,5 +154,5 @@ fn main() {
 }
 ```
 
-> **Note:**  
+> **Note:**
 > For Rapier, you must enable either the `debug-render-2d` feature on the `bevy_rapier2d` crate or the `rapier_debug` feature on `bevy_ecs_tiled`.
