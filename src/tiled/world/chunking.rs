@@ -6,7 +6,7 @@
 
 use crate::prelude::*;
 use bevy::{
-    math::bounding::{Aabb2d, IntersectsVolume},
+    shape::{Aabb2d, IntersectsVolume},
     prelude::*,
 };
 

@@ -10,7 +10,7 @@
 use crate::prelude::*;
 use bevy::{
     color::palettes::css::{BLUE, FUCHSIA, GREEN, LIME, RED, WHITE, YELLOW},
-    math::bounding::BoundingVolume,
+    shape::BoundingVolume,
     prelude::*,
 };
 

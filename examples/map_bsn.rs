@@ -21,12 +21,12 @@ fn main() {
 }
 
 fn level() -> impl SceneList {
-    bsn_list![
+    bsn_list!{
         // Spawn a 2D camera (required by Bevy)
-        Camera2d,
+        Camera2d --
         // Tiled map
-        tiled_map("maps/orthogonal/finite.tmx")
-    ]
+        @tiled_map("maps/orthogonal/finite.tmx")
+    }
 }
 
 fn tiled_map(map_file: &'static str) -> impl Scene {

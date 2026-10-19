@@ -1,9 +1,10 @@
 use std::time::Duration;
 
-use avian2d::{math::*, prelude::*};
+use avian2d::prelude::*;
 use bevy::{
     camera::visibility::RenderLayers, color::palettes::css::RED, prelude::*, sprite::Anchor,
 };
+use std::f32::consts::PI;
 
 use crate::{
     animation::{Animation, AnimationState},
@@ -25,7 +26,7 @@ pub(super) fn plugin(app: &mut App) {
 pub struct Enemy;
 
 fn on_enemy_added(
-    add_enemy: On<Add, Enemy>,
+    add_enemy: On<Add<Enemy>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
