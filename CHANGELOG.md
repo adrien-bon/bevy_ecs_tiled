@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+**BREAKING CHANGES**
+This version brings breaking changes.
+A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_14.html) is available to help adapt to these.
+
 ### Features
 
 - Update for Bevy v0.20 (#235)
