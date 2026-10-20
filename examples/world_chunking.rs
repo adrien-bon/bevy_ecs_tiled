@@ -63,21 +63,20 @@ fn input(mut chunking: Query<&mut TiledWorldChunking>, keys: Res<ButtonInput<Key
         return;
     };
 
-    if keys.pressed(KeyCode::Minus) {
-        // Decrease the chunking size
-        if let Some(c) = chunking.0 {
-            if (c.x - STEP_SIZE as f32) > 0. {
-                *chunking = TiledWorldChunking::new(c.x - STEP_SIZE as f32, c.y - STEP_SIZE as f32);
-            }
-        }
+    // Decrease the chunking size
+    if keys.pressed(KeyCode::Minus)
+        && let Some(c) = chunking.0
+        && (c.x - STEP_SIZE as f32) > 0.
+    {
+        *chunking = TiledWorldChunking::new(c.x - STEP_SIZE as f32, c.y - STEP_SIZE as f32);
     }
 
-    if keys.pressed(KeyCode::Equal) {
-        if let Some(c) = chunking.0 {
-            if c.x < f32::MAX - STEP_SIZE as f32 {
-                *chunking = TiledWorldChunking::new(c.x + STEP_SIZE as f32, c.y + STEP_SIZE as f32);
-            }
-        }
+    // Increase the chunking size
+    if keys.pressed(KeyCode::Equal)
+        && let Some(c) = chunking.0
+        && c.x < f32::MAX - STEP_SIZE as f32
+    {
+        *chunking = TiledWorldChunking::new(c.x + STEP_SIZE as f32, c.y + STEP_SIZE as f32);
     }
 }
 

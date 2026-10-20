@@ -54,7 +54,7 @@ impl<'a> TiledMapStorage {
     pub fn get_layer_id(&self, entity: Entity) -> Option<u32> {
         self.layers
             .iter()
-            .find(|(_, &e)| e == entity)
+            .find(|(_, e)| **e == entity)
             .map(|(&id, _)| id)
     }
 
@@ -107,7 +107,7 @@ impl<'a> TiledMapStorage {
     pub fn get_object_id(&self, entity: Entity) -> Option<u32> {
         self.objects
             .iter()
-            .find(|(_, &e)| e == entity)
+            .find(|(_, e)| **e == entity)
             .map(|(&id, _)| id)
     }
 

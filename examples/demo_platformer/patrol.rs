@@ -2,8 +2,8 @@ use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 
 use crate::{
-    controller::{MovementAction, MovementEvent},
     UpdateSystems,
+    controller::{MovementAction, MovementEvent},
 };
 
 pub(super) fn plugin(app: &mut App) {

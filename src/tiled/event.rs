@@ -20,10 +20,10 @@ use bevy::{ecs::system::SystemParam, prelude::*};
 use crate::tiled::{
     helpers::{get_layer_from_map, get_object_from_map, get_tile_from_map, get_tileset_from_map},
     layer::TiledLayer,
-    map::{asset::TiledMapAsset, TiledMap},
+    map::{TiledMap, asset::TiledMapAsset},
     object::TiledObject,
     tile::{TiledTile, TiledTilemap},
-    world::{asset::TiledWorldAsset, TiledWorld},
+    world::{TiledWorld, asset::TiledWorldAsset},
 };
 
 /// Wrapper around Tiled events

@@ -4,6 +4,7 @@ use bevy::{
     platform::collections::HashMap,
     prelude::*,
     reflect::{
+        NamedField, ReflectRef, TypeInfo, TypeRegistration, TypeRegistry, UnnamedField,
         array::ArrayInfo,
         enums::{EnumInfo, VariantInfo},
         list::ListInfo,
@@ -12,7 +13,6 @@ use bevy::{
         structs::StructInfo,
         tuple::TupleInfo,
         tuple_struct::TupleStructInfo,
-        NamedField, ReflectRef, TypeInfo, TypeRegistration, TypeRegistry, UnnamedField,
     },
 };
 use serde_json::Value;
@@ -79,13 +79,12 @@ impl TypeExportRegistry {
             // List is ordered with "leaf" dependencies at the beginning
             let deps = dependencies(top_level_type, registry);
             for d in deps {
-                if let Some(dep_registration) = registry.get_with_type_path(d) {
-                    if !out
+                if let Some(dep_registration) = registry.get_with_type_path(d)
+                    && !out
                         .types
                         .contains_key(dep_registration.type_info().type_path())
-                    {
-                        types_to_export.push(dep_registration);
-                    }
+                {
+                    types_to_export.push(dep_registration);
                 }
             }
             types_to_export.push(top_level_type);
@@ -273,14 +272,16 @@ impl TypeExportRegistry {
                     name: "list".to_string(),
                     property_type: None,
                     type_field: FieldType::List,
-                    value: Value::Array(vec![serde_json::to_value(ListItem {
-                        property_type: property_type.clone(),
-                        type_field,
-                        value: default_value
-                            .map(|v| value_to_json(v.as_partial_reflect()))
-                            .unwrap_or_default(),
-                    })
-                    .unwrap()]),
+                    value: Value::Array(vec![
+                        serde_json::to_value(ListItem {
+                            property_type: property_type.clone(),
+                            type_field,
+                            value: default_value
+                                .map(|v| value_to_json(v.as_partial_reflect()))
+                                .unwrap_or_default(),
+                        })
+                        .unwrap(),
+                    ]),
                 }],
             }),
         };
@@ -352,12 +353,14 @@ impl TypeExportRegistry {
                     name: "map".to_string(),
                     property_type: None,
                     type_field: FieldType::List,
-                    value: Value::Array(vec![serde_json::to_value(ListItem {
-                        property_type: Some(map_item_property_type),
-                        type_field: FieldType::Class,
-                        value: Default::default(),
-                    })
-                    .unwrap()]),
+                    value: Value::Array(vec![
+                        serde_json::to_value(ListItem {
+                            property_type: Some(map_item_property_type),
+                            type_field: FieldType::Class,
+                            value: Default::default(),
+                        })
+                        .unwrap(),
+                    ]),
                 }],
             }),
         };
@@ -391,14 +394,16 @@ impl TypeExportRegistry {
                     name: "set".to_string(),
                     property_type: None,
                     type_field: FieldType::List,
-                    value: Value::Array(vec![serde_json::to_value(ListItem {
-                        property_type: property_type.clone(),
-                        type_field,
-                        value: default_value
-                            .map(|v| value_to_json(v.as_partial_reflect()))
-                            .unwrap_or_default(),
-                    })
-                    .unwrap()]),
+                    value: Value::Array(vec![
+                        serde_json::to_value(ListItem {
+                            property_type: property_type.clone(),
+                            type_field,
+                            value: default_value
+                                .map(|v| value_to_json(v.as_partial_reflect()))
+                                .unwrap_or_default(),
+                        })
+                        .unwrap(),
+                    ]),
                 }],
             }),
         };
@@ -674,7 +679,11 @@ fn value_to_json(value: &dyn PartialReflect) -> serde_json::Value {
             serde_json::json!(*v.try_downcast_ref::<Cow<str>>().unwrap())
         }
         // Special case for bevy "Name" which use a HashedStr instead of a regular string
-        ("bevy_platform::hash::Hashed<alloc::borrow::Cow<str>, bevy_platform::hash::FixedHasher>", _, ReflectRef::Opaque(_)) => {
+        (
+            "bevy_platform::hash::Hashed<alloc::borrow::Cow<str>, bevy_platform::hash::FixedHasher>",
+            _,
+            ReflectRef::Opaque(_),
+        ) => {
             serde_json::json!("")
         }
         ("bevy_color::color::Color", _, _) => {

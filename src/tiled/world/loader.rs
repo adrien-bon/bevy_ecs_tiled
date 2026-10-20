@@ -7,7 +7,7 @@ use crate::{
     tiled::{cache::TiledResourceCache, reader::BytesResourceReader},
 };
 use bevy::{
-    asset::{io::Reader, AssetLoader, AssetPath, LoadContext},
+    asset::{AssetLoader, AssetPath, LoadContext, io::Reader},
     prelude::*,
 };
 

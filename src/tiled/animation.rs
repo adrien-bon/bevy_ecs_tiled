@@ -46,10 +46,10 @@ fn step_animation(anim: &mut TiledAnimation, delta: std::time::Duration) -> Opti
 
 fn animate_sprite(time: Res<Time>, mut query: Query<(&mut TiledAnimation, &mut Sprite)>) {
     for (mut anim, mut sprite) in query.iter_mut() {
-        if let Some(atlas_index) = step_animation(&mut anim, time.delta()) {
-            if let Some(atlas) = &mut sprite.texture_atlas {
-                atlas.index = atlas_index;
-            }
+        if let Some(atlas_index) = step_animation(&mut anim, time.delta())
+            && let Some(atlas) = &mut sprite.texture_atlas
+        {
+            atlas.index = atlas_index;
         }
     }
 }
@@ -106,7 +106,7 @@ mod tests {
         // Frame 0: 100ms, Frame 1: 500ms
         let mut anim = make_anim(vec![(0, 0.1), (1, 0.5)]);
         step_animation(&mut anim, Duration::from_millis(101)); // → frame 1 (100ms timer)
-                                                               // Now on frame 1 with a 500ms timer — 100ms should NOT advance it
+        // Now on frame 1 with a 500ms timer — 100ms should NOT advance it
         let result = step_animation(&mut anim, Duration::from_millis(100));
         assert!(result.is_none());
         assert_eq!(anim.current_frame, 1);

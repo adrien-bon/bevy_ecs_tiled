@@ -130,7 +130,10 @@ fn process_loaded_worlds(
 
             // World should be loaded at this point
             let Some(tiled_world) = worlds.get(&world_handle.0) else {
-                error!("Cannot get a valid TiledWorld out of Handle<TiledWorld>: has the last strong reference to the asset been dropped ? (handle = {:?} / entity = {:?})", world_handle.0, world_entity);
+                error!(
+                    "Cannot get a valid TiledWorld out of Handle<TiledWorld>: has the last strong reference to the asset been dropped ? (handle = {:?} / entity = {:?})",
+                    world_handle.0, world_entity
+                );
                 commands.entity(world_entity).despawn();
                 continue;
             };

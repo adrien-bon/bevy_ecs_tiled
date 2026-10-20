@@ -42,7 +42,7 @@ impl TiledWorldStorage {
     pub fn get_map_id(&self, entity: Entity) -> Option<u32> {
         self.maps
             .iter()
-            .find(|(_, &e)| e == entity)
+            .find(|(_, e)| **e == entity)
             .map(|(&id, _)| id)
     }
 }

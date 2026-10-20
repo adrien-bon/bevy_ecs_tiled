@@ -29,11 +29,11 @@ pub mod physics;
 pub mod prelude {
     #[cfg(feature = "debug")]
     pub use super::debug::{
+        TiledDebugPluginGroup,
         axis::TiledDebugAxisPlugin,
         objects::{TiledDebugObjectsConfig, TiledDebugObjectsPlugin},
         tiles::{TiledDebugTilesConfig, TiledDebugTilesPlugin},
         world_chunk::{TiledDebugWorldChunkConfig, TiledDebugWorldChunkPlugin},
-        TiledDebugPluginGroup,
     };
     #[cfg(feature = "avian")]
     pub use super::physics::backend::avian::TiledPhysicsAvianBackend;
@@ -41,6 +41,7 @@ pub mod prelude {
     pub use super::physics::backend::rapier::TiledPhysicsRapierBackend;
     #[cfg(feature = "physics")]
     pub use super::physics::{
+        TiledPhysicsPlugin,
         backend::TiledPhysicsBackend,
         collider::{
             ColliderCreated, TiledColliderOf, TiledColliderPolygons, TiledColliderSource,
@@ -48,9 +49,9 @@ pub mod prelude {
         },
         geometry::{multi_polygon_as_line_strings, multi_polygon_as_triangles, simplify_geometry},
         settings::TiledPhysicsSettings,
-        TiledPhysicsPlugin,
     };
     pub use super::tiled::{
+        TiledPlugin, TiledPluginConfig,
         animation::TiledAnimation,
         event::{
             LayerCreated, MapCreated, ObjectCreated, TileCreated, TiledEvent, TilemapCreated,
@@ -64,9 +65,9 @@ pub mod prelude {
         image::TiledImage,
         layer::{TiledLayer, TiledLayerId, TiledLayerParallax, TiledParallaxCamera},
         map::{
-            asset::TiledMapAsset, loader::TiledMapLoaderError, storage::TiledMapStorage,
             RespawnTiledMap, TiledMap, TiledMapImageRepeatMargin, TiledMapLayerZOffset,
-            TiledMapReference,
+            TiledMapReference, asset::TiledMapAsset, loader::TiledMapLoaderError,
+            storage::TiledMapStorage,
         },
         object::{
             TiledObject, TiledObjectId, TiledObjectText, TiledObjectTextBox, TiledObjectVisualOf,
@@ -75,10 +76,9 @@ pub mod prelude {
         sets::{TiledPostUpdateSystems, TiledPreUpdateSystems, TiledUpdateSystems},
         tile::{TiledTile, TiledTileId, TiledTilemap, TiledTilesetId},
         world::{
-            asset::TiledWorldAsset, chunking::TiledWorldChunking, loader::TiledWorldLoaderError,
-            storage::TiledWorldStorage, RespawnTiledWorld, TiledWorld,
+            RespawnTiledWorld, TiledWorld, asset::TiledWorldAsset, chunking::TiledWorldChunking,
+            loader::TiledWorldLoaderError, storage::TiledWorldStorage,
         },
-        TiledPlugin, TiledPluginConfig,
     };
 
     // Re-exports from `bevy_ecs_tilemap`:

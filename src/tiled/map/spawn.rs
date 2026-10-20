@@ -453,10 +453,9 @@ fn spawn_objects_layer(
         if matches!(
             tilemap_type_from_map(&tiled_map.map),
             TilemapType::Isometric(..)
-        ) {
-            if let TiledObject::Tile { width, height: _ } = tiled_object {
-                pos.x -= width / 2.;
-            }
+        ) && let TiledObject::Tile { width, height: _ } = tiled_object
+        {
+            pos.x -= width / 2.;
         }
 
         let transform = Transform::from_isometry(
@@ -754,11 +753,11 @@ fn get_animated_tile(tile: &tiled::Tile) -> Option<AnimatedTile> {
             log::warn!("Animated tile with non constant frame duration is currently not supported");
             return None;
         }
-        if let Some(id) = previous_tile_id {
-            if frame.tile_id != id + 1 {
-                log::warn!("Animated tile with non-aligned frame tiles is currently not supported");
-                return None;
-            }
+        if let Some(id) = previous_tile_id
+            && frame.tile_id != id + 1
+        {
+            log::warn!("Animated tile with non-aligned frame tiles is currently not supported");
+            return None;
         }
         previous_tile_id = Some(frame.tile_id);
     }
