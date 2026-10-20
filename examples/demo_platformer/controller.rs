@@ -106,10 +106,10 @@ impl MovementBundle {
 impl Default for MovementBundle {
     fn default() -> Self {
         Self::new(
-            30.0_f32.into(),
-            0.9_f32.into(),
-            7.0_f32.into(),
-            (PI * 0.45_f32).into(),
+            30.0_f32,
+            0.9_f32,
+            7.0_f32,
+            PI * 0.45_f32,
         )
     }
 }
