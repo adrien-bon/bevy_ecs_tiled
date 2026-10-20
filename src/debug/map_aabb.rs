@@ -180,3 +180,89 @@ fn draw_aabb(gizmos: &mut Gizmos, transform: &GlobalTransform, corners: [Vec2; 4
         color,
     );
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use bevy::asset::LoadState;
+    use std::time::{Duration, Instant};
+
+    fn aabb(corners: [Vec2; 4]) -> Aabb2d {
+        Aabb2d::from_point_cloud(Isometry2d::IDENTITY, &corners)
+    }
+
+    /// Map AABB computed from Tiled coordinates conversion must match the one
+    /// computed by `bevy_ecs_tilemap`, whatever the map orientation and anchor.
+    #[test]
+    fn tiled_aabb_matches_tilemap_aabb() {
+        let mut app = App::new();
+        app.add_plugins((MinimalPlugins, AssetPlugin::default()));
+        app.init_asset::<Image>();
+        app.init_asset::<TextureAtlasLayout>();
+        app.add_plugins((
+            crate::tiled::cache::plugin,
+            crate::tiled::map::asset::plugin,
+            crate::tiled::map::loader::plugin,
+        ));
+
+        let mut paths = vec![];
+        for dir in ["orthogonal", "isometric", "hexagonal"] {
+            for entry in std::fs::read_dir(format!("assets/maps/{dir}")).unwrap() {
+                let path = entry.unwrap().path();
+                if path.extension().is_some_and(|ext| ext == "tmx") {
+                    paths.push(format!(
+                        "maps/{dir}/{}",
+                        path.file_name().unwrap().to_string_lossy()
+                    ));
+                }
+            }
+        }
+        assert!(!paths.is_empty());
+
+        let anchors = [
+            TilemapAnchor::None,
+            TilemapAnchor::TopLeft,
+            TilemapAnchor::TopRight,
+            TilemapAnchor::TopCenter,
+            TilemapAnchor::CenterRight,
+            TilemapAnchor::CenterLeft,
+            TilemapAnchor::BottomLeft,
+            TilemapAnchor::BottomRight,
+            TilemapAnchor::BottomCenter,
+            TilemapAnchor::Center,
+            TilemapAnchor::Custom(Vec2::new(0.25, -0.1)),
+        ];
+
+        for path in paths {
+            let handle: Handle<TiledMapAsset> = app.world().resource::<AssetServer>().load(&path);
+            let deadline = Instant::now() + Duration::from_secs(10);
+            loop {
+                assert!(
+                    Instant::now() < deadline,
+                    "{path}: map did not load in time"
+                );
+                app.update();
+                match app.world().resource::<AssetServer>().load_state(&handle) {
+                    LoadState::Loaded => break,
+                    LoadState::Failed(error) => panic!("{path}: failed to load: {error}"),
+                    _ => std::thread::sleep(Duration::from_millis(1)),
+                }
+            }
+
+            let map_asset = app
+                .world()
+                .resource::<Assets<TiledMapAsset>>()
+                .get(&handle)
+                .unwrap();
+            for anchor in anchors {
+                let tilemap = aabb(tilemap_corners(map_asset, &anchor));
+                let tiled = aabb(tiled_corners(map_asset, &anchor));
+                assert!(
+                    tilemap.min.abs_diff_eq(tiled.min, 0.01)
+                        && tilemap.max.abs_diff_eq(tiled.max, 0.01),
+                    "{path} ({anchor:?}): tilemap AABB {tilemap:?} != tiled AABB {tiled:?}"
+                );
+            }
+        }
+    }
+}
