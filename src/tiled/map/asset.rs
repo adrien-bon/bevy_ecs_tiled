@@ -140,7 +140,7 @@ impl TiledMapAsset {
                         iso_projection(tiled_position + self.tiled_offset, &map_size, &grid_size);
                     Vec2 {
                         x: position.x,
-                        y: map_height / 2. - grid_size.y / 2. - position.y,
+                        y: map_height / 2. + grid_size.y / 2. - position.y,
                     }
                 }
                 TilemapType::Isometric(IsoCoordSystem::Staggered) => {

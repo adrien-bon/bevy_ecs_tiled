@@ -136,6 +136,24 @@ pub fn tile_size(tile: &tiled::Tile) -> TilemapTileSize {
     }
 }
 
+/// Offset to apply to a tilemap so its tiles are rendered at the same place than in Tiled.
+///
+/// This offset includes the tileset `tileoffset` and, for isometric maps, compensates for
+/// `bevy_ecs_tilemap` centering tiles images on their grid cell whereas Tiled aligns them
+/// on the cell bottom-left corner.
+#[allow(dead_code)] // Not used when no feature is enabled
+pub(crate) fn tilemap_offset(map: &tiled::Map, tileset: &tiled::Tileset) -> Vec2 {
+    let mut offset = Vec2::new(tileset.offset_x as f32, -tileset.offset_y as f32);
+    if matches!(tilemap_type_from_map(map), TilemapType::Isometric(..)) {
+        let grid_size = grid_size_from_map(map);
+        offset += Vec2::new(
+            tileset.tile_width as f32 - grid_size.x,
+            tileset.tile_height as f32 - grid_size.y,
+        ) / 2.;
+    }
+    offset
+}
+
 /// Projects Tiled isometric coordinates into scalar coordinates for Bevy.
 ///
 /// Used to convert isometric tile coordinates into world-space positions for rendering.

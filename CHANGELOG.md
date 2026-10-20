@@ -30,6 +30,7 @@
 - User properties: invalid values coming from Tiled (out of range integers, empty `char`, reference to a missing object, ...) no longer panic, an error is logged and the property is skipped
 - User properties: fixed-size array properties (`[T; N]`) were always deserialized as empty arrays
 - Hexagonal maps: `TiledMapAsset::rect` now accounts for the last half column (or row) and for the half tile shift of staggered columns (or rows), so it matches the actual map size
+- Isometric maps: tiles bigger than the map grid are now aligned on their cell bottom-left corner like in Tiled (they used to be centered on their cell), and objects are no longer shifted down by one tile height. Tiles colliders follow the same alignment
 
 ### Internal
 

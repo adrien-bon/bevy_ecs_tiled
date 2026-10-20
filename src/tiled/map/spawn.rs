@@ -297,10 +297,8 @@ impl SpawnContext<'_, '_, '_> {
                         x: tileset.spacing as f32,
                         y: tileset.spacing as f32,
                     },
-                    transform: Transform::from_xyz(
-                        tileset.offset_x as f32,
-                        -tileset.offset_y as f32,
-                        0.0,
+                    transform: Transform::from_translation(
+                        crate::tiled::helpers::tilemap_offset(&tiled_map.map, tileset).extend(0.0),
                     ),
                     map_type: tilemap_type_from_map(&tiled_map.map),
                     render_settings: *self.render_settings,
