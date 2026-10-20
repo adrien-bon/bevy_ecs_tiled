@@ -306,15 +306,27 @@ impl AssetLoader for TiledMapLoader {
                     x: tilemap_size.x as f32 * grid_size.x,
                     y: tilemap_size.y as f32 * grid_size.y,
                 },
+                // For hexagonal maps, account for the last half column (or row) side
+                // and for the half tile shift of staggered columns (or rows)
                 TilemapType::Hexagon(HexCoordSystem::ColumnOdd)
                 | TilemapType::Hexagon(HexCoordSystem::ColumnEven) => Vec2 {
-                    x: tilemap_size.x as f32 * grid_size.x * 0.75,
-                    y: tilemap_size.y as f32 * grid_size.y,
+                    x: tilemap_size.x as f32 * grid_size.x * 0.75 + grid_size.x * 0.25,
+                    y: tilemap_size.y as f32 * grid_size.y
+                        + if tilemap_size.x > 1 {
+                            grid_size.y / 2.
+                        } else {
+                            0.
+                        },
                 },
                 TilemapType::Hexagon(HexCoordSystem::RowOdd)
                 | TilemapType::Hexagon(HexCoordSystem::RowEven) => Vec2 {
-                    x: tilemap_size.x as f32 * grid_size.x,
-                    y: tilemap_size.y as f32 * grid_size.y * 0.75,
+                    x: tilemap_size.x as f32 * grid_size.x
+                        + if tilemap_size.y > 1 {
+                            grid_size.x / 2.
+                        } else {
+                            0.
+                        },
+                    y: tilemap_size.y as f32 * grid_size.y * 0.75 + grid_size.y * 0.25,
                 },
                 TilemapType::Isometric(IsoCoordSystem::Diamond) => {
                     let topleft = iso_projection(Vec2::ZERO, &tilemap_size, &grid_size);

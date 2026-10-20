@@ -111,28 +111,28 @@ impl TiledMapAsset {
                     self.tiled_offset
                         + Vec2 {
                             x: tiled_position.x,
-                            y: map_height + grid_size.y / 2. - tiled_position.y,
+                            y: map_height - tiled_position.y,
                         }
                 }
                 TilemapType::Hexagon(HexCoordSystem::ColumnEven) => {
                     self.tiled_offset
                         + Vec2 {
                             x: tiled_position.x,
-                            y: map_height - tiled_position.y,
+                            y: map_height - grid_size.y / 2. - tiled_position.y,
                         }
                 }
                 TilemapType::Hexagon(HexCoordSystem::RowOdd) => {
                     self.tiled_offset
                         + Vec2 {
                             x: tiled_position.x,
-                            y: map_height + grid_size.y / 4. - tiled_position.y,
+                            y: map_height - tiled_position.y,
                         }
                 }
                 TilemapType::Hexagon(HexCoordSystem::RowEven) => {
                     self.tiled_offset
                         + Vec2 {
                             x: tiled_position.x - grid_size.x / 2.,
-                            y: map_height + grid_size.y / 4. - tiled_position.y,
+                            y: map_height - tiled_position.y,
                         }
                 }
                 TilemapType::Isometric(IsoCoordSystem::Diamond) => {
