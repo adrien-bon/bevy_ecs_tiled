@@ -14,8 +14,8 @@ use bevy::{
     camera::visibility::RenderLayers, color::palettes::css::BLUE, prelude::*, sprite::Anchor,
 };
 
-use std::f32::consts::PI;
 use avian2d::math::Real as Scalar;
+use std::f32::consts::PI;
 
 const PLAYER_SPRITE_FILE: &str =
     "demo_platformer/kenney_platformer-pack-redux/Spritesheets/spritesheet_players.png";

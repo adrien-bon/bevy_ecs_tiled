@@ -6,8 +6,8 @@
 
 use crate::prelude::*;
 use bevy::{
-    shape::{Aabb2d, IntersectsVolume},
     prelude::*,
+    shape::{Aabb2d, IntersectsVolume},
 };
 
 /// [`Component`] holding Tiled world chunking configuration.

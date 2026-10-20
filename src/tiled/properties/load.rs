@@ -133,7 +133,11 @@ pub(crate) struct DeserializedProperties {
 impl Clone for DeserializedProperties {
     fn clone(&self) -> Self {
         Self {
-            properties: self.properties.iter().map(|r| r.to_dynamic().expect("Can't be changed into dynamic")).collect(),
+            properties: self
+                .properties
+                .iter()
+                .map(|r| r.to_dynamic().expect("Can't be changed into dynamic"))
+                .collect(),
         }
     }
 }
@@ -221,7 +225,10 @@ impl DeserializedProperties {
             value = Self::deserialize_property(pv, reg, registry, load_cx, default_value)?;
         } else if let Some(def) = default_value {
             // If a default value from parent is provided, use it
-            value = def.to_dynamic().expect("value can't be made dynamic").into_partial_reflect();
+            value = def
+                .to_dynamic()
+                .expect("value can't be made dynamic")
+                .into_partial_reflect();
         } else if let Some(def) = default_value_from_type_path(registry, field.type_path()) {
             // If no default value from parent is not provided, try to use type default()
             value = def.into_partial_reflect();
@@ -262,7 +269,10 @@ impl DeserializedProperties {
             value = Self::deserialize_property(pv, reg, registry, load_cx, default_value)?;
         } else if let Some(def) = default_value {
             // If a default value from parent is provided, use it
-            value = def.to_dynamic().expect("value can't be made dynamic").into_partial_reflect();
+            value = def
+                .to_dynamic()
+                .expect("value can't be made dynamic")
+                .into_partial_reflect();
         } else if let Some(default_value) =
             default_value_from_type_path(registry, field.type_path())
         {
@@ -720,7 +730,8 @@ fn object_ref(
     obj_entity_map: &HashMap<u32, Entity>,
 ) -> Option<Box<dyn PartialReflect>> {
     if obj.represents::<Entity>() {
-        let obj = Entity::take_from_reflect(obj.to_dynamic().expect("Obj can't be made dynamic")).unwrap();
+        let obj = Entity::take_from_reflect(obj.to_dynamic().expect("Obj can't be made dynamic"))
+            .unwrap();
         if let Some(&e) = obj_entity_map.get(&obj.index_u32()) {
             Some(Box::new(e))
         } else {
@@ -732,9 +743,11 @@ fn object_ref(
     } else if obj.represents::<Option<Entity>>() {
         // maybe the map get should panic actually
         Some(Box::new(
-            Option::<Entity>::take_from_reflect(obj.to_dynamic().expect("obj can't be made dynamic"))
-                .unwrap()
-                .and_then(|obj| obj_entity_map.get(&obj.index_u32()).copied()),
+            Option::<Entity>::take_from_reflect(
+                obj.to_dynamic().expect("obj can't be made dynamic"),
+            )
+            .unwrap()
+            .and_then(|obj| obj_entity_map.get(&obj.index_u32()).copied()),
         ))
     } else {
         None
@@ -795,7 +808,10 @@ fn hydrate(object: &mut dyn PartialReflect, obj_entity_map: &HashMap<u32, Entity
                     panic!("Unable to hydrate a key in a map!");
                 }
                 hydrate(v, obj_entity_map);
-                s.insert_boxed(k.to_dynamic().expect("obj can't be made dynamic"), v.to_dynamic().expect("obj can't be made dynamic"));
+                s.insert_boxed(
+                    k.to_dynamic().expect("obj can't be made dynamic"),
+                    v.to_dynamic().expect("obj can't be made dynamic"),
+                );
             }
         }
         // Cannot hydrate a Set since it does not have a get_mut() function

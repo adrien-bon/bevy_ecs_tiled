@@ -21,7 +21,7 @@ fn main() {
 }
 
 fn level() -> impl SceneList {
-    bsn_list!{
+    bsn_list! {
         // Spawn a 2D camera (required by Bevy)
         Camera2d
         --
@@ -32,10 +32,10 @@ fn level() -> impl SceneList {
 
 fn tiled_map(map_file: &'static str) -> impl Scene {
     bsn! {
-            // Only the [`TiledMap`] component is actually required to spawn a map.
-            TiledMap(map_file)
-            // But you can add extra components to change the defaults settings and how
-            // your map is actually displayed
-            TilemapAnchor::Center
-        }
+        // Only the [`TiledMap`] component is actually required to spawn a map.
+        TiledMap(map_file)
+        // But you can add extra components to change the defaults settings and how
+        // your map is actually displayed
+        TilemapAnchor::Center
+    }
 }
