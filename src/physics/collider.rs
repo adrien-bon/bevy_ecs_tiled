@@ -4,7 +4,7 @@
 //! It provides types to distinguish between colliders created from tile layers and object layers,
 //! as well as utilities for extracting tile data relevant to collider generation.
 
-use crate::prelude::*;
+use crate::{prelude::*, tiled::helpers::tilemap_offset};
 use ::geo::BooleanOps;
 use bevy::prelude::*;
 
@@ -87,10 +87,7 @@ impl<'a> TiledEvent<ColliderCreated> {
                     if let Some(tile) = layer_tile.get_tile() {
                         let tile_coords =
                             map_asset.tile_relative_position(&tile_pos, &tile_size(&tile), anchor);
-                        let offset = Vec2::new(
-                            tile.tileset().offset_x as f32,
-                            -tile.tileset().offset_y as f32,
-                        );
+                        let offset = tilemap_offset(&map_asset.map, tile.tileset());
                         out.push((tile_coords + offset, tile));
                     }
                 });
