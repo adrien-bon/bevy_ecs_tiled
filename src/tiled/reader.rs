@@ -45,22 +45,22 @@ impl tiled::ResourceReader for BytesResourceReader<'_> {
     /// If the path has a `.tsx` or `.tx` extension, the reader looks up the pre-loaded cache.
     /// Otherwise, it returns the embedded bytes.
     fn read_from(&mut self, path: &Path) -> std::result::Result<Self::Resource, Self::Error> {
-        if let Some(extension) = path.extension() {
-            if extension == "tsx" || extension == "tx" {
-                // Tiled may reach the same nested resource through a different lexical path.
-                // Normalize both cache keys and lookups so equivalent paths share an entry.
-                if let Some(data) = self.cache.get(&normalize_path(path)) {
-                    return Ok(Box::new(Cursor::new(data.clone())));
-                }
-                return Err(IoError::new(
-                    ErrorKind::NotFound,
-                    format!(
-                        "External tileset/template '{}' not found in cache. \
-                        For WASM builds, all external tilesets must be pre-loaded.",
-                        path.display()
-                    ),
-                ));
+        if let Some(extension) = path.extension()
+            && (extension == "tsx" || extension == "tx")
+        {
+            // Tiled may reach the same nested resource through a different lexical path.
+            // Normalize both cache keys and lookups so equivalent paths share an entry.
+            if let Some(data) = self.cache.get(&normalize_path(path)) {
+                return Ok(Box::new(Cursor::new(data.clone())));
             }
+            return Err(IoError::new(
+                ErrorKind::NotFound,
+                format!(
+                    "External tileset/template '{}' not found in cache. \
+                        For WASM builds, all external tilesets must be pre-loaded.",
+                    path.display()
+                ),
+            ));
         }
         Ok(Box::new(Cursor::new(self.bytes.clone())))
     }
@@ -139,12 +139,11 @@ pub(crate) async fn preload_external_resources(
                     // Resolve nested paths relative to the tileset's location for loading
                     let nested_resolved = resolve_relative_path(&resolved_path, &nested_relative);
                     let nested_cache_key = nested_resolved.clone();
-                    if !cache.contains_key(&nested_cache_key) {
-                        if let Ok(nested_bytes) =
+                    if !cache.contains_key(&nested_cache_key)
+                        && let Ok(nested_bytes) =
                             load_context.read_asset_bytes(nested_resolved).await
-                        {
-                            cache.insert(nested_cache_key, nested_bytes);
-                        }
+                    {
+                        cache.insert(nested_cache_key, nested_bytes);
                     }
                 }
                 // Store with the key that Tiled will use for lookup

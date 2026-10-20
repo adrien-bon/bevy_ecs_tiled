@@ -1,7 +1,7 @@
 use bevy::{
     app::{HierarchyPropagatePlugin, Propagate},
     asset::RenderAssetUsages,
-    camera::{visibility::RenderLayers, RenderTarget},
+    camera::{RenderTarget, visibility::RenderLayers},
     color::palettes::tailwind::CYAN_100,
     prelude::*,
     render::render_resource::{TextureDimension, TextureFormat, TextureUsages},

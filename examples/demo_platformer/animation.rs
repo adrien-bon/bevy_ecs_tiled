@@ -100,12 +100,12 @@ impl Animation {
 
     /// Update animation state if it changes.
     pub fn change_state(&mut self, state: AnimationState) {
-        if self.state != state {
-            if let Some((duration, _)) = self.config.get(&state) {
-                self.state = state;
-                self.frame_index = 0;
-                self.timer = Timer::new(*duration, TimerMode::Repeating);
-            }
+        if self.state != state
+            && let Some((duration, _)) = self.config.get(&state)
+        {
+            self.state = state;
+            self.frame_index = 0;
+            self.timer = Timer::new(*duration, TimerMode::Repeating);
         }
     }
 

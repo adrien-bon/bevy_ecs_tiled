@@ -3,11 +3,11 @@
 use std::time::Duration;
 
 use crate::{
+    UpdateSystems,
     animation::{Animation, AnimationState},
     controller::{CharacterControllerBundle, MovementAction, MovementEvent},
     minimap::MINIMAP_RENDER_LAYER,
     trigger::TriggerActor,
-    UpdateSystems,
 };
 use avian2d::prelude::*;
 use bevy::{

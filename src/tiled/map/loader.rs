@@ -14,7 +14,7 @@ use crate::{
     },
 };
 use bevy::{
-    asset::{io::Reader, AssetLoader, AssetPath, LoadContext},
+    asset::{AssetLoader, AssetPath, LoadContext, io::Reader},
     platform::collections::HashMap,
     prelude::*,
 };
@@ -379,7 +379,10 @@ fn tileset_to_tiled_map_tileset(
         None => {
             #[cfg(feature = "atlas")]
             {
-                warn!("Skipping image collection tileset '{}' which is incompatible with atlas feature", tileset.name);
+                warn!(
+                    "Skipping image collection tileset '{}' which is incompatible with atlas feature",
+                    tileset.name
+                );
                 return None;
             }
 
@@ -391,7 +394,9 @@ fn tileset_to_tiled_map_tileset(
                 for (tile_id, tile) in tileset.tiles() {
                     if let Some(img) = &tile.image {
                         let asset_path = AssetPath::from(img.source.clone());
-                        trace!("Loading tile image from {asset_path:?} as image ({tileset_path}, {tile_id})");
+                        trace!(
+                            "Loading tile image from {asset_path:?} as image ({tileset_path}, {tile_id})"
+                        );
                         let texture: Handle<Image> = load_context.load(asset_path.clone());
                         tile_image_offsets.insert(tile_id, tile_images.len() as u32);
                         tile_images.push(texture.clone());

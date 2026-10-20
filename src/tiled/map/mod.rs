@@ -199,7 +199,10 @@ fn process_loaded_maps(
 
             // Map should be loaded at this point
             let Some(tiled_map) = maps.get(&map_handle.0) else {
-                error!("Cannot get a valid TiledMapAsset out of Asset<TiledMapAsset>: has the last strong reference to the asset been dropped ? (handle = {:?})", map_handle.0);
+                error!(
+                    "Cannot get a valid TiledMapAsset out of Asset<TiledMapAsset>: has the last strong reference to the asset been dropped ? (handle = {:?})",
+                    map_handle.0
+                );
                 commands.entity(map_entity).despawn();
                 continue;
             };

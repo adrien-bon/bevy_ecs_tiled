@@ -6,6 +6,8 @@ use bevy::{
     platform::collections::HashMap,
     prelude::*,
     reflect::{
+        NamedField, Reflect, ReflectMut, ReflectRef, TypeInfo, TypeRegistration, TypeRegistry,
+        UnnamedField,
         array::DynamicArray,
         enums::{DynamicEnum, DynamicVariant, VariantInfo, VariantType},
         list::DynamicList,
@@ -14,8 +16,6 @@ use bevy::{
         structs::DynamicStruct,
         tuple::DynamicTuple,
         tuple_struct::DynamicTupleStruct,
-        NamedField, Reflect, ReflectMut, ReflectRef, TypeInfo, TypeRegistration, TypeRegistry,
-        UnnamedField,
     },
 };
 use std::path::PathBuf;
@@ -170,7 +170,9 @@ impl DeserializedProperties {
             };
 
             let Some(reg) = reg else {
-                bevy::log::error!("error deserializing property `{name}`: `{reg_name}` is not registered in the TypeRegistry.");
+                bevy::log::error!(
+                    "error deserializing property `{name}`: `{reg_name}` is not registered in the TypeRegistry."
+                );
                 continue;
             };
 
@@ -183,7 +185,9 @@ impl DeserializedProperties {
                         continue;
                     }
                 } else {
-                    bevy::log::warn!("error deserializing property `{name}`: type `{reg_name}` is not registered as a Component, Bundle, or Resource");
+                    bevy::log::warn!(
+                        "error deserializing property `{name}`: type `{reg_name}` is not registered as a Component, Bundle, or Resource"
+                    );
                     continue;
                 }
             }
@@ -543,11 +547,11 @@ impl DeserializedProperties {
                     return Ok(Box::new(out));
                 };
 
-                if let Some(default_value) = default_value {
-                    if let ReflectRef::Enum(e) = default_value.reflect_ref() {
-                        out = e.to_dynamic_enum().expect("value can't be made dynamic");
-                        return Ok(Box::new(out));
-                    }
+                if let Some(default_value) = default_value
+                    && let ReflectRef::Enum(e) = default_value.reflect_ref()
+                {
+                    out = e.to_dynamic_enum().expect("value can't be made dynamic");
+                    return Ok(Box::new(out));
                 }
 
                 Err(format!(
@@ -841,13 +845,13 @@ mod tests {
             if let Some(tiles_layer) = layer.as_tile_layer() {
                 for x in 0..map.height {
                     for y in 0..map.width {
-                        if let Some(tile) = tiles_layer.get_tile(x as i32, y as i32) {
-                            if let Some(t) = tile.get_tile() {
-                                println!(
-                                    "Found tile: {}({},{})' = {:?}",
-                                    layer.name, x, y, t.properties
-                                );
-                            }
+                        if let Some(tile) = tiles_layer.get_tile(x as i32, y as i32)
+                            && let Some(t) = tile.get_tile()
+                        {
+                            println!(
+                                "Found tile: {}({},{})' = {:?}",
+                                layer.name, x, y, t.properties
+                            );
                         }
                     }
                 }
