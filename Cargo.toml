@@ -71,7 +71,7 @@ bevy = { version = "0.19", features = ["bevy_dev_tools"] }
 bevy = { version = "0.19", features = ["file_watcher", "bevy_dev_tools"] }
 
 [dev-dependencies]
-bevy-inspector-egui = "0.37"
+bevy-inspector-egui = "0.38"
 
 # docs.rs-specific configuration
 [package.metadata.docs.rs]
