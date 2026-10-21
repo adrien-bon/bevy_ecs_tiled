@@ -77,6 +77,29 @@ pub struct TiledMapAsset {
 }
 
 impl TiledMapAsset {
+    /// Position of Tiled "screen" origin, relative to the map entity.
+    ///
+    /// This is the point from which Tiled image layers are positioned (before applying the layer offset).
+    /// For orthogonal and hexagonal maps, this is Tiled position `(0, 0)`.
+    /// For isometric maps, Tiled renderer puts this origin `map.height * tile_width / 2` pixels on the left
+    /// of tile `(0, 0)` top corner, where `map.height` is the map height declared in the Tiled map
+    /// (which can differ from [`TiledMapAsset::tilemap_size`] for infinite maps).
+    pub(crate) fn screen_origin(&self, anchor: &TilemapAnchor) -> Vec2 {
+        self.world_space_from_tiled_position(
+            anchor,
+            match tilemap_type_from_map(&self.map) {
+                // In Tiled isometric coordinates, moving by `(-h/2, h/2)` tiles
+                // results in an horizontal move of `-h * tile_width / 2` pixels
+                TilemapType::Isometric(IsoCoordSystem::Diamond) => {
+                    let grid_size = grid_size_from_map(&self.map);
+                    let half_height = self.map.height as f32 * grid_size.y / 2.;
+                    Vec2::new(-half_height, half_height)
+                }
+                _ => Vec2::ZERO,
+            },
+        )
+    }
+
     /// Raw conversion between a Tiled position and Bevy world space
     ///
     /// # Arguments
