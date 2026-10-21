@@ -22,6 +22,10 @@ See [main page](../README.md) for assets credits.
 | `maps/orthogonal/infinite.tmx` | `tiles/orthogonal_1.tsx` | Images collection in `tiles/orthogonal/` | Infinite orthogonal | No |
 | `maps/orthogonal/multiple_layers_with_colliders.tmx` | `tiles/orthogonal_1.tsx` | Images collection in `tiles/orthogonal/` | Finite orthogonal | Yes |
 | `maps/orthogonal/multiple_tilesets.tmx` | `tiles/orthogonal_1.tsx` | Images collection in `tiles/orthogonal/` | Finite orthogonal | Yes |
+| `maps/spacing/8px-margin.tmx` | `tiles/spacing/8px-margin.tsx` | Tileset image `tiles/spacing/8px-margin.png` | Finite orthogonal | No |
+| `maps/spacing/8px-spacing-8px-margin.tmx` | `tiles/spacing/8px-spacing-8px-margin.tsx` | Tileset image `tiles/spacing/8px-spacing-8px-margin.png` | Finite orthogonal | No |
+| `maps/spacing/8px-spacing.tmx` | `tiles/spacing/8px-spacing.tsx` | Tileset image `tiles/spacing/8px-spacing.png` | Finite orthogonal | No |
+| `maps/spacing/no-spacing.tmx` | `tiles/spacing/no-spacing.tsx` | Tileset image `tiles/spacing/no-spacing.png` | Finite orthogonal | No |
 | `maps/demo.tmx` | All `.tsx` files in `Magic Market/Tilesets/` | Tileset images in `Magic Market/Art/` | Finite orthogonal | Yes |
 
 For hexagonal maps :
