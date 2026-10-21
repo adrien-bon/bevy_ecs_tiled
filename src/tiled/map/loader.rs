@@ -8,10 +8,7 @@ use std::sync::Arc;
 
 use crate::{
     prelude::*,
-    tiled::{
-        cache::TiledResourceCache, helpers::iso_projection, map::asset::TiledMapTileset,
-        reader::BytesResourceReader,
-    },
+    tiled::{cache::TiledResourceCache, map::asset::TiledMapTileset, reader::BytesResourceReader},
 };
 use bevy::{
     asset::{AssetLoader, AssetPath, LoadContext, io::Reader},
@@ -328,19 +325,12 @@ impl AssetLoader for TiledMapLoader {
                         },
                     y: tilemap_size.y as f32 * grid_size.y * 0.75 + grid_size.y * 0.25,
                 },
-                TilemapType::Isometric(IsoCoordSystem::Diamond) => {
-                    let topleft = iso_projection(Vec2::ZERO, &tilemap_size, &grid_size);
-                    let topright = iso_projection(
-                        Vec2 {
-                            x: tilemap_size.x as f32 * grid_size.y,
-                            y: 0.,
-                        },
-                        &tilemap_size,
-                        &grid_size,
-                    );
-
-                    2. * (topright - topleft)
-                }
+                // Diamond bounding box: each tile along X or Y axis adds half a tile
+                // to both the map width and height
+                TilemapType::Isometric(IsoCoordSystem::Diamond) => Vec2 {
+                    x: (tilemap_size.x + tilemap_size.y) as f32 * grid_size.x / 2.,
+                    y: (tilemap_size.x + tilemap_size.y) as f32 * grid_size.y / 2.,
+                },
                 TilemapType::Isometric(IsoCoordSystem::Staggered) => {
                     unreachable!("staggered maps are rejected above")
                 }

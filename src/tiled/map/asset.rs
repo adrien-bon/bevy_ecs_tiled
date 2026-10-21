@@ -161,9 +161,11 @@ impl TiledMapAsset {
                 TilemapType::Isometric(IsoCoordSystem::Diamond) => {
                     let position =
                         iso_projection(tiled_position + self.tiled_offset, &map_size, &grid_size);
+                    // Tiled tile (0, 0) top corner is located half a tile above
+                    // `bevy_ecs_tilemap` tile (0, map_size.y - 1) center
                     Vec2 {
                         x: position.x,
-                        y: map_height / 2. + grid_size.y / 2. - position.y,
+                        y: (map_size.y + 1) as f32 * grid_size.y / 2. - position.y,
                     }
                 }
                 TilemapType::Isometric(IsoCoordSystem::Staggered) => {
