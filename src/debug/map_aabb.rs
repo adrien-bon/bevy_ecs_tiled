@@ -187,14 +187,22 @@ mod tests {
     use bevy::asset::LoadState;
     use std::time::{Duration, Instant};
 
-    fn aabb(corners: [Vec2; 4]) -> Aabb2d {
-        Aabb2d::from_point_cloud(Isometry2d::IDENTITY, &corners)
-    }
+    const ANCHORS: [TilemapAnchor; 11] = [
+        TilemapAnchor::None,
+        TilemapAnchor::TopLeft,
+        TilemapAnchor::TopRight,
+        TilemapAnchor::TopCenter,
+        TilemapAnchor::CenterRight,
+        TilemapAnchor::CenterLeft,
+        TilemapAnchor::BottomLeft,
+        TilemapAnchor::BottomRight,
+        TilemapAnchor::BottomCenter,
+        TilemapAnchor::Center,
+        TilemapAnchor::Custom(Vec2::new(0.25, -0.1)),
+    ];
 
-    /// Map AABB computed from Tiled coordinates conversion must match the one
-    /// computed by `bevy_ecs_tilemap`, whatever the map orientation and anchor.
-    #[test]
-    fn tiled_aabb_matches_tilemap_aabb() {
+    /// Load all maps from the given `assets/maps` sub-directories.
+    fn load_maps(dirs: &[&str]) -> (App, Vec<(String, Handle<TiledMapAsset>)>) {
         let mut app = App::new();
         app.add_plugins((MinimalPlugins, AssetPlugin::default()));
         app.init_asset::<Image>();
@@ -205,62 +213,98 @@ mod tests {
             crate::tiled::map::loader::plugin,
         ));
 
-        let mut paths = vec![];
-        for dir in ["orthogonal", "isometric", "hexagonal"] {
+        let mut maps = vec![];
+        for dir in dirs {
             for entry in std::fs::read_dir(format!("assets/maps/{dir}")).unwrap() {
                 let path = entry.unwrap().path();
-                if path.extension().is_some_and(|ext| ext == "tmx") {
-                    paths.push(format!(
-                        "maps/{dir}/{}",
-                        path.file_name().unwrap().to_string_lossy()
-                    ));
+                if path.extension().is_none_or(|ext| ext != "tmx") {
+                    continue;
                 }
+                let path = format!("maps/{dir}/{}", path.file_name().unwrap().to_string_lossy());
+                let handle: Handle<TiledMapAsset> =
+                    app.world().resource::<AssetServer>().load(&path);
+                let deadline = Instant::now() + Duration::from_secs(10);
+                loop {
+                    assert!(
+                        Instant::now() < deadline,
+                        "{path}: map did not load in time"
+                    );
+                    app.update();
+                    match app.world().resource::<AssetServer>().load_state(&handle) {
+                        LoadState::Loaded => break,
+                        LoadState::Failed(error) => panic!("{path}: failed to load: {error}"),
+                        _ => std::thread::sleep(Duration::from_millis(1)),
+                    }
+                }
+                maps.push((path, handle));
             }
         }
-        assert!(!paths.is_empty());
+        assert!(!maps.is_empty());
+        (app, maps)
+    }
 
-        let anchors = [
-            TilemapAnchor::None,
-            TilemapAnchor::TopLeft,
-            TilemapAnchor::TopRight,
-            TilemapAnchor::TopCenter,
-            TilemapAnchor::CenterRight,
-            TilemapAnchor::CenterLeft,
-            TilemapAnchor::BottomLeft,
-            TilemapAnchor::BottomRight,
-            TilemapAnchor::BottomCenter,
-            TilemapAnchor::Center,
-            TilemapAnchor::Custom(Vec2::new(0.25, -0.1)),
-        ];
+    fn aabb(corners: [Vec2; 4]) -> Aabb2d {
+        Aabb2d::from_point_cloud(Isometry2d::IDENTITY, &corners)
+    }
 
-        for path in paths {
-            let handle: Handle<TiledMapAsset> = app.world().resource::<AssetServer>().load(&path);
-            let deadline = Instant::now() + Duration::from_secs(10);
-            loop {
-                assert!(
-                    Instant::now() < deadline,
-                    "{path}: map did not load in time"
-                );
-                app.update();
-                match app.world().resource::<AssetServer>().load_state(&handle) {
-                    LoadState::Loaded => break,
-                    LoadState::Failed(error) => panic!("{path}: failed to load: {error}"),
-                    _ => std::thread::sleep(Duration::from_millis(1)),
-                }
-            }
-
-            let map_asset = app
-                .world()
-                .resource::<Assets<TiledMapAsset>>()
-                .get(&handle)
-                .unwrap();
-            for anchor in anchors {
+    /// Map AABB computed from Tiled coordinates conversion must match the one
+    /// computed by `bevy_ecs_tilemap`, whatever the map orientation and anchor.
+    #[test]
+    fn tiled_aabb_matches_tilemap_aabb() {
+        let (app, maps) = load_maps(&["orthogonal", "isometric", "hexagonal"]);
+        let assets = app.world().resource::<Assets<TiledMapAsset>>();
+        for (path, handle) in maps {
+            let map_asset = assets.get(&handle).unwrap();
+            for anchor in ANCHORS {
                 let tilemap = aabb(tilemap_corners(map_asset, &anchor));
                 let tiled = aabb(tiled_corners(map_asset, &anchor));
                 assert!(
                     tilemap.min.abs_diff_eq(tiled.min, 0.01)
                         && tilemap.max.abs_diff_eq(tiled.max, 0.01),
                     "{path} ({anchor:?}): tilemap AABB {tilemap:?} != tiled AABB {tiled:?}"
+                );
+            }
+        }
+    }
+
+    /// For isometric maps, Tiled "screen" origin (used to position image layers) is located
+    /// `map.height * tile_width / 2` pixels on the left of tile `(0, 0)` top corner.
+    ///
+    /// Expected position is computed from `bevy_ecs_tilemap` tiles positions.
+    #[test]
+    fn isometric_screen_origin() {
+        let (app, maps) = load_maps(&["isometric"]);
+        let assets = app.world().resource::<Assets<TiledMapAsset>>();
+        for (path, handle) in maps {
+            let map_asset = assets.get(&handle).unwrap();
+            let grid_size = grid_size_from_map(&map_asset.map);
+            let map_size = map_asset.tilemap_size;
+            // Top-left tile in bevy_ecs_tilemap coordinates (Y axis is flipped)
+            // and its coordinates in Tiled (offset by the top-left chunk for infinite maps)
+            let tile_pos = TilePos::new(0, map_size.y - 1);
+            let tiled_tile = Vec2::new(
+                (map_asset.topleft_chunk.0 * tiled::ChunkData::WIDTH as i32) as f32,
+                (map_asset.topleft_chunk.1 * tiled::ChunkData::HEIGHT as i32) as f32,
+            );
+            // Tiled screen position of this tile top corner, relative to Tiled screen origin
+            let tiled_screen = Vec2::new(
+                (tiled_tile.x - tiled_tile.y + map_asset.map.height as f32) * grid_size.x / 2.,
+                (tiled_tile.x + tiled_tile.y) * grid_size.y / 2.,
+            );
+            for anchor in ANCHORS {
+                let top_corner = tile_pos.center_in_world(
+                    &map_size,
+                    &grid_size,
+                    &map_asset.largest_tile_size,
+                    &tilemap_type_from_map(&map_asset.map),
+                    &anchor,
+                ) + Vec2::new(0., grid_size.y / 2.);
+                // Tiled Y axis points down
+                let expected = top_corner + Vec2::new(-tiled_screen.x, tiled_screen.y);
+                let origin = map_asset.screen_origin(&anchor);
+                assert!(
+                    origin.abs_diff_eq(expected, 0.01),
+                    "{path} ({anchor:?}): screen origin {origin:?} != expected {expected:?}"
                 );
             }
         }

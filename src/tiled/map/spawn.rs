@@ -553,22 +553,7 @@ impl SpawnContext<'_, '_, '_> {
             };
 
             let image_size = Vec2::new(image.width as f32, image.height as f32);
-            let image_position = tiled_map.world_space_from_tiled_position(
-                anchor,
-                match tilemap_type_from_map(&tiled_map.map) {
-                    // Special case for isometric maps where image origin
-                    // is not (0, 0) but (-map_width/2, +map_height/2)
-                    TilemapType::Isometric(IsoCoordSystem::Diamond) => {
-                        let grid_size = grid_size_from_map(&tiled_map.map);
-                        let map_size = tiled_map.tilemap_size;
-                        Vec2 {
-                            x: map_size.x as f32 * grid_size.y / -2.,
-                            y: map_size.y as f32 * grid_size.y / 2.,
-                        }
-                    }
-                    _ => Vec2::ZERO,
-                },
-            );
+            let image_position = tiled_map.screen_origin(anchor);
             self.commands.spawn((
                 Name::new(format!("Image({})", image.source.display())),
                 TiledImage {
