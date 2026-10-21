@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Features
+
+- Update for Bevy v0.20 (#235)
+
 ## v0.13.4
 
 ### Features

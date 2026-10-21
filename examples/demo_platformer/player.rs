@@ -9,10 +9,13 @@ use crate::{
     trigger::TriggerActor,
     UpdateSystems,
 };
-use avian2d::{math::*, prelude::*};
+use avian2d::prelude::*;
 use bevy::{
     camera::visibility::RenderLayers, color::palettes::css::BLUE, prelude::*, sprite::Anchor,
 };
+
+use avian2d::math::Real as Scalar;
+use std::f32::consts::PI;
 
 const PLAYER_SPRITE_FILE: &str =
     "demo_platformer/kenney_platformer-pack-redux/Spritesheets/spritesheet_players.png";
@@ -40,7 +43,7 @@ pub struct Player;
 pub struct PlayerSpawnPoint;
 
 fn spawn_player_at_spawn_point(
-    add_player_spawn: On<Add, PlayerSpawnPoint>,
+    add_player_spawn: On<Add<PlayerSpawnPoint>>,
     mut commands: Commands,
     player_query: Query<Entity, With<Player>>,
     player_spawn_query: Query<&Transform, With<PlayerSpawnPoint>>,

@@ -118,7 +118,7 @@ enum Resource {
 // This observer will be triggered every time a `SpawnType` component is added to an entity.
 // We can use it to spawn additional entity / insert more components
 fn on_add_spawn(
-    add_spawn: On<Add, SpawnPoint>,
+    add_spawn: On<Add<SpawnPoint>>,
     spawn_query: Query<(&SpawnPoint, &GlobalTransform)>,
     mut _commands: Commands,
 ) {

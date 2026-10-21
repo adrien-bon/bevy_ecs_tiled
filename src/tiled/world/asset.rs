@@ -1,7 +1,7 @@
 //! This module contains all world [`Asset`]s definition.
 
 use crate::prelude::*;
-use bevy::{math::bounding::Aabb2d, prelude::*};
+use bevy::{prelude::*, shape::Aabb2d};
 use std::fmt;
 
 /// Tiled world `Asset`.

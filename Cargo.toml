@@ -5,7 +5,6 @@ version = "0.13.4"
 
 authors = ["Steve Pryde <steve@stevepryde.com>", "Adrien Bon"]
 description = "A Bevy plugin for loading Tiled maps"
-homepage = "https://github.com/adrien-bon/bevy_ecs_tiled"
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/adrien-bon/bevy_ecs_tiled"
@@ -47,8 +46,8 @@ user_properties = ["dep:serde", "dep:serde_json"]
 
 [dependencies]
 # Main dependencies
-bevy = { version = "0.19", default-features = false }
-bevy_ecs_tilemap = { version = "0.19", default-features = false }
+bevy = { version = "0.20", default-features = false }
+bevy_ecs_tilemap = { version = "0.20", default-features = false }
 tiled = { version = "0.16", default-features = false, features = ["world"] }
 
 # Utilities
@@ -58,20 +57,20 @@ geo = "0.33"
 regex = "1.13"
 
 # Optional dependencies, enabled via features.
-bevy_rapier2d = { version = "0.36", optional = true }
-avian2d = { version = "0.7", optional = true }
+bevy_rapier2d = { version = "0.37", optional = true }
+avian2d = { version = "0.8", optional = true }
 serde = { version = "1.0", optional = true, features = ["derive"] }
 serde_json = { version = "1.0", optional = true }
 getrandom = { version = "0.4", optional = true }
 
 # Pull in Bevy 'file_watcher' feature only for non-WASM builds
 [target.'cfg(all(target_family = "wasm", any(target_os = "unknown", target_os = "none")))'.dev-dependencies]
-bevy = { version = "0.19", features = ["bevy_dev_tools"] }
+bevy = { version = "0.20", features = ["bevy_dev_tools", "bevy_render", "render_dev_tools", "bevy_scene"] }
 [target.'cfg(any(not(target_family = "wasm"), all(not(target_os = "unknown"), not(target_os = "none"))))'.dev-dependencies]
-bevy = { version = "0.19", features = ["file_watcher", "bevy_dev_tools"] }
+bevy = { version = "0.20", features = ["file_watcher", "bevy_dev_tools", "bevy_render", "render_dev_tools", "bevy_scene"] }
 
 [dev-dependencies]
-bevy-inspector-egui = "0.37"
+bevy-inspector-egui = "0.38"
 
 # docs.rs-specific configuration
 [package.metadata.docs.rs]

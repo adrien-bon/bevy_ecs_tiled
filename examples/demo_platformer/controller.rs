@@ -1,7 +1,10 @@
 use avian2d::{math::*, prelude::*};
 use bevy::{ecs::query::Has, prelude::*};
+use std::f32::consts::PI;
 
 use crate::UpdateSystems;
+
+use avian2d::math::Real as Scalar;
 
 // Disclaimer
 // This character controller was stolen from Avian examples:
@@ -102,7 +105,7 @@ impl MovementBundle {
 
 impl Default for MovementBundle {
     fn default() -> Self {
-        Self::new(30.0, 0.9, 7.0, PI * 0.45)
+        Self::new(30.0_f32, 0.9_f32, 7.0_f32, PI * 0.45_f32)
     }
 }
 
@@ -110,13 +113,13 @@ impl CharacterControllerBundle {
     pub fn new(collider: Collider) -> Self {
         // Create shape caster as a slightly smaller version of collider
         let mut caster_shape = collider.clone();
-        caster_shape.set_scale(Vector::ONE * 0.99, 10);
+        caster_shape.set_scale(RVector::ONE * 0.99, 10);
 
         Self {
             character_controller: CharacterController,
             body: RigidBody::Dynamic,
             collider,
-            ground_caster: ShapeCaster::new(caster_shape, Vector::ZERO, 0.0, Dir2::NEG_Y)
+            ground_caster: ShapeCaster::new(caster_shape, RVector::ZERO, 0.0, Dir2::NEG_Y)
                 .with_max_distance(10.0),
             locked_axes: LockedAxes::ROTATION_LOCKED,
             movement: MovementBundle::default(),
@@ -148,7 +151,7 @@ fn update_grounded(
         // that isn't too steep.
         let is_grounded = hits.iter().any(|hit| {
             if let Some(angle) = max_slope_angle {
-                (rotation * -hit.normal2).angle_to(Vector::Y).abs() <= angle.0
+                (rotation * -hit.normal2).angle_to(RVector::Y).abs() <= angle.0
             } else {
                 true
             }
@@ -175,7 +178,7 @@ fn movement(
 ) {
     // Precision is adjusted so that the example works with
     // both the `f32` and `f64` features. Otherwise you don't need this.
-    let delta_time = time.delta_secs_f64().adjust_precision();
+    let delta_time = time.delta_secs_f64().real();
 
     for event in movement_message_reader.read() {
         if let Ok((movement_acceleration, jump_impulse, mut linear_velocity, is_grounded)) =

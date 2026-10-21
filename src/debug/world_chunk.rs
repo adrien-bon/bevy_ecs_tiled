@@ -10,8 +10,8 @@
 use crate::prelude::*;
 use bevy::{
     color::palettes::css::{BLUE, FUCHSIA, GREEN, LIME, RED, WHITE, YELLOW},
-    math::bounding::BoundingVolume,
     prelude::*,
+    shape::BoundingVolume,
 };
 
 /// Configuration for the [`TiledDebugWorldChunkPlugin`].
