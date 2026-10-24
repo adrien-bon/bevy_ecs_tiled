@@ -6,6 +6,11 @@ on:
       - main
       - dev
 
+env:
+  MDBOOK_VERSION: '0.4.52'
+  MDBOOK_TOC_VERSION: '0.15.4'
+  MDBOOK_MERMAID_VERSION: 'v0.17.1'
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -17,9 +22,14 @@ jobs:
       - name: Setup mdBook
         uses: peaceiris/actions-mdbook@v2
         with:
-          mdbook-version: '0.4.52'
+          mdbook-version: ${{ env.MDBOOK_VERSION }}
 
-      - run: CARGO_MANIFEST_DIR=. mdbook build book
+      - run: |
+          # Add mdbook-toc and mdbook-mermaid preprocessors.
+          wget -qO- https://github.com/badboy/mdbook-toc/releases/download/${{ env.MDBOOK_TOC_VERSION }}/mdbook-toc-${{ env.MDBOOK_TOC_VERSION }}-x86_64-unknown-linux-gnu.tar.gz | tar xz -C /usr/local/bin
+          wget -qO- https://github.com/badboy/mdbook-mermaid/releases/download/${{ env.MDBOOK_MERMAID_VERSION }}/mdbook-mermaid-${{ env.MDBOOK_MERMAID_VERSION }}-x86_64-unknown-linux-gnu.tar.gz | tar xz -C /usr/local/bin
+          # Build book
+          CARGO_MANIFEST_DIR=. mdbook build book
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
