@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+**BREAKING CHANGES**
+This version brings breaking changes.
+A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_15.html) is available to help adapt to these.
+
 ### Features
 
 - Add `TiledDebugMapAabbPlugin` debug plugin to display maps bounding boxes
