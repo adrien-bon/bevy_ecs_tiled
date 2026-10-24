@@ -41,6 +41,7 @@
 ### Documentation
 
 - Fix inaccurate API documentation: `TiledEvent` world / map / object getters, `TiledWorldStorage` keys (map index, not Tiled ID), `TiledPhysicsBackend::spawn_colliders` arguments and return value
+- book: rework hierarchy and add a dedicated guide for coordinates conversion between Tiled and Bevy
 
 ## v0.14.0
 

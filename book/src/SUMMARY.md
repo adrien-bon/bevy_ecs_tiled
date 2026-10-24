@@ -9,7 +9,7 @@
 - [Entities hierarchy and marker components](design/entities_hierarchy.md)
 - [Z-ordering](design/z_order.md)
 - [Map loading events](design/map_events.md)
-- [Coordinates conversion between Tiled and Bevy]()
+- [Coordinates conversion between Tiled and Bevy](design/coordinates.md)
 
 # How-To Guides
 
