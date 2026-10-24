@@ -4,7 +4,7 @@ Add the required dependencies to your `Cargo.toml` file:
 ```toml
 [dependencies]
 bevy = "0.20"
-bevy_ecs_tiled = "0.14"
+bevy_ecs_tiled = "0.15"
 ```
 
 ### Basic Usage

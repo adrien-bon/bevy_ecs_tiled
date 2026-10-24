@@ -1,12 +1,12 @@
 # Add Physics Colliders
 
-Tiled allows you to add objects to your map—either directly on an object layer or attached to a tile.  
+Tiled allows you to add objects to your map—either directly on an object layer or attached to a tile.
 `bevy_ecs_tiled` can use these objects to automatically spawn physics colliders when loading the map.
 
 Two physics engines are supported out of the box:
 
-- [`avian`](https://github.com/Jondolf/avian)  
-- [`rapier`](https://github.com/dimforge/bevy_rapier)  
+- [`avian`](https://github.com/Jondolf/avian)
+- [`rapier`](https://github.com/dimforge/bevy_rapier)
 
 Both are well-integrated and offer similar features in the context of `bevy_ecs_tiled`. You can use them as-is, customize their behavior, or implement your own backend.
 
@@ -16,9 +16,9 @@ Both are well-integrated and offer similar features in the context of `bevy_ecs_
 
 To spawn colliders, you need to define objects in your map:
 
-- **Objects on an object layer:**  
+- **Objects on an object layer:**
   These are the standard objects you place in Tiled on an object layer.
-- **Objects attached to a tile:**  
+- **Objects attached to a tile:**
   Edit your tileset and use Tiled's [built-in collision editor](https://doc.mapeditor.org/en/stable/manual/editing-tilesets/#tile-collision-editor) to define collision shapes for tiles.
 
 Both types of objects are supported and will result in physics colliders being spawned in your game, based on their shapes.
@@ -29,22 +29,22 @@ Both types of objects are supported and will result in physics colliders being s
 
 To automatically spawn colliders from Tiled objects, you need to:
 
-1. **Enable the appropriate feature in your `Cargo.toml`:**  
-   Either `avian` or `rapier`, depending on your backend choice.  
+1. **Enable the appropriate feature in your `Cargo.toml`:**
+   Either `avian` or `rapier`, depending on your backend choice.
    You can also enable only the `physics` feature and provide your own backend (see below).
 
 **Example: Using the Avian backend**
 
 ```toml
 [dependencies]
-bevy = "0.16"
-bevy_ecs_tiled = { version = "0.10", features = ["avian"] }
+bevy = "0.20"
+bevy_ecs_tiled = { version = "0.15", features = ["avian"] }
 ```
 
-> **Note:**  
+> **Note:**
 > You may need to adjust `bevy` and `bevy_ecs_tiled` versions.
 
-2. **Add the [`TiledPhysicsPlugin<T>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/struct.TiledPhysicsPlugin.html)**  
+2. **Add the [`TiledPhysicsPlugin<T>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/struct.TiledPhysicsPlugin.html)**
    with the [`TiledPhysicsBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/trait.TiledPhysicsBackend.html) of your choice.
 
 **Example: Using the Avian backend**
@@ -82,14 +82,14 @@ We provide two [`TiledPhysicsBackend`](https://docs.rs/bevy_ecs_tiled/latest/bev
 - [`TiledPhysicsAvianBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/avian/enum.TiledPhysicsAvianBackend.html): for the Avian 2D physics engine
 - [`TiledPhysicsRapierBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/rapier/enum.TiledPhysicsRapierBackend.html): for the Rapier 2D physics engine
 
-> **Note:**  
+> **Note:**
 > You can actually use several physics backends at the same time if you register the [`TiledPhysicsPlugin<T>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/struct.TiledPhysicsPlugin.html) plugin multiple times, but with different [`TiledPhysicsBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/trait.TiledPhysicsBackend.html).
 
 ---
 
 ## Filtering Which Objects Get Colliders
 
-By default, colliders are spawned for **all** objects (regular objects and tile colliders).  
+By default, colliders are spawned for **all** objects (regular objects and tile colliders).
 If you want more control, use the [`TiledPhysicsSettings`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/settings/struct.TiledPhysicsSettings.html) component.
 
 This component lets you filter which objects/layers should have colliders, based on their names.
@@ -121,23 +121,23 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 ## Colliders Aggregation
 
-Tiled uses simple shapes (rectangles, ellipses, polygons) to define colliders.  
+Tiled uses simple shapes (rectangles, ellipses, polygons) to define colliders.
 To reduce the number of physics colliders and improve performance, `bevy_ecs_tiled` tries to merge these simple shape colliders into a single complex one whenever possible.
 
-- **Tiles:** Merging is actually performed at the tilemap level.  
-  Eventhough you can use several shapes to define a tile's collider, these shape will be merged into a single collider and all tile colliders for a given tilemap will also be merged together.  
-  The collider entity is spawned at the tilemap level.  
-- **Regular objects:** If an object references a tile, it will inherit that tile's collider and if the tile has several shapes, they will be merged.  
+- **Tiles:** Merging is actually performed at the tilemap level.
+  Eventhough you can use several shapes to define a tile's collider, these shape will be merged into a single collider and all tile colliders for a given tilemap will also be merged together.
+  The collider entity is spawned at the tilemap level.
+- **Regular objects:** If an object references a tile, it will inherit that tile's collider and if the tile has several shapes, they will be merged.
   The collider entity is spawned at the object level and each object always gets its own collider.
 
-> **Note:**  
+> **Note:**
 > Both [`TiledPhysicsAvianBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/avian/enum.TiledPhysicsAvianBackend.html) and [`TiledPhysicsRapierBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/rapier/enum.TiledPhysicsRapierBackend.html) provide several strategies to aggregate colliders. You can see their respective documentation for more information.
 
 ---
 
 ## Custom Physics Backends
 
-For advanced use cases, you can implement your own physics backend.  
+For advanced use cases, you can implement your own physics backend.
 Just create a struct that implements the [`TiledPhysicsBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/trait.TiledPhysicsBackend.html) trait (i.e., provide a `spawn_colliders` function), and use it when registering the `TiledPhysicsPlugin<T>` plugin.
 
 See [this example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/physics_custom_backend.rs) for more information.
@@ -149,7 +149,7 @@ See [this example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/exampl
 When a collider entity is spawned, a [`TiledEvent<ColliderCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.ColliderCreated.html) event is sent.
 It contains information about the origin of the collider.
 
-This can be useful to add custom components to your colliders.  
+This can be useful to add custom components to your colliders.
 For instance, with Avian:
 
 ```rust,no_run
