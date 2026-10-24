@@ -210,6 +210,16 @@ If you would like to contribute but don't know where to start, [read this sectio
 
 ---
 
+## AI disclaimer
+
+This project is developed with the help of an LLM-based coding agent, which assists in writing both the code and the documentation.
+
+However, every commit is reviewed and validated by a human before being merged.
+
+Contributors are welcome to use LLM tools as well, but they must fully understand their contribution and be able to explain and justify the choices they made.
+
+---
+
 ## License
 
 This work is licensed under the MIT license.
