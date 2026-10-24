@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Fixed
+
+- World chunking no longer despawns all visible maps on frames where no camera moved
+
 ## v0.14.0
 
 **BREAKING CHANGES**
