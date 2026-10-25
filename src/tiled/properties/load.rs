@@ -29,8 +29,12 @@ pub(crate) struct DeserializedMapProperties<const HYDRATED: bool = false> {
 }
 
 impl DeserializedMapProperties<false> {
-    pub(crate) fn load(
+    /// Load properties of the map, its layers, objects and tiles.
+    ///
+    /// `tilesets` gives the tilesets for which tiles properties should be loaded, along with their tileset ID.
+    pub(crate) fn load<'a>(
         map: &tiled::Map,
+        tilesets: impl Iterator<Item = (u32, &'a tiled::Tileset)>,
         registry: &TypeRegistry,
         load_context: &mut LoadContext<'_>,
     ) -> Self {
@@ -65,13 +69,10 @@ impl DeserializedMapProperties<false> {
             }
         }
 
-        let tiles = map
-            .tilesets()
-            .iter()
-            .enumerate()
+        let tiles = tilesets
             .map(|(tileset_id, tileset)| {
                 (
-                    tileset_id as u32,
+                    tileset_id,
                     tileset
                         .tiles()
                         .map(|(id, t)| {
@@ -96,6 +97,21 @@ impl DeserializedMapProperties<false> {
             tiles,
             objects,
         }
+    }
+
+    /// Retrieve the hydrated properties of a tile, if it has any
+    pub(crate) fn tile_properties(
+        &self,
+        tileset_id: u32,
+        tile_id: tiled::TileId,
+        entity_map: &HashMap<u32, Entity>,
+    ) -> Option<DeserializedProperties> {
+        let mut properties = self.tiles.get(&tileset_id)?.get(&tile_id)?.clone();
+        if properties.properties.is_empty() {
+            return None;
+        }
+        properties.hydrate(entity_map);
+        Some(properties)
     }
 
     pub(crate) fn hydrate(

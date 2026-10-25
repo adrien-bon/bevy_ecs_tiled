@@ -347,6 +347,17 @@ impl AssetLoader for TiledMapLoader {
         #[cfg(feature = "user_properties")]
         let properties = crate::tiled::properties::load::DeserializedMapProperties::load(
             &map,
+            // Map tilesets, then tilesets only referenced by templates
+            map.tilesets()
+                .iter()
+                .enumerate()
+                .map(|(id, t)| (id as u32, t.as_ref()))
+                .chain(
+                    tilesets
+                        .iter()
+                        .filter(|(id, _)| **id as usize >= map.tilesets().len())
+                        .map(|(id, t)| (*id, t.tileset.as_ref())),
+                ),
             self.registry.read().deref(),
             load_context,
         );

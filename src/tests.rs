@@ -162,7 +162,7 @@ fn map_load_spawns_data_and_render_components() {
     // Created events are only sent once all the map data have been spawned
     assert_eq!(
         app.world().resource::<Received>().storage_on_map_created,
-        Some((3, 4, 2))
+        Some((3, 4, 3))
     );
 
     let ground = layer_by_name(&mut app, "ground");
@@ -393,5 +393,116 @@ mod physics {
         };
         app.update();
         assert_eq!(colliders_area(&app, rectangle), vec![100.]);
+    }
+}
+
+#[cfg(all(feature = "user_properties", feature = "render"))]
+mod properties {
+    use super::*;
+
+    /// Custom property set on tile 0 of the first tileset of the test map
+    #[derive(Component, Reflect, Default, Debug, PartialEq)]
+    #[reflect(Component, Default)]
+    pub struct TestTileProperty {
+        value: i32,
+    }
+
+    /// Values of [`TestTileProperty`] found when receiving [`MapCreated`]
+    #[derive(Resource, Default)]
+    struct PropertiesOnMapCreated(Option<Vec<(String, i32)>>);
+
+    fn property_value(app: &App, entity: Entity) -> Option<i32> {
+        app.world().get::<TestTileProperty>(entity).map(|p| p.value)
+    }
+
+    fn properties_test_app() -> App {
+        let mut app = test_app();
+        app.register_type::<TestTileProperty>();
+        app.add_plugins(crate::tiled::properties::plugin);
+        app.init_resource::<PropertiesOnMapCreated>();
+        app.add_observer(
+            |_: On<TiledEvent<MapCreated>>,
+             mut found: ResMut<PropertiesOnMapCreated>,
+             query: Query<(&Name, &TestTileProperty)>| {
+                let mut values = query
+                    .iter()
+                    .map(|(name, p)| (name.to_string(), p.value))
+                    .collect::<Vec<_>>();
+                values.sort();
+                found.0 = Some(values);
+            },
+        );
+        app
+    }
+
+    #[test]
+    fn tile_properties_are_inserted_before_map_created() {
+        let mut app = properties_test_app();
+        spawn_test_map(&mut app);
+
+        // Both tiles using tile 0 and both tile objects referencing it have the property,
+        // and the object own property takes precedence over the tile one
+        assert_eq!(
+            app.world().resource::<PropertiesOnMapCreated>().0,
+            Some(vec![
+                ("Tile(tile_object)".to_string(), 42),
+                ("Tile(tile_object_with_override)".to_string(), 7),
+                ("TiledMapTile(0,3)".to_string(), 42),
+                ("TiledMapTile(1,3)".to_string(), 42),
+            ])
+        );
+
+        // Properties are not inserted again afterwards
+        let tile_object = object_by_name(&mut app, "tile_object_with_override");
+        assert_eq!(property_value(&app, tile_object), Some(7));
+    }
+
+    #[test]
+    fn tile_properties_are_inserted_on_new_tiles_and_tile_objects() {
+        let mut app = properties_test_app();
+        let map = spawn_test_map(&mut app);
+        let ground = layer_by_name(&mut app, "ground");
+        let objects = layer_by_name(&mut app, "objects");
+
+        let tile = app
+            .world_mut()
+            .spawn((
+                TiledTile,
+                ChildOf(ground),
+                TiledTilesetId(0),
+                TiledTileId(0),
+                TilePos::new(2, 2),
+            ))
+            .id();
+        let other_tile = app
+            .world_mut()
+            .spawn((
+                TiledTile,
+                ChildOf(ground),
+                TiledTilesetId(0),
+                TiledTileId(1),
+                TilePos::new(3, 3),
+            ))
+            .id();
+        let tile_object = app
+            .world_mut()
+            .spawn((
+                TiledObject::Tile {
+                    width: 16.,
+                    height: 16.,
+                    tileset_id: 0,
+                    tile_id: 0,
+                    flip_x: false,
+                    flip_y: false,
+                },
+                ChildOf(objects),
+                TiledMapReference(map),
+            ))
+            .id();
+        app.update();
+
+        assert_eq!(property_value(&app, tile), Some(42));
+        assert_eq!(property_value(&app, other_tile), None);
+        assert_eq!(property_value(&app, tile_object), Some(42));
     }
 }
