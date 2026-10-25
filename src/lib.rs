@@ -24,6 +24,9 @@ pub mod debug;
 #[cfg(feature = "physics")]
 pub mod physics;
 
+#[cfg(test)]
+mod tests;
+
 /// `bevy_ecs_tiled` public exports.
 pub mod prelude {
     #[cfg(feature = "debug")]
@@ -74,7 +77,9 @@ pub mod prelude {
             TiledObjectVisuals,
         },
         sets::{TiledPostUpdateSystems, TiledPreUpdateSystems, TiledUpdateSystems},
-        tile::{TiledTile, TiledTileId, TiledTilemap, TiledTilesetId},
+        tile::{
+            TiledTile, TiledTileId, TiledTilemap, TiledTilemapOf, TiledTilemaps, TiledTilesetId,
+        },
         world::{
             RespawnTiledWorld, TiledWorld, asset::TiledWorldAsset, chunking::TiledWorldChunking,
             loader::TiledWorldLoaderError, storage::TiledWorldStorage,

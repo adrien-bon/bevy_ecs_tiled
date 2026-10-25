@@ -3,17 +3,26 @@
 //! This module defines Bevy components used to represent Tiled images within the ECS world.
 
 use crate::prelude::*;
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::Anchor};
 
-/// Marker [`Component`] for the [`Sprite`] attached to an image layer.
-#[derive(Component, Default, Reflect, Copy, Clone, Debug)]
+/// [`Component`] holding the image of an image layer.
+///
+/// The associated [`Sprite`] is derived from this component: it is automatically updated when
+/// this component changes, during [`TiledPostUpdateSystems::SyncRender`].
+#[derive(Component, Default, Reflect, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
 #[require(Visibility, Transform, Sprite)]
 pub struct TiledImage {
+    /// Image handle
+    pub image: Handle<Image>,
     /// Base position, relative to parent layer
     pub base_position: Vec2,
     /// Base image size
     pub base_size: Vec2,
+    /// Whether the image should be repeated along the X axis
+    pub repeat_x: bool,
+    /// Whether the image should be repeated along the Y axis
+    pub repeat_y: bool,
 }
 
 pub(crate) fn plugin(app: &mut App) {
@@ -22,6 +31,33 @@ pub(crate) fn plugin(app: &mut App) {
         Update,
         update_image_position_and_size.in_set(TiledUpdateSystems::UpdateTiledImagePositionAndSize),
     );
+    app.add_systems(
+        PostUpdate,
+        sync_image_sprite.in_set(TiledPostUpdateSystems::SyncRender),
+    );
+}
+
+/// Update the [`Sprite`] of new or modified [`TiledImage`]s
+fn sync_image_sprite(
+    mut commands: Commands,
+    image_query: Query<(Entity, &TiledImage), Changed<TiledImage>>,
+) {
+    for (entity, image) in image_query.iter() {
+        commands.entity(entity).insert((
+            Sprite {
+                image: image.image.clone(),
+                custom_size: Some(image.base_size),
+                image_mode: SpriteImageMode::Tiled {
+                    tile_x: image.repeat_x,
+                    tile_y: image.repeat_y,
+                    stretch_value: 1.,
+                },
+                ..default()
+            },
+            Anchor::TOP_LEFT,
+            Transform::from_translation(image.base_position.extend(0.)),
+        ));
+    }
 }
 
 fn update_image_position_and_size(
@@ -54,10 +90,7 @@ fn update_image_position_and_size(
         });
 
     for (image, child_of_image, mut transform, mut sprite) in image_query.iter_mut() {
-        let (repeat_x, repeat_y) = match sprite.image_mode {
-            SpriteImageMode::Tiled { tile_x, tile_y, .. } => (tile_x, tile_y),
-            _ => continue,
-        };
+        let (repeat_x, repeat_y) = (image.repeat_x, image.repeat_y);
 
         // Skip to next image if this one does not repeat
         if !repeat_x && !repeat_y {

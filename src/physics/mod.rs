@@ -45,110 +45,240 @@ impl<T: TiledPhysicsBackend> Plugin for TiledPhysicsPlugin<T> {
         app.register_type::<T>();
         app.register_type::<TiledPhysicsDisableGeometrySimplification>();
         app.add_systems(
-            PreUpdate,
-            (collider_from_tiles_layer::<T>, collider_from_object::<T>)
+            PostUpdate,
+            (
+                mark_tiles_layers_colliders_dirty::<T>,
+                update_tiles_layers_colliders::<T>,
+                update_objects_colliders::<T>,
+            )
                 .chain()
-                .in_set(TiledPreUpdateSystems::SpawnPhysicsColliders),
+                .in_set(TiledPostUpdateSystems::SyncPhysics),
         );
+        app.add_observer(on_tile_removed::<T>);
         app.add_plugins((backend::plugin, collider::plugin, settings::plugin::<T>));
     }
 }
 
-fn collider_from_tiles_layer<T: TiledPhysicsBackend>(
-    mut layer_created: MessageReader<TiledEvent<LayerCreated>>,
-    layer_query: Query<Option<&TiledPhysicsDisableGeometrySimplification>, With<TiledLayer>>,
+/// Marker [`Component`] for a [`TiledLayer::Tiles`] whose colliders must be updated.
+#[derive(Component)]
+struct TiledTilesLayerCollidersDirty<T: TiledPhysicsBackend>(std::marker::PhantomData<T>);
+
+impl<T: TiledPhysicsBackend> Default for TiledTilesLayerCollidersDirty<T> {
+    fn default() -> Self {
+        Self(std::marker::PhantomData)
+    }
+}
+
+/// Mark the parent layer of new or modified tiles so its colliders get updated
+fn mark_tiles_layers_colliders_dirty<T: TiledPhysicsBackend>(
     mut commands: Commands,
-    assets: Res<Assets<TiledMapAsset>>,
-    maps_query: Query<(&TiledPhysicsSettings<T>, &TilemapAnchor), With<TiledMap>>,
-    mut message_writer: MessageWriter<TiledEvent<ColliderCreated>>,
+    tiles_query: Query<
+        &ChildOf,
+        (
+            With<TiledTile>,
+            Or<(
+                Added<TiledTile>,
+                Changed<TiledTilesetId>,
+                Changed<TiledTileId>,
+                Changed<TilePos>,
+            )>,
+        ),
+    >,
 ) {
-    for ev in layer_created.read() {
-        let Some((settings, anchor)) = ev.map_entity().and_then(|e| maps_query.get(e).ok()) else {
-            warn!(
-                "Cannot spawn colliders for entity {}: parent map is missing or has no TiledPhysicsSettings",
-                ev.origin
-            );
-            continue;
-        };
+    let layers = tiles_query
+        .iter()
+        .map(ChildOf::parent)
+        .collect::<bevy::platform::collections::HashSet<_>>();
+    for layer in layers {
+        commands
+            .entity(layer)
+            .try_insert(TiledTilesLayerCollidersDirty::<T>::default());
+    }
+}
 
-        let Some(layer) = ev.layer(&assets) else {
-            continue;
-        };
+/// Mark the parent layer of a removed tile so its colliders get updated
+fn on_tile_removed<T: TiledPhysicsBackend>(
+    removed: On<Remove<TiledTile>>,
+    mut commands: Commands,
+    tiles_query: Query<&ChildOf>,
+) {
+    if let Ok(child_of) = tiles_query.get(removed.entity) {
+        commands
+            .entity(child_of.parent())
+            .try_insert(TiledTilesLayerCollidersDirty::<T>::default());
+    }
+}
 
-        let tiled::LayerType::Tiles(_) = layer.layer_type() else {
-            continue;
-        };
-
-        let Ok(disable_geometry_simplification) = layer_query.get(ev.origin) else {
-            continue;
-        };
-
-        if settings.tiles_layer_filter.matches(&layer.name) {
-            collider::spawn_colliders::<T>(
-                settings,
-                &mut commands,
-                &assets,
-                anchor,
-                &settings.tiles_objects_filter,
-                ev.transmute(
-                    None,
-                    ColliderCreated::new(TiledColliderSource::TilesLayer, ev.origin),
-                ),
-                &mut message_writer,
-                disable_geometry_simplification.is_some(),
-            );
+/// Despawn previous colliders of a Tiled entity, except if the collider is the entity itself
+fn despawn_colliders(commands: &mut Commands, entity: Entity, colliders: Option<&TiledColliders>) {
+    for collider in colliders.into_iter().flat_map(|c| c.iter()) {
+        if collider != entity {
+            commands.entity(collider).despawn();
         }
     }
 }
 
-fn collider_from_object<T: TiledPhysicsBackend>(
-    mut object_created: MessageReader<TiledEvent<ObjectCreated>>,
-    object_query: Query<Option<&TiledPhysicsDisableGeometrySimplification>, With<TiledObject>>,
+/// Spawn again the colliders of tiles layers which have been marked as dirty
+fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
     mut commands: Commands,
+    layers_query: Query<
+        (
+            Entity,
+            &TiledLayer,
+            &TiledLayerId,
+            &TiledName,
+            &TiledMapReference,
+            Option<&Children>,
+            Option<&TiledColliders>,
+            Has<TiledPhysicsDisableGeometrySimplification>,
+        ),
+        With<TiledTilesLayerCollidersDirty<T>>,
+    >,
+    tiles_query: Query<(&TilePos, &TiledTilesetId, &TiledTileId), With<TiledTile>>,
+    maps_query: Query<(&TiledMap, &TiledPhysicsSettings<T>, &TilemapAnchor)>,
     assets: Res<Assets<TiledMapAsset>>,
-    maps_query: Query<(&TiledPhysicsSettings<T>, &TilemapAnchor), With<TiledMap>>,
     mut message_writer: MessageWriter<TiledEvent<ColliderCreated>>,
 ) {
-    for ev in object_created.read() {
-        let Some((settings, anchor)) = ev.map_entity().and_then(|e| maps_query.get(e).ok()) else {
-            warn!(
-                "Cannot spawn colliders for entity {}: parent map is missing or has no TiledPhysicsSettings",
-                ev.origin
-            );
-            continue;
-        };
+    for (
+        layer_entity,
+        layer,
+        layer_id,
+        layer_name,
+        map_ref,
+        children,
+        colliders,
+        disable_geometry_simplification,
+    ) in layers_query.iter()
+    {
+        commands
+            .entity(layer_entity)
+            .remove::<TiledTilesLayerCollidersDirty<T>>();
 
-        let Some(layer) = ev.layer(&assets) else {
+        if !matches!(layer, TiledLayer::Tiles) {
             continue;
-        };
-
-        let Some(object) = ev.object(&assets) else {
-            continue;
-        };
-
-        let Ok(disable_geometry_simplification) = object_query.get(ev.origin) else {
-            continue;
-        };
-
-        if settings.objects_layer_filter.matches(&layer.name)
-            && settings.objects_filter.matches(&object.name)
-        {
-            collider::spawn_colliders::<T>(
-                settings,
-                &mut commands,
-                &assets,
-                anchor,
-                match object.get_tile() {
-                    Some(_) => &settings.tiles_objects_filter,
-                    None => &TiledFilter::All,
-                },
-                ev.transmute(
-                    None,
-                    ColliderCreated::new(TiledColliderSource::Object, ev.origin),
-                ),
-                &mut message_writer,
-                disable_geometry_simplification.is_some(),
-            );
         }
+
+        let Ok((tiled_map, settings, anchor)) = maps_query.get(map_ref.0) else {
+            warn!(
+                "Cannot spawn colliders for entity {layer_entity}: parent map is missing or has no TiledPhysicsSettings"
+            );
+            continue;
+        };
+        let Some(map_asset) = assets.get(&tiled_map.0) else {
+            continue;
+        };
+
+        despawn_colliders(&mut commands, layer_entity, colliders);
+
+        if !settings.tiles_layer_filter.matches(&layer_name.0) {
+            continue;
+        }
+
+        let tiles = children
+            .into_iter()
+            .flat_map(|children| children.iter())
+            .filter_map(|e| tiles_query.get(e).ok())
+            .map(|(pos, tileset_id, tile_id)| (*pos, tileset_id.0, tile_id.0));
+        let polygons =
+            collider::tiles_polygons(map_asset, anchor, tiles, &settings.tiles_objects_filter);
+
+        let event = TiledEvent::new(
+            layer_entity,
+            ColliderCreated::new(TiledColliderSource::TilesLayer, layer_entity),
+        )
+        .with_map(map_ref.0, tiled_map.0.id())
+        .with_layer(layer_entity, layer_id.0)
+        .to_owned();
+        collider::spawn_colliders::<T>(
+            settings,
+            &mut commands,
+            polygons,
+            event,
+            &mut message_writer,
+            disable_geometry_simplification,
+        );
+    }
+}
+
+/// Spawn again the colliders of new or modified objects
+fn update_objects_colliders<T: TiledPhysicsBackend>(
+    mut commands: Commands,
+    objects_query: Query<
+        (
+            Entity,
+            &TiledObject,
+            &TiledObjectId,
+            &TiledName,
+            &TiledMapReference,
+            Option<&ChildOf>,
+            Option<&TiledColliders>,
+            Has<TiledPhysicsDisableGeometrySimplification>,
+        ),
+        Changed<TiledObject>,
+    >,
+    layers_query: Query<(&TiledLayerId, &TiledName), With<TiledLayer>>,
+    maps_query: Query<(&TiledMap, &TiledPhysicsSettings<T>)>,
+    assets: Res<Assets<TiledMapAsset>>,
+    mut message_writer: MessageWriter<TiledEvent<ColliderCreated>>,
+) {
+    for (
+        object_entity,
+        object,
+        object_id,
+        object_name,
+        map_ref,
+        child_of,
+        colliders,
+        disable_geometry_simplification,
+    ) in objects_query.iter()
+    {
+        let Ok((tiled_map, settings)) = maps_query.get(map_ref.0) else {
+            warn!(
+                "Cannot spawn colliders for entity {object_entity}: parent map is missing or has no TiledPhysicsSettings"
+            );
+            continue;
+        };
+        let Some(map_asset) = assets.get(&tiled_map.0) else {
+            continue;
+        };
+        let Some((layer_entity, (layer_id, layer_name))) =
+            child_of.and_then(|c| layers_query.get(c.parent()).ok().map(|l| (c.parent(), l)))
+        else {
+            continue;
+        };
+
+        despawn_colliders(&mut commands, object_entity, colliders);
+
+        if !settings.objects_layer_filter.matches(&layer_name.0)
+            || !settings.objects_filter.matches(&object_name.0)
+        {
+            continue;
+        }
+
+        let polygons = collider::object_polygons(
+            map_asset,
+            object,
+            match object {
+                TiledObject::Tile { .. } => &settings.tiles_objects_filter,
+                _ => &TiledFilter::All,
+            },
+        );
+
+        let event = TiledEvent::new(
+            object_entity,
+            ColliderCreated::new(TiledColliderSource::Object, object_entity),
+        )
+        .with_map(map_ref.0, tiled_map.0.id())
+        .with_layer(layer_entity, layer_id.0)
+        .with_object(object_entity, object_id.0)
+        .to_owned();
+        collider::spawn_colliders::<T>(
+            settings,
+            &mut commands,
+            polygons,
+            event,
+            &mut message_writer,
+            disable_geometry_simplification,
+        );
     }
 }

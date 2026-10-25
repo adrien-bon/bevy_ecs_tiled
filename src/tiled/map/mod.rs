@@ -176,7 +176,7 @@ fn process_loaded_maps(
     >,
     mut message_writers: TiledMessageWriters,
 ) {
-    for (map_entity, map_handle, mut tiled_storage, render_settings, anchor, layer_offset) in
+    for (map_entity, map_handle, mut tiled_storage, _render_settings, anchor, layer_offset) in
         map_query.iter_mut()
     {
         if let Some(load_state) = asset_server.get_recursive_dependency_load_state(&map_handle.0) {
@@ -220,7 +220,6 @@ fn process_loaded_maps(
                 map_handle.0.id(),
                 tiled_map,
                 &mut tiled_storage,
-                render_settings,
                 layer_offset,
                 &mut message_writers,
                 anchor,

@@ -70,7 +70,10 @@ pub(crate) fn plugin(app: &mut App) {
 
 impl<'a> TiledEvent<ColliderCreated> {
     /// Returns a vector containing [`tiled::Tile`]s in this layer as well as their
-    /// relative position from their parent [`crate::tiled::tile::TiledTilemap`] [`Entity``].
+    /// relative position from their parent [`TiledLayer`] [`Entity`].
+    ///
+    /// Note that tiles are read from the [`TiledMapAsset`]: modifications made to the
+    /// [`TiledTile`] entities after the map has been spawned are not taken into account.
     pub fn tiles(
         &self,
         assets: &'a Assets<TiledMapAsset>,
@@ -97,104 +100,120 @@ impl<'a> TiledEvent<ColliderCreated> {
     }
 }
 
-#[allow(clippy::too_many_arguments)]
+/// Compute the collider polygons of a [`TiledObject`], relative to the object itself.
+///
+/// For a [`TiledObject::Tile`], polygons are computed from the tile collision objects which match `filter`.
+pub(crate) fn object_polygons(
+    map_asset: &TiledMapAsset,
+    tiled_object: &TiledObject,
+    filter: &TiledFilter,
+) -> Vec<geo::Polygon<f32>> {
+    match tiled_object {
+        // If the object has a tile, we need to handle its collision data
+        TiledObject::Tile {
+            width,
+            height,
+            tileset_id,
+            tile_id,
+            flip_x,
+            flip_y,
+        } => {
+            let Some(tile) = map_asset.tile(*tileset_id, *tile_id) else {
+                return vec![];
+            };
+            let Some(object_layer_data) = &tile.collision else {
+                return vec![];
+            };
+            let (width, height) = (*width, *height);
+            let tile_size = tile_size(&tile);
+            let mut scale = Vec2::new(width, height) / Vec2::new(tile_size.x, tile_size.y);
+            let mut offset = Vec2::new(
+                tile.tileset().offset_x as f32,
+                -tile.tileset().offset_y as f32,
+            ) * scale;
+            if *flip_x {
+                scale.x *= -1.;
+                offset.x += width;
+            }
+            if *flip_y {
+                scale.y *= -1.;
+                offset.y -= height;
+            }
+            polygons_from_tile(
+                map_asset,
+                object_layer_data,
+                filter,
+                &TilemapTileSize::new(width, height),
+                offset,
+                scale,
+            )
+        }
+        // If the object does not have a tile, we can create a collider directly from itself
+        _ => tiled_object
+            .polygon(
+                &GlobalTransform::default(),
+                matches!(
+                    tilemap_type_from_map(&map_asset.map),
+                    TilemapType::Isometric(..)
+                ),
+                &map_asset.tilemap_size,
+                &grid_size_from_map(&map_asset.map),
+                map_asset.tiled_offset,
+            )
+            .into_iter()
+            .collect(),
+    }
+}
+
+/// Compute the collider polygons of a set of tiles, relative to their parent [`TiledLayer::Tiles`].
+///
+/// Tiles are given as their position, tileset ID and [`tiled::TileId`].
+/// Polygons are computed from the tiles collision objects which match `filter`.
+pub(crate) fn tiles_polygons(
+    map_asset: &TiledMapAsset,
+    anchor: &TilemapAnchor,
+    tiles: impl Iterator<Item = (TilePos, u32, tiled::TileId)>,
+    filter: &TiledFilter,
+) -> Vec<geo::Polygon<f32>> {
+    let mut acc = vec![];
+    for (tile_pos, tileset_id, tile_id) in tiles {
+        let Some(tile) = map_asset.tile(tileset_id, tile_id) else {
+            continue;
+        };
+        let Some(collision) = &tile.collision else {
+            continue;
+        };
+        let tile_size = tile_size(&tile);
+        let tile_position = map_asset.tile_relative_position(&tile_pos, &tile_size, anchor)
+            + tilemap_offset(&map_asset.map, tile.tileset());
+        acc.extend(polygons_from_tile(
+            map_asset,
+            collision,
+            filter,
+            &tile_size,
+            Vec2::new(
+                tile_position.x - tile_size.x / 2.,
+                tile_position.y - tile_size.y / 2.,
+            ),
+            Vec2::ONE,
+        ));
+    }
+    acc
+}
+
+/// Spawn colliders for the given polygons using the physics backend from `settings`.
 pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
     settings: &TiledPhysicsSettings<T>,
     commands: &mut Commands,
-    assets: &Assets<TiledMapAsset>,
-    anchor: &TilemapAnchor,
-    filter: &TiledFilter,
+    polygons: Vec<geo::Polygon<f32>>,
     collider_created: TiledEvent<ColliderCreated>,
     message_writer: &mut MessageWriter<TiledEvent<ColliderCreated>>,
     disable_geometry_simplification: bool,
 ) {
-    let Some(map_asset) = collider_created.map_asset(assets) else {
-        return;
-    };
-
-    let polygons = match collider_created.event.source {
-        TiledColliderSource::Object => {
-            if let Some(object) = collider_created.object(assets) {
-                match object.get_tile() {
-                    // If the object does not have a tile, we can create a collider directly from itself
-                    None => {
-                        let global_transform = &GlobalTransform::default();
-                        TiledObject::from_object_data(&object)
-                            .polygon(
-                                global_transform,
-                                matches!(
-                                    tilemap_type_from_map(&map_asset.map),
-                                    TilemapType::Isometric(..)
-                                ),
-                                &map_asset.tilemap_size,
-                                &grid_size_from_map(&map_asset.map),
-                                map_asset.tiled_offset,
-                            )
-                            .map(|p| vec![p])
-                    }
-                    // If the object has a tile, we need to handle its collision data
-                    Some(object_tile) => object_tile.get_tile().map(|tile| {
-                        let Some(object_layer_data) = &tile.collision else {
-                            return vec![];
-                        };
-                        let ::tiled::ObjectShape::Rect { width, height } = object.shape else {
-                            return vec![];
-                        };
-
-                        let tile_size = tile_size(&tile);
-                        let mut scale =
-                            Vec2::new(width, height) / Vec2::new(tile_size.x, tile_size.y);
-                        let mut offset = Vec2::new(
-                            tile.tileset().offset_x as f32,
-                            -tile.tileset().offset_y as f32,
-                        ) * scale;
-                        if object_tile.flip_h {
-                            scale.x *= -1.;
-                            offset.x += width;
-                        }
-                        if object_tile.flip_v {
-                            scale.y *= -1.;
-                            offset.y -= height;
-                        }
-                        polygons_from_tile(
-                            object_layer_data,
-                            filter,
-                            &TilemapTileSize::new(width, height),
-                            offset,
-                            scale,
-                        )
-                    }),
-                }
-                .unwrap_or_default()
-            } else {
-                vec![]
-            }
-        }
-        TiledColliderSource::TilesLayer => {
-            let mut acc = vec![];
-
-            // Iterate over all tiles in the layer and create colliders for each
-            for (tile_position, tile) in collider_created.tiles(assets, anchor) {
-                if let Some(collision) = &tile.collision {
-                    let tile_size = tile_size(&tile);
-                    acc.extend(polygons_from_tile(
-                        collision,
-                        filter,
-                        &tile_size,
-                        Vec2::new(
-                            tile_position.x - tile_size.x / 2.,
-                            tile_position.y - tile_size.y / 2.,
-                        ),
-                        Vec2::ONE,
-                    ));
-                }
-            }
-            acc
-        }
-    }
-    .into_iter()
-    .map(|p| geo::MultiPolygon::new(vec![p]))
-    .collect::<Vec<_>>();
+    let polygons = polygons
+        .into_iter()
+        .map(|p| geo::MultiPolygon::new(vec![p]))
+        .collect::<Vec<_>>();
 
     if polygons.is_empty() {
         return;
@@ -236,6 +255,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
 }
 
 fn polygons_from_tile(
+    map_asset: &TiledMapAsset,
     object_layer_data: &::tiled::ObjectLayerData,
     filter: &TiledFilter,
     tile_size: &TilemapTileSize,
@@ -256,7 +276,7 @@ fn polygons_from_tile(
 
         // Special case for tiles: our referential is local to the tile
         // do not use TilemapSize and TilemapGridSize relative to the whole map
-        if let Some(p) = TiledObject::from_object_data(object).polygon(
+        if let Some(p) = TiledObject::from_object_data(map_asset, object).polygon(
             &transform,
             false, // we do not support 'isometric' tilesets
             &TilemapSize::new(1, 1),

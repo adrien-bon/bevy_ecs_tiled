@@ -59,7 +59,8 @@ fn process_layers<'a>(
     layers: impl Iterator<Item = tiled::Layer<'a>>,
     images: &mut HashMap<u32, Handle<Image>>,
     largest_tile_size: &mut TilemapTileSize,
-    tilesets: &mut HashMap<String, TiledMapTileset>,
+    tilesets: &mut HashMap<u32, TiledMapTileset>,
+    tilesets_id_by_label: &mut HashMap<String, u32>,
     load_context: &mut LoadContext,
 ) {
     for layer in layers {
@@ -118,7 +119,7 @@ fn process_layers<'a>(
                         continue;
                     };
 
-                    if tilesets.contains_key(&label) {
+                    if tilesets_id_by_label.contains_key(&label) {
                         continue;
                     }
 
@@ -128,7 +129,10 @@ fn process_layers<'a>(
                         continue;
                     };
 
-                    tilesets.insert(label.to_owned(), tiled_map_tileset);
+                    // Template tilesets get an ID after all the map tilesets
+                    let id = next_tileset_id(tilesets);
+                    tilesets_id_by_label.insert(label, id);
+                    tilesets.insert(id, tiled_map_tileset);
                 }
             }
             tiled::LayerType::Image(image_layer) => {
@@ -148,6 +152,7 @@ fn process_layers<'a>(
                     images,
                     largest_tile_size,
                     tilesets,
+                    tilesets_id_by_label,
                     load_context,
                 );
             }
@@ -192,7 +197,7 @@ impl AssetLoader for TiledMapLoader {
         };
         let grid_size = grid_size_from_map(&map);
         let mut tilesets = HashMap::default();
-        let mut tilesets_label_by_index = HashMap::<u32, String>::default();
+        let mut tilesets_id_by_label = HashMap::default();
 
         for (tileset_index, tileset) in map.tilesets().iter().enumerate() {
             debug!(
@@ -210,8 +215,8 @@ impl AssetLoader for TiledMapLoader {
                 continue;
             };
 
-            tilesets_label_by_index.insert(tileset_index as u32, label.to_owned());
-            tilesets.insert(label.to_owned(), tiled_map_tileset);
+            tilesets_id_by_label.insert(label, tileset_index as u32);
+            tilesets.insert(tileset_index as u32, tiled_map_tileset);
         }
 
         let mut images = HashMap::default();
@@ -223,6 +228,7 @@ impl AssetLoader for TiledMapLoader {
             &mut images,
             &mut largest_tile_size,
             &mut tilesets,
+            &mut tilesets_id_by_label,
             load_context,
         );
 
@@ -358,7 +364,7 @@ impl AssetLoader for TiledMapLoader {
             topleft_chunk: topleft,
             bottomright_chunk: bottomright,
             tilesets,
-            tilesets_label_by_index,
+            tilesets_id_by_label,
             images,
             #[cfg(feature = "user_properties")]
             properties,
@@ -454,12 +460,21 @@ fn tileset_to_tiled_map_tileset(
     };
 
     Some(TiledMapTileset {
+        tileset,
         usable_for_tiles_layer,
         tilemap_texture,
         texture_atlas_layout_handle,
         #[cfg(not(feature = "atlas"))]
         tile_image_offsets,
     })
+}
+
+/// Returns the first tileset ID which is not used yet.
+///
+/// Map tilesets are inserted first using their index, so this ID never
+/// conflicts with a map tileset, even if some of them failed to load.
+fn next_tileset_id(tilesets: &HashMap<u32, TiledMapTileset>) -> u32 {
+    tilesets.keys().max().map(|id| id + 1).unwrap_or(0)
 }
 
 pub(crate) fn plugin(app: &mut App) {

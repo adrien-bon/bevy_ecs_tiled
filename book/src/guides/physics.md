@@ -77,6 +77,8 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 Colliders will be spawned for every object or tiles colliders in your map automatically.
 
+Colliders are derived from the map entities: if you add, modify or remove a tile or an object after the map has been loaded, the corresponding colliders are automatically spawned again.
+
 We provide two [`TiledPhysicsBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/trait.TiledPhysicsBackend.html) that can be used out of the box:
 
 - [`TiledPhysicsAvianBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/avian/enum.TiledPhysicsAvianBackend.html): for the Avian 2D physics engine
@@ -124,9 +126,9 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 Tiled uses simple shapes (rectangles, ellipses, polygons) to define colliders.
 To reduce the number of physics colliders and improve performance, `bevy_ecs_tiled` tries to merge these simple shape colliders into a single complex one whenever possible.
 
-- **Tiles:** Merging is actually performed at the tilemap level.
-  Eventhough you can use several shapes to define a tile's collider, these shape will be merged into a single collider and all tile colliders for a given tilemap will also be merged together.
-  The collider entity is spawned at the tilemap level.
+- **Tiles:** Merging is actually performed at the tiles layer level.
+  Eventhough you can use several shapes to define a tile's collider, these shape will be merged into a single collider and all tile colliders for a given tiles layer will also be merged together.
+  The collider entity is spawned at the tiles layer level, and spawned again whenever a tile of this layer is added, modified or removed.
 - **Regular objects:** If an object references a tile, it will inherit that tile's collider and if the tile has several shapes, they will be merged.
   The collider entity is spawned at the object level and each object always gets its own collider.
 
@@ -147,6 +149,7 @@ See [this example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/exampl
 ## Physics Events
 
 When a collider entity is spawned, a [`TiledEvent<ColliderCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.ColliderCreated.html) event is sent.
+Since colliders are spawned again when their source changes, you can receive this event several times for the same tiles layer or object.
 It contains information about the origin of the collider.
 
 This can be useful to add custom components to your colliders.
