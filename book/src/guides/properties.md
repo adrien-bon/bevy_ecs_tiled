@@ -131,6 +131,18 @@ Once imported, you can add custom properties to your map:
 
 When you load the map, the corresponding Bevy entity will have the appropriate `Component` with the values you set.
 
+### Tile Properties
+
+Properties added to a tile in a tileset are inserted on every entity referencing this tile:
+
+- the tiles using it in tiles layers,
+- the tile objects using it. If the object also has its own properties, they take precedence over the tile ones.
+
+This also applies to tiles and tile objects you spawn after the map has been loaded: tile properties are inserted during [`TiledPostUpdateSystems::SyncMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/sets/enum.TiledPostUpdateSystems.html).
+Note that modifying the `TiledTileId` or `TiledTilesetId` of an existing tile does not update its properties.
+
+When loading a map, all custom properties are inserted before the map events (`MapCreated`, `LayerCreated`, ...) are sent.
+
 > **Note:**
 > Only add properties imported from Bevy. Properties created only in Tiled (ie. not exported from your app) will not be loaded in Bevy.
 > You can also control which properties are exported from your application via [`TiledPluginConfig`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/struct.TiledPluginConfig.html)

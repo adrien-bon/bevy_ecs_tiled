@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="4" height="4" tilewidth="16" tileheight="16" infinite="0" nextlayerid="4" nextobjectid="3">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="4" height="4" tilewidth="16" tileheight="16" infinite="0" nextlayerid="4" nextobjectid="4">
  <tileset firstgid="1" name="with_colliders" tilewidth="16" tileheight="16" tilecount="20" columns="4">
   <image source="../../tiles/drjamgo_hex_16x16.png" width="64" height="80"/>
   <tile id="0">
+   <properties>
+    <property name="TestTileProperty" type="class" propertytype="bevy_ecs_tiled::tests::properties::TestTileProperty">
+     <properties>
+      <property name="value" type="int" value="42"/>
+     </properties>
+    </property>
+   </properties>
    <objectgroup draworder="index" id="2">
     <object id="1" name="collider" x="0" y="0" width="16" height="16"/>
    </objectgroup>
@@ -29,6 +36,15 @@
  </layer>
  <objectgroup id="3" name="objects">
   <object id="1" name="tile_object" gid="1" x="32" y="48" width="16" height="16"/>
+  <object id="3" name="tile_object_with_override" gid="1" x="48" y="48" width="16" height="16">
+   <properties>
+    <property name="TestTileProperty" type="class" propertytype="bevy_ecs_tiled::tests::properties::TestTileProperty">
+     <properties>
+      <property name="value" type="int" value="7"/>
+     </properties>
+    </property>
+   </properties>
+  </object>
   <object id="2" name="rectangle" x="0" y="0" width="16" height="8"/>
  </objectgroup>
 </map>
