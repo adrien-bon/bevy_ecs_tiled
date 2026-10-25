@@ -46,7 +46,7 @@ pub struct TiledEvent<E: Debug + Clone + Copy + Reflect> {
     map: Option<(Entity, AssetId<TiledMapAsset>)>,
     layer: Option<(Entity, u32)>,
     tilemap: Option<(Entity, u32)>,
-    tile: Option<(Entity, TilePos, tiled::TileId)>,
+    tile: Option<(Entity, TilePos, u32, tiled::TileId)>,
     object: Option<(Entity, u32)>,
 }
 
@@ -122,9 +122,10 @@ where
         &mut self,
         entity: Entity,
         position: TilePos,
+        tileset_id: u32,
         tile_id: tiled::TileId,
     ) -> &mut Self {
-        self.tile = Some((entity, position, tile_id));
+        self.tile = Some((entity, position, tileset_id, tile_id));
         self
     }
 
@@ -208,23 +209,28 @@ where
 
     /// Retrieve the [`TiledTile`] [`Entity`] associated with this [`TiledEvent`]
     pub fn tile_entity(&self) -> Option<Entity> {
-        self.tile.map(|(e, _, _)| e)
+        self.tile.map(|(e, _, _, _)| e)
     }
 
     /// Retrieve the [`TilePos`] associated with this [`TiledEvent`]
     pub fn tile_pos(&self) -> Option<TilePos> {
-        self.tile.map(|(_, pos, _)| pos)
+        self.tile.map(|(_, pos, _, _)| pos)
+    }
+
+    /// Retrieve the tileset ID of the tile associated with this [`TiledEvent`]
+    pub fn tile_tileset_id(&self) -> Option<u32> {
+        self.tile.map(|(_, _, tileset_id, _)| tileset_id)
     }
 
     /// Retrieve the [`tiled::TileId`] associated with this [`TiledEvent`]
     pub fn tile_id(&self) -> Option<tiled::TileId> {
-        self.tile.map(|(_, _, id)| id)
+        self.tile.map(|(_, _, _, id)| id)
     }
 
     /// Retrieve the [`tiled::Tile`] associated with this [`TiledEvent`]
     pub fn tile(&self, assets: &'a Assets<TiledMapAsset>) -> Option<tiled::Tile<'a>> {
         self.map(assets).and_then(|map| {
-            self.tilemap_tileset_id().and_then(|tileset_id| {
+            self.tile_tileset_id().and_then(|tileset_id| {
                 self.tile_id()
                     .and_then(|id| tile_from_map(map, tileset_id, id))
             })
@@ -270,12 +276,19 @@ pub struct LayerCreated;
 
 /// A [`TiledTilemap`] was created
 ///
+/// Tilemaps are rendering entities: this event is sent when a tilemap is spawned during
+/// [`TiledPostUpdateSystems::SyncRender`], either when the map is loaded or later on, when a tile
+/// is added to a layer which does not have a tilemap for this tile tileset yet.
+/// It is only sent when the `render` feature is enabled.
+///
 /// See also [`TiledEvent`]
 #[derive(Clone, Copy, PartialEq, Debug, Reflect)]
 #[reflect(Clone, PartialEq)]
 pub struct TilemapCreated;
 
 /// A [`TiledTile`] with custom properties was created
+///
+/// Only sent when a map is loaded, not for tiles spawned afterwards.
 ///
 /// See also [`TiledEvent`]
 #[derive(Clone, Copy, PartialEq, Debug, Reflect)]
@@ -298,8 +311,6 @@ pub(crate) struct TiledMessageWriters<'w> {
     pub map_created: MessageWriter<'w, TiledEvent<MapCreated>>,
     /// Layer events writer
     pub layer_created: MessageWriter<'w, TiledEvent<LayerCreated>>,
-    /// Tilemap events writer
-    pub tilemap_created: MessageWriter<'w, TiledEvent<TilemapCreated>>,
     /// Tile events writer
     pub tile_created: MessageWriter<'w, TiledEvent<TileCreated>>,
     /// Object events writer

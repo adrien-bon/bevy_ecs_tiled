@@ -98,6 +98,9 @@ name = "map_text"
 required-features = ["text"]
 
 [[example]]
+name = "map_dynamic"
+
+[[example]]
 name = "map_events"
 
 [[example]]

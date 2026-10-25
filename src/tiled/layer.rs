@@ -12,7 +12,7 @@ use bevy::prelude::*;
 /// This enum is attached to entities representing Tiled layers in the ECS world.
 /// Each variant corresponds to a specific Tiled layer type and indicates the expected children entities.
 ///
-/// - `Tiles`: A layer containing tiles, parent of [`TiledTilemap`] entities.
+/// - `Tiles`: A layer containing tiles, parent of [`TiledTile`] and [`TiledTilemap`] entities.
 /// - `Objects`: A layer containing objects, parent of [`TiledObject`] entities.
 /// - `Image`: A layer containing an image, parent of a single [`TiledImage`] entity.
 /// - `Group`: A group of layers, used to organize multiple layers hierarchically.
@@ -22,7 +22,7 @@ use bevy::prelude::*;
 pub enum TiledLayer {
     /// A layer containing tiles.
     ///
-    /// Parent of [`TiledTilemap`] entities.
+    /// Parent of [`TiledTile`] entities and of the [`TiledTilemap`] entities rendering them.
     Tiles,
     /// A layer containing objects.
     ///

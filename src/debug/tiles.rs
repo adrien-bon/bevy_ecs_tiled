@@ -61,7 +61,7 @@ fn draw_tile_infos(
     assets: Res<Assets<TiledMapAsset>>,
     map_query: Query<(&TiledMap, &TiledMapStorage, &TilemapAnchor)>,
     tilemap_query: Query<&GlobalTransform, With<TiledTilemap>>,
-    tile_query: Query<(&TilePos, &ChildOf), With<TiledTile>>,
+    tile_query: Query<(&TilePos, &TilemapId), With<TiledTile>>,
     mut gizmos: Gizmos,
 ) {
     for (tiled_map, storage, anchor) in map_query.iter() {
@@ -71,7 +71,7 @@ fn draw_tile_infos(
 
         for (_, entities) in storage.tiles() {
             for entity in entities {
-                let Ok((tile_pos, child_of)) = tile_query.get(*entity) else {
+                let Ok((tile_pos, tilemap_id)) = tile_query.get(*entity) else {
                     continue;
                 };
                 let Some(tile) = storage.tile(&map_asset.map, *entity) else {
@@ -83,7 +83,7 @@ fn draw_tile_infos(
                     map_asset.tile_relative_position(tile_pos, &tile_size(&tile), anchor);
 
                 // To get the tile's global transform, combine with the parent tilemap's transform
-                let Ok(parent_transform) = tilemap_query.get(child_of.parent()) else {
+                let Ok(parent_transform) = tilemap_query.get(tilemap_id.0) else {
                     continue;
                 };
                 let tile_transform =

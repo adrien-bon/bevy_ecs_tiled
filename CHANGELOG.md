@@ -2,6 +2,32 @@
 
 ## [unreleased]
 
+**BREAKING CHANGES**
+This version brings breaking changes.
+A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16.html) is available to help adapt to these.
+
+### Features
+
+- Maps can be modified after they have been loaded: tilemaps, objects visuals, image sprites and physics colliders are derived from tiles, objects and images entities and are automatically updated when these entities are spawned, despawned or modified
+- Add `map_dynamic` example
+- Add `TiledTilemapOf` / `TiledTilemaps` relationship between a tilemap and its layer
+- Add `TiledMapAsset::tileset()` and `TiledMapAsset::tile()`, which also handle tilesets only used by templates
+- Add `TiledObject::kind()`
+- Add `TiledEvent::tile_tileset_id()`
+- Add `SyncMapStorage`, `SyncRender` and `SyncPhysics` variants to `TiledPostUpdateSystems`
+
+### Changed
+
+- Tiles are now direct children of their `TiledLayer::Tiles` entity instead of their `TiledTilemap`, and have a `TiledMapReference`
+- Tilemaps, objects visuals and image sprites are spawned during `TiledPostUpdateSystems::SyncRender` instead of when spawning the map; empty tilemaps are despawned
+- `TiledEvent<TilemapCreated>` is sent whenever a tilemap is spawned during `TiledPostUpdateSystems::SyncRender`, only with the `render` feature
+- Physics colliders are computed from ECS components and spawned during `TiledPostUpdateSystems::SyncPhysics`; `TiledPreUpdateSystems::SpawnPhysicsColliders` is removed
+- `TiledObject::Tile` holds its tileset ID, tile ID and flip flags; `TiledObject::from_object_data()` takes the `TiledMapAsset` as first argument
+- `TiledImage` holds the image handle and repeat settings
+- `TiledObjectVisualOf` no longer requires a `Sprite` and is also used for text objects text box
+- `TiledEvent::with_tile()` takes the tile tileset ID
+- `TiledMapStorage` is kept up to date when layers, objects or tiles are added, modified or removed; `TiledMapStorage::tile_id()` no longer iterates over all tiles
+
 ## v0.15.0
 
 **BREAKING CHANGES**

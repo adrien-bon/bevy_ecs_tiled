@@ -49,7 +49,7 @@ There are six main events:
   - [`TiledEvent<LayerCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.LayerCreated.html):  
     Emitted for each layer after the map is loaded. Contains information about the layer entity.
   - [`TiledEvent<TilemapCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TilemapCreated.html):  
-    Emitted for each tilemap, for every tile layer, after the map is loaded. Contains information about the tilemap entity.
+    Emitted each time a tilemap is spawned, see [below](#tilemapcreated-is-a-rendering-event). Contains information about the tilemap entity.
   - [`TiledEvent<TileCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TileCreated.html):  
     Emitted for each tile after the map is loaded. Contains information about the tile entity. Note this event is only fired for tiles using custom properties.
   - [`TiledEvent<ObjectCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.ObjectCreated.html):  
@@ -58,7 +58,7 @@ There are six main events:
   - [`TiledEvent<WorldCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.WorldCreated.html):  
     Emitted once the world has finished loading. Contains information about the world entity.
 
-All these events are sent **after** the map or world is fully loaded and all components (including those from user properties) have been inserted.
+Except for `TilemapCreated`, all these events are sent **after** the map or world is fully loaded and all components (including those from user properties) have been inserted.
 
 ---
 
@@ -116,8 +116,23 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 ## When Are Events Sent?
 
-All these events are sent **after** the map or world is actually loaded and their components have been inserted, including those coming from user properties.  
-This means you can safely query for components and child entities in your event handlers.
+All these events are sent **after** the map or world is actually loaded and all its Tiled data entities (layers, tiles, objects, images) have been spawned, with their components inserted, including those coming from user properties.  
+This means you can safely query for components and child entities in your event handlers: for instance, when receiving a `LayerCreated` event, all the other layers of the map already exist.
+
+Events are sent in the following order: `MapCreated`, then `LayerCreated`, `TileCreated` and finally `ObjectCreated`.
+
+Note that rendering components and physics colliders are derived from Tiled data later in the frame, during [`TiledPostUpdateSystems`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/sets/enum.TiledPostUpdateSystems.html): they do not exist yet when these events are sent.
+If you need them, use the [`ColliderCreated`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.ColliderCreated.html) and `TilemapCreated` events instead.
+
+### `TilemapCreated` Is a Rendering Event
+
+Tilemaps are rendering entities derived from tiles (see [Entities hierarchy](entities_hierarchy.md)).
+As such, `TilemapCreated` is sent whenever a tilemap is spawned, during `TiledPostUpdateSystems::SyncRender`:
+
+- when the map is loaded, once for each layer and tileset combination,
+- later on, when a tile using a new tileset is added to a layer.
+
+It is only sent when the `render` feature is enabled.
 
 ---
 
