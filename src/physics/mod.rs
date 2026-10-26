@@ -55,6 +55,7 @@ impl<T: TiledPhysicsBackend> Plugin for TiledPhysicsPlugin<T> {
                 .in_set(TiledPostUpdateSystems::SyncPhysics),
         );
         app.add_observer(on_tile_removed::<T>);
+        app.add_observer(on_object_removed);
         app.add_plugins((backend::plugin, collider::plugin, settings::plugin::<T>));
     }
 }
@@ -110,11 +111,25 @@ fn on_tile_removed<T: TiledPhysicsBackend>(
     }
 }
 
+/// Despawn the colliders of an object when its [`TiledObject`] component is removed
+fn on_object_removed(
+    removed: On<Remove<TiledObject>>,
+    mut commands: Commands,
+    colliders_query: Query<&TiledColliders>,
+) {
+    despawn_colliders(
+        &mut commands,
+        removed.entity,
+        colliders_query.get(removed.entity).ok(),
+    );
+}
+
 /// Despawn previous colliders of a Tiled entity, except if the collider is the entity itself
 fn despawn_colliders(commands: &mut Commands, entity: Entity, colliders: Option<&TiledColliders>) {
     for collider in colliders.into_iter().flat_map(|c| c.iter()) {
         if collider != entity {
-            commands.entity(collider).despawn();
+            // Colliders are also children of their source: they may already be despawned
+            commands.entity(collider).try_despawn();
         }
     }
 }

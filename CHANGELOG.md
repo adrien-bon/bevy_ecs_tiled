@@ -8,7 +8,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 
 ### Features
 
-- Maps can be modified after they have been loaded: tilemaps, objects visuals, image sprites and physics colliders are derived from tiles, objects and images entities and are automatically updated when these entities are spawned, despawned or modified
+- Maps can be modified after they have been loaded: tilemaps, objects visuals, image sprites and physics colliders are derived from tiles, objects and images entities and are automatically updated when these entities are spawned, despawned or modified (including when their `TiledObject` component is removed)
 - Add `map_dynamic` example
 - Add `TiledTilemapOf` / `TiledTilemaps` relationship between a tilemap and its layer
 - Add `TiledMapAsset::tileset()` and `TiledMapAsset::tile()`, which also handle tilesets only used by templates
