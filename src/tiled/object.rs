@@ -522,6 +522,23 @@ pub(crate) fn plugin(app: &mut App) {
         PostUpdate,
         sync_object_visuals.in_set(TiledPostUpdateSystems::SyncRender),
     );
+    app.add_observer(on_object_removed);
+}
+
+/// Despawn the visual representation of an object when its [`TiledObject`] component is removed.
+fn on_object_removed(
+    removed: On<Remove<TiledObject>>,
+    mut commands: Commands,
+    visuals_query: Query<&TiledObjectVisuals>,
+) {
+    // Visuals are also children of the object: when the object is despawned, they already are
+    for visual in visuals_query
+        .get(removed.entity)
+        .into_iter()
+        .flat_map(|v| v.iter())
+    {
+        commands.entity(visual).try_despawn();
+    }
 }
 
 /// Spawn the visual representation of new or modified [`TiledObject`]s, removing the previous one.

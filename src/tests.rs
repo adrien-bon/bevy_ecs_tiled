@@ -323,6 +323,17 @@ fn modifying_objects_updates_visuals() {
     };
     app.update();
     assert!(app.world().get::<TiledObjectVisuals>(tile_object).is_none());
+
+    // Remove the TiledObject component of another tile object: its visual is despawned
+    let tile_object = object_by_name(&mut app, "tile_object_with_override");
+    let visual = app.world().get::<TiledObjectVisuals>(tile_object).unwrap()[0];
+    app.world_mut()
+        .entity_mut(tile_object)
+        .remove::<TiledObject>();
+    app.update();
+    assert!(app.world().get_entity(visual).is_err());
+    assert!(app.world().get_entity(tile_object).is_ok());
+    assert!(app.world().get::<TiledObjectVisuals>(tile_object).is_none());
 }
 
 #[cfg(feature = "physics")]
@@ -499,6 +510,14 @@ mod physics {
         };
         app.update();
         assert_eq!(colliders_area(&app, rectangle), vec![100.]);
+
+        // Removing the TiledObject component despawns its colliders
+        app.world_mut()
+            .entity_mut(rectangle)
+            .remove::<TiledObject>();
+        app.update();
+        assert!(colliders_area(&app, rectangle).is_empty());
+        assert!(app.world().get_entity(rectangle).is_ok());
     }
 }
 
