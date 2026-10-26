@@ -328,7 +328,7 @@ fn modifying_objects_updates_visuals() {
 #[cfg(feature = "physics")]
 mod physics {
     use super::*;
-    use ::geo::Area;
+    use ::geo::{Area, BoundingRect};
 
     /// Physics backend which only spawns an entity holding the collider polygons
     #[derive(Default, Clone, Debug, Reflect)]
@@ -360,6 +360,112 @@ mod physics {
                     .sum()
             })
             .collect()
+    }
+
+    /// Bounding box size and center of an entity colliders, relative to `origin`
+    fn colliders_bounds(app: &App, entity: Entity, origin: Vec2) -> (Vec2, Vec2) {
+        let rect = app
+            .world()
+            .get::<TiledColliders>(entity)
+            .into_iter()
+            .flat_map(|c| c.iter())
+            .flat_map(|e| {
+                app.world()
+                    .get::<TiledColliderPolygons>(e)
+                    .unwrap()
+                    .0
+                    .clone()
+            })
+            .filter_map(|p| p.bounding_rect())
+            .reduce(|a, b| {
+                ::geo::Rect::new(
+                    ::geo::Coord {
+                        x: a.min().x.min(b.min().x),
+                        y: a.min().y.min(b.min().y),
+                    },
+                    ::geo::Coord {
+                        x: a.max().x.max(b.max().x),
+                        y: a.max().y.max(b.max().y),
+                    },
+                )
+            })
+            .expect("no collider");
+        let center = rect.center();
+        (
+            Vec2::new(rect.width(), rect.height()),
+            Vec2::new(center.x, center.y) - origin,
+        )
+    }
+
+    #[test]
+    fn colliders_follow_tiles_flips() {
+        let mut app = test_app();
+        app.add_plugins(TiledPhysicsPlugin::<TestBackend>::default());
+        let map = spawn_test_map(&mut app);
+        let decoration = layer_by_name(&mut app, "decoration");
+        assert!(app.world().get::<TiledColliders>(decoration).is_none());
+
+        // Tile 3 has a collider on its left half
+        let tile_pos = TilePos::new(2, 1);
+        let tile = app
+            .world_mut()
+            .spawn((
+                TiledTile,
+                ChildOf(decoration),
+                TiledTilesetId(0),
+                TiledTileId(3),
+                tile_pos,
+            ))
+            .id();
+        app.update();
+
+        let tile_center = {
+            let handle = &app.world().get::<TiledMap>(map).unwrap().0;
+            let assets = app.world().resource::<Assets<TiledMapAsset>>();
+            assets.get(handle).unwrap().tile_relative_position(
+                &tile_pos,
+                &TilemapTileSize::new(16., 16.),
+                &TilemapAnchor::default(),
+            )
+        };
+        assert_eq!(
+            colliders_bounds(&app, decoration, tile_center),
+            (Vec2::new(8., 16.), Vec2::new(-4., 0.))
+        );
+
+        // Horizontal flip: collider is on the right half
+        *app.world_mut().get_mut::<TileFlip>(tile).unwrap() = TileFlip {
+            x: true,
+            ..default()
+        };
+        app.update();
+        assert_eq!(
+            colliders_bounds(&app, decoration, tile_center),
+            (Vec2::new(8., 16.), Vec2::new(4., 0.))
+        );
+
+        // Diagonal flip: collider is on the top half
+        *app.world_mut().get_mut::<TileFlip>(tile).unwrap() = TileFlip {
+            d: true,
+            ..default()
+        };
+        app.update();
+        assert_eq!(
+            colliders_bounds(&app, decoration, tile_center),
+            (Vec2::new(16., 8.), Vec2::new(0., 4.))
+        );
+
+        // Diagonal and vertical flips: collider is on the bottom half
+        *app.world_mut().get_mut::<TileFlip>(tile).unwrap() = TileFlip {
+            y: true,
+            d: true,
+            ..default()
+        };
+        app.update();
+        assert_eq!(
+            colliders_bounds(&app, decoration, tile_center),
+            (Vec2::new(16., 8.), Vec2::new(0., -4.))
+        );
     }
 
     #[test]

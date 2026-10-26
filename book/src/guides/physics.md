@@ -128,7 +128,8 @@ To reduce the number of physics colliders and improve performance, `bevy_ecs_til
 
 - **Tiles:** Merging is actually performed at the tiles layer level.
   Eventhough you can use several shapes to define a tile's collider, these shape will be merged into a single collider and all tile colliders for a given tiles layer will also be merged together.
-  The collider entity is spawned at the tiles layer level, and spawned again whenever a tile of this layer is added, modified or removed.
+  The collider entity is spawned at the tiles layer level, and spawned again whenever a tile of this layer is added, modified (including its `TileFlip`) or removed.
+  Tiles flips (horizontal, vertical and diagonal) are applied to their collider, the same way they are applied to their rendering.
 - **Regular objects:** If an object references a tile, it will inherit that tile's collider and if the tile has several shapes, they will be merged.
   The collider entity is spawned at the object level and each object always gets its own collider.
 

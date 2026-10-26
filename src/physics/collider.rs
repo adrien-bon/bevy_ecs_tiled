@@ -5,7 +5,7 @@
 //! as well as utilities for extracting tile data relevant to collider generation.
 
 use crate::{prelude::*, tiled::helpers::tilemap_offset};
-use ::geo::BooleanOps;
+use ::geo::{BooleanOps, MapCoords};
 use bevy::prelude::*;
 
 /// Marker component for collider's source
@@ -165,18 +165,41 @@ pub(crate) fn object_polygons(
     }
 }
 
+/// Apply a [`TileFlip`] to a coordinate local to a tile of the given size.
+///
+/// Coordinates use Bevy referential: origin is the tile bottom-left corner and Y axis points up.
+/// Flips are applied the same way `bevy_ecs_tilemap` renders them (and Tiled draws them):
+/// diagonal flip first (ie. swapping X and Y axis in image space), then horizontal and vertical flips.
+fn flip_tile_coord(coord: geo::Coord<f32>, size: Vec2, flip: &TileFlip) -> geo::Coord<f32> {
+    // Normalized coordinates in image space: origin is top-left corner and Y axis points down
+    let (mut u, mut v) = (coord.x / size.x, 1. - coord.y / size.y);
+    if flip.d {
+        std::mem::swap(&mut u, &mut v);
+    }
+    if flip.x {
+        u = 1. - u;
+    }
+    if flip.y {
+        v = 1. - v;
+    }
+    geo::Coord {
+        x: u * size.x,
+        y: (1. - v) * size.y,
+    }
+}
+
 /// Compute the collider polygons of a set of tiles, relative to their parent [`TiledLayer::Tiles`].
 ///
-/// Tiles are given as their position, tileset ID and [`tiled::TileId`].
+/// Tiles are given as their position, tileset ID, [`tiled::TileId`] and [`TileFlip`].
 /// Polygons are computed from the tiles collision objects which match `filter`.
 pub(crate) fn tiles_polygons(
     map_asset: &TiledMapAsset,
     anchor: &TilemapAnchor,
-    tiles: impl Iterator<Item = (TilePos, u32, tiled::TileId)>,
+    tiles: impl Iterator<Item = (TilePos, u32, tiled::TileId, TileFlip)>,
     filter: &TiledFilter,
 ) -> Vec<geo::Polygon<f32>> {
     let mut acc = vec![];
-    for (tile_pos, tileset_id, tile_id) in tiles {
+    for (tile_pos, tileset_id, tile_id, flip) in tiles {
         let Some(tile) = map_asset.tile(tileset_id, tile_id) else {
             continue;
         };
@@ -186,17 +209,35 @@ pub(crate) fn tiles_polygons(
         let tile_size = tile_size(&tile);
         let tile_position = map_asset.tile_relative_position(&tile_pos, &tile_size, anchor)
             + tilemap_offset(&map_asset.map, tile.tileset());
-        acc.extend(polygons_from_tile(
-            map_asset,
-            collision,
-            filter,
-            &tile_size,
-            Vec2::new(
-                tile_position.x - tile_size.x / 2.,
-                tile_position.y - tile_size.y / 2.,
-            ),
-            Vec2::ONE,
-        ));
+        let size = Vec2::new(tile_size.x, tile_size.y);
+        let bottom_left = tile_position - size / 2.;
+        let flipped = flip.x || flip.y || flip.d;
+        // Compute polygons relative to the tile bottom-left corner, apply
+        // tile flips then move them to the actual tile position
+        acc.extend(
+            polygons_from_tile(
+                map_asset,
+                collision,
+                filter,
+                &tile_size,
+                Vec2::ZERO,
+                Vec2::ONE,
+            )
+            .into_iter()
+            .map(|polygon| {
+                polygon.map_coords(|coord| {
+                    let coord = if flipped {
+                        flip_tile_coord(coord, size, &flip)
+                    } else {
+                        coord
+                    };
+                    geo::Coord {
+                        x: coord.x + bottom_left.x,
+                        y: coord.y + bottom_left.y,
+                    }
+                })
+            }),
+        );
     }
     acc
 }
@@ -287,4 +328,44 @@ fn polygons_from_tile(
         }
     }
     polygons
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn flip(x: bool, y: bool, d: bool) -> TileFlip {
+        TileFlip { x, y, d }
+    }
+
+    fn apply(x: f32, y: f32, size: Vec2, f: TileFlip) -> (f32, f32) {
+        let c = flip_tile_coord(geo::Coord { x, y }, size, &f);
+        (c.x, c.y)
+    }
+
+    #[test]
+    fn flip_square_tile() {
+        let size = Vec2::new(16., 16.);
+        // Point near the tile top-left corner
+        assert_eq!(apply(2., 14., size, flip(false, false, false)), (2., 14.));
+        assert_eq!(apply(2., 14., size, flip(true, false, false)), (14., 14.));
+        assert_eq!(apply(2., 14., size, flip(false, true, false)), (2., 2.));
+        assert_eq!(apply(2., 14., size, flip(true, true, false)), (14., 2.));
+        // This point is on the image diagonal: diagonal flip does not move it
+        assert_eq!(apply(2., 14., size, flip(false, false, true)), (2., 14.));
+        // Diagonal flip swaps X and Y axis in image space (Y pointing down)
+        assert_eq!(apply(2., 10., size, flip(false, false, true)), (6., 14.));
+        // Diagonal flip is applied before horizontal and vertical ones
+        assert_eq!(apply(2., 10., size, flip(true, false, true)), (10., 14.));
+        assert_eq!(apply(2., 10., size, flip(false, true, true)), (6., 2.));
+    }
+
+    #[test]
+    fn flip_non_square_tile() {
+        let size = Vec2::new(16., 8.);
+        assert_eq!(apply(4., 2., size, flip(true, false, false)), (12., 2.));
+        assert_eq!(apply(4., 2., size, flip(false, true, false)), (4., 6.));
+        // Coordinates are normalized: diagonal flip stretches the tile like rendering does
+        assert_eq!(apply(4., 2., size, flip(false, false, true)), (12., 6.));
+    }
 }
