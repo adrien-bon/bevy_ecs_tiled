@@ -14,6 +14,11 @@
     <object id="1" name="collider" x="0" y="0" width="16" height="16"/>
    </objectgroup>
   </tile>
+  <tile id="3">
+   <objectgroup draworder="index" id="2">
+    <object id="1" name="left_half" x="0" y="0" width="8" height="16"/>
+   </objectgroup>
+  </tile>
  </tileset>
  <tileset firstgid="21" name="without_colliders" tilewidth="16" tileheight="16" tilecount="20" columns="4">
   <image source="../../tiles/drjamgo_hex_16x16.png" width="64" height="80"/>
