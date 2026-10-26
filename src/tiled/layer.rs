@@ -18,7 +18,13 @@ use bevy::prelude::*;
 /// - `Group`: A group of layers, used to organize multiple layers hierarchically.
 #[derive(Component, Reflect, Copy, Clone, Debug)]
 #[reflect(Component, Debug)]
-#[require(Visibility, Transform, TiledName, TiledLayerId)]
+#[require(
+    Visibility,
+    Transform,
+    TiledName,
+    TiledLayerId,
+    crate::tiled::tile::TiledLayerTiles
+)]
 pub enum TiledLayer {
     /// A layer containing tiles.
     ///

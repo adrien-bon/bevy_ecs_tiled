@@ -135,6 +135,14 @@ Below each `TiledLayer::Tiles`, you find two kinds of sibling entities:
 
 Tilemaps are derived from tiles: a tilemap is spawned when a tile using a new tileset is added to a layer, and despawned once it does not contain any tile anymore.
 
+A position of a layer can only hold a single tile, as in Tiled.
+Spawning a tile, or moving a tile (ie. changing its `TilePos`), onto a position already used by another tile of the same layer despawns this other tile, whatever its tileset.
+
+Note that:
+
+- tiles outside of the map bounds (see [`TiledMapAsset::tilemap_size`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html)) are neither rendered nor used to compute physics colliders: layers cannot grow,
+- moving a tile to another layer (ie. changing its `ChildOf`) is not supported: despawn it and spawn a new one in the other layer instead.
+
 ## Objects
 
 Each Tiled object is spawned as a child of its `TiledLayer::Objects`, with a [`TiledObject`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html) component describing its shape (point, rectangle, polygon, ...).  

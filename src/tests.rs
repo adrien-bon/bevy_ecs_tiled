@@ -99,7 +99,6 @@ fn spawn_test_map(app: &mut App) -> Entity {
     map_entity
 }
 
-#[cfg(any(feature = "render", feature = "physics"))]
 fn layer_by_name(app: &mut App, name: &str) -> Entity {
     app.world_mut()
         .query_filtered::<(Entity, &TiledName), With<TiledLayer>>()
@@ -109,7 +108,6 @@ fn layer_by_name(app: &mut App, name: &str) -> Entity {
         .unwrap_or_else(|| panic!("missing layer {name}"))
 }
 
-#[cfg(any(feature = "render", feature = "physics"))]
 fn tile_at(app: &mut App, layer: Entity, pos: TilePos) -> Entity {
     app.world_mut()
         .query_filtered::<(Entity, &TilePos, &ChildOf), With<TiledTile>>()
@@ -336,6 +334,196 @@ fn modifying_objects_updates_visuals() {
     assert!(app.world().get::<TiledObjectVisuals>(tile_object).is_none());
 }
 
+/// Tiles of a layer, as registered in its index
+fn layer_index(app: &App, layer: Entity) -> Vec<(TilePos, Entity)> {
+    let mut tiles = app
+        .world()
+        .get::<crate::tiled::tile::TiledLayerTiles>(layer)
+        .unwrap()
+        .tiles()
+        .iter()
+        .map(|(pos, e)| (*pos, *e))
+        .collect::<Vec<_>>();
+    tiles.sort();
+    tiles
+}
+
+/// Tiles of a layer, from their actual components
+fn layer_tiles(app: &mut App, layer: Entity) -> Vec<(TilePos, Entity)> {
+    let mut tiles = app
+        .world_mut()
+        .query_filtered::<(Entity, &TilePos, &ChildOf), With<TiledTile>>()
+        .iter(app.world())
+        .filter(|(_, _, c)| c.parent() == layer)
+        .map(|(e, pos, _)| (*pos, e))
+        .collect::<Vec<_>>();
+    tiles.sort();
+    tiles
+}
+
+#[test]
+fn moving_a_tile_onto_another_replaces_it() {
+    let mut app = test_app();
+    let map = spawn_test_map(&mut app);
+    let ground = layer_by_name(&mut app, "ground");
+    let a = tile_at(&mut app, ground, TilePos::new(0, 3));
+    let b = tile_at(&mut app, ground, TilePos::new(1, 3));
+
+    // Move A onto B: B is despawned
+    *app.world_mut().get_mut::<TilePos>(a).unwrap() = TilePos::new(1, 3);
+    app.update();
+    assert!(app.world().get_entity(b).is_err());
+    let storage = app.world().get::<TiledMapStorage>(map).unwrap();
+    assert_eq!(storage.tile_id(b), None);
+    assert_eq!(layer_index(&app, ground), layer_tiles(&mut app, ground));
+
+    // Move A back: its previous position is empty
+    *app.world_mut().get_mut::<TilePos>(a).unwrap() = TilePos::new(0, 3);
+    app.update();
+    assert!(
+        layer_tiles(&mut app, ground)
+            .iter()
+            .all(|(pos, _)| *pos != TilePos::new(1, 3))
+    );
+    assert_eq!(layer_index(&app, ground), layer_tiles(&mut app, ground));
+
+    #[cfg(feature = "render")]
+    {
+        let tilemap = tilemap_of(&app, ground, 0).unwrap();
+        assert_eq!(storage_at(&app, tilemap, TilePos::new(1, 3)), None);
+        assert_eq!(storage_at(&app, tilemap, TilePos::new(0, 3)), Some(a));
+    }
+}
+
+#[test]
+fn swapping_tiles_keeps_both() {
+    let mut app = test_app();
+    spawn_test_map(&mut app);
+    let ground = layer_by_name(&mut app, "ground");
+    let a = tile_at(&mut app, ground, TilePos::new(0, 3));
+    let b = tile_at(&mut app, ground, TilePos::new(1, 3));
+
+    *app.world_mut().get_mut::<TilePos>(a).unwrap() = TilePos::new(1, 3);
+    *app.world_mut().get_mut::<TilePos>(b).unwrap() = TilePos::new(0, 3);
+    app.update();
+    assert_eq!(tile_at(&mut app, ground, TilePos::new(1, 3)), a);
+    assert_eq!(tile_at(&mut app, ground, TilePos::new(0, 3)), b);
+    assert_eq!(layer_index(&app, ground), layer_tiles(&mut app, ground));
+
+    // Index is still valid: moving A to an empty position does not despawn anything
+    *app.world_mut().get_mut::<TilePos>(a).unwrap() = TilePos::new(2, 2);
+    app.update();
+    assert!(app.world().get_entity(b).is_ok());
+    assert_eq!(layer_index(&app, ground), layer_tiles(&mut app, ground));
+}
+
+#[test]
+fn spawning_a_tile_onto_another_replaces_it() {
+    let mut app = test_app();
+    spawn_test_map(&mut app);
+    let ground = layer_by_name(&mut app, "ground");
+    let a = tile_at(&mut app, ground, TilePos::new(0, 3));
+
+    // Another tileset: tiles are still replaced
+    let new_tile = app
+        .world_mut()
+        .spawn((
+            TiledTile,
+            ChildOf(ground),
+            TiledTilesetId(1),
+            TiledTileId(2),
+            TilePos::new(0, 3),
+        ))
+        .id();
+    app.update();
+    assert!(app.world().get_entity(a).is_err());
+    assert_eq!(tile_at(&mut app, ground, TilePos::new(0, 3)), new_tile);
+    assert_eq!(layer_index(&app, ground), layer_tiles(&mut app, ground));
+}
+
+#[test]
+fn layer_index_follows_tiles() {
+    let mut app = test_app();
+    spawn_test_map(&mut app);
+    let ground = layer_by_name(&mut app, "ground");
+    let decoration = layer_by_name(&mut app, "decoration");
+    assert_eq!(layer_index(&app, ground), layer_tiles(&mut app, ground));
+    assert_eq!(
+        layer_index(&app, decoration),
+        layer_tiles(&mut app, decoration)
+    );
+    assert_eq!(layer_index(&app, ground).len(), 3);
+
+    // Add a tile
+    let tile = app
+        .world_mut()
+        .spawn((
+            TiledTile,
+            ChildOf(ground),
+            TiledTilesetId(0),
+            TiledTileId(1),
+            TilePos::new(2, 2),
+        ))
+        .id();
+    app.update();
+    assert!(layer_index(&app, ground).contains(&(TilePos::new(2, 2), tile)));
+
+    // Move it: previous position is no longer in the index
+    *app.world_mut().get_mut::<TilePos>(tile).unwrap() = TilePos::new(2, 1);
+    app.update();
+    assert_eq!(layer_index(&app, ground), layer_tiles(&mut app, ground));
+    assert!(
+        layer_index(&app, ground)
+            .iter()
+            .all(|(pos, _)| *pos != TilePos::new(2, 2))
+    );
+
+    // Despawn it: it is removed from the index
+    app.world_mut().entity_mut(tile).despawn();
+    app.update();
+    assert_eq!(layer_index(&app, ground).len(), 3);
+    assert_eq!(layer_index(&app, ground), layer_tiles(&mut app, ground));
+}
+
+#[test]
+#[cfg(feature = "render")]
+fn tiles_outside_of_map_are_not_rendered() {
+    use crate::tiled::tile::render::TiledTileRenderState;
+
+    let mut app = test_app();
+    spawn_test_map(&mut app);
+    let ground = layer_by_name(&mut app, "ground");
+    let tilemap = tilemap_of(&app, ground, 0).unwrap();
+    let tile = tile_at(&mut app, ground, TilePos::new(0, 3));
+
+    // Move the tile outside of the map: it is detached from its tilemap
+    *app.world_mut().get_mut::<TilePos>(tile).unwrap() = TilePos::new(10, 10);
+    app.update();
+    assert!(app.world().get::<TilemapId>(tile).is_none());
+    assert_eq!(storage_at(&app, tilemap, TilePos::new(0, 3)), None);
+    let state = *app.world().get::<TiledTileRenderState>(tile).unwrap();
+    assert_eq!(state.tilemap, None);
+    assert_eq!(state.position, TilePos::new(10, 10));
+
+    // The tile is not processed again on next frame
+    app.update();
+    let state = app
+        .world_mut()
+        .query::<Ref<TiledTileRenderState>>()
+        .get(app.world(), tile)
+        .unwrap();
+    assert!(!state.is_changed());
+
+    // Move it back inside the map: it is rendered again
+    *app.world_mut().get_mut::<TilePos>(tile).unwrap() = TilePos::new(2, 2);
+    app.update();
+    assert_eq!(
+        app.world().get::<TilemapId>(tile),
+        Some(&TilemapId(tilemap))
+    );
+    assert_eq!(storage_at(&app, tilemap, TilePos::new(2, 2)), Some(tile));
+}
+
 #[cfg(feature = "physics")]
 mod physics {
     use super::*;
@@ -477,6 +665,43 @@ mod physics {
             colliders_bounds(&app, decoration, tile_center),
             (Vec2::new(16., 8.), Vec2::new(0., -4.))
         );
+    }
+
+    #[test]
+    fn replaced_tiles_colliders_are_removed() {
+        let mut app = test_app();
+        app.add_plugins(TiledPhysicsPlugin::<TestBackend>::default());
+        spawn_test_map(&mut app);
+        let ground = layer_by_name(&mut app, "ground");
+        assert_eq!(colliders_area(&app, ground), vec![512.]);
+
+        // Move a tile onto the other one, then move it back
+        let tile = tile_at(&mut app, ground, TilePos::new(0, 3));
+        *app.world_mut().get_mut::<TilePos>(tile).unwrap() = TilePos::new(1, 3);
+        app.update();
+        *app.world_mut().get_mut::<TilePos>(tile).unwrap() = TilePos::new(0, 3);
+        app.update();
+
+        // The replaced tile does not have a collider anymore
+        assert_eq!(colliders_area(&app, ground), vec![256.]);
+    }
+
+    #[test]
+    fn tiles_outside_of_map_have_no_collider() {
+        let mut app = test_app();
+        app.add_plugins(TiledPhysicsPlugin::<TestBackend>::default());
+        spawn_test_map(&mut app);
+        let ground = layer_by_name(&mut app, "ground");
+        assert_eq!(colliders_area(&app, ground), vec![512.]);
+
+        let tile = tile_at(&mut app, ground, TilePos::new(0, 3));
+        *app.world_mut().get_mut::<TilePos>(tile).unwrap() = TilePos::new(10, 10);
+        app.update();
+        assert_eq!(colliders_area(&app, ground), vec![256.]);
+
+        *app.world_mut().get_mut::<TilePos>(tile).unwrap() = TilePos::new(0, 3);
+        app.update();
+        assert_eq!(colliders_area(&app, ground), vec![512.]);
     }
 
     #[test]

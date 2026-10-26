@@ -9,7 +9,7 @@
 //! updated and removed when tiles are added, modified or removed.
 
 use crate::prelude::*;
-use bevy::{prelude::*, render::sync_world::SyncToRenderWorld};
+use bevy::{platform::collections::HashMap, prelude::*, render::sync_world::SyncToRenderWorld};
 
 /// Marker [`Component`] for a Tiled map tile.
 ///
@@ -22,6 +22,15 @@ use bevy::{prelude::*, render::sync_world::SyncToRenderWorld};
 ///
 /// To spawn a new tile, you only need to insert this component along with a [`ChildOf`] pointing to
 /// a [`TiledLayer::Tiles`] entity, a [`TiledTilesetId`], a [`TiledTileId`] and a [`TilePos`].
+///
+/// A position of a layer can only hold a single tile: spawning a tile, or moving a tile (ie. changing its
+/// [`TilePos`]), onto a position already used by another tile of the same layer despawns this other tile,
+/// whatever its tileset.
+///
+/// Some limitations apply:
+/// - tiles outside of the map bounds (see [`TiledMapAsset::tilemap_size`]) are neither rendered nor used to
+///   compute physics colliders: layers cannot grow,
+/// - moving a tile to another layer (ie. changing its [`ChildOf`]) is not supported: despawn it and spawn a new one instead.
 ///
 /// **Note:** Do not add [`Visibility`] or [`Transform`] to tile entities. Rendering is handled at the
 /// [`TiledTilemap`] level via [`TilemapBundle`], and adding
@@ -39,9 +48,27 @@ use bevy::{prelude::*, render::sync_world::SyncToRenderWorld};
     TileFlip,
     TileVisible,
     TileColor,
-    SyncToRenderWorld
+    SyncToRenderWorld,
+    TiledTileIndexedPosition
 )]
 pub struct TiledTile;
+
+/// Which tile occupies each position of a [`TiledLayer::Tiles`].
+///
+/// Kept up to date when tiles are added, moved or removed.
+#[derive(Component, Default, Debug)]
+pub(crate) struct TiledLayerTiles(HashMap<TilePos, Entity>);
+
+#[cfg(test)]
+impl TiledLayerTiles {
+    pub(crate) fn tiles(&self) -> &HashMap<TilePos, Entity> {
+        &self.0
+    }
+}
+
+/// Position under which a [`TiledTile`] is registered in its layer [`TiledLayerTiles`], if any.
+#[derive(Component, Default, Copy, Clone, Debug)]
+pub(crate) struct TiledTileIndexedPosition(Option<TilePos>);
 
 /// Marker [`Component`] for a Tiled tilemap.
 ///
@@ -93,6 +120,11 @@ pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledTileId>();
     app.register_type::<TiledTilemapOf>();
     app.register_type::<TiledTilemaps>();
+    app.add_systems(
+        PostUpdate,
+        index_layers_tiles.in_set(TiledPostUpdateSystems::SyncMapStorage),
+    );
+    app.add_observer(unindex_tile);
     #[cfg(feature = "render")]
     {
         app.add_systems(
@@ -105,8 +137,70 @@ pub(crate) fn plugin(app: &mut App) {
     }
 }
 
+/// Register new or moved tiles in their layer [`TiledLayerTiles`].
+///
+/// If another tile already occupies the position, it is despawned.
+fn index_layers_tiles(
+    mut commands: Commands,
+    mut tiles_query: Query<
+        (Entity, &TilePos, &ChildOf, &mut TiledTileIndexedPosition),
+        (With<TiledTile>, Or<(Added<TiledTile>, Changed<TilePos>)>),
+    >,
+    positions_query: Query<&TilePos, With<TiledTile>>,
+    mut layers_query: Query<&mut TiledLayerTiles>,
+) {
+    // Tiles despawned during this run, because another tile moved onto them
+    let mut despawned = bevy::platform::collections::HashSet::<Entity>::default();
+    for (entity, tile_pos, child_of, mut indexed) in tiles_query.iter_mut() {
+        if despawned.contains(&entity) {
+            continue;
+        }
+        let Ok(mut layer_tiles) = layers_query.get_mut(child_of.parent()) else {
+            continue;
+        };
+
+        // Remove the tile from its previous position
+        if let Some(previous) = indexed.0
+            && layer_tiles.0.get(&previous) == Some(&entity)
+        {
+            layer_tiles.0.remove(&previous);
+        }
+
+        // Replace the tile which was at this position, unless it moved away during this
+        // frame (it will then be handled later on, when iterating over moved tiles)
+        if let Some(&other) = layer_tiles.0.get(tile_pos)
+            && other != entity
+            && positions_query.get(other).is_ok_and(|pos| pos == tile_pos)
+        {
+            commands.entity(other).despawn();
+            despawned.insert(other);
+        }
+
+        layer_tiles.0.insert(*tile_pos, entity);
+        indexed.0 = Some(*tile_pos);
+    }
+}
+
+/// Remove a tile from its layer [`TiledLayerTiles`] when it is despawned or when its [`TiledTile`] component is removed.
+fn unindex_tile(
+    removed: On<Remove<TiledTile>>,
+    mut tiles_query: Query<(&ChildOf, &mut TiledTileIndexedPosition)>,
+    mut layers_query: Query<&mut TiledLayerTiles>,
+) {
+    let entity = removed.entity;
+    let Ok((child_of, mut indexed)) = tiles_query.get_mut(entity) else {
+        return;
+    };
+    if let Some(position) = indexed.0.take()
+        && let Ok(mut layer_tiles) = layers_query.get_mut(child_of.parent())
+        && layer_tiles.0.get(&position) == Some(&entity)
+    {
+        layer_tiles.0.remove(&position);
+    }
+}
+
 #[cfg(feature = "render")]
-mod render {
+pub(crate) mod render {
     use super::*;
     use crate::tiled::{
         event::TilemapCreated, helpers::tilemap_offset, map::asset::TiledMapTileset,
@@ -117,10 +211,11 @@ mod render {
     /// Where a [`TiledTile`] is currently registered for rendering.
     ///
     /// Used to remove the tile from its previous [`TileStorage`] when it is modified or removed.
+    /// `tilemap` is `None` if the tile cannot be rendered at this position (eg. outside of map bounds).
     #[derive(Component, Copy, Clone, Debug)]
-    pub(super) struct TiledTileRenderState {
-        tilemap: Entity,
-        position: TilePos,
+    pub(crate) struct TiledTileRenderState {
+        pub(crate) tilemap: Option<Entity>,
+        pub(crate) position: TilePos,
     }
 
     /// A tilemap spawned during the current [`sync_tiles`] run
@@ -144,6 +239,25 @@ mod render {
             // the tile from bevy_ecs_tilemap render world
             .try_remove::<TilePos>()
             .try_insert(position);
+    }
+
+    /// Mark a tile as not rendered at the given position, detaching it from its tilemap if needed.
+    ///
+    /// Keeping a render state for this position prevents [`sync_tiles`] from processing the tile
+    /// again (and logging again why it cannot be rendered) until it is actually modified.
+    fn mark_not_rendered(
+        commands: &mut Commands,
+        entity: Entity,
+        position: TilePos,
+        render_state: Option<&TiledTileRenderState>,
+    ) {
+        if render_state.is_some_and(|state| state.tilemap.is_some()) {
+            detach_tile(commands, entity, position);
+        }
+        commands.entity(entity).insert(TiledTileRenderState {
+            tilemap: None,
+            position,
+        });
     }
 
     /// Add new or modified tiles to the [`TileStorage`] of the corresponding [`TiledTilemap`],
@@ -198,7 +312,8 @@ mod render {
 
             // First, remove the tile from its previous tilemap
             if let Some(state) = render_state
-                && let Ok((_, mut storage)) = tilemaps_query.get_mut(state.tilemap)
+                && let Some(tilemap) = state.tilemap
+                && let Ok((_, mut storage)) = tilemaps_query.get_mut(tilemap)
                 && storage.checked_get(&state.position) == Some(entity)
             {
                 storage.remove(&state.position);
@@ -208,9 +323,7 @@ mod render {
                 child_of.and_then(|c| layers_query.get(c.parent()).ok().map(|l| (c.parent(), l)))
             else {
                 warn!("Tile {entity} is not a child of a tiles layer, it will not be rendered");
-                if render_state.is_some() {
-                    detach_tile(&mut commands, entity, *tile_pos);
-                }
+                mark_not_rendered(&mut commands, entity, *tile_pos, render_state);
                 continue;
             };
 
@@ -230,9 +343,7 @@ mod render {
                         "Tileset {} cannot be used in a tiles layer (missing tileset or images with different sizes), some tiles will not be rendered",
                         tileset_id.0
                     );
-                    if render_state.is_some() {
-                        detach_tile(&mut commands, entity, *tile_pos);
-                    }
+                    mark_not_rendered(&mut commands, entity, *tile_pos, render_state);
                     continue;
                 }
             };
@@ -242,9 +353,7 @@ mod render {
                     "Tile {entity} position {tile_pos:?} is outside of map bounds {:?}, it will not be rendered",
                     map_asset.tilemap_size
                 );
-                if render_state.is_some() {
-                    detach_tile(&mut commands, entity, *tile_pos);
-                }
+                mark_not_rendered(&mut commands, entity, *tile_pos, render_state);
                 continue;
             }
 
@@ -308,9 +417,9 @@ mod render {
 
             // Then update the tile rendering components
             let mut entity_commands = commands.entity(entity);
-            if render_state
-                .is_some_and(|state| state.tilemap != tilemap_entity || state.position != *tile_pos)
-            {
+            if render_state.is_some_and(|state| {
+                state.tilemap != Some(tilemap_entity) || state.position != *tile_pos
+            }) {
                 // The tile changed of tilemap or position: removing then re-inserting its TilePos
                 // makes sure it is removed from its previous location in bevy_ecs_tilemap render
                 // world before being added to the new one. Relying on bevy_ecs_tilemap TilePosOld
@@ -322,7 +431,7 @@ mod render {
                 TilemapId(tilemap_entity),
                 tile_texture_index(tileset, tile_id.0),
                 TiledTileRenderState {
-                    tilemap: tilemap_entity,
+                    tilemap: Some(tilemap_entity),
                     position: *tile_pos,
                 },
             ));
@@ -359,7 +468,8 @@ mod render {
         let Ok((state, tile_pos)) = tiles_query.get(entity) else {
             return;
         };
-        if let Ok(mut storage) = tilemaps_query.get_mut(state.tilemap)
+        if let Some(tilemap) = state.tilemap
+            && let Ok(mut storage) = tilemaps_query.get_mut(tilemap)
             && storage.checked_get(&state.position) == Some(entity)
         {
             storage.remove(&state.position);

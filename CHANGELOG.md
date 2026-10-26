@@ -16,6 +16,8 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Add `TiledEvent::tile_tileset_id()`
 - Add `SyncMapStorage`, `SyncRender` and `SyncPhysics` variants to `TiledPostUpdateSystems`
 - Colliders of tiles layers take tiles flips (including diagonal flip) into account and are updated when a `TileFlip` changes
+- A position of a tiles layer only holds a single tile: spawning or moving a tile onto another one of the same layer despawns the latter
+- Tiles outside of the map bounds are neither rendered nor used to compute physics colliders
 - Tile objects inherit the custom properties of their tile, and tile properties are inserted on tiles and tile objects spawned after the map has been loaded
 
 ### Changed

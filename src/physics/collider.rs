@@ -200,6 +200,10 @@ pub(crate) fn tiles_polygons(
 ) -> Vec<geo::Polygon<f32>> {
     let mut acc = vec![];
     for (tile_pos, tileset_id, tile_id, flip) in tiles {
+        // Tiles outside of map bounds are not rendered: do not give them a collider
+        if !tile_pos.within_map_bounds(&map_asset.tilemap_size) {
+            continue;
+        }
         let Some(tile) = map_asset.tile(tileset_id, tile_id) else {
             continue;
         };
