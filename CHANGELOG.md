@@ -18,6 +18,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Colliders of tiles layers take tiles flips (including diagonal flip) into account and are updated when a `TileFlip` changes
 - A position of a tiles layer only holds a single tile: spawning or moving a tile onto another one of the same layer despawns the latter
 - Tiles outside of the map bounds are neither rendered nor used to compute physics colliders
+- Tiles and objects spawned without a `TiledMapReference` get the one of their parent layer
 - Tile objects inherit the custom properties of their tile, and tile properties are inserted on tiles and tile objects spawned after the map has been loaded
 
 ### Changed

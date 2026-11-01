@@ -85,6 +85,13 @@ fn spawn_tile(mut commands: Commands, layers: Query<(Entity, &TiledLayer)>) {
 }
 ```
 
+When spawning tiles or objects yourself:
+
+- you do not need to insert a [`TiledMapReference`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMapReference.html): it is automatically inserted from the parent layer,
+- give each object a [`TiledObjectId`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/struct.TiledObjectId.html) which is not used by any other object of the map, otherwise it will not be registered in the map [`TiledMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/storage/struct.TiledMapStorage.html).
+
+Also note that respawning the map discards all these modifications (see [Spawn / Despawn / Reload a Map](../guides/spawn_reload.md)).
+
 See the [`map_dynamic` example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/map_dynamic.rs) for a demo.
 
 Whatever their level in the hierarchy, entities spawned by `bevy_ecs_tiled` share a few common components:
