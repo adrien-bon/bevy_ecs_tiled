@@ -73,10 +73,15 @@ fn test_app() -> App {
 
 /// Spawn the test map and run the app until it is spawned
 fn spawn_test_map(app: &mut App) -> Entity {
+    spawn_map(app, DYNAMIC_MAP)
+}
+
+/// Spawn the given map and run the app until it is spawned
+fn spawn_map(app: &mut App, path: &str) -> Entity {
     let handle = app
         .world()
         .resource::<AssetServer>()
-        .load::<TiledMapAsset>(DYNAMIC_MAP);
+        .load::<TiledMapAsset>(path.to_owned());
     let map_entity = app.world_mut().spawn(TiledMap(handle.clone())).id();
 
     let deadline = Instant::now() + Duration::from_secs(10);
@@ -531,7 +536,7 @@ mod physics {
 
     /// Physics backend which only spawns an entity holding the collider polygons
     #[derive(Default, Clone, Debug, Reflect)]
-    struct TestBackend;
+    pub(super) struct TestBackend;
 
     impl TiledPhysicsBackend for TestBackend {
         fn spawn_colliders(
@@ -854,5 +859,142 @@ mod properties {
         assert_eq!(property_value(&app, tile), Some(42));
         assert_eq!(property_value(&app, other_tile), None);
         assert_eq!(property_value(&app, tile_object), Some(42));
+    }
+}
+
+/// Performance measurements on a large map, ignored by default.
+///
+/// Run with:
+/// `cargo test --release --all-features --lib perf -- --ignored --nocapture`
+mod perf {
+    use super::*;
+
+    const LARGE_MAP: &str = "tests/perf/large_map.tmx";
+
+    /// Minimal deterministic pseudo-random generator
+    struct Lcg(u64);
+
+    impl Lcg {
+        fn next(&mut self, max: u32) -> u32 {
+            self.0 = self
+                .0
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            ((self.0 >> 33) % max as u64) as u32
+        }
+    }
+
+    /// Run a single frame and return its duration
+    fn timed_update(app: &mut App) -> Duration {
+        let start = Instant::now();
+        app.update();
+        start.elapsed()
+    }
+
+    /// Run several frames, applying `modify` before each of them, and return the average frame duration
+    fn average_frame(app: &mut App, frames: u32, mut modify: impl FnMut(&mut App)) -> Duration {
+        let mut total = Duration::ZERO;
+        for _ in 0..frames {
+            modify(app);
+            total += timed_update(app);
+        }
+        total / frames
+    }
+
+    fn layer_tiles_entities(app: &mut App, layer: Entity) -> Vec<Entity> {
+        app.world_mut()
+            .query_filtered::<(Entity, &ChildOf), With<TiledTile>>()
+            .iter(app.world())
+            .filter(|(_, c)| c.parent() == layer)
+            .map(|(e, _)| e)
+            .collect()
+    }
+
+    #[test]
+    #[ignore = "performance test: cargo test --release --all-features --lib perf -- --ignored --nocapture"]
+    fn perf_large_map() {
+        let mut app = test_app();
+        #[cfg(feature = "physics")]
+        app.add_plugins(TiledPhysicsPlugin::<physics::TestBackend>::default());
+
+        // Load the asset first: we do not want to measure IO and parsing
+        let handle = app
+            .world()
+            .resource::<AssetServer>()
+            .load::<TiledMapAsset>(LARGE_MAP);
+        let deadline = Instant::now() + Duration::from_secs(60);
+        while !app
+            .world()
+            .resource::<AssetServer>()
+            .is_loaded_with_dependencies(&handle)
+        {
+            assert!(Instant::now() < deadline, "large map did not load in time");
+            app.update();
+            std::thread::sleep(Duration::from_millis(1));
+        }
+
+        // Spawn: map data, then rendering and physics components
+        app.world_mut().spawn(TiledMap(handle));
+        let mut spawn = Duration::ZERO;
+        while app
+            .world()
+            .resource::<Received>()
+            .storage_on_map_created
+            .is_none()
+        {
+            spawn += timed_update(&mut app);
+        }
+        let tiles = app
+            .world()
+            .resource::<Received>()
+            .storage_on_map_created
+            .unwrap()
+            .1;
+        let first_frame = timed_update(&mut app);
+
+        let ground = layer_by_name(&mut app, "ground");
+        let decoration = layer_by_name(&mut app, "decoration");
+        let mut rng = Lcg(42);
+
+        // Frame without any modification
+        let idle = average_frame(&mut app, 20, |_| {});
+
+        // Change the tile ID of 100 ground tiles per frame
+        let ground_tiles = layer_tiles_entities(&mut app, ground);
+        let change_ids = average_frame(&mut app, 20, |app| {
+            for _ in 0..100 {
+                let tile = ground_tiles[rng.next(ground_tiles.len() as u32) as usize];
+                let mut tile_id = app.world_mut().get_mut::<TiledTileId>(tile).unwrap();
+                tile_id.0 = (tile_id.0 + 1) % 4;
+            }
+        });
+
+        // Move 100 decoration tiles per frame (some of them replace other tiles)
+        let move_tiles = average_frame(&mut app, 20, |app| {
+            let decoration_tiles = layer_tiles_entities(app, decoration);
+            for _ in 0..100 {
+                let tile = decoration_tiles[rng.next(decoration_tiles.len() as u32) as usize];
+                if let Some(mut pos) = app.world_mut().get_mut::<TilePos>(tile) {
+                    *pos = TilePos::new(rng.next(200), rng.next(200));
+                }
+            }
+        });
+
+        // Despawn 1000 ground tiles in a single frame
+        for tile in layer_tiles_entities(&mut app, ground)
+            .into_iter()
+            .take(1000)
+        {
+            app.world_mut().entity_mut(tile).despawn();
+        }
+        let despawn = timed_update(&mut app);
+
+        eprintln!("=== Performance on a 200x200 map with 2 tiles layers ({tiles} tiles)");
+        eprintln!("spawn (until MapCreated)       : {spawn:?}");
+        eprintln!("first frame (render + physics) : {first_frame:?}");
+        eprintln!("idle frame                     : {idle:?}");
+        eprintln!("change 100 tile IDs / frame    : {change_ids:?}");
+        eprintln!("move 100 tiles / frame         : {move_tiles:?}");
+        eprintln!("despawn 1000 tiles             : {despawn:?}");
     }
 }
