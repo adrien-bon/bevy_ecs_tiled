@@ -74,6 +74,10 @@ impl<'a> TiledEvent<ColliderCreated> {
     ///
     /// Note that tiles are read from the [`TiledMapAsset`]: modifications made to the
     /// [`TiledTile`] entities after the map has been spawned are not taken into account.
+    #[deprecated(
+        since = "0.16.0",
+        note = "tiles are read from the map asset and do not reflect modifications made after the map has been spawned: query the `TiledTile` children of the layer instead"
+    )]
     pub fn tiles(
         &self,
         assets: &'a Assets<TiledMapAsset>,
