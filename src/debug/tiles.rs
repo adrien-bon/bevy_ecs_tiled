@@ -4,7 +4,7 @@
 //! above each tile in your map. This is useful for debugging tile placement, grid alignment, and verifying
 //! that tiles are correctly positioned and indexed within your Tiled maps.
 //!
-//! When enabled, the plugin spawns a [`Text2d`] entity above every tile, showing its [`TilePos`] coordinates.
+//! When enabled, the plugin draws a text above every rendered tile using [`Gizmos`], showing its [`TilePos`] coordinates.
 
 use crate::prelude::*;
 use bevy::{color::palettes::css::FUCHSIA, prelude::*};
@@ -32,7 +32,7 @@ impl Default for TiledDebugTilesConfig {
 
 /// Debug [`Plugin`] for visualizing tile indices in Bevy Tiled maps.
 ///
-/// Enabling this plugin will insert a [`Text2d`] component into every tile entity to display its [`TilePos`] coordinates.
+/// Enabling this plugin will draw, every frame, the [`TilePos`] coordinates of every rendered tile using [`Gizmos`].
 /// This is helpful for debugging tile placement and grid alignment in your Tiled maps.
 ///
 /// # Example
@@ -59,44 +59,48 @@ impl Plugin for TiledDebugTilesPlugin {
 fn draw_tile_infos(
     config: Res<TiledDebugTilesConfig>,
     assets: Res<Assets<TiledMapAsset>>,
-    map_query: Query<(&TiledMap, &TiledMapStorage, &TilemapAnchor)>,
+    map_query: Query<(&TiledMap, &TilemapAnchor)>,
     tilemap_query: Query<&GlobalTransform, With<TiledTilemap>>,
-    tile_query: Query<(&TilePos, &TilemapId), With<TiledTile>>,
+    tile_query: Query<
+        (
+            &TilePos,
+            &TiledTilesetId,
+            &TiledTileId,
+            &TilemapId,
+            &TiledMapReference,
+        ),
+        With<TiledTile>,
+    >,
     mut gizmos: Gizmos,
 ) {
-    for (tiled_map, storage, anchor) in map_query.iter() {
-        let Some(map_asset) = assets.get(&tiled_map.0) else {
+    for (tile_pos, tileset_id, tile_id, tilemap_id, map_ref) in tile_query.iter() {
+        let Some((map_asset, anchor)) = map_query
+            .get(map_ref.0)
+            .ok()
+            .and_then(|(tiled_map, anchor)| assets.get(&tiled_map.0).map(|a| (a, anchor)))
+        else {
+            continue;
+        };
+        let Some(tile) = map_asset.tile(tileset_id.0, tile_id.0) else {
             continue;
         };
 
-        for (_, entities) in storage.tiles() {
-            for entity in entities {
-                let Ok((tile_pos, tilemap_id)) = tile_query.get(*entity) else {
-                    continue;
-                };
-                let Some(tile) = storage.tile(&map_asset.map, *entity) else {
-                    continue;
-                };
+        // Compute the tile's world position (center) relative to its tilemap
+        let tile_rel_pos = map_asset.tile_relative_position(tile_pos, &tile_size(&tile), anchor);
 
-                // Compute the tile's world position (center) relative to its tilemap
-                let tile_rel_pos =
-                    map_asset.tile_relative_position(tile_pos, &tile_size(&tile), anchor);
+        // To get the tile's global transform, combine with the tilemap's transform
+        let Ok(tilemap_transform) = tilemap_query.get(tilemap_id.0) else {
+            continue;
+        };
+        let tile_transform =
+            *tilemap_transform * Transform::from_translation(tile_rel_pos.extend(0.));
 
-                // To get the tile's global transform, combine with the parent tilemap's transform
-                let Ok(parent_transform) = tilemap_query.get(tilemap_id.0) else {
-                    continue;
-                };
-                let tile_transform =
-                    *parent_transform * Transform::from_translation(tile_rel_pos.extend(0.));
-
-                gizmos.text_2d(
-                    Isometry2d::from_translation(tile_transform.translation().truncate()),
-                    &format!("{}x{}", tile_pos.x, tile_pos.y),
-                    config.text_size,
-                    Vec2::ZERO,
-                    config.text_color,
-                );
-            }
-        }
+        gizmos.text_2d(
+            Isometry2d::from_translation(tile_transform.translation().truncate()),
+            &format!("{}x{}", tile_pos.x, tile_pos.y),
+            config.text_size,
+            Vec2::ZERO,
+            config.text_color,
+        );
     }
 }

@@ -400,7 +400,7 @@ impl TiledMapAsset {
         )
     }
 
-    /// Returns the world position (center) of a tile relative to its parent [`TiledTilemap`] [`Entity`].
+    /// Returns the world position (center) of a tile relative to its [`TiledTilemap`] [`Entity`].
     ///
     /// This function computes the world-space position of a tile, given its [`TilePos`], tile size, and map anchor.
     /// It is especially useful because tiles do not have their own [`Transform`] component, so their world position must be calculated manually.
@@ -424,27 +424,26 @@ impl TiledMapAsset {
     ///
     /// fn tile_position_system(
     ///     assets: Res<Assets<TiledMapAsset>>,
-    ///     map_query: Query<(&TiledMap, &TiledMapStorage, &TilemapAnchor)>,
-    ///     tile_query: Query<(&TilePos, &TilemapId), With<TiledTile>>,
+    ///     map_query: Query<(&TiledMap, &TilemapAnchor)>,
+    ///     tile_query: Query<
+    ///         (&TilePos, &TiledTilesetId, &TiledTileId, &TilemapId, &TiledMapReference),
+    ///         With<TiledTile>,
+    ///     >,
     ///     tilemap_query: Query<&GlobalTransform, With<TiledTilemap>>,
     /// ) {
-    ///     for (tiled_map, storage, anchor) in map_query.iter() {
+    ///     for (tile_pos, tileset_id, tile_id, tilemap_id, map_ref) in tile_query.iter() {
+    ///         let Ok((tiled_map, anchor)) = map_query.get(map_ref.0) else { continue; };
     ///         let Some(map_asset) = assets.get(&tiled_map.0) else { continue; };
-    ///         for (_, entities) in storage.tiles() {
-    ///             for entity in entities {
-    ///                 let Ok((tile_pos, tilemap_id)) = tile_query.get(*entity) else { continue; };
-    ///                 let Some(tile) = storage.tile(&map_asset.map, *entity) else { continue; };
-    ///                 // Compute the tile's world position (center) relative to its tilemap
-    ///                 let tile_rel_pos = map_asset.tile_relative_position(
-    ///                     tile_pos,
-    ///                     &tile_size(&tile),
-    ///                     anchor
-    ///                 );
-    ///                 // To get the tile's global transform, combine with the tilemap's transform
-    ///                 let Ok(parent_transform) = tilemap_query.get(tilemap_id.0) else { continue; };
-    ///                 let tile_transform = *parent_transform * Transform::from_translation(tile_rel_pos.extend(0.));
-    ///             }
-    ///         }
+    ///         let Some(tile) = map_asset.tile(tileset_id.0, tile_id.0) else { continue; };
+    ///         // Compute the tile's world position (center) relative to its tilemap
+    ///         let tile_rel_pos = map_asset.tile_relative_position(
+    ///             tile_pos,
+    ///             &tile_size(&tile),
+    ///             anchor
+    ///         );
+    ///         // To get the tile's global transform, combine with the tilemap's transform
+    ///         let Ok(tilemap_transform) = tilemap_query.get(tilemap_id.0) else { continue; };
+    ///         let tile_transform = *tilemap_transform * Transform::from_translation(tile_rel_pos.extend(0.));
     ///     }
     /// }
     /// ```
