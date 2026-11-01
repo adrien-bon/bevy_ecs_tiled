@@ -657,6 +657,98 @@ fn storage_follows_tiles() {
     assert_storage_matches_tiles(&mut app, map);
 }
 
+/// A map entity whose asset is not available yet, with a single tile
+#[cfg(any(feature = "render", feature = "physics"))]
+struct MapWithoutAsset {
+    /// Handle to the loaded test map asset
+    loaded: Handle<TiledMapAsset>,
+    /// Handle used by the map entity, without any asset yet
+    reserved: Handle<TiledMapAsset>,
+    layer: Entity,
+    #[cfg_attr(not(feature = "render"), allow(dead_code))]
+    tile: Entity,
+}
+
+#[cfg(any(feature = "render", feature = "physics"))]
+impl MapWithoutAsset {
+    fn spawn(app: &mut App) -> Self {
+        let loaded = app
+            .world()
+            .resource::<AssetServer>()
+            .load::<TiledMapAsset>(DYNAMIC_MAP);
+        let deadline = Instant::now() + Duration::from_secs(10);
+        while !app
+            .world()
+            .resource::<AssetServer>()
+            .is_loaded_with_dependencies(&loaded)
+        {
+            assert!(Instant::now() < deadline, "test map did not load in time");
+            app.update();
+            std::thread::sleep(Duration::from_millis(1));
+        }
+
+        let reserved = app
+            .world()
+            .resource::<Assets<TiledMapAsset>>()
+            .reserve_handle();
+        let map = app.world_mut().spawn(TiledMap(reserved.clone())).id();
+        let layer = app
+            .world_mut()
+            .spawn((TiledLayer::Tiles, TiledMapReference(map), ChildOf(map)))
+            .id();
+        let tile = app
+            .world_mut()
+            .spawn((
+                TiledTile,
+                ChildOf(layer),
+                TiledTilesetId(0),
+                TiledTileId(0),
+                TilePos::new(1, 1),
+            ))
+            .id();
+        Self {
+            loaded,
+            reserved,
+            layer,
+            tile,
+        }
+    }
+
+    /// Make the asset available for the map entity
+    fn insert_asset(&self, app: &mut App) {
+        let mut assets = app.world_mut().resource_mut::<Assets<TiledMapAsset>>();
+        let asset = assets.remove(self.loaded.id()).unwrap();
+        let _ = assets.insert(self.reserved.id(), asset);
+    }
+}
+
+#[test]
+#[cfg(feature = "render")]
+fn tiles_are_rendered_once_map_asset_is_available() {
+    let mut app = test_app();
+    let map = MapWithoutAsset::spawn(&mut app);
+    for _ in 0..3 {
+        app.update();
+    }
+    assert!(app.world().get::<TilemapId>(map.tile).is_none());
+
+    map.insert_asset(&mut app);
+    app.update();
+    let tilemap = app
+        .world()
+        .get::<TilemapId>(map.tile)
+        .expect("tile is not rendered")
+        .0;
+    assert_eq!(
+        storage_at(&app, tilemap, TilePos::new(1, 1)),
+        Some(map.tile)
+    );
+    assert_eq!(
+        app.world().get::<ChildOf>(tilemap).unwrap().parent(),
+        map.layer
+    );
+}
+
 #[cfg(feature = "physics")]
 mod physics {
     use super::*;
@@ -858,6 +950,21 @@ mod physics {
             .id();
         app.update();
         assert_eq!(colliders_area(&app, object), vec![20.]);
+    }
+
+    #[test]
+    fn colliders_are_spawned_once_map_asset_is_available() {
+        let mut app = test_app();
+        app.add_plugins(TiledPhysicsPlugin::<TestBackend>::default());
+        let map = MapWithoutAsset::spawn(&mut app);
+        for _ in 0..3 {
+            app.update();
+        }
+        assert!(colliders_area(&app, map.layer).is_empty());
+
+        map.insert_asset(&mut app);
+        app.update();
+        assert_eq!(colliders_area(&app, map.layer), vec![256.]);
     }
 
     #[test]

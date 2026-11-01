@@ -283,21 +283,26 @@ pub(crate) mod render {
         });
     }
 
+    /// Tile components read by [`sync_tiles`]
+    type SyncedTile = (
+        Entity,
+        Ref<'static, TiledTilesetId>,
+        Ref<'static, TiledTileId>,
+        &'static TilePos,
+        Option<&'static ChildOf>,
+        Option<&'static TiledTileRenderState>,
+        Has<AnimatedTile>,
+    );
+
     /// Add new or modified tiles to the [`TileStorage`] of the corresponding [`TiledTilemap`],
     /// spawning this tilemap if needed.
+    ///
+    /// Tiles whose map asset is not available yet are processed again on the next runs.
     #[allow(clippy::too_many_arguments)]
     pub(super) fn sync_tiles(
         mut commands: Commands,
-        tiles_query: Query<
-            (
-                Entity,
-                Ref<TiledTilesetId>,
-                Ref<TiledTileId>,
-                &TilePos,
-                Option<&ChildOf>,
-                Option<&TiledTileRenderState>,
-                Has<AnimatedTile>,
-            ),
+        changed_tiles_query: Query<
+            SyncedTile,
             (
                 With<TiledTile>,
                 Or<(
@@ -308,6 +313,8 @@ pub(crate) mod render {
                 )>,
             ),
         >,
+        tiles_query: Query<SyncedTile, With<TiledTile>>,
+        mut pending_tiles: Local<bevy::ecs::entity::EntityHashSet>,
         layers_query: Query<
             (
                 &TiledMapReference,
@@ -342,8 +349,15 @@ pub(crate) mod render {
             (TileTextureIndex, Option<AnimatedTile>),
         >::default();
 
+        // Tiles which could not be processed during previous runs, and which were not modified since then
+        let pending = std::mem::take(&mut *pending_tiles);
+        let pending = pending
+            .into_iter()
+            .filter(|entity| !changed_tiles_query.contains(*entity))
+            .filter_map(|entity| tiles_query.get(entity).ok());
+
         for (entity, tileset_id, tile_id, tile_pos, child_of, render_state, has_animation) in
-            tiles_query.iter()
+            changed_tiles_query.iter().chain(pending)
         {
             // Nothing to do if only the TilePos was re-inserted (see below)
             if render_state.is_some_and(|state| state.position == *tile_pos)
@@ -375,7 +389,8 @@ pub(crate) mod render {
                 .ok()
                 .and_then(|(m, r, a)| assets.get(&m.0).map(|asset| (m, asset, r, a)))
             else {
-                // Map is not loaded (yet): nothing we can do
+                // Map asset is not available (yet): try again later
+                pending_tiles.insert(entity);
                 continue;
             };
 

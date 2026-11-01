@@ -166,11 +166,10 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
         disable_geometry_simplification,
     ) in layers_query.iter()
     {
-        commands
-            .entity(layer_entity)
-            .remove::<TiledTilesLayerCollidersDirty<T>>();
-
         if !matches!(layer, TiledLayer::Tiles) {
+            commands
+                .entity(layer_entity)
+                .remove::<TiledTilesLayerCollidersDirty<T>>();
             continue;
         }
 
@@ -178,11 +177,18 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
             warn!(
                 "Cannot spawn colliders for entity {layer_entity}: parent map is missing or has no TiledPhysicsSettings"
             );
+            commands
+                .entity(layer_entity)
+                .remove::<TiledTilesLayerCollidersDirty<T>>();
             continue;
         };
+        // Map asset is not available (yet): keep the layer marked to try again later
         let Some(map_asset) = assets.get(&tiled_map.0) else {
             continue;
         };
+        commands
+            .entity(layer_entity)
+            .remove::<TiledTilesLayerCollidersDirty<T>>();
 
         despawn_colliders(&mut commands, layer_entity, colliders);
 
