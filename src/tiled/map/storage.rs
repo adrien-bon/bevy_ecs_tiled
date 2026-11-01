@@ -22,6 +22,8 @@ pub struct TiledMapStorage {
     pub(crate) layers: HashMap<u32, Entity>,
 
     /// Mapping between a Tiled object ID with corresponding [`TiledObject`] [`Entity`]
+    ///
+    /// If several objects share the same [`TiledObjectId`], only the first one is registered.
     pub(crate) objects: HashMap<u32, Entity>,
 
     /// Mapping between a Tiled tileset ID + [`tiled::TileId`] with all corresponding [`TiledTile`] [`Entity`]s

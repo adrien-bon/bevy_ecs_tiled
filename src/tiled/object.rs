@@ -30,6 +30,11 @@ pub struct TiledObjectVisuals(Vec<Entity>);
 /// Tiled object ID associated with this [`TiledObject`].
 ///
 /// You can retrieve the corresponding [`tiled::Object`] using the [`object_from_map`] helper function.
+///
+/// Object IDs are unique within a map: [`TiledMapStorage`] associates each ID with a single object entity.
+/// When spawning an object yourself, give it an ID which is not used by any other object of the map,
+/// otherwise it will not be registered in [`TiledMapStorage`]. In particular, the default ID (`0`) is
+/// shared by all the objects spawned without an explicit ID: only the first one is registered.
 #[derive(Component, Default, Reflect, Copy, Clone, Debug, Deref)]
 #[reflect(Component, Default, Debug)]
 pub struct TiledObjectId(pub u32);
