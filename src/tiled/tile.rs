@@ -272,6 +272,7 @@ pub(crate) mod render {
                 &TilePos,
                 Option<&ChildOf>,
                 Option<&TiledTileRenderState>,
+                Has<AnimatedTile>,
             ),
             (
                 With<TiledTile>,
@@ -300,8 +301,16 @@ pub(crate) mod render {
         // Tilemaps found or spawned during this run, by (layer, tileset ID)
         let mut tilemaps_cache = HashMap::<(Entity, u32), Entity>::default();
         let mut new_tilemaps = HashMap::<Entity, NewTilemap>::default();
+        // Rendering components of tiles processed during this run, by (map, tileset ID, tile ID):
+        // many tiles usually share the same tile, especially when spawning a map
+        let mut tiles_cache = HashMap::<
+            (Entity, u32, tiled::TileId),
+            (TileTextureIndex, Option<AnimatedTile>),
+        >::default();
 
-        for (entity, tileset_id, tile_id, tile_pos, child_of, render_state) in tiles_query.iter() {
+        for (entity, tileset_id, tile_id, tile_pos, child_of, render_state, has_animation) in
+            tiles_query.iter()
+        {
             // Nothing to do if only the TilePos was re-inserted (see below)
             if render_state.is_some_and(|state| state.position == *tile_pos)
                 && !tileset_id.is_changed()
@@ -427,21 +436,33 @@ pub(crate) mod render {
                 // moving at the same time onto each other's previous position.
                 entity_commands.remove::<TilePos>().insert(*tile_pos);
             }
+            let (texture_index, animation) = *tiles_cache
+                .entry((map_ref.0, tileset_id.0, tile_id.0))
+                .or_insert_with(|| {
+                    (
+                        tile_texture_index(tileset, tile_id.0),
+                        map_asset
+                            .tile(tileset_id.0, tile_id.0)
+                            .and_then(|tile| animated_tile(&tile)),
+                    )
+                });
             entity_commands.insert((
                 TilemapId(tilemap_entity),
-                tile_texture_index(tileset, tile_id.0),
+                texture_index,
                 TiledTileRenderState {
                     tilemap: Some(tilemap_entity),
                     position: *tile_pos,
                 },
             ));
-            match map_asset
-                .tile(tileset_id.0, tile_id.0)
-                .and_then(|tile| animated_tile(&tile))
-            {
-                Some(animated_tile) => entity_commands.insert(animated_tile),
-                None => entity_commands.remove::<AnimatedTile>(),
-            };
+            match animation {
+                Some(animation) => {
+                    entity_commands.insert(animation);
+                }
+                None if has_animation => {
+                    entity_commands.remove::<AnimatedTile>();
+                }
+                None => {}
+            }
         }
 
         // Finally, insert the actual tilemap bundle for new tilemaps and send the associated events
