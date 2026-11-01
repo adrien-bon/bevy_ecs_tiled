@@ -31,9 +31,13 @@ pub(crate) fn plugin(app: &mut App) {
         Update,
         update_image_position_and_size.in_set(TiledUpdateSystems::UpdateTiledImagePositionAndSize),
     );
+    // When the TiledImage changes, its Sprite is built again from scratch: compute repeated images
+    // position and size again right after, so the Sprite is not displayed with its base size for a frame
     app.add_systems(
         PostUpdate,
-        sync_image_sprite.in_set(TiledPostUpdateSystems::SyncRender),
+        (sync_image_sprite, update_image_position_and_size)
+            .chain()
+            .in_set(TiledPostUpdateSystems::SyncRender),
     );
 }
 

@@ -749,6 +749,41 @@ fn tiles_are_rendered_once_map_asset_is_available() {
     );
 }
 
+#[test]
+fn repeated_images_are_sized_on_first_frame() {
+    let mut app = test_app();
+    spawn_test_map(&mut app);
+    let layer = layer_by_name(&mut app, "objects");
+
+    // A camera seeing a 400 pixels wide area
+    app.world_mut().spawn((
+        Camera2d,
+        Projection::Orthographic(OrthographicProjection {
+            area: Rect::new(-200., -100., 200., 100.),
+            ..OrthographicProjection::default_2d()
+        }),
+    ));
+
+    let image = app
+        .world_mut()
+        .spawn((
+            TiledImage {
+                base_size: Vec2::new(16., 16.),
+                repeat_x: true,
+                ..default()
+            },
+            ChildOf(layer),
+        ))
+        .id();
+    app.update();
+
+    // On the very first frame, the image already covers the camera area along the X axis
+    let sprite = app.world().get::<Sprite>(image).unwrap();
+    let size = sprite.custom_size.unwrap();
+    assert!(size.x >= 400., "repeated image width is {}", size.x);
+    assert_eq!(size.y, 16.);
+}
+
 #[cfg(feature = "physics")]
 mod physics {
     use super::*;
