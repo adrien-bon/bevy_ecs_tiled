@@ -493,6 +493,8 @@ pub(crate) mod render {
                 // world before being added to the new one. Relying on bevy_ecs_tilemap TilePosOld
                 // is not enough: it does not handle a tile changing of tilemap, nor several tiles
                 // moving at the same time onto each other's previous position.
+                // This relies on bevy_ecs_tilemap internals and cannot be tested without a renderer:
+                // see the "Manual Checks" section of the contributing guide.
                 entity_commands.remove::<TilePos>().insert(*tile_pos);
             }
             let (texture_index, animation) = *tiles_cache
