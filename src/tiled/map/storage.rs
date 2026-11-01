@@ -200,10 +200,19 @@ fn unregister_layer(
 
 fn register_object(
     added: On<Add<TiledObject>>,
-    objects_query: Query<(&TiledObjectId, &TiledMapReference)>,
+    objects_query: Query<(&TiledObjectId, Option<&TiledMapReference>, Option<&ChildOf>)>,
+    layers_query: Query<&TiledMapReference, With<TiledLayer>>,
     mut maps_query: Query<&mut TiledMapStorage>,
 ) {
-    let Ok((object_id, map_ref)) = objects_query.get(added.entity) else {
+    // The TiledMapReference may not have been inserted yet: use the one of the parent layer
+    let Some((object_id, map_ref)) =
+        objects_query
+            .get(added.entity)
+            .ok()
+            .and_then(|(id, map_ref, child_of)| {
+                super::resolve_map_reference(map_ref, child_of, &layers_query).map(|r| (id, r))
+            })
+    else {
         return;
     };
     if let Ok(mut storage) = maps_query.get_mut(map_ref.0) {
@@ -227,18 +236,9 @@ fn unregister_object(
 }
 
 /// Register new tiles (or tiles which changed of tileset ID or [`tiled::TileId`]) in their map storage.
-///
-/// Tiles without a [`TiledMapReference`] inherit the one from their parent layer.
 fn register_tiles(
-    mut commands: Commands,
     tiles_query: Query<
-        (
-            Entity,
-            &TiledTilesetId,
-            &TiledTileId,
-            Option<&TiledMapReference>,
-            Option<&ChildOf>,
-        ),
+        (Entity, &TiledTilesetId, &TiledTileId, &TiledMapReference),
         (
             With<TiledTile>,
             Or<(
@@ -248,20 +248,9 @@ fn register_tiles(
             )>,
         ),
     >,
-    layers_query: Query<&TiledMapReference, With<TiledLayer>>,
     mut maps_query: Query<&mut TiledMapStorage>,
 ) {
-    for (entity, tileset_id, tile_id, map_ref, child_of) in tiles_query.iter() {
-        let map_ref = match map_ref {
-            Some(map_ref) => *map_ref,
-            None => {
-                let Some(map_ref) = child_of.and_then(|c| layers_query.get(c.parent()).ok()) else {
-                    continue;
-                };
-                commands.entity(entity).insert(*map_ref);
-                *map_ref
-            }
-        };
+    for (entity, tileset_id, tile_id, map_ref) in tiles_query.iter() {
         if let Ok(mut storage) = maps_query.get_mut(map_ref.0) {
             storage.insert_tile((tileset_id.0, tile_id.0), entity);
         }

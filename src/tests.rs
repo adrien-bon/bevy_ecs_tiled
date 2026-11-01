@@ -529,6 +529,41 @@ fn tiles_outside_of_map_are_not_rendered() {
     assert_eq!(storage_at(&app, tilemap, TilePos::new(2, 2)), Some(tile));
 }
 
+#[test]
+fn spawned_objects_inherit_map_reference() {
+    let mut app = test_app();
+    let map = spawn_test_map(&mut app);
+    let objects = layer_by_name(&mut app, "objects");
+
+    // Only the TiledObject and its parent layer are needed
+    let object = app
+        .world_mut()
+        .spawn((
+            TiledObject::Tile {
+                width: 16.,
+                height: 16.,
+                tileset_id: 0,
+                tile_id: 1,
+                flip_x: false,
+                flip_y: false,
+            },
+            TiledObjectId(99),
+            ChildOf(objects),
+        ))
+        .id();
+    app.update();
+
+    assert_eq!(app.world().get::<TiledMapReference>(object).unwrap().0, map);
+    let storage = app.world().get::<TiledMapStorage>(map).unwrap();
+    assert_eq!(storage.object_entity(99), Some(object));
+    assert_eq!(
+        app.world()
+            .get::<TiledObjectVisuals>(object)
+            .map(|v| v.len()),
+        Some(1)
+    );
+}
+
 #[cfg(feature = "physics")]
 mod physics {
     use super::*;
@@ -707,6 +742,29 @@ mod physics {
         *app.world_mut().get_mut::<TilePos>(tile).unwrap() = TilePos::new(0, 3);
         app.update();
         assert_eq!(colliders_area(&app, ground), vec![512.]);
+    }
+
+    #[test]
+    fn spawned_objects_get_colliders() {
+        let mut app = test_app();
+        app.add_plugins(TiledPhysicsPlugin::<TestBackend>::default());
+        spawn_test_map(&mut app);
+        let objects = layer_by_name(&mut app, "objects");
+
+        // No TiledMapReference: it is inherited from the parent layer
+        let object = app
+            .world_mut()
+            .spawn((
+                TiledObject::Rectangle {
+                    width: 4.,
+                    height: 5.,
+                },
+                TiledObjectId(99),
+                ChildOf(objects),
+            ))
+            .id();
+        app.update();
+        assert_eq!(colliders_area(&app, object), vec![20.]);
     }
 
     #[test]

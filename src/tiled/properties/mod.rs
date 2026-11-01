@@ -62,13 +62,7 @@ pub(crate) fn plugin(app: &mut App) {
 fn insert_tile_properties(
     mut commands: Commands,
     tiles_query: Query<
-        (
-            Entity,
-            &TiledTilesetId,
-            &TiledTileId,
-            Option<&TiledMapReference>,
-            Option<&ChildOf>,
-        ),
+        (Entity, &TiledTilesetId, &TiledTileId, &TiledMapReference),
         (
             Added<TiledTile>,
             Without<crate::tiled::map::spawn::TiledTilePropertiesInserted>,
@@ -81,19 +75,12 @@ fn insert_tile_properties(
             Without<crate::tiled::map::spawn::TiledTilePropertiesInserted>,
         ),
     >,
-    layers_query: Query<&TiledMapReference, With<TiledLayer>>,
     maps_query: Query<(&TiledMap, &TiledMapStorage)>,
     assets: Res<Assets<TiledMapAsset>>,
 ) {
-    let tiles =
-        tiles_query
-            .iter()
-            .filter_map(|(entity, tileset_id, tile_id, map_ref, child_of)| {
-                // Tiles without a TiledMapReference belong to the map of their parent layer
-                let map_ref =
-                    map_ref.or_else(|| child_of.and_then(|c| layers_query.get(c.parent()).ok()))?;
-                Some((entity, map_ref, tileset_id.0, tile_id.0))
-            });
+    let tiles = tiles_query
+        .iter()
+        .map(|(entity, tileset_id, tile_id, map_ref)| (entity, map_ref, tileset_id.0, tile_id.0));
     let tile_objects = objects_query
         .iter()
         .filter_map(|(entity, object, map_ref)| match object {
