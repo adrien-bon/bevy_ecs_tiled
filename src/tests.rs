@@ -784,6 +784,65 @@ fn repeated_images_are_sized_on_first_frame() {
     assert_eq!(size.y, 16.);
 }
 
+/// Move a tile of the given map, then check that it moved in its tilemap and that its collider followed it
+#[cfg(any(feature = "render", feature = "physics"))]
+fn check_tile_move(path: &str) {
+    let mut app = test_app();
+    #[cfg(feature = "physics")]
+    app.add_plugins(TiledPhysicsPlugin::<physics::TestBackend>::default());
+    let _map = spawn_map(&mut app, path);
+    let ground = layer_by_name(&mut app, "ground");
+    let (from, to) = (TilePos::new(0, 3), TilePos::new(2, 1));
+    let tile = tile_at(&mut app, ground, from);
+
+    #[cfg(feature = "physics")]
+    let before = physics::colliders_bounds(&app, ground, Vec2::ZERO);
+
+    *app.world_mut().get_mut::<TilePos>(tile).unwrap() = to;
+    app.update();
+
+    #[cfg(feature = "render")]
+    {
+        let tilemap = app.world().get::<TilemapId>(tile).unwrap().0;
+        assert_eq!(storage_at(&app, tilemap, to), Some(tile));
+        assert_eq!(storage_at(&app, tilemap, from), None);
+    }
+
+    #[cfg(feature = "physics")]
+    {
+        // The collider moves by the same offset than the tile rendering position
+        let expected_offset = {
+            let handle = &app.world().get::<TiledMap>(_map).unwrap().0;
+            let assets = app.world().resource::<Assets<TiledMapAsset>>();
+            let map_asset = assets.get(handle).unwrap();
+            let tile_size = tile_size(&map_asset.tile(0, 0).unwrap());
+            let anchor = TilemapAnchor::default();
+            map_asset.tile_relative_position(&to, &tile_size, &anchor)
+                - map_asset.tile_relative_position(&from, &tile_size, &anchor)
+        };
+        let after = physics::colliders_bounds(&app, ground, Vec2::ZERO);
+        assert_eq!(after.0, before.0, "collider size changed");
+        assert!(
+            (after.1 - before.1 - expected_offset).length() < 1e-3,
+            "collider moved by {:?} instead of {:?}",
+            after.1 - before.1,
+            expected_offset
+        );
+    }
+}
+
+#[test]
+#[cfg(any(feature = "render", feature = "physics"))]
+fn moving_tiles_on_isometric_map() {
+    check_tile_move("tests/dynamic/isometric_map.tmx");
+}
+
+#[test]
+#[cfg(any(feature = "render", feature = "physics"))]
+fn moving_tiles_on_hexagonal_map() {
+    check_tile_move("tests/dynamic/hexagonal_map.tmx");
+}
+
 #[cfg(feature = "physics")]
 mod physics {
     use super::*;
@@ -822,7 +881,7 @@ mod physics {
     }
 
     /// Bounding box size and center of an entity colliders, relative to `origin`
-    fn colliders_bounds(app: &App, entity: Entity, origin: Vec2) -> (Vec2, Vec2) {
+    pub(super) fn colliders_bounds(app: &App, entity: Entity, origin: Vec2) -> (Vec2, Vec2) {
         let rect = app
             .world()
             .get::<TiledColliders>(entity)

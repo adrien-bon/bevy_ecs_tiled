@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.0" orientation="isometric" renderorder="right-down" width="4" height="4" tilewidth="32" tileheight="16" infinite="0" nextlayerid="2" nextobjectid="1">
+ <tileset firstgid="1" name="isometric" tilewidth="32" tileheight="16" tilecount="10" columns="2">
+  <image source="../../tiles/drjamgo_hex_16x16.png" width="64" height="80"/>
+  <tile id="0">
+   <objectgroup draworder="index" id="2">
+    <object id="1" name="collider" x="0" y="0" width="32" height="16"/>
+   </objectgroup>
+  </tile>
+ </tileset>
+ <layer id="1" name="ground" width="4" height="4">
+  <data encoding="csv">
+1,0,0,0,
+0,0,0,0,
+0,0,0,0,
+0,0,0,2
+</data>
+ </layer>
+</map>
