@@ -263,6 +263,7 @@ pub(crate) mod render {
 
     /// Add new or modified tiles to the [`TileStorage`] of the corresponding [`TiledTilemap`],
     /// spawning this tilemap if needed.
+    #[allow(clippy::too_many_arguments)]
     pub(super) fn sync_tiles(
         mut commands: Commands,
         tiles_query: Query<
@@ -298,6 +299,9 @@ pub(crate) mod render {
         maps_query: Query<(&TiledMap, &TilemapRenderSettings, &TilemapAnchor)>,
         assets: Res<Assets<TiledMapAsset>>,
         mut message_writer: MessageWriter<TiledEvent<TilemapCreated>>,
+        mut unusable_tilesets: Local<
+            bevy::platform::collections::HashSet<(AssetId<TiledMapAsset>, u32)>,
+        >,
     ) {
         // Tilemaps found or spawned during this run, by (layer, tileset ID)
         let mut tilemaps_cache = HashMap::<(Entity, u32), Entity>::default();
@@ -349,10 +353,13 @@ pub(crate) mod render {
             let tileset = match map_asset.tilesets.get(&tileset_id.0) {
                 Some(tileset) if tileset.usable_for_tiles_layer => tileset,
                 _ => {
-                    warn_once!(
-                        "Tileset {} cannot be used in a tiles layer (missing tileset or images with different sizes), some tiles will not be rendered",
-                        tileset_id.0
-                    );
+                    // Only warn once for each tileset of each map
+                    if unusable_tilesets.insert((tiled_map.0.id(), tileset_id.0)) {
+                        warn!(
+                            "Tileset {} of map {:?} cannot be used in a tiles layer (missing tileset or images with different sizes), its tiles will not be rendered",
+                            tileset_id.0, map_asset.map.source
+                        );
+                    }
                     mark_not_rendered(&mut commands, entity, *tile_pos, render_state);
                     continue;
                 }
