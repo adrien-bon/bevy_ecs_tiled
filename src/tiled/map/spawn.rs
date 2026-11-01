@@ -104,6 +104,10 @@ struct SpawnContext<'a, 'w, 's> {
 ///
 /// Tile properties of tiles and tile objects added after the map has been spawned are inserted
 /// in [`TiledPostUpdateSystems::SyncMapStorage`]: this marker prevents inserting them twice.
+///
+/// The marker is never removed: if the [`TiledTile`] (or [`TiledObject`]) component of such an entity
+/// is removed then inserted again, tile properties are not inserted again. This is not a supported
+/// use case: spawn a new entity instead.
 #[cfg(feature = "user_properties")]
 #[derive(Component, Copy, Clone, Debug)]
 pub(crate) struct TiledTilePropertiesInserted;
