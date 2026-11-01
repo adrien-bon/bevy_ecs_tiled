@@ -8,7 +8,10 @@
 //! and physics colliders are derived from these data later on, so they are also updated
 //! when these data are modified after the map has been spawned.
 
-use crate::{prelude::*, tiled::event::TiledMessageWriters};
+use crate::{
+    prelude::*,
+    tiled::{event::TiledMessageWriters, map::storage::TiledTileStorageIndex},
+};
 use bevy::prelude::*;
 
 #[cfg(feature = "user_properties")]
@@ -258,6 +261,8 @@ impl SpawnContext<'_, '_, '_> {
         tiled_map.for_each_tile(&tiles_layer, |layer_tile, layer_tile_data, tile_pos, _| {
             let tileset_id = layer_tile.tileset_index() as u32;
             let tile_id = layer_tile.id();
+            let key = (tileset_id, tile_id);
+            let storage_index = map_storage.next_tile_index(key);
             let tile_entity = commands
                 .spawn((
                     Name::new(format!("TiledMapTile({},{})", tile_pos.x, tile_pos.y)),
@@ -272,6 +277,7 @@ impl SpawnContext<'_, '_, '_> {
                     },
                     ChildOf(layer_entity),
                     TiledMapReference(map_entity),
+                    TiledTileStorageIndex(Some((key, storage_index))),
                     TILE_PROPERTIES_INSERTED,
                 ))
                 .id();
@@ -289,7 +295,8 @@ impl SpawnContext<'_, '_, '_> {
             }
 
             // Update map storage with tile entity
-            map_storage.insert_tile((tileset_id, tile_id), tile_entity);
+            let index = map_storage.insert_tile(key, tile_entity);
+            debug_assert_eq!(index, storage_index);
         });
     }
 

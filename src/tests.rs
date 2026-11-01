@@ -564,6 +564,75 @@ fn spawned_objects_inherit_map_reference() {
     );
 }
 
+/// Check that the map storage matches the actual tiles, and that each tile knows its index in it
+fn assert_storage_matches_tiles(app: &mut App, map: Entity) {
+    use crate::tiled::map::storage::TiledTileStorageIndex;
+
+    let tiles = app
+        .world_mut()
+        .query_filtered::<(
+            Entity,
+            &TiledTilesetId,
+            &TiledTileId,
+            &TiledTileStorageIndex,
+        ), With<TiledTile>>()
+        .iter(app.world())
+        .map(|(e, tileset_id, tile_id, index)| (e, (tileset_id.0, tile_id.0), index.0))
+        .collect::<Vec<_>>();
+    let storage = app.world().get::<TiledMapStorage>(map).unwrap();
+    assert_eq!(
+        storage.tiles().map(|(_, e)| e.len()).sum::<usize>(),
+        tiles.len()
+    );
+    for (entity, key, index) in tiles {
+        let entities = storage.tile_entities(key.0, key.1);
+        let position = entities.iter().position(|e| *e == entity);
+        assert!(position.is_some(), "tile {entity} is not in storage");
+        assert_eq!(index, Some((key, position.unwrap())));
+    }
+}
+
+#[test]
+fn storage_follows_tiles() {
+    let mut app = test_app();
+    let map = spawn_test_map(&mut app);
+    let ground = layer_by_name(&mut app, "ground");
+    assert_storage_matches_tiles(&mut app, map);
+
+    // Several tiles sharing the same tileset ID + tile ID
+    let tiles = (0..6)
+        .map(|i| {
+            app.world_mut()
+                .spawn((
+                    TiledTile,
+                    ChildOf(ground),
+                    TiledTilesetId(0),
+                    TiledTileId(0),
+                    TilePos::new(i % 4, 1 + i / 4),
+                ))
+                .id()
+        })
+        .collect::<Vec<_>>();
+    app.update();
+    assert_storage_matches_tiles(&mut app, map);
+
+    // Despawn some of them and change the tile ID of others
+    app.world_mut().entity_mut(tiles[0]).despawn();
+    app.world_mut().entity_mut(tiles[3]).despawn();
+    app.world_mut().get_mut::<TiledTileId>(tiles[1]).unwrap().0 = 2;
+    app.world_mut()
+        .get_mut::<TiledTilesetId>(tiles[5])
+        .unwrap()
+        .0 = 1;
+    app.update();
+    assert_storage_matches_tiles(&mut app, map);
+
+    app.world_mut().entity_mut(tiles[2]).despawn();
+    app.world_mut().get_mut::<TiledTileId>(tiles[1]).unwrap().0 = 0;
+    app.update();
+    assert_storage_matches_tiles(&mut app, map);
+}
+
 #[cfg(feature = "physics")]
 mod physics {
     use super::*;

@@ -49,7 +49,8 @@ use bevy::{platform::collections::HashMap, prelude::*, render::sync_world::SyncT
     TileVisible,
     TileColor,
     SyncToRenderWorld,
-    TiledTileIndexedPosition
+    TiledTileIndexedPosition,
+    crate::tiled::map::storage::TiledTileStorageIndex
 )]
 pub struct TiledTile;
 

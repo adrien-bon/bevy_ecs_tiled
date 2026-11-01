@@ -30,7 +30,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - `TiledImage` holds the image handle and repeat settings
 - `TiledObjectVisualOf` no longer requires a `Sprite` and is also used for text objects text box
 - `TiledEvent::with_tile()` takes the tile tileset ID
-- `TiledMapStorage` is kept up to date when layers, objects or tiles are added, modified or removed; `TiledMapStorage::tile_id()` no longer iterates over all tiles
+- `TiledMapStorage` is kept up to date when layers, objects or tiles are added, modified or removed
 
 ## v0.15.1
 

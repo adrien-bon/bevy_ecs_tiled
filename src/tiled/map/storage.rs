@@ -29,11 +29,14 @@ pub struct TiledMapStorage {
     /// Note that we can have multiple entities (ie.several instances) of the same tile since
     /// it references the tile on the tileset and not the tile on the tilemap.
     pub(crate) tiles: HashMap<(u32, tiled::TileId), Vec<Entity>>,
-
-    /// Reverse mapping between a [`TiledTile`] [`Entity`] and its tileset ID + [`tiled::TileId`],
-    /// along with its index in the corresponding `tiles` entry
-    pub(crate) tiles_index: HashMap<Entity, ((u32, tiled::TileId), usize)>,
 }
+
+/// Where a [`TiledTile`] is registered in its map [`TiledMapStorage`], if any:
+/// its tileset ID + [`tiled::TileId`] and its index in the corresponding list of entities.
+///
+/// Storing it on the tile itself allows removing a tile from the storage in constant time.
+#[derive(Component, Default, Copy, Clone, Debug)]
+pub(crate) struct TiledTileStorageIndex(pub(crate) Option<((u32, tiled::TileId), usize)>);
 
 impl TiledMapStorage {
     /// Clear the [`TiledMapStorage`], removing all children layers in the process
@@ -46,39 +49,41 @@ impl TiledMapStorage {
         self.layers.clear();
         self.objects.clear();
         self.tiles.clear();
-        self.tiles_index.clear();
     }
 
-    /// Register a [`TiledTile`] [`Entity`] for the given tileset ID + [`tiled::TileId`]
-    ///
-    /// If the entity was already registered with another key, it is moved to the new one.
-    pub(crate) fn insert_tile(&mut self, key: (u32, tiled::TileId), entity: Entity) {
-        if let Some((old_key, _)) = self.tiles_index.get(&entity) {
-            if *old_key == key {
-                return;
-            }
-            self.remove_tile(entity);
-        }
+    /// Index the next [`TiledTile`] [`Entity`] registered for this tileset ID + [`tiled::TileId`] will get
+    pub(crate) fn next_tile_index(&self, key: (u32, tiled::TileId)) -> usize {
+        self.tiles.get(&key).map_or(0, Vec::len)
+    }
+
+    /// Register a [`TiledTile`] [`Entity`] for the given tileset ID + [`tiled::TileId`],
+    /// returning its index in the corresponding list of entities
+    pub(crate) fn insert_tile(&mut self, key: (u32, tiled::TileId), entity: Entity) -> usize {
         let entities = self.tiles.entry(key).or_default();
-        self.tiles_index.insert(entity, (key, entities.len()));
         entities.push(entity);
+        entities.len() - 1
     }
 
-    /// Unregister a [`TiledTile`] [`Entity`], returning its tileset ID + [`tiled::TileId`]
-    pub(crate) fn remove_tile(&mut self, entity: Entity) -> Option<(u32, tiled::TileId)> {
-        let (key, index) = self.tiles_index.remove(&entity)?;
+    /// Unregister the [`TiledTile`] [`Entity`] registered at the given tileset ID + [`tiled::TileId`] and index.
+    ///
+    /// Nothing is done if this entity is not registered there anymore (eg. the storage was cleared).
+    /// Otherwise, returns the [`Entity`] which took its place, if any: its index must be updated.
+    pub(crate) fn remove_tile(
+        &mut self,
+        key: (u32, tiled::TileId),
+        index: usize,
+        entity: Entity,
+    ) -> Option<Entity> {
         let entities = self.tiles.get_mut(&key)?;
-        entities.swap_remove(index);
-        // Update index of the entity which took the place of the removed one
-        if let Some(moved) = entities.get(index)
-            && let Some((_, moved_index)) = self.tiles_index.get_mut(moved)
-        {
-            *moved_index = index;
+        if entities.get(index) != Some(&entity) {
+            return None;
         }
+        entities.swap_remove(index);
+        let moved = entities.get(index).copied();
         if entities.is_empty() {
             self.tiles.remove(&key);
         }
-        Some(key)
+        moved
     }
 }
 
@@ -122,8 +127,14 @@ impl<'a> TiledMapStorage {
     }
 
     /// Retrieve the tileset ID and [`tiled::TileId`] associated with this [`TiledTile`] [`Entity`]
+    ///
+    /// This function iterates over all the tiles of the map: prefer reading the [`TiledTilesetId`]
+    /// and [`TiledTileId`] components of the tile entity instead.
     pub fn tile_id(&self, entity: Entity) -> Option<(u32, tiled::TileId)> {
-        self.tiles_index.get(&entity).map(|(id, _)| *id)
+        self.tiles
+            .iter()
+            .find(|(_, entities)| entities.contains(&entity))
+            .map(|(&id, _)| id)
     }
 
     /// Retrieve the [`tiled::Tile`] associated with this [`TiledTile`] [`Entity`]
@@ -248,25 +259,55 @@ fn register_tiles(
             )>,
         ),
     >,
+    mut indexes_query: Query<&mut TiledTileStorageIndex>,
     mut maps_query: Query<&mut TiledMapStorage>,
 ) {
     for (entity, tileset_id, tile_id, map_ref) in tiles_query.iter() {
-        if let Ok(mut storage) = maps_query.get_mut(map_ref.0) {
-            storage.insert_tile((tileset_id.0, tile_id.0), entity);
+        let key = (tileset_id.0, tile_id.0);
+        let Ok(mut storage) = maps_query.get_mut(map_ref.0) else {
+            continue;
+        };
+        let Ok(previous) = indexes_query.get(entity).map(|index| index.0) else {
+            continue;
+        };
+
+        match previous {
+            // Already registered with this key (eg. tiles registered when spawning the map)
+            Some((previous_key, _)) if previous_key == key => continue,
+            // Registered with another key: unregister it first
+            Some((previous_key, index)) => {
+                if let Some(moved) = storage.remove_tile(previous_key, index, entity)
+                    && let Ok(mut moved_index) = indexes_query.get_mut(moved)
+                {
+                    moved_index.0 = Some((previous_key, index));
+                }
+            }
+            None => {}
+        }
+
+        let index = storage.insert_tile(key, entity);
+        if let Ok(mut tile_index) = indexes_query.get_mut(entity) {
+            tile_index.0 = Some((key, index));
         }
     }
 }
 
 fn unregister_tile(
     removed: On<Remove<TiledTile>>,
-    tiles_query: Query<&TiledMapReference>,
+    mut tiles_query: Query<(Option<&TiledMapReference>, &mut TiledTileStorageIndex)>,
     mut maps_query: Query<&mut TiledMapStorage>,
 ) {
-    let Ok(map_ref) = tiles_query.get(removed.entity) else {
+    let Ok((map_ref, mut tile_index)) = tiles_query.get_mut(removed.entity) else {
         return;
     };
-    if let Ok(mut storage) = maps_query.get_mut(map_ref.0) {
-        storage.remove_tile(removed.entity);
+    let (Some(map_ref), Some((key, index))) = (map_ref.copied(), tile_index.0.take()) else {
+        return;
+    };
+    if let Ok(mut storage) = maps_query.get_mut(map_ref.0)
+        && let Some(moved) = storage.remove_tile(key, index, removed.entity)
+        && let Ok((_, mut moved_index)) = tiles_query.get_mut(moved)
+    {
+        moved_index.0 = Some((key, index));
     }
 }
 
@@ -310,29 +351,29 @@ mod tests {
         );
 
         let mut storage = TiledMapStorage::default();
-        storage.insert_tile((0, 1), a);
-        storage.insert_tile((0, 1), b);
-        storage.insert_tile((0, 1), c);
-        // Inserting twice the same entity with the same key does nothing
-        storage.insert_tile((0, 1), a);
+        assert_eq!(storage.next_tile_index((0, 1)), 0);
+        assert_eq!(storage.insert_tile((0, 1), a), 0);
+        assert_eq!(storage.insert_tile((0, 1), b), 1);
+        assert_eq!(storage.next_tile_index((0, 1)), 2);
+        assert_eq!(storage.insert_tile((0, 1), c), 2);
         assert_eq!(storage.tile_entities(0, 1), &[a, b, c]);
 
         // Removing an entity moves the last one at its place
-        assert_eq!(storage.remove_tile(a), Some((0, 1)));
+        assert_eq!(storage.remove_tile((0, 1), 0, a), Some(c));
         assert_eq!(storage.tile_entities(0, 1), &[c, b]);
         assert_eq!(storage.tile_id(a), None);
-        assert_eq!(storage.remove_tile(a), None);
 
-        // Moving an entity to another key
-        storage.insert_tile((1, 2), c);
-        assert_eq!(storage.tile_entities(0, 1), &[b]);
-        assert_eq!(storage.tile_entities(1, 2), &[c]);
-        assert_eq!(storage.tile_id(c), Some((1, 2)));
+        // Removing an entity which is not registered at this index does nothing
+        assert_eq!(storage.remove_tile((0, 1), 0, a), None);
+        assert_eq!(storage.remove_tile((0, 1), 1, c), None);
+        assert_eq!(storage.tile_entities(0, 1), &[c, b]);
+
+        // Removing the last entity does not move any other one
+        assert_eq!(storage.remove_tile((0, 1), 1, b), None);
+        assert_eq!(storage.tile_entities(0, 1), &[c]);
 
         // Removing the last entity for a key removes the key
-        storage.remove_tile(b);
-        assert!(storage.tiles().all(|(key, _)| key == (1, 2)));
-        assert_eq!(storage.remove_tile(c), Some((1, 2)));
+        assert_eq!(storage.remove_tile((0, 1), 0, c), None);
         assert_eq!(storage.tiles().count(), 0);
     }
 }
