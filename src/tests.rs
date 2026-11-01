@@ -382,6 +382,9 @@ fn moving_a_tile_onto_another_replaces_it() {
     assert_eq!(storage.tile_id(b), None);
     assert_eq!(layer_index(&app, ground), layer_tiles(&mut app, ground));
 
+    #[cfg(feature = "render")]
+    assert_tilemaps_count_match_storage(&mut app);
+
     // Move A back: its previous position is empty
     *app.world_mut().get_mut::<TilePos>(a).unwrap() = TilePos::new(0, 3);
     app.update();
@@ -564,6 +567,24 @@ fn spawned_objects_inherit_map_reference() {
     );
 }
 
+/// Check that the tile count of each tilemap matches the content of its storage
+#[cfg(feature = "render")]
+fn assert_tilemaps_count_match_storage(app: &mut App) {
+    use crate::tiled::tile::render::TiledTilemapTileCount;
+
+    for (entity, storage, count) in app
+        .world_mut()
+        .query::<(Entity, &TileStorage, &TiledTilemapTileCount)>()
+        .iter(app.world())
+    {
+        assert_eq!(
+            count.0 as usize,
+            storage.iter().flatten().count(),
+            "wrong tile count for tilemap {entity}"
+        );
+    }
+}
+
 /// Check that the map storage matches the actual tiles, and that each tile knows its index in it
 fn assert_storage_matches_tiles(app: &mut App, map: Entity) {
     use crate::tiled::map::storage::TiledTileStorageIndex;
@@ -590,6 +611,9 @@ fn assert_storage_matches_tiles(app: &mut App, map: Entity) {
         assert!(position.is_some(), "tile {entity} is not in storage");
         assert_eq!(index, Some((key, position.unwrap())));
     }
+
+    #[cfg(feature = "render")]
+    assert_tilemaps_count_match_storage(app);
 }
 
 #[test]

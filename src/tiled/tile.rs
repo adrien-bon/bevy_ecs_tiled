@@ -219,9 +219,31 @@ pub(crate) mod render {
         pub(crate) position: TilePos,
     }
 
+    /// Number of tiles in the [`TileStorage`] of a [`TiledTilemap`].
+    ///
+    /// Used to despawn the tilemap once it is empty without iterating over its whole storage.
+    #[derive(Component, Default, Copy, Clone, Debug)]
+    pub(crate) struct TiledTilemapTileCount(pub(crate) u32);
+
+    /// Set a tile in a tilemap [`TileStorage`], updating the tilemap tile count
+    fn storage_set(storage: &mut TileStorage, count: &mut u32, position: &TilePos, entity: Entity) {
+        if storage.checked_get(position).is_none() {
+            *count += 1;
+        }
+        storage.set(position, entity);
+    }
+
+    /// Remove a tile from a tilemap [`TileStorage`], updating the tilemap tile count
+    fn storage_remove(storage: &mut TileStorage, count: &mut u32, position: &TilePos) {
+        if storage.checked_remove(position).is_some() {
+            *count -= 1;
+        }
+    }
+
     /// A tilemap spawned during the current [`sync_tiles`] run
     struct NewTilemap {
         storage: TileStorage,
+        count: u32,
         bundle: TilemapBundle,
         event: TiledEvent<TilemapCreated>,
     }
@@ -295,7 +317,14 @@ pub(crate) mod render {
             ),
             With<TiledLayer>,
         >,
-        mut tilemaps_query: Query<(&TiledTilesetId, &mut TileStorage), With<TiledTilemap>>,
+        mut tilemaps_query: Query<
+            (
+                &TiledTilesetId,
+                &mut TileStorage,
+                &mut TiledTilemapTileCount,
+            ),
+            With<TiledTilemap>,
+        >,
         maps_query: Query<(&TiledMap, &TilemapRenderSettings, &TilemapAnchor)>,
         assets: Res<Assets<TiledMapAsset>>,
         mut message_writer: MessageWriter<TiledEvent<TilemapCreated>>,
@@ -327,10 +356,10 @@ pub(crate) mod render {
             // First, remove the tile from its previous tilemap
             if let Some(state) = render_state
                 && let Some(tilemap) = state.tilemap
-                && let Ok((_, mut storage)) = tilemaps_query.get_mut(tilemap)
+                && let Ok((_, mut storage, mut count)) = tilemaps_query.get_mut(tilemap)
                 && storage.checked_get(&state.position) == Some(entity)
             {
-                storage.remove(&state.position);
+                storage_remove(&mut storage, &mut count.0, &state.position);
             }
 
             let Some((layer_entity, (map_ref, layer_id, layer_name, layer_tilemaps))) =
@@ -384,7 +413,7 @@ pub(crate) mod render {
                         .find(|e| {
                             tilemaps_query
                                 .get(*e)
-                                .is_ok_and(|(id, _)| id.0 == tileset_id.0)
+                                .is_ok_and(|(id, _, _)| id.0 == tileset_id.0)
                         })
                         .unwrap_or_else(|| {
                             let tilemap_entity = commands.spawn_empty().id();
@@ -409,6 +438,7 @@ pub(crate) mod render {
                                 tilemap_entity,
                                 NewTilemap {
                                     storage: TileStorage::empty(map_asset.tilemap_size),
+                                    count: 0,
                                     bundle: tilemap_bundle(
                                         map_asset,
                                         tileset,
@@ -424,10 +454,16 @@ pub(crate) mod render {
 
             // Add the tile to the tilemap storage
             match new_tilemaps.get_mut(&tilemap_entity) {
-                Some(new_tilemap) => new_tilemap.storage.set(tile_pos, entity),
+                Some(new_tilemap) => storage_set(
+                    &mut new_tilemap.storage,
+                    &mut new_tilemap.count,
+                    tile_pos,
+                    entity,
+                ),
                 None => {
-                    if let Ok((_, mut storage)) = tilemaps_query.get_mut(tilemap_entity) {
-                        storage.set(tile_pos, entity);
+                    if let Ok((_, mut storage, mut count)) = tilemaps_query.get_mut(tilemap_entity)
+                    {
+                        storage_set(&mut storage, &mut count.0, tile_pos, entity);
                     }
                 }
             }
@@ -477,11 +513,14 @@ pub(crate) mod render {
         for (tilemap_entity, new_tilemap) in new_tilemaps {
             let NewTilemap {
                 storage,
+                count,
                 mut bundle,
                 event,
             } = new_tilemap;
             bundle.storage = storage;
-            commands.entity(tilemap_entity).insert(bundle);
+            commands
+                .entity(tilemap_entity)
+                .insert((bundle, TiledTilemapTileCount(count)));
             event.send(&mut commands, &mut message_writer);
         }
     }
@@ -491,17 +530,17 @@ pub(crate) mod render {
         removed: On<Remove<TiledTile>>,
         mut commands: Commands,
         tiles_query: Query<(&TiledTileRenderState, &TilePos)>,
-        mut tilemaps_query: Query<&mut TileStorage>,
+        mut tilemaps_query: Query<(&mut TileStorage, &mut TiledTilemapTileCount)>,
     ) {
         let entity = removed.entity;
         let Ok((state, tile_pos)) = tiles_query.get(entity) else {
             return;
         };
         if let Some(tilemap) = state.tilemap
-            && let Ok(mut storage) = tilemaps_query.get_mut(tilemap)
+            && let Ok((mut storage, mut count)) = tilemaps_query.get_mut(tilemap)
             && storage.checked_get(&state.position) == Some(entity)
         {
-            storage.remove(&state.position);
+            storage_remove(&mut storage, &mut count.0, &state.position);
         }
         // If the entity is not despawned, it should not be rendered anymore
         detach_tile(&mut commands, entity, *tile_pos);
@@ -510,10 +549,13 @@ pub(crate) mod render {
     /// Despawn tilemaps which do not contain any tile anymore
     pub(super) fn despawn_empty_tilemaps(
         mut commands: Commands,
-        tilemaps_query: Query<(Entity, &TileStorage), (With<TiledTilemap>, Changed<TileStorage>)>,
+        tilemaps_query: Query<
+            (Entity, &TiledTilemapTileCount),
+            (With<TiledTilemap>, Changed<TiledTilemapTileCount>),
+        >,
     ) {
-        for (entity, storage) in tilemaps_query.iter() {
-            if storage.iter().all(Option::is_none) {
+        for (entity, count) in tilemaps_query.iter() {
+            if count.0 == 0 {
                 commands.entity(entity).despawn();
             }
         }
