@@ -91,7 +91,7 @@ See the [custom properties guide](guides/properties.md) for more information.
 Yes: tiles, objects and images entities hold Tiled data, from which their rendering and physics colliders are derived.
 You can spawn, despawn or modify them (for instance change a tile `TiledTileId` or `TilePos`, or an object `TiledObject` shape) and their rendering and colliders will automatically follow.
 
-See the [entities hierarchy page](design/entities_hierarchy.md) for more information and the [`map_dynamic` example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/map_dynamic.rs) for a demo.
+See the [dedicated guide](guides/dynamic_maps.md) for more information and the [`map_dynamic` example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/map_dynamic.rs) for a demo.
 
 Note that respawning a map, for instance when it is hot-reloaded, discards all these modifications: see [Spawn / Despawn / Reload a Map](guides/spawn_reload.md).
 

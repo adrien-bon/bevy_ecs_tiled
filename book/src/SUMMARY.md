@@ -15,6 +15,7 @@
 
 - [Getting started](guides/getting-started.md)
 - [Spawn / Despawn / Reload a map](guides/spawn_reload.md)
+- [Modify a map at runtime](guides/dynamic_maps.md)
 - [Add physics colliders](guides/physics.md)
 - [Using Tiled custom properties](guides/properties.md)
 - [Debug your project](guides/debug.md)

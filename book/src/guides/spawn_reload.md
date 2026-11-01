@@ -74,7 +74,7 @@ This will reload the same map asset, despawning and respawning all child entitie
 This is useful for implementing level respawn or resetting a map to its initial state.
 
 Note that the map is also respawned when you modify one of these components on the map entity: [`TiledMap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMap.html), [`TilemapAnchor`](https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/anchor/enum.TilemapAnchor.html), [`TiledMapLayerZOffset`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMapLayerZOffset.html), [`TilemapRenderSettings`](https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/map/struct.TilemapRenderSettings.html) or, with physics enabled, [`TiledPhysicsSettings`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/settings/struct.TiledPhysicsSettings.html).
-In all these cases, the modifications you made to the map entities at runtime (spawned, despawned or modified tiles and objects) are lost.
+In all these cases, the modifications you made to the map entities at runtime (spawned, despawned or modified tiles and objects, see [Modify a map at runtime](dynamic_maps.md)) are lost.
 
 ---
 
