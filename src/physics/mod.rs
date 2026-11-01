@@ -16,6 +16,9 @@ use bevy::prelude::*;
 ///
 /// Must be added to your app in order to automatically spawn physics colliders using the provided [`TiledPhysicsBackend`].
 ///
+/// Colliders are derived from tiles and objects entities: they are spawned again during
+/// [`TiledPostUpdateSystems::SyncPhysics`] whenever a tile of a layer, or an object, is added, modified or removed.
+///
 /// Example:
 /// ```rust,no_run
 /// use bevy::prelude::*;
@@ -35,6 +38,10 @@ use bevy::prelude::*;
 pub struct TiledPhysicsPlugin<T: TiledPhysicsBackend>(std::marker::PhantomData<T>);
 
 /// When added to a Tiled entity, will prevent tree reduction (combining) of colliders.
+///
+/// It is taken into account the next time the colliders of this entity are computed: adding or removing
+/// it does not spawn colliders again by itself. Insert it when the entity is spawned, for instance in an
+/// observer of [`LayerCreated`] or [`ObjectCreated`] events.
 ///
 /// See also [TiledPhysicsSettings::simplify_geometry].
 #[derive(Component, Reflect, Copy, PartialEq, Clone, Debug)]

@@ -4,6 +4,10 @@
 //! schedules. These sets help organize and order the execution of systems related to Tiled map and
 //! world processing, including asset loading, physics initialization, animation, debugging, and
 //! chunk management.
+//!
+//! Rendering and physics components are derived from Tiled data components during the
+//! [`TiledPostUpdateSystems::SyncMapStorage`], [`TiledPostUpdateSystems::SyncRender`] and
+//! [`TiledPostUpdateSystems::SyncPhysics`] sets.
 
 use bevy::prelude::*;
 

@@ -37,7 +37,12 @@ use bevy::{platform::collections::HashMap, prelude::*, render::sync_world::SyncT
 /// these components to every tile entity can significantly degrade performance due to unnecessary
 /// transform and visibility propagation.
 ///
-/// See [`TileBundle`] for more information on available [`Component`]s.
+/// Tile entities hold two kinds of components:
+/// - Tiled data, which you can freely modify: [`TiledTilesetId`], [`TiledTileId`], [`TilePos`], [`TileFlip`],
+///   [`TileVisible`] and [`TileColor`]. A [`TiledMapReference`] is automatically inserted from the parent layer
+///   if the tile does not have one.
+/// - rendering components derived from these data, which you should not modify since they are overwritten
+///   when the tile changes: [`TilemapId`], [`TileTextureIndex`] and [`AnimatedTile`].
 #[derive(Component, Default, Reflect, Copy, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
 #[require(

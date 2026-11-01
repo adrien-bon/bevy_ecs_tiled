@@ -1,8 +1,9 @@
 //! Collider management for Tiled maps and worlds.
 //!
 //! This module defines marker components and events for colliders generated from Tiled maps and objects.
-//! It provides types to distinguish between colliders created from tile layers and object layers,
-//! as well as utilities for extracting tile data relevant to collider generation.
+//! It provides types to distinguish between colliders created from tile layers and object layers.
+//!
+//! Colliders are computed from tiles and objects entities, and spawned again when these entities change.
 
 use crate::{prelude::*, tiled::helpers::tilemap_offset};
 use ::geo::{BooleanOps, MapCoords};

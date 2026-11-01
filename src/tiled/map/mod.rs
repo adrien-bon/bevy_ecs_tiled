@@ -28,6 +28,10 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 /// - [`TilemapAnchor`]: Controls the anchor point of the map.
 /// - [`Visibility`] and [`Transform`]: Standard Bevy components.
 ///
+/// Note that modifying the [`TiledMap`], [`TiledMapLayerZOffset`], [`TilemapRenderSettings`] or [`TilemapAnchor`]
+/// components of a map entity respawns the whole map from its asset: all the modifications made to its layers,
+/// tiles or objects since it has been spawned are lost.
+///
 /// Example:
 /// ```rust,no_run
 /// use bevy::prelude::*;
@@ -121,6 +125,7 @@ pub struct TiledMapReference(pub Entity);
 /// This is useful for hot-reloading, resetting, or programmatically refreshing the map state at runtime.
 ///
 /// When present, the plugin will despawn all child entities and re-instantiate the map from its asset, preserving the top-level entity and its components.
+/// All the modifications made to the map layers, tiles or objects since it has been spawned are lost.
 ///
 /// Example:
 /// ```rust,no_run
