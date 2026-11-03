@@ -18,7 +18,7 @@ use bevy::{ecs::system::SystemParam, prelude::*};
 
 #[allow(unused_imports)]
 use crate::tiled::{
-    helpers::{layer_from_map, object_from_map, tile_from_map, tileset_from_map},
+    helpers::{tile_from_map, tileset_from_map},
     layer::TiledLayer,
     map::{TiledMap, asset::TiledMapAsset},
     object::TiledObject,
@@ -44,10 +44,10 @@ pub struct TiledEvent<E: Debug + Clone + Copy + Reflect> {
     world: Option<(Entity, AssetId<TiledWorldAsset>)>,
     /// [`AssetId`] of the [`TiledMapAsset`]
     map: Option<(Entity, AssetId<TiledMapAsset>)>,
-    layer: Option<(Entity, u32)>,
+    layer: Option<Entity>,
     tilemap: Option<(Entity, u32)>,
     tile: Option<(Entity, TilePos, u32, tiled::TileId)>,
-    object: Option<(Entity, u32)>,
+    object: Option<Entity>,
 }
 
 impl<E> TiledEvent<E>
@@ -100,14 +100,14 @@ where
     }
 
     /// Update the layer information for this [`TiledEvent`]
-    pub fn with_layer(&mut self, entity: Entity, layer_id: u32) -> &mut Self {
-        self.layer = Some((entity, layer_id));
+    pub fn with_layer(&mut self, entity: Entity) -> &mut Self {
+        self.layer = Some(entity);
         self
     }
 
     /// Update the object information for this [`TiledEvent`]
-    pub fn with_object(&mut self, entity: Entity, object_id: u32) -> &mut Self {
-        self.object = Some((entity, object_id));
+    pub fn with_object(&mut self, entity: Entity) -> &mut Self {
+        self.object = Some(entity);
         self
     }
 
@@ -172,18 +172,7 @@ where
 
     /// Retrieve the [`TiledLayer`] [`Entity`] associated with this [`TiledEvent`]
     pub fn layer_entity(&self) -> Option<Entity> {
-        self.layer.map(|(e, _)| e)
-    }
-
-    /// Retrieve the layer ID associated with this [`TiledEvent`]
-    pub fn layer_id(&self) -> Option<u32> {
-        self.layer.map(|(_, id)| id)
-    }
-
-    /// Retrieve the [`tiled::Layer`] associated with this [`TiledEvent`]
-    pub fn layer(&self, assets: &'a Assets<TiledMapAsset>) -> Option<tiled::Layer<'a>> {
-        self.map(assets)
-            .and_then(|map| self.layer_id().and_then(|id| layer_from_map(map, id)))
+        self.layer
     }
 
     /// Retrieve the [`TiledTilemap`] [`Entity`] associated with this [`TiledEvent`]
@@ -239,18 +228,7 @@ where
 
     /// Retrieve the [`TiledObject`] [`Entity`] associated with this [`TiledEvent`]
     pub fn object_entity(&self) -> Option<Entity> {
-        self.object.map(|(e, _)| e)
-    }
-
-    /// Retrieve the object ID associated with this [`TiledEvent`]
-    pub fn object_id(&self) -> Option<u32> {
-        self.object.map(|(_, id)| id)
-    }
-
-    /// Retrieve the [`tiled::Object`] associated with this [`TiledEvent`]
-    pub fn object(&self, assets: &'a Assets<TiledMapAsset>) -> Option<tiled::Object<'a>> {
-        self.map(assets)
-            .and_then(|map| self.object_id().and_then(|id| object_from_map(map, id)))
+        self.object
     }
 }
 
@@ -371,16 +349,19 @@ mod tests {
         let entity = app.world_mut().spawn_empty().id();
         let event = TiledEvent::new(entity, LayerCreated)
             .with_map(entity, handle.id())
-            .with_layer(entity, 1)
+            .with_layer(entity)
             .to_owned();
 
         // No system involved: assets are borrowed directly from the World
         let assets = app.world().resource::<Assets<TiledMapAsset>>();
-        assert!(event.map(assets).is_some());
         assert_eq!(
-            event.layer(assets).map(|layer| layer.name.clone()),
+            event
+                .map(assets)
+                .and_then(|map| map.layers().next())
+                .map(|layer| layer.name.clone()),
             Some("ground".to_string())
         );
-        assert!(event.object(assets).is_none());
+        assert_eq!(event.layer_entity(), Some(entity));
+        assert!(event.object_entity().is_none());
     }
 }

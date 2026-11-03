@@ -17,6 +17,10 @@ For example, you could:
 - Add a generic "trigger zone" (e.g., damaging zone, victory zone)
 - ...or anything else your game needs!
 
+> **Note:**
+> Even without the `user_properties` feature, the class and custom properties of the map, layers and objects are available as raw Tiled data in their [`TiledProperties`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/properties_raw/struct.TiledProperties.html) component.
+> Tiles properties can be retrieved from their tileset, using [`TiledMapAsset::tile()`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html#method.tile).
+
 ---
 
 ## Overview
@@ -140,6 +144,7 @@ Properties added to a tile in a tileset are inserted on every entity referencing
 
 This also applies to tiles and tile objects you spawn after the map has been loaded: tile properties are inserted during [`TiledPostUpdateSystems::SyncMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/sets/enum.TiledPostUpdateSystems.html).
 Note that modifying the `TiledTile` component (tileset ID or tile ID) of an existing tile does not update its properties.
+Since Tiled object IDs are not known anymore once the map has been loaded, object references in these properties cannot be resolved: they are set to `Entity::PLACEHOLDER`.
 
 When loading a map, all custom properties are inserted before the map events (`MapCreated`, `LayerCreated`, ...) are sent.
 

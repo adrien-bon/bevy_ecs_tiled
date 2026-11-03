@@ -320,12 +320,7 @@ pub(crate) mod render {
         tiles_query: Query<SyncedTile, With<TiledTile>>,
         mut pending_tiles: Local<bevy::ecs::entity::EntityHashSet>,
         layers_query: Query<
-            (
-                &TiledMapReference,
-                &TiledLayerId,
-                &TiledName,
-                Option<&TiledTilemaps>,
-            ),
+            (&TiledMapReference, &TiledName, Option<&TiledTilemaps>),
             With<TiledLayer>,
         >,
         mut tilemaps_query: Query<
@@ -373,7 +368,7 @@ pub(crate) mod render {
                 storage_remove(&mut storage, &mut count.0, &state.position);
             }
 
-            let Some((layer_entity, (map_ref, layer_id, layer_name, layer_tilemaps))) =
+            let Some((layer_entity, (map_ref, layer_name, layer_tilemaps))) =
                 child_of.and_then(|c| layers_query.get(c.parent()).ok().map(|l| (c.parent(), l)))
             else {
                 warn!("Tile {entity} is not a child of a tiles layer, it will not be rendered");
@@ -431,7 +426,7 @@ pub(crate) mod render {
                             let tilemap_entity = commands.spawn_empty().id();
                             let event = TiledEvent::new(tilemap_entity, TilemapCreated)
                                 .with_map(map_ref.0, tiled_map.0.id())
-                                .with_layer(layer_entity, layer_id.0)
+                                .with_layer(layer_entity)
                                 .with_tilemap(tilemap_entity, tile.tileset_id)
                                 .to_owned();
                             commands.entity(tilemap_entity).insert((

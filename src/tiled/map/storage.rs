@@ -8,7 +8,9 @@ use crate::prelude::*;
 use bevy::{platform::collections::HashMap, prelude::*};
 
 /// [`Component`] storing all the Tiled items composing this map.
-/// Makes the association between Tiled ID and corresponding Bevy [`Entity`].
+///
+/// Gives the [`TiledLayer`] and [`TiledObject`] entities of the map, and indexes its [`TiledTile`] entities
+/// by tileset ID and [`tiled::TileId`].
 ///
 /// Should not be manually inserted but can be accessed from the map [`Entity`].
 ///
@@ -18,13 +20,11 @@ use bevy::{platform::collections::HashMap, prelude::*};
 #[derive(Component, Default, Reflect, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
 pub struct TiledMapStorage {
-    /// Mapping between a Tiled layer ID with corresponding [`TiledLayer`] [`Entity`]
-    pub(crate) layers: HashMap<u32, Entity>,
+    /// [`TiledLayer`] entities, in the order they were registered
+    pub(crate) layers: Vec<Entity>,
 
-    /// Mapping between a Tiled object ID with corresponding [`TiledObject`] [`Entity`]
-    ///
-    /// If several objects share the same [`TiledObjectId`], only the first one is registered.
-    pub(crate) objects: HashMap<u32, Entity>,
+    /// [`TiledObject`] entities, in the order they were registered
+    pub(crate) objects: Vec<Entity>,
 
     /// Mapping between a Tiled tileset ID + [`tiled::TileId`] with all corresponding [`TiledTile`] [`Entity`]s
     ///
@@ -45,7 +45,7 @@ impl TiledMapStorage {
     ///
     /// To respawn a map, insert the [`RespawnTiledMap`] component on the map entity instead.
     pub(crate) fn clear(&mut self, commands: &mut Commands) {
-        for layer_entity in self.layers.values() {
+        for layer_entity in self.layers.iter() {
             commands.entity(*layer_entity).try_despawn();
         }
         self.layers.clear();
@@ -89,28 +89,21 @@ impl TiledMapStorage {
     }
 }
 
-impl<'a> TiledMapStorage {
-    /// Returns an iterator over the layer ID and [`TiledLayer`] [`Entity`] associations
-    pub fn layers(&self) -> impl Iterator<Item = (u32, Entity)> + '_ {
-        self.layers.iter().map(|(&id, &entity)| (id, entity))
+impl TiledMapStorage {
+    /// Returns an iterator over the [`TiledLayer`] entities of the map.
+    ///
+    /// Layers spawned along with the map are given in the order they appear in the map
+    /// (a group layer comes before its children); layers added afterwards come last.
+    pub fn layers(&self) -> impl Iterator<Item = Entity> + '_ {
+        self.layers.iter().copied()
     }
 
-    /// Retrieve the [`TiledLayer`] [`Entity`] associated with this layer ID
-    pub fn layer_entity(&self, layer_id: u32) -> Option<Entity> {
-        self.layers.get(&layer_id).cloned()
-    }
-
-    /// Retrieve the layer ID associated with this [`TiledLayer`] [`Entity`]
-    pub fn layer_id(&self, entity: Entity) -> Option<u32> {
-        self.layers
-            .iter()
-            .find(|(_, e)| **e == entity)
-            .map(|(&id, _)| id)
-    }
-
-    /// Retrieve the [`tiled::Layer`] associated with this [`TiledLayer`] [`Entity`]
-    pub fn layer(&self, map: &'a tiled::Map, entity: Entity) -> Option<tiled::Layer<'a>> {
-        self.layer_id(entity).and_then(|id| layer_from_map(map, id))
+    /// Returns an iterator over the [`TiledObject`] entities of the map.
+    ///
+    /// Objects spawned along with the map are given in the order they appear in the map;
+    /// objects added afterwards come last.
+    pub fn objects(&self) -> impl Iterator<Item = Entity> + '_ {
+        self.objects.iter().copied()
     }
 
     /// Returns an iterator over the tileset ID + [`tiled::TileId`] and [`TiledTile`] [`Entity`]s associations
@@ -127,46 +120,12 @@ impl<'a> TiledMapStorage {
             .map(Vec::as_slice)
             .unwrap_or(&[])
     }
+}
 
-    /// Retrieve the tileset ID and [`tiled::TileId`] associated with this [`TiledTile`] [`Entity`]
-    ///
-    /// This function iterates over all the tiles of the map: prefer reading the [`TiledTile`]
-    /// component of the tile entity instead.
-    pub fn tile_id(&self, entity: Entity) -> Option<(u32, tiled::TileId)> {
-        self.tiles
-            .iter()
-            .find(|(_, entities)| entities.contains(&entity))
-            .map(|(&id, _)| id)
-    }
-
-    /// Retrieve the [`tiled::Tile`] associated with this [`TiledTile`] [`Entity`]
-    pub fn tile(&self, map: &'a tiled::Map, entity: Entity) -> Option<tiled::Tile<'a>> {
-        self.tile_id(entity)
-            .and_then(|(tileset_id, tile_id)| tile_from_map(map, tileset_id, tile_id))
-    }
-
-    /// Returns an iterator over the object ID and [`TiledObject`] [`Entity`] associations
-    pub fn objects(&self) -> impl Iterator<Item = (u32, Entity)> + '_ {
-        self.objects.iter().map(|(&id, &entity)| (id, entity))
-    }
-
-    /// Retrieve the [`TiledObject`] [`Entity`] associated with this object ID
-    pub fn object_entity(&self, object_id: u32) -> Option<Entity> {
-        self.objects.get(&object_id).cloned()
-    }
-
-    /// Retrieve the object ID associated with this [`TiledObject`] [`Entity`]
-    pub fn object_id(&self, entity: Entity) -> Option<u32> {
-        self.objects
-            .iter()
-            .find(|(_, e)| **e == entity)
-            .map(|(&id, _)| id)
-    }
-
-    /// Retrieve the [`tiled::Object`] associated with this [`TiledObject`] [`Entity`]
-    pub fn object(&self, map: &'a tiled::Map, entity: Entity) -> Option<tiled::Object<'a>> {
-        self.object_id(entity)
-            .and_then(|id| object_from_map(map, id))
+/// Remove an [`Entity`] from a list, keeping the order of the other ones
+fn remove_entity(entities: &mut Vec<Entity>, entity: Entity) {
+    if let Some(index) = entities.iter().position(|e| *e == entity) {
+        entities.remove(index);
     }
 }
 
@@ -185,66 +144,61 @@ pub(crate) fn plugin(app: &mut App) {
 
 fn register_layer(
     added: On<Add<TiledLayer>>,
-    layers_query: Query<(&TiledLayerId, &TiledMapReference)>,
+    layers_query: Query<&TiledMapReference>,
     mut maps_query: Query<&mut TiledMapStorage>,
 ) {
-    let Ok((layer_id, map_ref)) = layers_query.get(added.entity) else {
+    let Ok(map_ref) = layers_query.get(added.entity) else {
         return;
     };
     if let Ok(mut storage) = maps_query.get_mut(map_ref.0) {
-        storage.layers.entry(layer_id.0).or_insert(added.entity);
+        storage.layers.push(added.entity);
     }
 }
 
 fn unregister_layer(
     removed: On<Remove<TiledLayer>>,
-    layers_query: Query<(&TiledLayerId, &TiledMapReference)>,
+    layers_query: Query<&TiledMapReference>,
     mut maps_query: Query<&mut TiledMapStorage>,
 ) {
-    let Ok((layer_id, map_ref)) = layers_query.get(removed.entity) else {
+    let Ok(map_ref) = layers_query.get(removed.entity) else {
         return;
     };
-    if let Ok(mut storage) = maps_query.get_mut(map_ref.0)
-        && storage.layers.get(&layer_id.0) == Some(&removed.entity)
-    {
-        storage.layers.remove(&layer_id.0);
+    if let Ok(mut storage) = maps_query.get_mut(map_ref.0) {
+        remove_entity(&mut storage.layers, removed.entity);
     }
 }
 
 fn register_object(
     added: On<Add<TiledObject>>,
-    objects_query: Query<(&TiledObjectId, Option<&TiledMapReference>, Option<&ChildOf>)>,
+    objects_query: Query<(Option<&TiledMapReference>, Option<&ChildOf>)>,
     layers_query: Query<&TiledMapReference, With<TiledLayer>>,
     mut maps_query: Query<&mut TiledMapStorage>,
 ) {
     // The TiledMapReference may not have been inserted yet: use the one of the parent layer
-    let Some((object_id, map_ref)) =
-        objects_query
-            .get(added.entity)
-            .ok()
-            .and_then(|(id, map_ref, child_of)| {
-                super::resolve_map_reference(map_ref, child_of, &layers_query).map(|r| (id, r))
-            })
+    let Some(map_ref) = objects_query
+        .get(added.entity)
+        .ok()
+        .and_then(|(map_ref, child_of)| {
+            super::resolve_map_reference(map_ref, child_of, &layers_query)
+        })
     else {
         return;
     };
     if let Ok(mut storage) = maps_query.get_mut(map_ref.0) {
-        storage.objects.entry(object_id.0).or_insert(added.entity);
+        storage.objects.push(added.entity);
     }
 }
 
 fn unregister_object(
     removed: On<Remove<TiledObject>>,
-    objects_query: Query<(&TiledObjectId, &TiledMapReference)>,
+    objects_query: Query<&TiledMapReference>,
     mut maps_query: Query<&mut TiledMapStorage>,
 ) {
-    let Ok((object_id, map_ref)) = objects_query.get(removed.entity) else {
+    let Ok(map_ref) = objects_query.get(removed.entity) else {
         return;
     };
-    if let Ok(mut storage) = maps_query.get_mut(map_ref.0)
-        && storage.objects.get(&object_id.0) == Some(&removed.entity)
-    {
-        storage.objects.remove(&object_id.0);
+    if let Ok(mut storage) = maps_query.get_mut(map_ref.0) {
+        remove_entity(&mut storage.objects, removed.entity);
     }
 }
 
@@ -317,20 +271,25 @@ mod tests {
         );
 
         let mut storage = TiledMapStorage::default();
-        storage.layers.insert(1, a);
-        storage.objects.insert(7, b);
+        storage.layers.extend([a, c]);
+        storage.objects.extend([b, a, c]);
         storage.insert_tile((0, 3), b);
         storage.insert_tile((0, 3), c);
 
-        assert_eq!(storage.layers().collect::<Vec<_>>(), vec![(1, a)]);
-        assert_eq!(storage.objects().collect::<Vec<_>>(), vec![(7, b)]);
+        assert_eq!(storage.layers().collect::<Vec<_>>(), vec![a, c]);
+        assert_eq!(storage.objects().collect::<Vec<_>>(), vec![b, a, c]);
         assert_eq!(
             storage.tiles().collect::<Vec<_>>(),
             vec![((0, 3), [b, c].as_slice())]
         );
         assert_eq!(storage.tile_entities(0, 3), &[b, c]);
         assert!(storage.tile_entities(0, 4).is_empty());
-        assert_eq!(storage.tile_id(c), Some((0, 3)));
+
+        // Removing an entity keeps the order of the other ones
+        remove_entity(&mut storage.objects, a);
+        assert_eq!(storage.objects().collect::<Vec<_>>(), vec![b, c]);
+        remove_entity(&mut storage.objects, a);
+        assert_eq!(storage.objects().collect::<Vec<_>>(), vec![b, c]);
     }
 
     #[test]
@@ -353,7 +312,6 @@ mod tests {
         // Removing an entity moves the last one at its place
         assert_eq!(storage.remove_tile((0, 1), 0, a), Some(c));
         assert_eq!(storage.tile_entities(0, 1), &[c, b]);
-        assert_eq!(storage.tile_id(a), None);
 
         // Removing an entity which is not registered at this index does nothing
         assert_eq!(storage.remove_tile((0, 1), 0, a), None);

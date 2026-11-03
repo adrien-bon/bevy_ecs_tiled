@@ -69,42 +69,6 @@ pub(crate) fn plugin(app: &mut App) {
         .register_type::<TiledEvent<ColliderCreated>>();
 }
 
-impl<'a> TiledEvent<ColliderCreated> {
-    /// Returns a vector containing [`tiled::Tile`]s in this layer as well as their
-    /// relative position from their parent [`TiledLayer`] [`Entity`].
-    ///
-    /// Note that tiles are read from the [`TiledMapAsset`]: modifications made to the
-    /// [`TiledTile`] entities after the map has been spawned are not taken into account.
-    #[deprecated(
-        since = "0.16.0",
-        note = "tiles are read from the map asset and do not reflect modifications made after the map has been spawned: query the `TiledTile` children of the layer instead"
-    )]
-    pub fn tiles(
-        &self,
-        assets: &'a Assets<TiledMapAsset>,
-        anchor: &TilemapAnchor,
-    ) -> Vec<(Vec2, tiled::Tile<'a>)> {
-        let Some(map_asset) = self.map_asset(assets) else {
-            return vec![];
-        };
-        self.layer(assets)
-            .and_then(|layer| layer.as_tile_layer())
-            .map(|layer| {
-                let mut out = vec![];
-                map_asset.for_each_tile(&layer, |layer_tile, _, tile_pos, _| {
-                    if let Some(tile) = layer_tile.get_tile() {
-                        let tile_coords =
-                            map_asset.tile_relative_position(&tile_pos, &tile_size(&tile), anchor);
-                        let offset = tilemap_offset(&map_asset.map, tile.tileset());
-                        out.push((tile_coords + offset, tile));
-                    }
-                });
-                out
-            })
-            .unwrap_or_default()
-    }
-}
-
 /// Compute the collider polygons of a [`TiledObject`], relative to the object itself.
 ///
 /// For a [`TiledObject::Tile`], polygons are computed from the tile collision objects which match `filter`.

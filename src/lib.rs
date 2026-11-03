@@ -66,16 +66,17 @@ pub mod prelude {
             tilemap_type_from_map, tileset_from_map, try_tilemap_type_from_map,
         },
         image::TiledImage,
-        layer::{TiledLayer, TiledLayerId, TiledLayerParallax, TiledParallaxCamera},
+        layer::{TiledLayer, TiledLayerParallax, TiledParallaxCamera},
         map::{
             RespawnTiledMap, TiledMap, TiledMapImageRepeatMargin, TiledMapLayerZOffset,
             TiledMapReference, asset::TiledMapAsset, loader::TiledMapLoaderError,
             storage::TiledMapStorage,
         },
         object::{
-            TiledObject, TiledObjectId, TiledObjectText, TiledObjectTextBox, TiledObjectVisualOf,
+            TiledObject, TiledObjectText, TiledObjectTextBox, TiledObjectVisualOf,
             TiledObjectVisuals,
         },
+        properties_raw::TiledProperties,
         sets::{TiledPostUpdateSystems, TiledPreUpdateSystems, TiledUpdateSystems},
         tile::{TiledTile, TiledTilemap, TiledTilemapOf, TiledTilemaps},
         world::{

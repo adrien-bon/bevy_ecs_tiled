@@ -65,16 +65,13 @@ fn evt_map_created(
 
         // Additionally, we can access Tiled items using the TiledMapStorage
         // component from the map.
-        // Using this component, we can retrieve Tiled items entity and access
+        // Using this component, we can retrieve Tiled items entities and access
         // their own components with another query (not shown here).
         // This can be useful if you want for instance to create a resource
         // based upon tiles or objects data but make it available only when
         // the map is actually spawned.
-        for (id, entity) in storage.objects() {
-            info!(
-                "(map) Object ID {:?} was spawned as entity {:?}",
-                id, entity
-            );
+        for entity in storage.objects() {
+            info!("(map) An object was spawned as entity {:?}", entity);
         }
     }
 }
@@ -82,16 +79,12 @@ fn evt_map_created(
 // Callback for our observer, will be triggered for every layer of the map
 fn obs_layer_created(
     layer_created: On<TiledEvent<LayerCreated>>,
-    layer_query: Query<&Name, With<TiledLayer>>,
+    layer_query: Query<(&Name, &TiledLayer, &TiledProperties)>,
     assets: Res<Assets<TiledMapAsset>>,
 ) {
-    // We can either access the layer components via a regular query
-    let Ok(name) = layer_query.get(layer_created.event().origin) else {
-        return;
-    };
-
-    // Or directly the underneath tiled Layer data
-    let Some(layer) = layer_created.event().layer(&assets) else {
+    // We can access the layer components via a regular query, including
+    // its Tiled class and custom properties
+    let Ok((name, layer, properties)) = layer_query.get(layer_created.event().origin) else {
         return;
     };
 
@@ -99,7 +92,10 @@ fn obs_layer_created(
         "=> Observer TiledLayerCreated was triggered for layer '{}'",
         name
     );
-    info!("Loaded layer: {:?}", layer);
+    info!(
+        "Loaded layer: {:?}, class = '{}', properties = {:?}",
+        layer, properties.class, properties.properties
+    );
 
     // Moreover, we can retrieve the TiledMapCreated event data from here
     let _map = layer_created.event().map(&assets);

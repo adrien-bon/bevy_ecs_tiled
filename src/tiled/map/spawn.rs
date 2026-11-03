@@ -15,6 +15,9 @@ use crate::{
 use bevy::prelude::*;
 
 #[cfg(feature = "user_properties")]
+use bevy::platform::collections::HashMap;
+
+#[cfg(feature = "user_properties")]
 use crate::tiled::properties::command::PropertiesCommandExt;
 
 #[allow(clippy::too_many_arguments)]
@@ -28,10 +31,13 @@ pub(crate) fn spawn_map(
     message_writers: &mut TiledMessageWriters,
     anchor: &TilemapAnchor,
 ) {
-    commands.entity(map_entity).insert(Name::new(format!(
-        "TiledMap: {}",
-        tiled_map.map.source.display()
-    )));
+    commands.entity(map_entity).insert((
+        Name::new(format!("TiledMap: {}", tiled_map.map.source.display())),
+        TiledProperties {
+            class: tiled_map.map.user_type.clone(),
+            properties: tiled_map.map.properties.clone(),
+        },
+    ));
 
     let map_event = TiledEvent::new(map_entity, MapCreated)
         .with_map(map_entity, map_asset_id)
@@ -53,6 +59,10 @@ pub(crate) fn spawn_map(
         tile_events: Vec::new(),
         #[cfg(feature = "user_properties")]
         tile_objects: Vec::new(),
+        #[cfg(feature = "user_properties")]
+        layer_entities: HashMap::default(),
+        #[cfg(feature = "user_properties")]
+        object_entities: HashMap::default(),
     };
     ctx.spawn_layers(tiled_map.map.layers(), map_entity, &map_event);
     #[cfg(feature = "user_properties")]
@@ -98,6 +108,12 @@ struct SpawnContext<'a, 'w, 's> {
     /// Tile objects, along with their tileset ID and tile ID
     #[cfg(feature = "user_properties")]
     tile_objects: Vec<(Entity, u32, tiled::TileId)>,
+    /// Spawned layers, by Tiled layer ID
+    #[cfg(feature = "user_properties")]
+    layer_entities: HashMap<u32, Entity>,
+    /// Spawned objects, by Tiled object ID: used to resolve object references in custom properties
+    #[cfg(feature = "user_properties")]
+    object_entities: HashMap<u32, Entity>,
 }
 
 /// Marker for the entities whose tile properties have been inserted when spawning the map.
@@ -128,7 +144,7 @@ impl SpawnContext<'_, '_, '_> {
             .tiled_map
             .properties
             .clone()
-            .hydrate(&map_storage.objects);
+            .hydrate(&self.object_entities);
 
         commands
             .entity(self.map_entity)
@@ -142,13 +158,13 @@ impl SpawnContext<'_, '_, '_> {
             }
         }
 
-        for (id, &entity) in map_storage.objects.iter() {
+        for (id, &entity) in self.object_entities.iter() {
             commands
                 .entity(entity)
                 .insert_properties(props.objects.remove(id).unwrap());
         }
 
-        for (id, &entity) in map_storage.layers.iter() {
+        for (id, &entity) in self.layer_entities.iter() {
             commands
                 .entity(entity)
                 .insert_properties(props.layers.remove(id).unwrap());
@@ -187,7 +203,10 @@ impl SpawnContext<'_, '_, '_> {
                     ChildOf(parent_entity),
                     TiledMapReference(self.map_entity),
                     TiledName(layer.name.clone()),
-                    TiledLayerId(layer.id()),
+                    TiledProperties {
+                        class: layer.user_type.clone(),
+                        properties: layer.properties.clone(),
+                    },
                     // Apply layer Transform using both layer base Transform and Tiled offset
                     layer_transform,
                     // Determine layer default visibility
@@ -209,7 +228,7 @@ impl SpawnContext<'_, '_, '_> {
 
             let layer_event = map_event
                 .transmute(Some(layer_entity), LayerCreated)
-                .with_layer(layer_entity, layer_id)
+                .with_layer(layer_entity)
                 .to_owned();
 
             match layer.layer_type() {
@@ -239,11 +258,12 @@ impl SpawnContext<'_, '_, '_> {
                         Name::new(format!("TiledMapImageLayer({})", layer.name)),
                         TiledLayer::Image,
                     ));
-                    self.spawn_image_layer(&layer_event, image_layer);
+                    self.spawn_image_layer(&layer_event, layer_id, image_layer);
                 }
             };
 
-            self.map_storage.layers.insert(layer.id(), layer_entity);
+            #[cfg(feature = "user_properties")]
+            self.layer_entities.insert(layer_id, layer_entity);
             self.layer_events.push(layer_event);
         }
     }
@@ -310,7 +330,8 @@ impl SpawnContext<'_, '_, '_> {
         let tiled_map = self.tiled_map;
         let anchor = self.anchor;
         let commands = &mut *self.commands;
-        let entity_map = &mut self.map_storage.objects;
+        #[cfg(feature = "user_properties")]
+        let object_entities = &mut self.object_entities;
         let object_events = &mut self.object_events;
         #[cfg(feature = "user_properties")]
         let tile_objects = &mut self.tile_objects;
@@ -351,9 +372,12 @@ impl SpawnContext<'_, '_, '_> {
                     Name::new(format!("{}({})", tiled_object.kind(), object_data.name)),
                     ChildOf(layer_event.origin),
                     TiledMapReference(self.map_entity),
-                    TiledObjectId(object_data.id()),
                     tiled_object,
                     TiledName(object_data.name.clone()),
+                    TiledProperties {
+                        class: object_data.user_type.clone(),
+                        properties: object_data.properties.clone(),
+                    },
                     transform,
                     match &object_data.visible {
                         true => Visibility::Inherited,
@@ -368,10 +392,11 @@ impl SpawnContext<'_, '_, '_> {
                 tile_objects.push((object_entity, tileset_id, tile_id));
             }
 
-            entity_map.insert(object_data.id(), object_entity);
+            #[cfg(feature = "user_properties")]
+            object_entities.insert(object_data.id(), object_entity);
             let object_event = layer_event
                 .transmute(Some(object_entity), ObjectCreated)
-                .with_object(object_entity, object_data.id())
+                .with_object(object_entity)
                 .to_owned();
             object_events.push(object_event);
         }
@@ -380,16 +405,14 @@ impl SpawnContext<'_, '_, '_> {
     fn spawn_image_layer(
         &mut self,
         layer_event: &TiledEvent<LayerCreated>,
+        layer_id: u32,
         image_layer: tiled::ImageLayer,
     ) {
         let tiled_map = self.tiled_map;
         let Some(image) = &image_layer.image else {
             return;
         };
-        let Some(handle) = layer_event
-            .layer_id()
-            .and_then(|id| tiled_map.images.get(&id))
-        else {
+        let Some(handle) = tiled_map.images.get(&layer_id) else {
             return;
         };
 

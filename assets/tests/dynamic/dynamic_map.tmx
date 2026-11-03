@@ -31,7 +31,10 @@
 0,0,0,22
 </data>
  </layer>
- <layer id="2" name="decoration" width="4" height="4">
+ <layer id="2" name="decoration" class="TestLayerClass" width="4" height="4">
+  <properties>
+   <property name="test_layer_property" value="layer value"/>
+  </properties>
   <data encoding="csv">
 0,0,0,0,
 0,2,0,0,
@@ -50,6 +53,10 @@
     </property>
    </properties>
   </object>
-  <object id="2" name="rectangle" x="0" y="0" width="16" height="8"/>
+  <object id="2" name="rectangle" type="TestObjectClass" x="0" y="0" width="16" height="8">
+   <properties>
+    <property name="test_object_property" type="int" value="3"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>

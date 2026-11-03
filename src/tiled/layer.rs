@@ -18,13 +18,7 @@ use bevy::prelude::*;
 /// - `Group`: A group of layers, used to organize multiple layers hierarchically.
 #[derive(Component, Reflect, Copy, Clone, Debug)]
 #[reflect(Component, Debug)]
-#[require(
-    Visibility,
-    Transform,
-    TiledName,
-    TiledLayerId,
-    crate::tiled::tile::TiledLayerTiles
-)]
+#[require(Visibility, Transform, TiledName, crate::tiled::tile::TiledLayerTiles)]
 pub enum TiledLayer {
     /// A layer containing tiles.
     ///
@@ -41,13 +35,6 @@ pub enum TiledLayer {
     /// A group of layers, used to organize multiple layers hierarchically.
     Group,
 }
-
-/// Tiled layer ID associated with this [`TiledLayer`].
-///
-/// You can retrieve the corresponding [`tiled::Layer`] using the [`layer_from_map`] helper function.
-#[derive(Component, Default, Clone, Copy, Reflect, Debug, Deref)]
-#[reflect(Component, Default, Debug)]
-pub struct TiledLayerId(pub u32);
 
 /// Component that stores parallax information for Tiled layers.
 #[derive(Component, Reflect, Clone, Debug, Copy)]
@@ -68,7 +55,6 @@ pub struct TiledParallaxCamera;
 
 pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledLayer>();
-    app.register_type::<TiledLayerId>();
     app.register_type::<TiledLayerParallax>();
     app.register_type::<TiledParallaxCamera>();
     app.add_systems(

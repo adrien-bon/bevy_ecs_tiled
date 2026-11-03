@@ -14,6 +14,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Add `TiledMapAsset::tileset()` and `TiledMapAsset::tile()`, which also handle tilesets only used by templates
 - Add `TiledObject::kind()`
 - Add `TiledEvent::tile_tileset_id()`
+- Add `TiledProperties` component, holding the class and custom properties of the map, layers and objects as defined in Tiled, whether the `user_properties` feature is enabled or not
 - Add `SyncMapStorage`, `SyncRender` and `SyncPhysics` variants to `TiledPostUpdateSystems`
 - Colliders of tiles layers take tiles flips (including diagonal flip) into account and are updated when a `TileFlip` changes
 - A position of a tiles layer only holds a single tile: spawning or moving a tile onto another one of the same layer despawns the latter
@@ -31,9 +32,10 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - `TiledImage` holds the image handle and repeat settings
 - `TiledObjectVisualOf` no longer requires a `Sprite` and is also used for text objects text box
 - `TiledEvent::with_tile()` takes the tile tileset ID
-- `TiledEvent<ColliderCreated>::tiles()` is deprecated: it does not reflect tiles modified after the map has been spawned
+- `TiledEvent<ColliderCreated>::tiles()` is removed: it did not reflect tiles modified after the map has been spawned
 - `TiledMapStorage` is kept up to date when layers, objects or tiles are added, modified or removed
 - `TiledTile` holds the tile tileset ID and tile ID, and `TiledTilemap` holds its tileset ID: `TiledTilesetId` and `TiledTileId` components are removed
+- `TiledLayerId` and `TiledObjectId` components are removed: `TiledMapStorage` lists layers and objects entities without their Tiled ID, and `TiledEvent` does not hold layer and object IDs anymore. `TiledEvent::layer_id()`, `layer()`, `object_id()`, `object()` and `TiledMapStorage::layer_entity()`, `layer_id()`, `layer()`, `object_entity()`, `object_id()`, `object()`, `tile_id()`, `tile()` are removed
 
 ## v0.15.1
 

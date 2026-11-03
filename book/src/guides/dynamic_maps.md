@@ -149,8 +149,6 @@ fn spawn_object(mut commands: Commands) {
             width: 32.,
             height: 16.,
         },
-        // Object IDs must be unique within a map
-        TiledObjectId(1000),
         TiledName("door".to_string()),
         Transform::from_xyz(64., -32., 0.),
         ChildOf(layer),
@@ -160,7 +158,6 @@ fn spawn_object(mut commands: Commands) {
 
 When spawning an object:
 
-- give it a [`TiledObjectId`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/struct.TiledObjectId.html) which is not used by any other object of the map, otherwise it will not be registered in the map `TiledMapStorage`,
 - give it a [`TiledName`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/filter/struct.TiledName.html) if you use [physics settings](physics.md) filtering objects by name,
 - as for tiles, its `TiledMapReference` is inserted from the parent layer, and a [`TiledObject::Tile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html#variant.Tile) gets the custom properties of its tile.
 
@@ -185,7 +182,8 @@ Two events are however sent when derived entities are spawned:
 
 For instance, if you add a `RigidBody` to colliders when receiving `ColliderCreated` (see the [physics guide](physics.md)), new colliders will get it as well.
 
-The map [`TiledMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/storage/struct.TiledMapStorage.html) is also kept up to date, so you can keep using it to find the entities of a given layer, object or tile.
+The map [`TiledMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/storage/struct.TiledMapStorage.html) is also kept up to date, so you can keep using it to list the layers and objects of the map, or to find the entities of a given tile.
+Layers and objects spawned at runtime are listed after the ones spawned along with the map.
 
 ---
 

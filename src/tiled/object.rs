@@ -27,18 +27,6 @@ pub struct TiledObjectVisualOf(pub Entity);
 #[relationship_target(relationship = TiledObjectVisualOf)]
 pub struct TiledObjectVisuals(Vec<Entity>);
 
-/// Tiled object ID associated with this [`TiledObject`].
-///
-/// You can retrieve the corresponding [`tiled::Object`] using the [`object_from_map`] helper function.
-///
-/// Object IDs are unique within a map: [`TiledMapStorage`] associates each ID with a single object entity.
-/// When spawning an object yourself, give it an ID which is not used by any other object of the map,
-/// otherwise it will not be registered in [`TiledMapStorage`]. In particular, the default ID (`0`) is
-/// shared by all the objects spawned without an explicit ID: only the first one is registered.
-#[derive(Component, Default, Reflect, Copy, Clone, Debug, Deref)]
-#[reflect(Component, Default, Debug)]
-pub struct TiledObjectId(pub u32);
-
 /// Marker [`Component`] for a [`TiledObject`]'s text box.
 #[derive(Component, Reflect, Copy, Clone, Debug)]
 pub struct TiledObjectTextBox;
@@ -50,7 +38,7 @@ pub struct TiledObjectText;
 /// Marker [`Component`] for a Tiled map object.
 #[derive(Component, Default, Reflect, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
-#[require(Visibility, Transform, TiledName, TiledObjectId)]
+#[require(Visibility, Transform, TiledName)]
 pub enum TiledObject {
     /// A point shape.
     #[default]
@@ -520,7 +508,6 @@ impl TiledObject {
 
 pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledObject>();
-    app.register_type::<TiledObjectId>();
     app.register_type::<TiledObjectVisualOf>();
     app.register_type::<TiledObjectVisuals>();
     app.add_systems(

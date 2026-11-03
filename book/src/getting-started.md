@@ -91,16 +91,13 @@ fn spawn_map(
                 info!("Loaded map: {:?}", map);
 
                 // Additionally, we can access Tiled items using the TiledMapStorage
-                // component: we can retrieve Tiled items entity and access
+                // component: we can retrieve Tiled items entities and access
                 // their own components with another query (not shown here).
                 // This can be useful if you want for instance to create a resource
                 // based upon tiles or objects data but make it available only when
                 // the map is actually spawned.
-                for (id, entity) in storage.objects() {
-                    info!(
-                        "(map) Object ID {:?} was spawned as entity {:?}",
-                        id, entity
-                    );
+                for entity in storage.objects() {
+                    info!("(map) An object was spawned as entity {:?}", entity);
                 }
             }
         );

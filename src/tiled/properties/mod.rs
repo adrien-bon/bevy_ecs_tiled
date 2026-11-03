@@ -59,6 +59,8 @@ pub(crate) fn plugin(app: &mut App) {
 /// Insert tile properties on tiles and tile objects added after their map has been spawned.
 ///
 /// Entities spawned along with the map already got their properties when spawning the map.
+///
+/// Object references in these properties cannot be resolved: they are set to [`Entity::PLACEHOLDER`].
 fn insert_tile_properties(
     mut commands: Commands,
     tiles_query: Query<
@@ -75,7 +77,7 @@ fn insert_tile_properties(
             Without<crate::tiled::map::spawn::TiledTilePropertiesInserted>,
         ),
     >,
-    maps_query: Query<(&TiledMap, &TiledMapStorage)>,
+    maps_query: Query<&TiledMap>,
     assets: Res<Assets<TiledMapAsset>>,
 ) {
     let tiles = tiles_query
@@ -93,18 +95,19 @@ fn insert_tile_properties(
         });
 
     for (entity, map_ref, tileset_id, tile_id) in tiles.chain(tile_objects) {
-        let Some((map_asset, storage)) = maps_query
+        let Some(map_asset) = maps_query
             .get(map_ref.0)
             .ok()
-            .and_then(|(m, storage)| assets.get(&m.0).map(|asset| (asset, storage)))
+            .and_then(|m| assets.get(&m.0))
         else {
             continue;
         };
-        if let Some(properties) =
-            map_asset
-                .properties
-                .tile_properties(tileset_id, tile_id, &storage.objects)
-        {
+        // Object IDs are not known anymore once the map has been spawned
+        if let Some(properties) = map_asset.properties.tile_properties(
+            tileset_id,
+            tile_id,
+            &bevy::platform::collections::HashMap::default(),
+        ) {
             commands.entity(entity).insert_properties(properties);
         }
     }

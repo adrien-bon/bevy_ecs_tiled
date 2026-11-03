@@ -142,7 +142,6 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
         (
             Entity,
             &TiledLayer,
-            &TiledLayerId,
             &TiledName,
             &TiledMapReference,
             Option<&Children>,
@@ -159,7 +158,6 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
     for (
         layer_entity,
         layer,
-        layer_id,
         layer_name,
         map_ref,
         children,
@@ -210,7 +208,7 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
             ColliderCreated::new(TiledColliderSource::TilesLayer, layer_entity),
         )
         .with_map(map_ref.0, tiled_map.0.id())
-        .with_layer(layer_entity, layer_id.0)
+        .with_layer(layer_entity)
         .to_owned();
         collider::spawn_colliders::<T>(
             settings,
@@ -230,7 +228,6 @@ fn update_objects_colliders<T: TiledPhysicsBackend>(
         (
             Entity,
             &TiledObject,
-            &TiledObjectId,
             &TiledName,
             &TiledMapReference,
             Option<&ChildOf>,
@@ -239,7 +236,7 @@ fn update_objects_colliders<T: TiledPhysicsBackend>(
         ),
         Changed<TiledObject>,
     >,
-    layers_query: Query<(&TiledLayerId, &TiledName), With<TiledLayer>>,
+    layers_query: Query<&TiledName, With<TiledLayer>>,
     maps_query: Query<(&TiledMap, &TiledPhysicsSettings<T>)>,
     assets: Res<Assets<TiledMapAsset>>,
     mut message_writer: MessageWriter<TiledEvent<ColliderCreated>>,
@@ -247,7 +244,6 @@ fn update_objects_colliders<T: TiledPhysicsBackend>(
     for (
         object_entity,
         object,
-        object_id,
         object_name,
         map_ref,
         child_of,
@@ -264,7 +260,7 @@ fn update_objects_colliders<T: TiledPhysicsBackend>(
         let Some(map_asset) = assets.get(&tiled_map.0) else {
             continue;
         };
-        let Some((layer_entity, (layer_id, layer_name))) =
+        let Some((layer_entity, layer_name)) =
             child_of.and_then(|c| layers_query.get(c.parent()).ok().map(|l| (c.parent(), l)))
         else {
             continue;
@@ -292,8 +288,8 @@ fn update_objects_colliders<T: TiledPhysicsBackend>(
             ColliderCreated::new(TiledColliderSource::Object, object_entity),
         )
         .with_map(map_ref.0, tiled_map.0.id())
-        .with_layer(layer_entity, layer_id.0)
-        .with_object(object_entity, object_id.0)
+        .with_layer(layer_entity)
+        .with_object(object_entity)
         .to_owned();
         collider::spawn_colliders::<T>(
             settings,

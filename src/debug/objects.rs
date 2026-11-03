@@ -83,7 +83,7 @@ fn draw_debug_gizmos(
         let Some(map_asset) = assets.get(&tiled_map.0) else {
             continue;
         };
-        for (idx, (_, entity)) in storage.objects().enumerate() {
+        for (idx, entity) in storage.objects().enumerate() {
             let Ok((object, transform)) = object_query.get(entity) else {
                 continue;
             };

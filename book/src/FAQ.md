@@ -122,13 +122,19 @@ bevy run --example map_basic --features=wasm web
 
 ## How do I access Tiled "raw" data?
 
-Sometimes you may need to access the underlying Tiled data, such as a `tiled::ObjectData` or `tiled::TileData`.
+Sometimes you may need to access the underlying Tiled data, such as a tile or the custom properties of an object.
 
-You have several options:
+Tiled data are held by ECS components, so you can read them directly from the entities:
 
-- Use provided ECS components such as [`TiledLayerId`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/struct.TiledLayerId.html), or [`TiledTile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTile.html) (which holds the tileset ID and tile ID) for tiles, and associated helper methods such as [`TiledMapAsset::tile()`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html#method.tile).
-- Listen to [map loading events](./design/map_events.md) and use [`TiledEvent<E>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TiledEvent.html) helper methods to access Tiled data.
-- Retrieve the [`TiledMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/storage/struct.TiledMapStorage.html) component from your map entity to get the mapping between Bevy entities and their corresponding Tiled data.
+- The map, layers and objects have a [`TiledProperties`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/properties_raw/struct.TiledProperties.html) component, which holds their class and custom properties as defined in Tiled, whether the `user_properties` feature is enabled or not.
+- Tiles have a [`TiledTile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTile.html) component, which holds their tileset ID and tile ID: use [`TiledMapAsset::tile()`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html#method.tile) to retrieve the corresponding `tiled::Tile`.
+- Objects have a [`TiledObject`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html) component, which describes their shape, and a [`TiledName`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/filter/struct.TiledName.html).
+
+You can also:
+
+- Listen to [map loading events](./design/map_events.md) and use [`TiledEvent<E>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TiledEvent.html) helper methods to access the map asset and the entities related to the event.
+- Retrieve the [`TiledMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/storage/struct.TiledMapStorage.html) component from your map entity to list its layers, objects and tiles entities.
+- Read the [`TiledMapAsset`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html) directly. Note that it is not updated when you modify the map entities after the map has been loaded.
 
 These options are demonstrated in [examples](https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples) and [debug plugins](https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/src/debug).
 

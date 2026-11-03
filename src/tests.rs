@@ -45,6 +45,7 @@ fn test_app() -> App {
         crate::tiled::tile::plugin,
         crate::tiled::sets::plugin,
         crate::tiled::filter::plugin,
+        crate::tiled::properties_raw::plugin,
     ));
     app.init_resource::<Received>();
     app.add_observer(
@@ -120,6 +121,14 @@ fn tile_at(app: &mut App, layer: Entity, pos: TilePos) -> Entity {
         .find(|(_, p, c)| **p == pos && c.parent() == layer)
         .map(|(e, _, _)| e)
         .unwrap_or_else(|| panic!("missing tile at {pos:?}"))
+}
+
+/// Returns the tileset ID + tile ID under which a tile is registered in the map storage
+fn storage_key(storage: &TiledMapStorage, entity: Entity) -> Option<(u32, tiled::TileId)> {
+    storage
+        .tiles()
+        .find(|(_, entities)| entities.contains(&entity))
+        .map(|(key, _)| key)
 }
 
 #[cfg(feature = "render")]
@@ -217,7 +226,7 @@ fn despawning_tiles_updates_tilemaps_and_storage() {
     assert_eq!(tilemaps_count(&app, ground), 1);
     let storage = app.world().get::<TiledMapStorage>(map).unwrap();
     assert!(storage.tile_entities(1, 1).is_empty());
-    assert_eq!(storage.tile_id(tile), None);
+    assert_eq!(storage_key(storage, tile), None);
 
     // Despawn a tile which shares its tilemap with another one
     let tile = tile_at(&mut app, ground, TilePos::new(0, 3));
@@ -254,7 +263,7 @@ fn modifying_tiles_updates_tilemaps_and_storage() {
         Some(&TileTextureIndex(3))
     );
     let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    assert_eq!(storage.tile_id(tile), Some((0, 3)));
+    assert_eq!(storage_key(storage, tile), Some((0, 3)));
 
     // Change its tileset: it moves to the other tilemap of the layer
     app.world_mut()
@@ -269,7 +278,7 @@ fn modifying_tiles_updates_tilemaps_and_storage() {
     assert_eq!(storage_at(&app, tilemap_0, TilePos::new(2, 2)), None);
     assert_eq!(storage_at(&app, tilemap_1, TilePos::new(2, 2)), Some(tile));
     let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    assert_eq!(storage.tile_id(tile), Some((1, 3)));
+    assert_eq!(storage_key(storage, tile), Some((1, 3)));
 }
 
 #[test]
@@ -380,7 +389,7 @@ fn moving_a_tile_onto_another_replaces_it() {
     app.update();
     assert!(app.world().get_entity(b).is_err());
     let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    assert_eq!(storage.tile_id(b), None);
+    assert_eq!(storage_key(storage, b), None);
     assert_eq!(layer_index(&app, ground), layer_tiles(&mut app, ground));
 
     #[cfg(feature = "render")]
@@ -539,7 +548,6 @@ fn spawned_objects_inherit_map_reference() {
                 flip_x: false,
                 flip_y: false,
             },
-            TiledObjectId(99),
             ChildOf(objects),
         ))
         .id();
@@ -547,13 +555,86 @@ fn spawned_objects_inherit_map_reference() {
 
     assert_eq!(app.world().get::<TiledMapReference>(object).unwrap().0, map);
     let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    assert_eq!(storage.object_entity(99), Some(object));
+    assert_eq!(storage.objects().last(), Some(object));
     assert_eq!(
         app.world()
             .get::<TiledObjectVisuals>(object)
             .map(|v| v.len()),
         Some(1)
     );
+}
+
+#[test]
+fn storage_lists_layers_and_objects_in_map_order() {
+    let mut app = test_app();
+    let map = spawn_test_map(&mut app);
+    let layers = ["ground", "decoration", "objects"].map(|n| layer_by_name(&mut app, n));
+    let objects = ["tile_object", "tile_object_with_override", "rectangle"]
+        .map(|n| object_by_name(&mut app, n));
+
+    let storage = app.world().get::<TiledMapStorage>(map).unwrap();
+    assert_eq!(storage.layers().collect::<Vec<_>>(), layers);
+    assert_eq!(storage.objects().collect::<Vec<_>>(), objects);
+
+    // Despawned objects are removed from the storage, keeping the order of the other ones
+    app.world_mut().entity_mut(objects[1]).despawn();
+    app.update();
+    let storage = app.world().get::<TiledMapStorage>(map).unwrap();
+    assert_eq!(
+        storage.objects().collect::<Vec<_>>(),
+        vec![objects[0], objects[2]]
+    );
+
+    // Respawning the map registers new entities only
+    app.world_mut().entity_mut(map).insert(RespawnTiledMap);
+    app.update();
+    app.update();
+    let storage = app.world().get::<TiledMapStorage>(map).unwrap();
+    assert_eq!(storage.layers().count(), 3);
+    assert_eq!(storage.objects().count(), 3);
+    assert!(storage.layers().all(|e| !layers.contains(&e)));
+    assert!(storage.objects().all(|e| !objects.contains(&e)));
+}
+
+#[test]
+fn tiled_properties_are_inserted() {
+    let mut app = test_app();
+    let map = spawn_test_map(&mut app);
+    let decoration = layer_by_name(&mut app, "decoration");
+    let ground = layer_by_name(&mut app, "ground");
+    let rectangle = object_by_name(&mut app, "rectangle");
+    let tile_object = object_by_name(&mut app, "tile_object");
+    let world = app.world();
+
+    let properties = world.get::<TiledProperties>(decoration).unwrap();
+    assert_eq!(properties.class, "TestLayerClass");
+    assert_eq!(
+        properties.properties.get("test_layer_property"),
+        Some(&tiled::PropertyValue::StringValue(
+            "layer value".to_string()
+        ))
+    );
+
+    let properties = world.get::<TiledProperties>(rectangle).unwrap();
+    assert_eq!(properties.class, "TestObjectClass");
+    assert_eq!(
+        properties.properties.get("test_object_property"),
+        Some(&tiled::PropertyValue::IntValue(3))
+    );
+
+    // Entities without class nor custom property also get an empty component
+    for entity in [map, ground, tile_object] {
+        let properties = world.get::<TiledProperties>(entity).unwrap();
+        assert!(properties.class.is_empty());
+        assert!(properties.properties.is_empty());
+    }
+
+    // The component is registered for reflection
+    let registry = world.resource::<AppTypeRegistry>().read();
+    let registration = registry
+        .get(std::any::TypeId::of::<TiledProperties>())
+        .expect("TiledProperties is not registered");
+    assert!(registration.data::<ReflectComponent>().is_some());
 }
 
 /// Check that the tile count of each tilemap matches the content of its storage
@@ -1014,7 +1095,6 @@ mod physics {
                     width: 4.,
                     height: 5.,
                 },
-                TiledObjectId(99),
                 ChildOf(objects),
             ))
             .id();
