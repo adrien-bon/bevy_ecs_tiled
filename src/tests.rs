@@ -349,6 +349,48 @@ fn modifying_objects_updates_visuals() {
     assert!(app.world().get::<TiledObjectVisuals>(tile_object).is_none());
 }
 
+#[test]
+fn layer_tiles_index_is_only_on_tiles_layers() {
+    use crate::tiled::tile::TiledLayerTiles;
+
+    let mut app = test_app();
+    let map = spawn_test_map(&mut app);
+    for (name, expected) in [("ground", true), ("decoration", true), ("objects", false)] {
+        let layer = layer_by_name(&mut app, name);
+        assert_eq!(
+            app.world().get::<TiledLayerTiles>(layer).is_some(),
+            expected
+        );
+    }
+
+    // A tiles layer spawned at runtime gets an index for its tiles
+    let layer = app
+        .world_mut()
+        .spawn((TiledLayer::Tiles, TiledMapReference(map), ChildOf(map)))
+        .id();
+    let tile = app
+        .world_mut()
+        .spawn((TiledTile::new(0, 1), ChildOf(layer), TilePos::new(2, 2)))
+        .id();
+    app.update();
+    assert_eq!(layer_index(&app, layer), vec![(TilePos::new(2, 2), tile)]);
+
+    // But not other layers
+    let layer = app
+        .world_mut()
+        .spawn((TiledLayer::Objects, TiledMapReference(map), ChildOf(map)))
+        .id();
+    app.update();
+    assert!(app.world().get::<TiledLayerTiles>(layer).is_none());
+
+    // The index is registered for reflection
+    let registry = app.world().resource::<AppTypeRegistry>().read();
+    let registration = registry
+        .get(std::any::TypeId::of::<TiledLayerTiles>())
+        .expect("TiledLayerTiles is not registered");
+    assert!(registration.data::<ReflectComponent>().is_some());
+}
+
 /// Tiles of a layer, as registered in its index
 fn layer_index(app: &App, layer: Entity) -> Vec<(TilePos, Entity)> {
     let mut tiles = app

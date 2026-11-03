@@ -80,8 +80,9 @@ impl TiledTile {
 
 /// Which tile occupies each position of a [`TiledLayer::Tiles`].
 ///
-/// Kept up to date when tiles are added, moved or removed.
-#[derive(Component, Default, Debug)]
+/// Only inserted on [`TiledLayer::Tiles`] entities, and kept up to date when tiles are added, moved or removed.
+#[derive(Component, Default, Reflect, Debug)]
+#[reflect(Component, Default, Debug)]
 pub(crate) struct TiledLayerTiles(pub(crate) HashMap<TilePos, Entity>);
 
 #[cfg(test)]
@@ -134,11 +135,13 @@ pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledTile>();
     app.register_type::<TiledTilemap>();
     app.register_type::<TiledTilemapOf>();
+    app.register_type::<TiledLayerTiles>();
     app.register_type::<TiledTilemaps>();
     app.add_systems(
         PostUpdate,
         index_layers_tiles.in_set(TiledPostUpdateSystems::SyncMapStorage),
     );
+    app.add_observer(insert_layer_tiles);
     app.add_observer(unindex_tile);
     #[cfg(feature = "render")]
     {
@@ -149,6 +152,29 @@ pub(crate) fn plugin(app: &mut App) {
                 .in_set(TiledPostUpdateSystems::SyncRender),
         );
         app.add_observer(render::on_tile_removed);
+    }
+}
+
+/// Insert a [`TiledLayerTiles`] on [`TiledLayer::Tiles`] entities only.
+///
+/// Layers spawned along with a map already get their [`TiledLayerTiles`], filled with their tiles: it is not overwritten.
+fn insert_layer_tiles(
+    inserted: On<Insert<TiledLayer>>,
+    mut commands: Commands,
+    layers_query: Query<&TiledLayer>,
+) {
+    match layers_query.get(inserted.entity) {
+        Ok(TiledLayer::Tiles) => {
+            commands
+                .entity(inserted.entity)
+                .insert_if_new(TiledLayerTiles::default());
+        }
+        Ok(_) => {
+            commands
+                .entity(inserted.entity)
+                .try_remove::<TiledLayerTiles>();
+        }
+        Err(_) => {}
     }
 }
 
