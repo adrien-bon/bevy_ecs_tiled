@@ -130,8 +130,8 @@ impl<'a> TiledMapStorage {
 
     /// Retrieve the tileset ID and [`tiled::TileId`] associated with this [`TiledTile`] [`Entity`]
     ///
-    /// This function iterates over all the tiles of the map: prefer reading the [`TiledTilesetId`]
-    /// and [`TiledTileId`] components of the tile entity instead.
+    /// This function iterates over all the tiles of the map: prefer reading the [`TiledTile`]
+    /// component of the tile entity instead.
     pub fn tile_id(&self, entity: Entity) -> Option<(u32, tiled::TileId)> {
         self.tiles
             .iter()
@@ -250,22 +250,12 @@ fn unregister_object(
 
 /// Register new tiles (or tiles which changed of tileset ID or [`tiled::TileId`]) in their map storage.
 fn register_tiles(
-    tiles_query: Query<
-        (Entity, &TiledTilesetId, &TiledTileId, &TiledMapReference),
-        (
-            With<TiledTile>,
-            Or<(
-                Added<TiledTile>,
-                Changed<TiledTilesetId>,
-                Changed<TiledTileId>,
-            )>,
-        ),
-    >,
+    tiles_query: Query<(Entity, &TiledTile, &TiledMapReference), Changed<TiledTile>>,
     mut indexes_query: Query<&mut TiledTileStorageIndex>,
     mut maps_query: Query<&mut TiledMapStorage>,
 ) {
-    for (entity, tileset_id, tile_id, map_ref) in tiles_query.iter() {
-        let key = (tileset_id.0, tile_id.0);
+    for (entity, tile, map_ref) in tiles_query.iter() {
+        let key = (tile.tileset_id, tile.tile_id);
         let Ok(mut storage) = maps_query.get_mut(map_ref.0) else {
             continue;
         };

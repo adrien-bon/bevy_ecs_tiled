@@ -40,8 +40,7 @@ Its Tiled data are held by the following components, which you can freely modify
 
 | Component | Description |
 | --- | --- |
-| [`TiledTilesetId`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilesetId.html) | Tileset of the tile, as its index in the map tilesets |
-| [`TiledTileId`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTileId.html) | Tile in this tileset |
+| [`TiledTile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTile.html) | Tileset of the tile (`tileset_id`, its index in the map tilesets) and tile in this tileset (`tile_id`) |
 | `TilePos` | Position of the tile in the layer (origin is the bottom-left corner of the map) |
 | `TileFlip` | Horizontal, vertical and diagonal flips |
 | `TileVisible`, `TileColor` | Visibility and color of the tile |
@@ -55,10 +54,10 @@ use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 
 /// Replace tile 0 with tile 1 of the same tileset, everywhere
-fn replace_tiles(mut tiles: Query<&mut TiledTileId, With<TiledTile>>) {
-    for mut tile_id in tiles.iter_mut() {
-        if tile_id.0 == 0 {
-            tile_id.0 = 1;
+fn replace_tiles(mut tiles: Query<&mut TiledTile>) {
+    for mut tile in tiles.iter_mut() {
+        if tile.tile_id == 0 {
+            tile.tile_id = 1;
         }
     }
 }
@@ -100,10 +99,9 @@ fn spawn_tile(mut commands: Commands, layers: Query<(Entity, &TiledLayer)>) {
         return;
     };
     commands.spawn((
-        TiledTile,
+        // Tile 2 of the first tileset of the map
+        TiledTile::new(0, 2),
         ChildOf(layer),
-        TiledTilesetId(0),
-        TiledTileId(2),
         TilePos::new(3, 4),
     ));
 }
@@ -117,7 +115,7 @@ If the tile has [custom properties](properties.md) in its tileset, they are also
 - **A position holds a single tile**, as in Tiled: spawning a tile, or moving a tile, onto a position already used by another tile of the same layer despawns this other tile, whatever its tileset.
 - **Layers cannot grow**: tiles outside of the map bounds (see [`TiledMapAsset::tilemap_size`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html#structfield.tilemap_size)) are neither rendered nor used to compute physics colliders, and a warning is logged.
 - **Tiles cannot change of layer**: changing the `ChildOf` of a tile is not supported. Despawn it and spawn a new one in the other layer instead.
-- **Custom properties are not updated** when you modify the `TiledTileId` or `TiledTilesetId` of an existing tile.
+- **Custom properties are not updated** when you modify the `TiledTile` component of an existing tile.
 - A tileset which cannot be used in a tiles layer (for instance an images collection with images of different sizes) cannot be used for spawned tiles either.
 
 ---

@@ -77,9 +77,7 @@ pub mod prelude {
             TiledObjectVisuals,
         },
         sets::{TiledPostUpdateSystems, TiledPreUpdateSystems, TiledUpdateSystems},
-        tile::{
-            TiledTile, TiledTileId, TiledTilemap, TiledTilemapOf, TiledTilemaps, TiledTilesetId,
-        },
+        tile::{TiledTile, TiledTilemap, TiledTilemapOf, TiledTilemaps},
         world::{
             RespawnTiledWorld, TiledWorld, asset::TiledWorldAsset, chunking::TiledWorldChunking,
             loader::TiledWorldLoaderError, storage::TiledWorldStorage,

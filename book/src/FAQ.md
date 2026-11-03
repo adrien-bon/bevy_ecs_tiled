@@ -89,7 +89,7 @@ See the [custom properties guide](guides/properties.md) for more information.
 ## Can I modify a map after it has been loaded?
 
 Yes: tiles, objects and images entities hold Tiled data, from which their rendering and physics colliders are derived.
-You can spawn, despawn or modify them (for instance change a tile `TiledTileId` or `TilePos`, or an object `TiledObject` shape) and their rendering and colliders will automatically follow.
+You can spawn, despawn or modify them (for instance change a tile `TiledTile` or `TilePos`, or an object `TiledObject` shape) and their rendering and colliders will automatically follow.
 
 See the [dedicated guide](guides/dynamic_maps.md) for more information and the [`map_dynamic` example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/map_dynamic.rs) for a demo.
 
@@ -126,7 +126,7 @@ Sometimes you may need to access the underlying Tiled data, such as a `tiled::Ob
 
 You have several options:
 
-- Use provided ECS components such as [`TiledLayerId`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/struct.TiledLayerId.html), or [`TiledTilesetId`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilesetId.html) and [`TiledTileId`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTileId.html) for tiles, and associated helper methods such as [`TiledMapAsset::tile()`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html#method.tile).
+- Use provided ECS components such as [`TiledLayerId`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/struct.TiledLayerId.html), or [`TiledTile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTile.html) (which holds the tileset ID and tile ID) for tiles, and associated helper methods such as [`TiledMapAsset::tile()`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html#method.tile).
 - Listen to [map loading events](./design/map_events.md) and use [`TiledEvent<E>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TiledEvent.html) helper methods to access Tiled data.
 - Retrieve the [`TiledMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/storage/struct.TiledMapStorage.html) component from your map entity to get the mapping between Bevy entities and their corresponding Tiled data.
 

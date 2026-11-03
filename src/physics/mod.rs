@@ -84,13 +84,7 @@ fn mark_tiles_layers_colliders_dirty<T: TiledPhysicsBackend>(
         &ChildOf,
         (
             With<TiledTile>,
-            Or<(
-                Added<TiledTile>,
-                Changed<TiledTilesetId>,
-                Changed<TiledTileId>,
-                Changed<TilePos>,
-                Changed<TileFlip>,
-            )>,
+            Or<(Changed<TiledTile>, Changed<TilePos>, Changed<TileFlip>)>,
         ),
     >,
 ) {
@@ -157,7 +151,7 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
         ),
         With<TiledTilesLayerCollidersDirty<T>>,
     >,
-    tiles_query: Query<(&TilePos, &TiledTilesetId, &TiledTileId, &TileFlip), With<TiledTile>>,
+    tiles_query: Query<(&TilePos, &TiledTile, &TileFlip)>,
     maps_query: Query<(&TiledMap, &TiledPhysicsSettings<T>, &TilemapAnchor)>,
     assets: Res<Assets<TiledMapAsset>>,
     mut message_writer: MessageWriter<TiledEvent<ColliderCreated>>,
@@ -207,7 +201,7 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
             .into_iter()
             .flat_map(|children| children.iter())
             .filter_map(|e| tiles_query.get(e).ok())
-            .map(|(pos, tileset_id, tile_id, flip)| (*pos, tileset_id.0, tile_id.0, *flip));
+            .map(|(pos, tile, flip)| (*pos, tile.tileset_id, tile.tile_id, *flip));
         let polygons =
             collider::tiles_polygons(map_asset, anchor, tiles, &settings.tiles_objects_filter);
 

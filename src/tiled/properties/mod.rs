@@ -62,7 +62,7 @@ pub(crate) fn plugin(app: &mut App) {
 fn insert_tile_properties(
     mut commands: Commands,
     tiles_query: Query<
-        (Entity, &TiledTilesetId, &TiledTileId, &TiledMapReference),
+        (Entity, &TiledTile, &TiledMapReference),
         (
             Added<TiledTile>,
             Without<crate::tiled::map::spawn::TiledTilePropertiesInserted>,
@@ -80,7 +80,7 @@ fn insert_tile_properties(
 ) {
     let tiles = tiles_query
         .iter()
-        .map(|(entity, tileset_id, tile_id, map_ref)| (entity, map_ref, tileset_id.0, tile_id.0));
+        .map(|(entity, tile, map_ref)| (entity, map_ref, tile.tileset_id, tile.tile_id));
     let tile_objects = objects_query
         .iter()
         .filter_map(|(entity, object, map_ref)| match object {

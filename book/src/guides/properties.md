@@ -139,7 +139,7 @@ Properties added to a tile in a tileset are inserted on every entity referencing
 - the tile objects using it. If the object also has its own properties, they take precedence over the tile ones.
 
 This also applies to tiles and tile objects you spawn after the map has been loaded: tile properties are inserted during [`TiledPostUpdateSystems::SyncMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/sets/enum.TiledPostUpdateSystems.html).
-Note that modifying the `TiledTileId` or `TiledTilesetId` of an existing tile does not update its properties.
+Note that modifying the `TiledTile` component (tileset ID or tile ID) of an existing tile does not update its properties.
 
 When loading a map, all custom properties are inserted before the map events (`MapCreated`, `LayerCreated`, ...) are sent.
 

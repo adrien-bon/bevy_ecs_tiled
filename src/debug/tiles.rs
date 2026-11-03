@@ -61,19 +61,10 @@ fn draw_tile_infos(
     assets: Res<Assets<TiledMapAsset>>,
     map_query: Query<(&TiledMap, &TilemapAnchor)>,
     tilemap_query: Query<&GlobalTransform, With<TiledTilemap>>,
-    tile_query: Query<
-        (
-            &TilePos,
-            &TiledTilesetId,
-            &TiledTileId,
-            &TilemapId,
-            &TiledMapReference,
-        ),
-        With<TiledTile>,
-    >,
+    tile_query: Query<(&TilePos, &TiledTile, &TilemapId, &TiledMapReference)>,
     mut gizmos: Gizmos,
 ) {
-    for (tile_pos, tileset_id, tile_id, tilemap_id, map_ref) in tile_query.iter() {
+    for (tile_pos, tiled_tile, tilemap_id, map_ref) in tile_query.iter() {
         let Some((map_asset, anchor)) = map_query
             .get(map_ref.0)
             .ok()
@@ -81,7 +72,7 @@ fn draw_tile_infos(
         else {
             continue;
         };
-        let Some(tile) = map_asset.tile(tileset_id.0, tile_id.0) else {
+        let Some(tile) = map_asset.tile(tiled_tile.tileset_id, tiled_tile.tile_id) else {
             continue;
         };
 

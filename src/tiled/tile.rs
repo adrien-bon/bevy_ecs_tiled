@@ -11,17 +11,18 @@
 use crate::prelude::*;
 use bevy::{platform::collections::HashMap, prelude::*, render::sync_world::SyncToRenderWorld};
 
-/// Marker [`Component`] for a Tiled map tile.
+/// [`Component`] for a Tiled map tile, giving which tile of which tileset it displays.
 ///
 /// This component is attached to entities representing individual tiles in a Tiled map.
 /// A tile entity is a child of its [`TiledLayer::Tiles`] entity.
 ///
 /// Tile entities are the source of truth for the map content: you can freely spawn, despawn or modify tiles
-/// ([`TiledTilesetId`], [`TiledTileId`], [`TilePos`], [`TileFlip`], ...) and the corresponding [`TiledTilemap`]
+/// ([`TiledTile`], [`TilePos`], [`TileFlip`], ...) and the corresponding [`TiledTilemap`]
 /// will be updated accordingly during [`TiledPostUpdateSystems::SyncRender`].
 ///
 /// To spawn a new tile, you only need to insert this component along with a [`ChildOf`] pointing to
-/// a [`TiledLayer::Tiles`] entity, a [`TiledTilesetId`], a [`TiledTileId`] and a [`TilePos`].
+/// a [`TiledLayer::Tiles`] entity and a [`TilePos`]. Note that [`TiledTile::default()`] is the first tile
+/// (ID `0`) of the first tileset (ID `0`) of the map.
 ///
 /// A position of a layer can only hold a single tile: spawning a tile, or moving a tile (ie. changing its
 /// [`TilePos`]), onto a position already used by another tile of the same layer despawns this other tile,
@@ -38,7 +39,7 @@ use bevy::{platform::collections::HashMap, prelude::*, render::sync_world::SyncT
 /// transform and visibility propagation.
 ///
 /// Tile entities hold two kinds of components:
-/// - Tiled data, which you can freely modify: [`TiledTilesetId`], [`TiledTileId`], [`TilePos`], [`TileFlip`],
+/// - Tiled data, which you can freely modify: [`TiledTile`], [`TilePos`], [`TileFlip`],
 ///   [`TileVisible`] and [`TileColor`]. A [`TiledMapReference`] is automatically inserted from the parent layer
 ///   if the tile does not have one.
 /// - rendering components derived from these data, which you should not modify since they are overwritten
@@ -46,8 +47,6 @@ use bevy::{platform::collections::HashMap, prelude::*, render::sync_world::SyncT
 #[derive(Component, Default, Reflect, Copy, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
 #[require(
-    TiledTileId,
-    TiledTilesetId,
     TilePos,
     TilePosOld,
     TileFlip,
@@ -57,7 +56,27 @@ use bevy::{platform::collections::HashMap, prelude::*, render::sync_world::SyncT
     TiledTileIndexedPosition,
     crate::tiled::map::storage::TiledTileStorageIndex
 )]
-pub struct TiledTile;
+pub struct TiledTile {
+    /// Tileset of the tile, as its index in the map tilesets.
+    ///
+    /// You can retrieve the corresponding [`tiled::Tileset`] using the [`tileset_from_map`] helper function.
+    pub tileset_id: u32,
+    /// [`tiled::TileId`] of the tile in its tileset.
+    ///
+    /// You can retrieve the corresponding [`tiled::Tile`] using [`TiledMapAsset::tile`]
+    /// or the [`tile_from_map`] helper function.
+    pub tile_id: tiled::TileId,
+}
+
+impl TiledTile {
+    /// Creates a new [`TiledTile`] from its tileset ID and [`tiled::TileId`]
+    pub fn new(tileset_id: u32, tile_id: tiled::TileId) -> Self {
+        Self {
+            tileset_id,
+            tile_id,
+        }
+    }
+}
 
 /// Which tile occupies each position of a [`TiledLayer::Tiles`].
 ///
@@ -90,22 +109,13 @@ pub(crate) struct TiledTileIndexedPosition(Option<TilePos>);
 /// See [`TilemapBundle`] for more information on available [`Component`]s.
 #[derive(Component, Default, Reflect, Copy, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
-#[require(Visibility, Transform, TiledName, TiledTilesetId)]
-pub struct TiledTilemap;
-
-/// Tiled tileset ID associated with this [`TiledTilemap`] or [`TiledTile`].
-///
-/// You can retrieve the corresponding [`tiled::Tileset`] using the [`tileset_from_map`] helper function.
-#[derive(Component, Default, Reflect, Copy, Clone, Debug, PartialEq, Eq, Hash, Deref)]
-#[reflect(Component, Default, Debug)]
-pub struct TiledTilesetId(pub u32);
-
-/// [`tiled::TileId`] associated with this [`TiledTile`].
-///
-/// You can retrieve the corresponding [`tiled::Tile`] using the [`tile_from_map`] helper function.
-#[derive(Component, Default, Reflect, Copy, Clone, Debug, PartialEq, Eq, Hash, Deref)]
-#[reflect(Component, Default, Debug)]
-pub struct TiledTileId(pub tiled::TileId);
+#[require(Visibility, Transform, TiledName)]
+pub struct TiledTilemap {
+    /// Tileset of the tiles rendered by this tilemap, as its index in the map tilesets.
+    ///
+    /// You can retrieve the corresponding [`tiled::Tileset`] using the [`tileset_from_map`] helper function.
+    pub tileset_id: u32,
+}
 
 /// Relationship [`Component`] between a [`TiledTilemap`] and its parent [`TiledLayer::Tiles`].
 #[derive(Component, Reflect, Copy, Clone, Debug, Deref)]
@@ -122,8 +132,6 @@ pub struct TiledTilemaps(Vec<Entity>);
 pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledTile>();
     app.register_type::<TiledTilemap>();
-    app.register_type::<TiledTilesetId>();
-    app.register_type::<TiledTileId>();
     app.register_type::<TiledTilemapOf>();
     app.register_type::<TiledTilemaps>();
     app.add_systems(
@@ -291,8 +299,7 @@ pub(crate) mod render {
     /// Tile components read by [`sync_tiles`]
     type SyncedTile = (
         Entity,
-        Ref<'static, TiledTilesetId>,
-        Ref<'static, TiledTileId>,
+        Ref<'static, TiledTile>,
         &'static TilePos,
         Option<&'static ChildOf>,
         Option<&'static TiledTileRenderState>,
@@ -308,15 +315,7 @@ pub(crate) mod render {
         mut commands: Commands,
         changed_tiles_query: Query<
             SyncedTile,
-            (
-                With<TiledTile>,
-                Or<(
-                    Added<TiledTile>,
-                    Changed<TiledTilesetId>,
-                    Changed<TiledTileId>,
-                    Changed<TilePos>,
-                )>,
-            ),
+            (With<TiledTile>, Or<(Changed<TiledTile>, Changed<TilePos>)>),
         >,
         tiles_query: Query<SyncedTile, With<TiledTile>>,
         mut pending_tiles: Local<bevy::ecs::entity::EntityHashSet>,
@@ -330,11 +329,7 @@ pub(crate) mod render {
             With<TiledLayer>,
         >,
         mut tilemaps_query: Query<
-            (
-                &TiledTilesetId,
-                &mut TileStorage,
-                &mut TiledTilemapTileCount,
-            ),
+            (&TiledTilemap, &mut TileStorage, &mut TiledTilemapTileCount),
             With<TiledTilemap>,
         >,
         maps_query: Query<(&TiledMap, &TilemapRenderSettings, &TilemapAnchor)>,
@@ -361,14 +356,11 @@ pub(crate) mod render {
             .filter(|entity| !changed_tiles_query.contains(*entity))
             .filter_map(|entity| tiles_query.get(entity).ok());
 
-        for (entity, tileset_id, tile_id, tile_pos, child_of, render_state, has_animation) in
+        for (entity, tile, tile_pos, child_of, render_state, has_animation) in
             changed_tiles_query.iter().chain(pending)
         {
             // Nothing to do if only the TilePos was re-inserted (see below)
-            if render_state.is_some_and(|state| state.position == *tile_pos)
-                && !tileset_id.is_changed()
-                && !tile_id.is_changed()
-            {
+            if render_state.is_some_and(|state| state.position == *tile_pos) && !tile.is_changed() {
                 continue;
             }
 
@@ -399,14 +391,14 @@ pub(crate) mod render {
                 continue;
             };
 
-            let tileset = match map_asset.tilesets.get(&tileset_id.0) {
+            let tileset = match map_asset.tilesets.get(&tile.tileset_id) {
                 Some(tileset) if tileset.usable_for_tiles_layer => tileset,
                 _ => {
                     // Only warn once for each tileset of each map
-                    if unusable_tilesets.insert((tiled_map.0.id(), tileset_id.0)) {
+                    if unusable_tilesets.insert((tiled_map.0.id(), tile.tileset_id)) {
                         warn!(
                             "Tileset {} of map {:?} cannot be used in a tiles layer (missing tileset or images with different sizes), its tiles will not be rendered",
-                            tileset_id.0, map_asset.map.source
+                            tile.tileset_id, map_asset.map.source
                         );
                     }
                     mark_not_rendered(&mut commands, entity, *tile_pos, render_state);
@@ -425,7 +417,7 @@ pub(crate) mod render {
 
             // Find the tilemap for this layer and tileset, or spawn a new one
             let tilemap_entity = *tilemaps_cache
-                .entry((layer_entity, tileset_id.0))
+                .entry((layer_entity, tile.tileset_id))
                 .or_insert_with(|| {
                     layer_tilemaps
                         .into_iter()
@@ -433,14 +425,14 @@ pub(crate) mod render {
                         .find(|e| {
                             tilemaps_query
                                 .get(*e)
-                                .is_ok_and(|(id, _, _)| id.0 == tileset_id.0)
+                                .is_ok_and(|(tilemap, _, _)| tilemap.tileset_id == tile.tileset_id)
                         })
                         .unwrap_or_else(|| {
                             let tilemap_entity = commands.spawn_empty().id();
                             let event = TiledEvent::new(tilemap_entity, TilemapCreated)
                                 .with_map(map_ref.0, tiled_map.0.id())
                                 .with_layer(layer_entity, layer_id.0)
-                                .with_tilemap(tilemap_entity, tileset_id.0)
+                                .with_tilemap(tilemap_entity, tile.tileset_id)
                                 .to_owned();
                             commands.entity(tilemap_entity).insert((
                                 Name::new(format!(
@@ -448,8 +440,9 @@ pub(crate) mod render {
                                     layer_name.0, tileset.tileset.name
                                 )),
                                 *map_ref,
-                                TiledTilemap,
-                                *tileset_id,
+                                TiledTilemap {
+                                    tileset_id: tile.tileset_id,
+                                },
                                 TiledName(tileset.tileset.name.clone()),
                                 ChildOf(layer_entity),
                                 TiledTilemapOf(layer_entity),
@@ -503,12 +496,12 @@ pub(crate) mod render {
                 entity_commands.remove::<TilePos>().insert(*tile_pos);
             }
             let (texture_index, animation) = *tiles_cache
-                .entry((map_ref.0, tileset_id.0, tile_id.0))
+                .entry((map_ref.0, tile.tileset_id, tile.tile_id))
                 .or_insert_with(|| {
                     (
-                        tile_texture_index(tileset, tile_id.0),
+                        tile_texture_index(tileset, tile.tile_id),
                         map_asset
-                            .tile(tileset_id.0, tile_id.0)
+                            .tile(tile.tileset_id, tile.tile_id)
                             .and_then(|tile| animated_tile(&tile)),
                     )
                 });

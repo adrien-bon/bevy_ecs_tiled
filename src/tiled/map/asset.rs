@@ -425,16 +425,13 @@ impl TiledMapAsset {
     /// fn tile_position_system(
     ///     assets: Res<Assets<TiledMapAsset>>,
     ///     map_query: Query<(&TiledMap, &TilemapAnchor)>,
-    ///     tile_query: Query<
-    ///         (&TilePos, &TiledTilesetId, &TiledTileId, &TilemapId, &TiledMapReference),
-    ///         With<TiledTile>,
-    ///     >,
+    ///     tile_query: Query<(&TilePos, &TiledTile, &TilemapId, &TiledMapReference)>,
     ///     tilemap_query: Query<&GlobalTransform, With<TiledTilemap>>,
     /// ) {
-    ///     for (tile_pos, tileset_id, tile_id, tilemap_id, map_ref) in tile_query.iter() {
+    ///     for (tile_pos, tiled_tile, tilemap_id, map_ref) in tile_query.iter() {
     ///         let Ok((tiled_map, anchor)) = map_query.get(map_ref.0) else { continue; };
     ///         let Some(map_asset) = assets.get(&tiled_map.0) else { continue; };
-    ///         let Some(tile) = map_asset.tile(tileset_id.0, tile_id.0) else { continue; };
+    ///         let Some(tile) = map_asset.tile(tiled_tile.tileset_id, tiled_tile.tile_id) else { continue; };
     ///         // Compute the tile's world position (center) relative to its tilemap
     ///         let tile_rel_pos = map_asset.tile_relative_position(
     ///             tile_pos,

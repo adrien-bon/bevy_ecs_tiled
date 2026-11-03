@@ -49,7 +49,7 @@ Dashed arrows are only present when the physics feature is enabled and the corre
 Entities spawned by `bevy_ecs_tiled` fall into two categories:
 
 - **Tiled data**: the map, layers, tiles, objects and images entities.
-  They hold what was defined in Tiled, such as a tile [`TiledTileId`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTileId.html) and `TilePos`, or a [`TiledObject`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html) shape.
+  They hold what was defined in Tiled, such as a tile [`TiledTile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTile.html) (tileset ID and tile ID) and `TilePos`, or a [`TiledObject`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html) shape.
 - **Derived entities and components**: [`TiledTilemap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilemap.html)s, tile objects and text objects visuals, image `Sprite`s and physics colliders.
   They are computed from the Tiled data during [`TiledPostUpdateSystems::SyncRender`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/sets/enum.TiledPostUpdateSystems.html) and [`TiledPostUpdateSystems::SyncPhysics`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/sets/enum.TiledPostUpdateSystems.html).
 
@@ -99,8 +99,8 @@ Its value tells you the kind of layer, and what you will find below it:
 Below each `TiledLayer::Tiles`, you find two kinds of sibling entities:
 
 - the actual [`TiledTile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTile.html) entities, one for each tile of the layer.
-  They are identified in Tiled by their [`TiledTilesetId`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilesetId.html) and [`TiledTileId`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTileId.html), and positioned with a `TilePos`.
-- one [`TiledTilemap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilemap.html) entity per tileset used by the layer, rendering the tiles using this tileset.
+  Their `TiledTile` component gives their tileset ID and tile ID, and they are positioned with a `TilePos`.
+- one [`TiledTilemap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilemap.html) entity per tileset used by the layer, rendering the tiles using this tileset (given by its `tileset_id` field).
   It holds the `TilemapBundle` from `bevy_ecs_tilemap`, so this is where the tilemap size, grid size or texture live.
   You can reach the tilemaps of a layer through the [`TiledTilemaps`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilemaps.html) relationship, and the tilemap of a tile through its `TilemapId`.
 

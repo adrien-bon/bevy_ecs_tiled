@@ -33,6 +33,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - `TiledEvent::with_tile()` takes the tile tileset ID
 - `TiledEvent<ColliderCreated>::tiles()` is deprecated: it does not reflect tiles modified after the map has been spawned
 - `TiledMapStorage` is kept up to date when layers, objects or tiles are added, modified or removed
+- `TiledTile` holds the tile tileset ID and tile ID, and `TiledTilemap` holds its tileset ID: `TiledTilesetId` and `TiledTileId` components are removed
 
 ## v0.15.1
 

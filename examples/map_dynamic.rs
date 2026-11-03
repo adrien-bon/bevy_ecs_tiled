@@ -83,7 +83,7 @@ fn modify_map(
     mut seed: Local<u32>,
     maps_query: Query<(Entity, &TiledMap)>,
     layers_query: Query<(Entity, &TiledLayer)>,
-    mut tiles_query: Query<(Entity, &mut TiledTileId, &mut TilePos), With<TiledTile>>,
+    mut tiles_query: Query<(Entity, &mut TiledTile, &mut TilePos)>,
     mut objects_query: Query<(Entity, &mut TiledObject)>,
     assets: Res<Assets<TiledMapAsset>>,
 ) {
@@ -97,11 +97,11 @@ fn modify_map(
 
     // Change the tile ID of a tile: tilemap is updated with the new texture
     if keyboard_input.just_pressed(KeyCode::Digit2)
-        && let Some((entity, mut tile_id, _)) = pick(&mut seed, tiles_query.iter_mut())
+        && let Some((entity, mut tile, _)) = pick(&mut seed, tiles_query.iter_mut())
     {
         // Our tileset contains 7 tiles
-        tile_id.0 = (tile_id.0 + 1) % 7;
-        info!("Change tile {entity} to {}", tile_id.0);
+        tile.tile_id = (tile.tile_id + 1) % 7;
+        info!("Change tile {entity} to {}", tile.tile_id);
     }
 
     // Move a tile one step to the right, if it stays within the map
@@ -138,10 +138,8 @@ fn modify_map(
         info!("Spawn tile {tile_id} at {tile_pos:?}");
         commands.spawn((
             Name::new("Manually spawned tile"),
-            TiledTile,
+            TiledTile::new(0, tile_id),
             ChildOf(layer),
-            TiledTilesetId(0),
-            TiledTileId(tile_id),
             tile_pos,
         ));
     }

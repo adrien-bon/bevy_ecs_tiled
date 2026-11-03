@@ -270,9 +270,7 @@ impl SpawnContext<'_, '_, '_> {
             let tile_entity = commands
                 .spawn((
                     Name::new(format!("TiledMapTile({},{})", tile_pos.x, tile_pos.y)),
-                    TiledTile,
-                    TiledTilesetId(tileset_id),
-                    TiledTileId(tile_id),
+                    TiledTile::new(tileset_id, tile_id),
                     tile_pos,
                     TileFlip {
                         x: layer_tile_data.flip_h,
