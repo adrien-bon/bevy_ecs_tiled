@@ -82,7 +82,7 @@ impl TiledTile {
 ///
 /// Kept up to date when tiles are added, moved or removed.
 #[derive(Component, Default, Debug)]
-pub(crate) struct TiledLayerTiles(HashMap<TilePos, Entity>);
+pub(crate) struct TiledLayerTiles(pub(crate) HashMap<TilePos, Entity>);
 
 #[cfg(test)]
 impl TiledLayerTiles {
@@ -91,9 +91,10 @@ impl TiledLayerTiles {
     }
 }
 
-/// Position under which a [`TiledTile`] is registered in its layer [`TiledLayerTiles`], if any.
+/// Position under which a [`TiledTile`] is registered in its layer [`TiledLayerTiles`]
+/// and in its map [`TiledMapStorage`] positions index, if any.
 #[derive(Component, Default, Copy, Clone, Debug)]
-pub(crate) struct TiledTileIndexedPosition(Option<TilePos>);
+pub(crate) struct TiledTileIndexedPosition(pub(crate) Option<TilePos>);
 
 /// Marker [`Component`] for a Tiled tilemap.
 ///
@@ -151,33 +152,47 @@ pub(crate) fn plugin(app: &mut App) {
     }
 }
 
-/// Register new or moved tiles in their layer [`TiledLayerTiles`].
+/// Register new or moved tiles in their layer [`TiledLayerTiles`] and in their map [`TiledMapStorage`] positions index.
 ///
-/// If another tile already occupies the position, it is despawned.
+/// If another tile of the same layer already occupies the position, it is despawned.
 fn index_layers_tiles(
     mut commands: Commands,
     mut tiles_query: Query<
-        (Entity, &TilePos, &ChildOf, &mut TiledTileIndexedPosition),
+        (
+            Entity,
+            &TilePos,
+            &ChildOf,
+            Option<&TiledMapReference>,
+            &mut TiledTileIndexedPosition,
+        ),
         (With<TiledTile>, Or<(Added<TiledTile>, Changed<TilePos>)>),
     >,
     positions_query: Query<&TilePos, With<TiledTile>>,
     mut layers_query: Query<&mut TiledLayerTiles>,
+    mut maps_query: Query<&mut TiledMapStorage>,
 ) {
     // Tiles despawned during this run, because another tile moved onto them
     let mut despawned = bevy::platform::collections::HashSet::<Entity>::default();
-    for (entity, tile_pos, child_of, mut indexed) in tiles_query.iter_mut() {
-        if despawned.contains(&entity) {
+    for (entity, tile_pos, child_of, map_ref, mut indexed) in tiles_query.iter_mut() {
+        // Nothing to do if the tile is already indexed at its position
+        // (eg. tiles indexed when spawning the map)
+        if despawned.contains(&entity) || indexed.0 == Some(*tile_pos) {
             continue;
         }
         let Ok(mut layer_tiles) = layers_query.get_mut(child_of.parent()) else {
             continue;
         };
 
+        let mut storage = map_ref.and_then(|map_ref| maps_query.get_mut(map_ref.0).ok());
+
         // Remove the tile from its previous position
-        if let Some(previous) = indexed.0
-            && layer_tiles.0.get(&previous) == Some(&entity)
-        {
-            layer_tiles.0.remove(&previous);
+        if let Some(previous) = indexed.0 {
+            if layer_tiles.0.get(&previous) == Some(&entity) {
+                layer_tiles.0.remove(&previous);
+            }
+            if let Some(storage) = storage.as_mut() {
+                storage.remove_tile_position(previous, entity);
+            }
         }
 
         // Replace the tile which was at this position, unless it moved away during this
@@ -191,25 +206,41 @@ fn index_layers_tiles(
         }
 
         layer_tiles.0.insert(*tile_pos, entity);
+        if let Some(storage) = storage.as_mut() {
+            storage.insert_tile_position(*tile_pos, entity);
+        }
         indexed.0 = Some(*tile_pos);
     }
 }
 
-/// Remove a tile from its layer [`TiledLayerTiles`] when it is despawned or when its [`TiledTile`] component is removed.
+/// Remove a tile from its layer [`TiledLayerTiles`] and from its map [`TiledMapStorage`] positions index
+/// when it is despawned or when its [`TiledTile`] component is removed.
 fn unindex_tile(
     removed: On<Remove<TiledTile>>,
-    mut tiles_query: Query<(&ChildOf, &mut TiledTileIndexedPosition)>,
+    mut tiles_query: Query<(
+        &ChildOf,
+        Option<&TiledMapReference>,
+        &mut TiledTileIndexedPosition,
+    )>,
     mut layers_query: Query<&mut TiledLayerTiles>,
+    mut maps_query: Query<&mut TiledMapStorage>,
 ) {
     let entity = removed.entity;
-    let Ok((child_of, mut indexed)) = tiles_query.get_mut(entity) else {
+    let Ok((child_of, map_ref, mut indexed)) = tiles_query.get_mut(entity) else {
         return;
     };
-    if let Some(position) = indexed.0.take()
-        && let Ok(mut layer_tiles) = layers_query.get_mut(child_of.parent())
+    let Some(position) = indexed.0.take() else {
+        return;
+    };
+    if let Ok(mut layer_tiles) = layers_query.get_mut(child_of.parent())
         && layer_tiles.0.get(&position) == Some(&entity)
     {
         layer_tiles.0.remove(&position);
+    }
+    if let Some(map_ref) = map_ref
+        && let Ok(mut storage) = maps_query.get_mut(map_ref.0)
+    {
+        storage.remove_tile_position(position, entity);
     }
 }
 

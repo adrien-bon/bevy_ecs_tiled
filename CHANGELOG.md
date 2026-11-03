@@ -14,6 +14,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Add `TiledMapAsset::tileset()` and `TiledMapAsset::tile()`, which also handle tilesets only used by templates
 - Add `TiledObject::kind()`
 - Add `TiledEvent::tile_tileset_id()`
+- Add `TiledMapStorage::tiles_at()`, giving the tiles at a given position, whatever their layer
 - Add `TiledProperties` component, holding the class and custom properties of the map, layers and objects as defined in Tiled, whether the `user_properties` feature is enabled or not
 - Add `SyncMapStorage`, `SyncRender` and `SyncPhysics` variants to `TiledPostUpdateSystems`
 - Colliders of tiles layers take tiles flips (including diagonal flip) into account and are updated when a `TileFlip` changes

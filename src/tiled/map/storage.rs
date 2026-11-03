@@ -10,7 +10,7 @@ use bevy::{platform::collections::HashMap, prelude::*};
 /// [`Component`] storing all the Tiled items composing this map.
 ///
 /// Gives the [`TiledLayer`] and [`TiledObject`] entities of the map, and indexes its [`TiledTile`] entities
-/// by tileset ID and [`tiled::TileId`].
+/// by tileset ID and [`tiled::TileId`], and by [`TilePos`].
 ///
 /// Should not be manually inserted but can be accessed from the map [`Entity`].
 ///
@@ -31,6 +31,9 @@ pub struct TiledMapStorage {
     /// Note that we can have multiple entities (ie.several instances) of the same tile since
     /// it references the tile on the tileset and not the tile on the tilemap.
     pub(crate) tiles: HashMap<(u32, tiled::TileId), Vec<Entity>>,
+
+    /// Mapping between a [`TilePos`] and the [`TiledTile`] [`Entity`]s at this position, whatever their layer
+    pub(crate) tiles_positions: HashMap<TilePos, Vec<Entity>>,
 }
 
 /// Where a [`TiledTile`] is registered in its map [`TiledMapStorage`], if any:
@@ -51,6 +54,29 @@ impl TiledMapStorage {
         self.layers.clear();
         self.objects.clear();
         self.tiles.clear();
+        self.tiles_positions.clear();
+    }
+
+    /// Register a [`TiledTile`] [`Entity`] at the given position
+    pub(crate) fn insert_tile_position(&mut self, position: TilePos, entity: Entity) {
+        self.tiles_positions
+            .entry(position)
+            .or_default()
+            .push(entity);
+    }
+
+    /// Unregister a [`TiledTile`] [`Entity`] from the given position, if it is registered there
+    pub(crate) fn remove_tile_position(&mut self, position: TilePos, entity: Entity) {
+        let Some(entities) = self.tiles_positions.get_mut(&position) else {
+            return;
+        };
+        // There is at most one tile per layer at a given position: the list is short
+        if let Some(index) = entities.iter().position(|e| *e == entity) {
+            entities.swap_remove(index);
+        }
+        if entities.is_empty() {
+            self.tiles_positions.remove(&position);
+        }
     }
 
     /// Index the next [`TiledTile`] [`Entity`] registered for this tileset ID + [`tiled::TileId`] will get
@@ -117,6 +143,21 @@ impl TiledMapStorage {
     pub fn tile_entities(&self, tileset_id: u32, tile_id: tiled::TileId) -> &[Entity] {
         self.tiles
             .get(&(tileset_id, tile_id))
+            .map(Vec::as_slice)
+            .unwrap_or(&[])
+    }
+
+    /// Retrieve the [`TiledTile`] entities at the given [`TilePos`], whatever their layer.
+    ///
+    /// There is at most one tile per layer at a given position: to find the tile of a given layer,
+    /// check the [`ChildOf`] of the returned entities.
+    /// Note that a [`TilePos`] is a position in the map grid: if layers have different offsets
+    /// (or parallax factors), tiles at the same [`TilePos`] are not drawn at the same place.
+    ///
+    /// Tiles added or moved at runtime are registered during [`TiledPostUpdateSystems::SyncMapStorage`].
+    pub fn tiles_at(&self, position: TilePos) -> &[Entity] {
+        self.tiles_positions
+            .get(&position)
             .map(Vec::as_slice)
             .unwrap_or(&[])
     }
@@ -325,5 +366,28 @@ mod tests {
         // Removing the last entity for a key removes the key
         assert_eq!(storage.remove_tile((0, 1), 0, c), None);
         assert_eq!(storage.tiles().count(), 0);
+    }
+
+    #[test]
+    fn storage_tiles_positions() {
+        let mut world = World::new();
+        let (a, b) = (world.spawn_empty().id(), world.spawn_empty().id());
+        let (p1, p2) = (TilePos::new(1, 2), TilePos::new(3, 4));
+
+        let mut storage = TiledMapStorage::default();
+        storage.insert_tile_position(p1, a);
+        storage.insert_tile_position(p1, b);
+        assert_eq!(storage.tiles_at(p1), &[a, b]);
+        assert!(storage.tiles_at(p2).is_empty());
+
+        // Removing an entity which is not at this position does nothing
+        storage.remove_tile_position(p2, a);
+        storage.remove_tile_position(p1, a);
+        storage.remove_tile_position(p1, a);
+        assert_eq!(storage.tiles_at(p1), &[b]);
+
+        // Removing the last entity of a position removes the position
+        storage.remove_tile_position(p1, b);
+        assert!(storage.tiles_positions.is_empty());
     }
 }

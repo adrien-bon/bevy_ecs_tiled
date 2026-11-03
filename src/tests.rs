@@ -2,7 +2,7 @@
 //! Tiled data components when they are modified after the map has been spawned.
 
 use crate::prelude::*;
-use bevy::{asset::LoadState, prelude::*};
+use bevy::{asset::LoadState, platform::collections::HashMap, prelude::*};
 use std::time::{Duration, Instant};
 
 const DYNAMIC_MAP: &str = "tests/dynamic/dynamic_map.tmx";
@@ -677,8 +677,91 @@ fn assert_storage_matches_tiles(app: &mut App, map: Entity) {
         assert_eq!(index, Some((key, position.unwrap())));
     }
 
+    // The positions index holds exactly the tiles at each position
+    let mut expected = app
+        .world_mut()
+        .query_filtered::<(Entity, &TilePos), With<TiledTile>>()
+        .iter(app.world())
+        .fold(
+            HashMap::<TilePos, Vec<Entity>>::default(),
+            |mut positions, (entity, pos)| {
+                positions.entry(*pos).or_default().push(entity);
+                positions
+            },
+        );
+    let storage = app.world().get::<TiledMapStorage>(map).unwrap();
+    let mut actual = storage.tiles_positions.clone();
+    for entities in expected.values_mut().chain(actual.values_mut()) {
+        entities.sort();
+    }
+    assert_eq!(actual, expected);
+    for (position, entities) in expected {
+        let mut at = storage.tiles_at(position).to_vec();
+        at.sort();
+        assert_eq!(at, entities);
+    }
+
     #[cfg(feature = "render")]
     assert_tilemaps_count_match_storage(app);
+}
+
+#[test]
+fn storage_indexes_tiles_positions() {
+    let mut app = test_app();
+    let map = spawn_test_map(&mut app);
+    let ground = layer_by_name(&mut app, "ground");
+    let decoration = layer_by_name(&mut app, "decoration");
+    assert_storage_matches_tiles(&mut app, map);
+
+    let a = tile_at(&mut app, ground, TilePos::new(0, 3));
+    let b = tile_at(&mut app, ground, TilePos::new(1, 3));
+    let tiles_at = |app: &App, x, y| {
+        let mut tiles = app
+            .world()
+            .get::<TiledMapStorage>(map)
+            .unwrap()
+            .tiles_at(TilePos::new(x, y))
+            .to_vec();
+        tiles.sort();
+        tiles
+    };
+    assert_eq!(tiles_at(&app, 0, 3), vec![a]);
+
+    // Tiles of different layers share the same position
+    let c = app
+        .world_mut()
+        .spawn((
+            TiledTile::new(1, 2),
+            ChildOf(decoration),
+            TilePos::new(0, 3),
+        ))
+        .id();
+    app.update();
+    let mut expected = vec![a, c];
+    expected.sort();
+    assert_eq!(tiles_at(&app, 0, 3), expected);
+    assert_storage_matches_tiles(&mut app, map);
+
+    // Moving B onto A replaces A, but not C which is in another layer
+    *app.world_mut().get_mut::<TilePos>(b).unwrap() = TilePos::new(0, 3);
+    app.update();
+    let mut expected = vec![b, c];
+    expected.sort();
+    assert_eq!(tiles_at(&app, 0, 3), expected);
+    assert!(tiles_at(&app, 1, 3).is_empty());
+    assert_storage_matches_tiles(&mut app, map);
+
+    // Despawning a tile removes it from its position
+    app.world_mut().entity_mut(c).despawn();
+    app.update();
+    assert_eq!(tiles_at(&app, 0, 3), vec![b]);
+    assert_storage_matches_tiles(&mut app, map);
+
+    // Removing the TiledTile component as well
+    app.world_mut().entity_mut(b).remove::<TiledTile>();
+    app.update();
+    assert!(tiles_at(&app, 0, 3).is_empty());
+    assert_storage_matches_tiles(&mut app, map);
 }
 
 #[test]
@@ -1333,7 +1416,7 @@ mod perf {
         }
 
         // Spawn: map data, then rendering and physics components
-        app.world_mut().spawn(TiledMap(handle));
+        let map = app.world_mut().spawn(TiledMap(handle)).id();
         let mut spawn = Duration::ZERO;
         while app
             .world()
@@ -1388,6 +1471,35 @@ mod perf {
         }
         let despawn = timed_update(&mut app);
 
+        // Spawn many objects in a new objects layer, then despawn this layer:
+        // each object is removed from the map storage one by one
+        const OBJECTS: u32 = 5000;
+        let objects_layer = app
+            .world_mut()
+            .spawn((TiledLayer::Objects, TiledMapReference(map), ChildOf(map)))
+            .id();
+        for i in 0..OBJECTS {
+            app.world_mut().spawn((
+                TiledObject::Rectangle {
+                    width: 4.,
+                    height: 4.,
+                },
+                Transform::from_xyz((i % 200) as f32 * 16., (i / 200) as f32 * -16., 0.),
+                ChildOf(objects_layer),
+            ));
+        }
+        let spawn_objects = timed_update(&mut app);
+        app.world_mut().entity_mut(objects_layer).despawn();
+        let despawn_objects = timed_update(&mut app);
+        assert_eq!(
+            app.world()
+                .get::<TiledMapStorage>(map)
+                .unwrap()
+                .objects()
+                .count(),
+            0
+        );
+
         eprintln!("=== Performance on a 200x200 map with 2 tiles layers ({tiles} tiles)");
         eprintln!("spawn (until MapCreated)       : {spawn:?}");
         eprintln!("first frame (render + physics) : {first_frame:?}");
@@ -1395,5 +1507,7 @@ mod perf {
         eprintln!("change 100 tile IDs / frame    : {change_ids:?}");
         eprintln!("move 100 tiles / frame         : {move_tiles:?}");
         eprintln!("despawn 1000 tiles             : {despawn:?}");
+        eprintln!("spawn {OBJECTS} objects            : {spawn_objects:?}");
+        eprintln!("despawn layer of {OBJECTS} objects : {despawn_objects:?}");
     }
 }
