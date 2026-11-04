@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Fixed
+
+- User properties: exporting a self-referencing type (eg. `enum A { B(Vec<A>) }`, like avian's `ColliderConstructor`) no longer crashes the application with a stack overflow (#246)
+
 ## v0.15.0
 
 **BREAKING CHANGES**

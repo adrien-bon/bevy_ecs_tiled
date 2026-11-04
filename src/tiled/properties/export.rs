@@ -1,7 +1,7 @@
 use crate::{prelude::*, tiled::properties::types_json::*};
 use bevy::{
     ecs::reflect::ReflectBundle,
-    platform::collections::HashMap,
+    platform::collections::{HashMap, HashSet},
     prelude::*,
     reflect::{
         NamedField, ReflectRef, TypeInfo, TypeRegistration, TypeRegistry, UnnamedField,
@@ -796,12 +796,45 @@ fn type_to_field(
     })
 }
 
+/// Returns all (transitive) dependencies of a type, ordered with "leaf" dependencies first.
+///
+/// The returned list contains no duplicates and never contains the type itself,
+/// even for self-referencing types (e.g. `enum A { B(Vec<A>) }`).
 fn dependencies(registration: &TypeRegistration, registry: &TypeRegistry) -> Vec<&'static str> {
+    // Root type is handled separately by the caller: mark it as visited so that
+    // it is excluded from its own dependencies and cycles through it are broken.
+    let mut visited = HashSet::new();
+    visited.insert(registration.type_info().type_path());
+    let mut out = Vec::new();
+    collect_dependencies(registration, registry, &mut visited, &mut out);
+    out
+}
+
+fn collect_dependencies(
+    registration: &TypeRegistration,
+    registry: &TypeRegistry,
+    visited: &mut HashSet<&'static str>,
+    out: &mut Vec<&'static str>,
+) {
     if TypeExportRegistry::is_simple(registration) {
-        return vec![];
+        return;
     }
 
-    let deps = match registration.type_info() {
+    for d in direct_dependencies(registration) {
+        // Skip types we already know about: this breaks cycles and avoids duplicates
+        if !visited.insert(d) {
+            continue;
+        }
+        if let Some(t) = registry.get_with_type_path(d) {
+            collect_dependencies(t, registry, visited, out);
+        }
+        // Post-order: push a type after its own dependencies
+        out.push(d);
+    }
+}
+
+fn direct_dependencies(registration: &TypeRegistration) -> Vec<&'static str> {
+    match registration.type_info() {
         TypeInfo::Struct(info) => info.iter().map(NamedField::type_path).collect(),
         TypeInfo::TupleStruct(info) => info.iter().map(UnnamedField::type_path).collect(),
         TypeInfo::Tuple(info) => info.iter().map(UnnamedField::type_path).collect(),
@@ -821,17 +854,7 @@ fn dependencies(registration: &TypeRegistration, registry: &TypeRegistry) -> Vec
             .collect(),
         TypeInfo::Set(info) => vec![info.value_ty().type_path_table().path()],
         TypeInfo::Opaque(_) => vec![],
-    };
-
-    let mut all_deps = deps.clone();
-    for d in deps {
-        if let Some(t) = registry.get_with_type_path(d) {
-            let mut new_deps = dependencies(t, registry);
-            new_deps.append(&mut all_deps);
-            all_deps = new_deps;
-        }
     }
-    all_deps
 }
 
 #[cfg(test)]
@@ -840,6 +863,78 @@ mod tests {
     use bevy::{
         platform::collections::HashSet, render::render_resource::encase::rts_array::Length,
     };
+    use std::any::TypeId;
+
+    #[derive(Reflect, Default)]
+    #[reflect(Default)]
+    struct Position(f32);
+
+    #[derive(Reflect, Default)]
+    #[reflect(Default)]
+    struct Rotation(f32);
+
+    /// Self-referencing type (mimics avian's `ColliderConstructor`)
+    #[derive(Component, Reflect)]
+    #[reflect(Component)]
+    enum ColliderConstructor {
+        Circle { radius: f32 },
+        Compound(Vec<(Position, Rotation, ColliderConstructor)>),
+    }
+
+    #[test]
+    fn generate_self_referencing_type() {
+        let mut registry = TypeRegistry::new();
+        registry.register::<ColliderConstructor>();
+
+        // Must not stack overflow
+        let exports = TypeExportRegistry::from_registry(&registry, &TiledFilter::All);
+
+        // Type and its dependencies are exported
+        assert!(exports.types.contains_key(ColliderConstructor::type_path()));
+        assert!(
+            exports
+                .types
+                .contains_key(Vec::<(Position, Rotation, ColliderConstructor)>::type_path())
+        );
+        assert!(
+            exports
+                .types
+                .contains_key(<(Position, Rotation, ColliderConstructor)>::type_path())
+        );
+        assert!(exports.types.contains_key(Position::type_path()));
+        assert!(exports.types.contains_key(Rotation::type_path()));
+
+        // No duplicates, and the root type is exported last
+        let names = exports
+            .to_vec()
+            .into_iter()
+            .map(|e| e.name)
+            .collect::<Vec<_>>();
+        let unique = names.iter().collect::<HashSet<_>>();
+        assert_eq!(unique.len(), names.len());
+        assert_eq!(names.last().unwrap(), ColliderConstructor::type_path());
+    }
+
+    #[test]
+    fn dependencies_of_self_referencing_type() {
+        let mut registry = TypeRegistry::new();
+        registry.register::<ColliderConstructor>();
+        let root = registry.get(TypeId::of::<ColliderConstructor>()).unwrap();
+
+        let deps = dependencies(root, &registry);
+
+        // Root type does not appear in its own dependencies
+        assert!(!deps.contains(&ColliderConstructor::type_path()));
+        // No duplicates
+        assert_eq!(deps.iter().collect::<HashSet<_>>().len(), deps.len());
+        // Leaves first: Position / Rotation < tuple < Vec
+        let pos = |p: &str| deps.iter().position(|d| *d == p).unwrap();
+        let tuple = <(Position, Rotation, ColliderConstructor)>::type_path();
+        let vec = Vec::<(Position, Rotation, ColliderConstructor)>::type_path();
+        assert!(pos(Position::type_path()) < pos(tuple));
+        assert!(pos(Rotation::type_path()) < pos(tuple));
+        assert!(pos(tuple) < pos(vec));
+    }
 
     #[test]
     fn generate_with_entity() {
