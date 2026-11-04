@@ -77,7 +77,7 @@ impl TypeExportRegistry {
 
             // Build a list with top-level type and associated dependencies
             // List is ordered with "leaf" dependencies at the beginning
-            let deps = dependencies(top_level_type, registry);
+            let deps = dependencies(top_level_type, registry, 64);
             for d in deps {
                 if let Some(dep_registration) = registry.get_with_type_path(d)
                     && !out
@@ -796,8 +796,12 @@ fn type_to_field(
     })
 }
 
-fn dependencies(registration: &TypeRegistration, registry: &TypeRegistry) -> Vec<&'static str> {
+fn dependencies(registration: &TypeRegistration, registry: &TypeRegistry, limit: u8) -> Vec<&'static str> {
     if TypeExportRegistry::is_simple(registration) {
+        return vec![];
+    }
+
+    if limit == 0 {
         return vec![];
     }
 
@@ -826,7 +830,7 @@ fn dependencies(registration: &TypeRegistration, registry: &TypeRegistry) -> Vec
     let mut all_deps = deps.clone();
     for d in deps {
         if let Some(t) = registry.get_with_type_path(d) {
-            let mut new_deps = dependencies(t, registry);
+            let mut new_deps = dependencies(t, registry, limit - 1);
             new_deps.append(&mut all_deps);
             all_deps = new_deps;
         }
@@ -1246,6 +1250,22 @@ mod tests {
                 Dependent::type_path().to_string(),
             ]
         );
+    }
+
+    #[test]
+    fn generate_recursive_structure() {
+        #[derive(Reflect, Component)]
+        #[reflect(Component)]
+        enum Loop {
+            NotAProblem(u64),
+            Problem(Vec<(u64, Loop)>),
+        }
+
+        let mut registry = TypeRegistry::new();
+        registry.register::<Loop>();
+
+        let exports = TypeExportRegistry::from_registry(&registry, &TiledFilter::All).to_vec();
+        let _ = exports;
     }
 
     #[test]
