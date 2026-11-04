@@ -1395,6 +1395,9 @@ mod perf {
 
     const LARGE_MAP: &str = "tests/perf/large_map.tmx";
 
+    /// Number of times each scenario is run, unless overridden by the `PERF_RUNS` environment variable
+    const DEFAULT_RUNS: usize = 5;
+
     /// Minimal deterministic pseudo-random generator
     struct Lcg(u64);
 
@@ -1408,21 +1411,90 @@ mod perf {
         }
     }
 
-    /// Run a single frame and return its duration
-    fn timed_update(app: &mut App) -> Duration {
-        let start = Instant::now();
-        app.update();
-        start.elapsed()
+    /// Steps of a frame whose duration is measured separately
+    const STEPS: [&str; 4] = ["data", "storage", "render", "physics"];
+
+    /// Time spent in each of [`STEPS`] since the last reset
+    #[derive(Resource, Default)]
+    struct StepsTimings {
+        /// When the current step started
+        started: Option<Instant>,
+        /// Time spent in each step
+        spent: [Duration; STEPS.len()],
     }
 
-    /// Run several frames, applying `modify` before each of them, and return the average frame duration
-    fn average_frame(app: &mut App, frames: u32, mut modify: impl FnMut(&mut App)) -> Duration {
-        let mut total = Duration::ZERO;
+    /// Start measuring a step
+    fn start_step(mut timings: ResMut<StepsTimings>) {
+        timings.started = Some(Instant::now());
+    }
+
+    /// Stop measuring step `STEP`
+    fn end_step<const STEP: usize>(mut timings: ResMut<StepsTimings>) {
+        if let Some(started) = timings.started.take() {
+            timings.spent[STEP] += started.elapsed();
+        }
+    }
+
+    /// Measure the time spent spawning map data, then in each of the `Sync*` system sets.
+    ///
+    /// Commands are applied by the sync points inserted between system sets: they are accounted
+    /// in the step which queued them.
+    fn add_steps_timings(app: &mut App) {
+        app.init_resource::<StepsTimings>();
+        app.add_systems(
+            PreUpdate,
+            (
+                start_step.before(TiledPreUpdateSystems::ProcessLoadedMaps),
+                end_step::<0>.after(TiledPreUpdateSystems::ProcessLoadedMaps),
+            ),
+        );
+        app.add_systems(
+            PostUpdate,
+            (
+                start_step
+                    .after(TiledPostUpdateSystems::HandleMapAssetEvents)
+                    .before(TiledPostUpdateSystems::SyncMapStorage),
+                (end_step::<1>, start_step)
+                    .chain()
+                    .after(TiledPostUpdateSystems::SyncMapStorage)
+                    .before(TiledPostUpdateSystems::SyncRender),
+                (end_step::<2>, start_step)
+                    .chain()
+                    .after(TiledPostUpdateSystems::SyncRender)
+                    .before(TiledPostUpdateSystems::SyncPhysics),
+                end_step::<3>
+                    .after(TiledPostUpdateSystems::SyncPhysics)
+                    .before(TiledPostUpdateSystems::Last),
+            ),
+        );
+    }
+
+    /// Duration of a scenario: whole frames, and time spent in each of [`STEPS`]
+    #[derive(Clone, Copy, Default)]
+    struct Measure {
+        total: Duration,
+        steps: [Duration; STEPS.len()],
+    }
+
+    /// Run several frames, applying `modify` before each of them, and return the average durations
+    fn measure(app: &mut App, frames: u32, mut modify: impl FnMut(&mut App)) -> Measure {
+        let mut measure = Measure::default();
         for _ in 0..frames {
             modify(app);
-            total += timed_update(app);
+            *app.world_mut().resource_mut::<StepsTimings>() = StepsTimings::default();
+            let start = Instant::now();
+            app.update();
+            measure.total += start.elapsed();
+            let spent = app.world().resource::<StepsTimings>().spent;
+            for (step, spent) in measure.steps.iter_mut().zip(spent) {
+                *step += spent;
+            }
         }
-        total / frames
+        measure.total /= frames;
+        for step in measure.steps.iter_mut() {
+            *step /= frames;
+        }
+        measure
     }
 
     fn layer_tiles_entities(app: &mut App, layer: Entity) -> Vec<Entity> {
@@ -1434,12 +1506,13 @@ mod perf {
             .collect()
     }
 
-    #[test]
-    #[ignore = "performance test: cargo test --release --all-features --lib perf -- --ignored --nocapture"]
-    fn perf_large_map() {
+    /// Run all the scenarios once, on a new app, and return their name and measure
+    fn run_scenarios() -> Vec<(String, Measure)> {
         let mut app = test_app();
         #[cfg(feature = "physics")]
         app.add_plugins(TiledPhysicsPlugin::<physics::TestBackend>::default());
+        add_steps_timings(&mut app);
+        let mut measures = Vec::new();
 
         // Load the asset first: we do not want to measure IO and parsing
         let handle = app
@@ -1459,42 +1532,42 @@ mod perf {
 
         // Spawn: map data, then rendering and physics components
         let map = app.world_mut().spawn(TiledMap(handle)).id();
-        let mut spawn = Duration::ZERO;
+        let mut spawn = Measure::default();
         while app
             .world()
             .resource::<Received>()
             .storage_on_map_created
             .is_none()
         {
-            spawn += timed_update(&mut app);
+            let frame = measure(&mut app, 1, |_| {});
+            spawn.total += frame.total;
+            for (step, spent) in spawn.steps.iter_mut().zip(frame.steps) {
+                *step += spent;
+            }
         }
-        let tiles = app
-            .world()
-            .resource::<Received>()
-            .storage_on_map_created
-            .unwrap()
-            .1;
-        let first_frame = timed_update(&mut app);
+        measures.push(("spawn (until MapCreated)".to_string(), spawn));
+        measures.push(("first frame".to_string(), measure(&mut app, 1, |_| {})));
 
         let ground = layer_by_name(&mut app, "ground");
         let decoration = layer_by_name(&mut app, "decoration");
         let mut rng = Lcg(42);
 
         // Frame without any modification
-        let idle = average_frame(&mut app, 20, |_| {});
+        measures.push(("idle frame".to_string(), measure(&mut app, 20, |_| {})));
 
         // Change the tile ID of 100 ground tiles per frame
         let ground_tiles = layer_tiles_entities(&mut app, ground);
-        let change_ids = average_frame(&mut app, 20, |app| {
+        let change_ids = measure(&mut app, 20, |app| {
             for _ in 0..100 {
                 let tile = ground_tiles[rng.next(ground_tiles.len() as u32) as usize];
                 let mut tile = app.world_mut().get_mut::<TiledTile>(tile).unwrap();
                 tile.tile_id = (tile.tile_id + 1) % 4;
             }
         });
+        measures.push(("change 100 tile IDs / frame".to_string(), change_ids));
 
         // Move 100 decoration tiles per frame (some of them replace other tiles)
-        let move_tiles = average_frame(&mut app, 20, |app| {
+        let move_tiles = measure(&mut app, 20, |app| {
             let decoration_tiles = layer_tiles_entities(app, decoration);
             for _ in 0..100 {
                 let tile = decoration_tiles[rng.next(decoration_tiles.len() as u32) as usize];
@@ -1503,15 +1576,16 @@ mod perf {
                 }
             }
         });
+        measures.push(("move 100 tiles / frame".to_string(), move_tiles));
 
         // Despawn 1000 ground tiles in a single frame
-        for tile in layer_tiles_entities(&mut app, ground)
-            .into_iter()
-            .take(1000)
-        {
-            app.world_mut().entity_mut(tile).despawn();
-        }
-        let despawn = timed_update(&mut app);
+        let ground_tiles = layer_tiles_entities(&mut app, ground);
+        let despawn = measure(&mut app, 1, |app| {
+            for &tile in ground_tiles.iter().take(1000) {
+                app.world_mut().entity_mut(tile).despawn();
+            }
+        });
+        measures.push(("despawn 1000 tiles".to_string(), despawn));
 
         // Spawn many objects in a new objects layer, then despawn this layer:
         // each object is removed from the map storage one by one
@@ -1520,19 +1594,23 @@ mod perf {
             .world_mut()
             .spawn((TiledLayer::Objects, TiledMapReference(map), ChildOf(map)))
             .id();
-        for i in 0..OBJECTS {
-            app.world_mut().spawn((
-                TiledObject::Rectangle {
-                    width: 4.,
-                    height: 4.,
-                },
-                Transform::from_xyz((i % 200) as f32 * 16., (i / 200) as f32 * -16., 0.),
-                ChildOf(objects_layer),
-            ));
-        }
-        let spawn_objects = timed_update(&mut app);
-        app.world_mut().entity_mut(objects_layer).despawn();
-        let despawn_objects = timed_update(&mut app);
+        let spawn_objects = measure(&mut app, 1, |app| {
+            for i in 0..OBJECTS {
+                app.world_mut().spawn((
+                    TiledObject::Rectangle {
+                        width: 4.,
+                        height: 4.,
+                    },
+                    Transform::from_xyz((i % 200) as f32 * 16., (i / 200) as f32 * -16., 0.),
+                    ChildOf(objects_layer),
+                ));
+            }
+        });
+        measures.push((format!("spawn {OBJECTS} objects"), spawn_objects));
+        let despawn_objects = measure(&mut app, 1, |app| {
+            app.world_mut().entity_mut(objects_layer).despawn();
+        });
+        measures.push((format!("despawn {OBJECTS} objects layer"), despawn_objects));
         assert_eq!(
             app.world()
                 .get::<TiledMapStorage>(map)
@@ -1542,14 +1620,58 @@ mod perf {
             0
         );
 
-        eprintln!("=== Performance on a 200x200 map with 2 tiles layers ({tiles} tiles)");
-        eprintln!("spawn (until MapCreated)       : {spawn:?}");
-        eprintln!("first frame (render + physics) : {first_frame:?}");
-        eprintln!("idle frame                     : {idle:?}");
-        eprintln!("change 100 tile IDs / frame    : {change_ids:?}");
-        eprintln!("move 100 tiles / frame         : {move_tiles:?}");
-        eprintln!("despawn 1000 tiles             : {despawn:?}");
-        eprintln!("spawn {OBJECTS} objects            : {spawn_objects:?}");
-        eprintln!("despawn layer of {OBJECTS} objects : {despawn_objects:?}");
+        // Despawn the whole map
+        let despawn_map = measure(&mut app, 1, |app| {
+            app.world_mut().entity_mut(map).despawn();
+        });
+        measures.push(("despawn map".to_string(), despawn_map));
+
+        measures
+    }
+
+    fn median(mut values: Vec<Duration>) -> Duration {
+        values.sort();
+        values[values.len() / 2]
+    }
+
+    fn ms(duration: Duration) -> String {
+        format!("{:.1}", duration.as_secs_f64() * 1000.)
+    }
+
+    #[test]
+    #[ignore = "performance test: cargo test --release --all-features --lib perf -- --ignored --nocapture"]
+    fn perf_large_map() {
+        let runs = std::env::var("PERF_RUNS")
+            .ok()
+            .and_then(|runs| runs.parse().ok())
+            .unwrap_or(DEFAULT_RUNS)
+            .max(1);
+        let all = (0..runs).map(|_| run_scenarios()).collect::<Vec<_>>();
+
+        eprintln!(
+            "=== Performance on a 200x200 map with 2 tiles layers (44137 tiles), {runs} runs"
+        );
+        eprintln!(
+            "{:<32} {:>8} {:>8} | {:>8} {:>8} {:>8} {:>8}",
+            "scenario (ms, median)", "total", "min", STEPS[0], STEPS[1], STEPS[2], STEPS[3]
+        );
+        for (index, (name, _)) in all[0].iter().enumerate() {
+            let measures = all.iter().map(|run| run[index].1).collect::<Vec<_>>();
+            let totals = measures.iter().map(|m| m.total).collect::<Vec<_>>();
+            let min = *totals.iter().min().unwrap();
+            let steps = (0..STEPS.len())
+                .map(|step| ms(median(measures.iter().map(|m| m.steps[step]).collect())))
+                .collect::<Vec<_>>();
+            eprintln!(
+                "{:<32} {:>8} {:>8} | {:>8} {:>8} {:>8} {:>8}",
+                name,
+                ms(median(totals)),
+                ms(min),
+                steps[0],
+                steps[1],
+                steps[2],
+                steps[3]
+            );
+        }
     }
 }
