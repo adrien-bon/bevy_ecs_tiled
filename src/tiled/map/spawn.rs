@@ -11,9 +11,8 @@
 use crate::{
     prelude::*,
     tiled::{
-        event::TiledMessageWriters,
-        map::storage::TiledTileStorageIndex,
-        tile::{TiledLayerTiles, TiledTileIndexedPosition},
+        event::TiledMessageWriters, map::storage::TiledTileStorageIndex,
+        tile::TiledTileIndexedPosition,
     },
 };
 use bevy::prelude::*;
@@ -283,8 +282,6 @@ impl SpawnContext<'_, '_, '_> {
         let map_storage = &mut *self.map_storage;
         let tile_events = &mut self.tile_events;
         let layer_entity = layer_event.origin;
-        // Index tiles positions right away, so they do not need to be indexed in `TiledPostUpdateSystems::SyncMapStorage`
-        let mut layer_tiles = TiledLayerTiles::default();
 
         // Only spawn tiles data: associated tilemaps, which hold the actual rendering
         // components, are derived from these data in `TiledPostUpdateSystems::SyncRender`
@@ -326,11 +323,9 @@ impl SpawnContext<'_, '_, '_> {
             // Update map storage with tile entity
             let index = map_storage.insert_tile(key, tile_entity);
             debug_assert_eq!(index, storage_index);
+            // Index the tile position right away, so it does not need to be indexed in `TiledPostUpdateSystems::SyncMapStorage`
             map_storage.insert_tile_position(tile_pos, tile_entity);
-            layer_tiles.0.insert(tile_pos, tile_entity);
         });
-
-        commands.entity(layer_entity).insert(layer_tiles);
     }
 
     fn spawn_objects_layer(

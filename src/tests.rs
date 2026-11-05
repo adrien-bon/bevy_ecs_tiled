@@ -350,20 +350,51 @@ fn modifying_objects_updates_visuals() {
 }
 
 #[test]
-fn layer_tiles_index_is_only_on_tiles_layers() {
-    use crate::tiled::tile::TiledLayerTiles;
-
+fn tiles_of_different_layers_at_the_same_position_are_kept() {
     let mut app = test_app();
     let map = spawn_test_map(&mut app);
-    for (name, expected) in [("ground", true), ("decoration", true), ("objects", false)] {
-        let layer = layer_by_name(&mut app, name);
-        assert_eq!(
-            app.world().get::<TiledLayerTiles>(layer).is_some(),
-            expected
-        );
-    }
+    let ground = layer_by_name(&mut app, "ground");
+    let decoration = layer_by_name(&mut app, "decoration");
+    let ground_tile = tile_at(&mut app, ground, TilePos::new(0, 3));
 
-    // A tiles layer spawned at runtime gets an index for its tiles
+    // Spawning a tile in another layer, at the same position, does not replace it
+    let decoration_tile = app
+        .world_mut()
+        .spawn((
+            TiledTile::new(TilesetId(0), 1),
+            ChildOf(decoration),
+            TilePos::new(0, 3),
+        ))
+        .id();
+    app.update();
+    assert!(app.world().get_entity(ground_tile).is_ok());
+    let storage = app.world().get::<TiledMapStorage>(map).unwrap();
+    let mut tiles = storage.tiles_at(TilePos::new(0, 3)).to_vec();
+    tiles.sort();
+    let mut expected = vec![ground_tile, decoration_tile];
+    expected.sort();
+    assert_eq!(tiles, expected);
+    assert_eq!(layer_index(&app, ground), layer_tiles(&mut app, ground));
+    assert_eq!(
+        layer_index(&app, decoration),
+        layer_tiles(&mut app, decoration)
+    );
+
+    // Neither does moving a tile of another layer onto it
+    *app.world_mut().get_mut::<TilePos>(decoration_tile).unwrap() = TilePos::new(1, 3);
+    app.update();
+    let other_ground_tile = tile_at(&mut app, ground, TilePos::new(1, 3));
+    *app.world_mut().get_mut::<TilePos>(decoration_tile).unwrap() = TilePos::new(0, 3);
+    app.update();
+    assert!(app.world().get_entity(ground_tile).is_ok());
+    assert!(app.world().get_entity(other_ground_tile).is_ok());
+    assert_eq!(layer_index(&app, ground), layer_tiles(&mut app, ground));
+    assert_eq!(
+        layer_index(&app, decoration),
+        layer_tiles(&mut app, decoration)
+    );
+
+    // Tiles of a tiles layer spawned at runtime are indexed as well
     let layer = app
         .world_mut()
         .spawn((TiledLayer::Tiles, TiledMapReference(map), ChildOf(map)))
@@ -378,32 +409,22 @@ fn layer_tiles_index_is_only_on_tiles_layers() {
         .id();
     app.update();
     assert_eq!(layer_index(&app, layer), vec![(TilePos::new(2, 2), tile)]);
-
-    // But not other layers
-    let layer = app
-        .world_mut()
-        .spawn((TiledLayer::Objects, TiledMapReference(map), ChildOf(map)))
-        .id();
-    app.update();
-    assert!(app.world().get::<TiledLayerTiles>(layer).is_none());
-
-    // The index is registered for reflection
-    let registry = app.world().resource::<AppTypeRegistry>().read();
-    let registration = registry
-        .get(std::any::TypeId::of::<TiledLayerTiles>())
-        .expect("TiledLayerTiles is not registered");
-    assert!(registration.data::<ReflectComponent>().is_some());
 }
 
-/// Tiles of a layer, as registered in its index
+/// Tiles of a layer, as registered in its map storage positions index
 fn layer_index(app: &App, layer: Entity) -> Vec<(TilePos, Entity)> {
-    let mut tiles = app
-        .world()
-        .get::<crate::tiled::tile::TiledLayerTiles>(layer)
-        .unwrap()
-        .tiles()
+    let world = app.world();
+    let map = world.get::<TiledMapReference>(layer).unwrap().0;
+    let storage = world.get::<TiledMapStorage>(map).unwrap();
+    let mut tiles = storage
+        .tiles_positions
         .iter()
-        .map(|(pos, e)| (*pos, *e))
+        .flat_map(|(pos, entities)| entities.iter().map(move |e| (*pos, *e)))
+        .filter(|(_, e)| {
+            world
+                .get::<ChildOf>(*e)
+                .is_some_and(|c| c.parent() == layer)
+        })
         .collect::<Vec<_>>();
     tiles.sort();
     tiles
