@@ -45,8 +45,8 @@ pub struct TiledEvent<E: Debug + Clone + Copy + Reflect> {
     /// [`AssetId`] of the [`TiledMapAsset`]
     map: Option<(Entity, AssetId<TiledMapAsset>)>,
     layer: Option<Entity>,
-    tilemap: Option<(Entity, u32)>,
-    tile: Option<(Entity, TilePos, u32, tiled::TileId)>,
+    tilemap: Option<(Entity, TilesetId)>,
+    tile: Option<(Entity, TilePos, TilesetId, tiled::TileId)>,
     object: Option<Entity>,
 }
 
@@ -112,7 +112,7 @@ where
     }
 
     /// Update the tilemap information for this [`TiledEvent`]
-    pub fn with_tilemap(&mut self, entity: Entity, tileset_id: u32) -> &mut Self {
+    pub fn with_tilemap(&mut self, entity: Entity, tileset_id: TilesetId) -> &mut Self {
         self.tilemap = Some((entity, tileset_id));
         self
     }
@@ -122,7 +122,7 @@ where
         &mut self,
         entity: Entity,
         position: TilePos,
-        tileset_id: u32,
+        tileset_id: TilesetId,
         tile_id: tiled::TileId,
     ) -> &mut Self {
         self.tile = Some((entity, position, tileset_id, tile_id));
@@ -180,8 +180,8 @@ where
         self.tilemap.map(|(e, _)| e)
     }
 
-    /// Retrieve the tilemap tileset ID associated with this [`TiledEvent`]
-    pub fn tilemap_tileset_id(&self) -> Option<u32> {
+    /// Retrieve the tilemap [`TilesetId`] associated with this [`TiledEvent`]
+    pub fn tilemap_tileset_id(&self) -> Option<TilesetId> {
         self.tilemap.map(|(_, id)| id)
     }
 
@@ -206,8 +206,8 @@ where
         self.tile.map(|(_, pos, _, _)| pos)
     }
 
-    /// Retrieve the tileset ID of the tile associated with this [`TiledEvent`]
-    pub fn tile_tileset_id(&self) -> Option<u32> {
+    /// Retrieve the [`TilesetId`] of the tile associated with this [`TiledEvent`]
+    pub fn tile_tileset_id(&self) -> Option<TilesetId> {
         self.tile.map(|(_, _, tileset_id, _)| tileset_id)
     }
 

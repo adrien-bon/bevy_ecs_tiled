@@ -11,6 +11,16 @@
 use crate::prelude::*;
 use bevy::{platform::collections::HashMap, prelude::*, render::sync_world::SyncToRenderWorld};
 
+/// ID of a tileset in a [`TiledMapAsset`].
+///
+/// For tilesets referenced by the map, it is the index of the tileset in the Tiled map tilesets.
+/// Tilesets only referenced by object templates get an ID after the map tilesets.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord, Reflect)]
+#[reflect(Clone, Debug, Default, PartialEq, Hash)]
+pub struct TilesetId(pub u32);
+
+crate::tiled::helpers::impl_id!(TilesetId);
+
 /// [`Component`] for a Tiled map tile, giving which tile of which tileset it displays.
 ///
 /// This component is attached to entities representing individual tiles in a Tiled map.
@@ -57,10 +67,10 @@ use bevy::{platform::collections::HashMap, prelude::*, render::sync_world::SyncT
     crate::tiled::map::storage::TiledTileStorageIndex
 )]
 pub struct TiledTile {
-    /// Tileset of the tile, as its index in the map tilesets.
+    /// [`TilesetId`] of the tile.
     ///
     /// You can retrieve the corresponding [`tiled::Tileset`] using the [`tileset_from_map`] helper function.
-    pub tileset_id: u32,
+    pub tileset_id: TilesetId,
     /// [`tiled::TileId`] of the tile in its tileset.
     ///
     /// You can retrieve the corresponding [`tiled::Tile`] using [`TiledMapAsset::tile`]
@@ -69,8 +79,8 @@ pub struct TiledTile {
 }
 
 impl TiledTile {
-    /// Creates a new [`TiledTile`] from its tileset ID and [`tiled::TileId`]
-    pub fn new(tileset_id: u32, tile_id: tiled::TileId) -> Self {
+    /// Creates a new [`TiledTile`] from its [`TilesetId`] and [`tiled::TileId`]
+    pub fn new(tileset_id: TilesetId, tile_id: tiled::TileId) -> Self {
         Self {
             tileset_id,
             tile_id,
@@ -113,10 +123,10 @@ pub(crate) struct TiledTileIndexedPosition(pub(crate) Option<TilePos>);
 #[reflect(Component, Default, Debug)]
 #[require(Visibility, Transform, TiledName)]
 pub struct TiledTilemap {
-    /// Tileset of the tiles rendered by this tilemap, as its index in the map tilesets.
+    /// [`TilesetId`] of the tiles rendered by this tilemap.
     ///
     /// You can retrieve the corresponding [`tiled::Tileset`] using the [`tileset_from_map`] helper function.
-    pub tileset_id: u32,
+    pub tileset_id: TilesetId,
 }
 
 /// Relationship [`Component`] between a [`TiledTilemap`] and its parent [`TiledLayer::Tiles`].
@@ -132,6 +142,7 @@ pub struct TiledTilemapOf(pub Entity);
 pub struct TiledTilemaps(Vec<Entity>);
 
 pub(crate) fn plugin(app: &mut App) {
+    app.register_type::<TilesetId>();
     app.register_type::<TiledTile>();
     app.register_type::<TiledTilemap>();
     app.register_type::<TiledTilemapOf>();
@@ -388,16 +399,16 @@ pub(crate) mod render {
         assets: Res<Assets<TiledMapAsset>>,
         mut message_writer: MessageWriter<TiledEvent<TilemapCreated>>,
         mut unusable_tilesets: Local<
-            bevy::platform::collections::HashSet<(AssetId<TiledMapAsset>, u32)>,
+            bevy::platform::collections::HashSet<(AssetId<TiledMapAsset>, TilesetId)>,
         >,
     ) {
         // Tilemaps found or spawned during this run, by (layer, tileset ID)
-        let mut tilemaps_cache = HashMap::<(Entity, u32), Entity>::default();
+        let mut tilemaps_cache = HashMap::<(Entity, TilesetId), Entity>::default();
         let mut new_tilemaps = HashMap::<Entity, NewTilemap>::default();
         // Rendering components of tiles processed during this run, by (map, tileset ID, tile ID):
         // many tiles usually share the same tile, especially when spawning a map
         let mut tiles_cache = HashMap::<
-            (Entity, u32, tiled::TileId),
+            (Entity, TilesetId, tiled::TileId),
             (TileTextureIndex, Option<AnimatedTile>),
         >::default();
 

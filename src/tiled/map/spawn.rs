@@ -111,13 +111,13 @@ struct SpawnContext<'a, 'w, 's> {
     tile_events: Vec<TiledEvent<TileCreated>>,
     /// Tile objects, along with their tileset ID and tile ID
     #[cfg(feature = "user_properties")]
-    tile_objects: Vec<(Entity, u32, tiled::TileId)>,
+    tile_objects: Vec<(Entity, TilesetId, tiled::TileId)>,
     /// Spawned layers, by Tiled layer ID
     #[cfg(feature = "user_properties")]
-    layer_entities: HashMap<u32, Entity>,
+    layer_entities: HashMap<LayerId, Entity>,
     /// Spawned objects, by Tiled object ID: used to resolve object references in custom properties
     #[cfg(feature = "user_properties")]
-    object_entities: HashMap<u32, Entity>,
+    object_entities: HashMap<ObjectId, Entity>,
 }
 
 /// Marker for the entities whose tile properties have been inserted when spawning the map.
@@ -191,7 +191,7 @@ impl SpawnContext<'_, '_, '_> {
         map_event: &TiledEvent<MapCreated>,
     ) {
         for layer in layers {
-            let layer_id = layer.id();
+            let layer_id = LayerId(layer.id());
             let layer_position = Vec2::new(layer.offset_x, -layer.offset_y);
 
             // Increment Z offset and compute layer transform offset
@@ -289,7 +289,7 @@ impl SpawnContext<'_, '_, '_> {
         // Only spawn tiles data: associated tilemaps, which hold the actual rendering
         // components, are derived from these data in `TiledPostUpdateSystems::SyncRender`
         tiled_map.for_each_tile(&tiles_layer, |layer_tile, layer_tile_data, tile_pos, _| {
-            let tileset_id = layer_tile.tileset_index() as u32;
+            let tileset_id = TilesetId(layer_tile.tileset_index() as u32);
             let tile_id = layer_tile.id();
             let key = (tileset_id, tile_id);
             let storage_index = map_storage.next_tile_index(key);
@@ -404,7 +404,7 @@ impl SpawnContext<'_, '_, '_> {
             }
 
             #[cfg(feature = "user_properties")]
-            object_entities.insert(object_data.id(), object_entity);
+            object_entities.insert(ObjectId(object_data.id()), object_entity);
             let object_event = layer_event
                 .transmute(Some(object_entity), ObjectCreated)
                 .with_object(object_entity)
@@ -416,7 +416,7 @@ impl SpawnContext<'_, '_, '_> {
     fn spawn_image_layer(
         &mut self,
         layer_event: &TiledEvent<LayerCreated>,
-        layer_id: u32,
+        layer_id: LayerId,
         image_layer: tiled::ImageLayer,
     ) {
         let tiled_map = self.tiled_map;

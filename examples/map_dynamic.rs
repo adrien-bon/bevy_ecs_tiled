@@ -138,7 +138,7 @@ fn modify_map(
         info!("Spawn tile {tile_id} at {tile_pos:?}");
         commands.spawn((
             Name::new("Manually spawned tile"),
-            TiledTile::new(0, tile_id),
+            TiledTile::new(TilesetId(0), tile_id),
             ChildOf(layer),
             tile_pos,
         ));

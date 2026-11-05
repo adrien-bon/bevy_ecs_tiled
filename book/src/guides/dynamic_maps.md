@@ -40,7 +40,7 @@ Its Tiled data are held by the following components, which you can freely modify
 
 | Component | Description |
 | --- | --- |
-| [`TiledTile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTile.html) | Tileset of the tile (`tileset_id`, its index in the map tilesets) and tile in this tileset (`tile_id`) |
+| [`TiledTile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTile.html) | Tileset of the tile (`tileset_id`, a `TilesetId`) and tile in this tileset (`tile_id`) |
 | `TilePos` | Position of the tile in the layer (origin is the bottom-left corner of the map) |
 | `TileFlip` | Horizontal, vertical and diagonal flips |
 | `TileVisible`, `TileColor` | Visibility and color of the tile |
@@ -104,7 +104,7 @@ fn spawn_tile(mut commands: Commands, layers: Query<(Entity, &TiledLayer)>) {
     };
     commands.spawn((
         // Tile 2 of the first tileset of the map
-        TiledTile::new(0, 2),
+        TiledTile::new(TilesetId(0), 2),
         ChildOf(layer),
         TilePos::new(3, 4),
     ));

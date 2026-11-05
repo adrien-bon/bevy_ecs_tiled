@@ -63,35 +63,34 @@ pub struct TiledMapAsset {
     pub(crate) bottomright_chunk: (i32, i32),
     /// HashMap of the map tilesets
     ///
-    /// Key is the tileset ID: for tilesets referenced by the map, it is the Tiled tileset index.
-    /// Tilesets only referenced by templates get an ID after the map tilesets.
-    pub(crate) tilesets: HashMap<u32, TiledMapTileset>,
+    /// Key is the [`TilesetId`].
+    pub(crate) tilesets: HashMap<TilesetId, TiledMapTileset>,
     /// HashMap of the tilesets ID by label
     ///
     /// Key is a unique label to identify the Tiled tileset within the map.
     /// See [`tileset_label`](crate::tiled::map::loader::tileset_label) function.
-    pub(crate) tilesets_id_by_label: HashMap<String, u32>,
+    pub(crate) tilesets_id_by_label: HashMap<String, TilesetId>,
     /// HashMap of the images used in the map
     ///
-    /// Key is the layer id of the image layer using this image
-    pub(crate) images: HashMap<u32, Handle<Image>>,
+    /// Key is the [`LayerId`] of the image layer using this image
+    pub(crate) images: HashMap<LayerId, Handle<Image>>,
     /// Map properties
     #[cfg(feature = "user_properties")]
     pub(crate) properties: crate::tiled::properties::load::DeserializedMapProperties,
 }
 
 impl TiledMapAsset {
-    /// Retrieve the [`tiled::Tileset`] associated with this tileset ID.
+    /// Retrieve the [`tiled::Tileset`] associated with this [`TilesetId`].
     ///
     /// Contrary to [`tileset_from_map`], it also works for tilesets only referenced by templates.
-    pub fn tileset(&self, tileset_id: u32) -> Option<&Arc<tiled::Tileset>> {
+    pub fn tileset(&self, tileset_id: TilesetId) -> Option<&Arc<tiled::Tileset>> {
         self.tilesets.get(&tileset_id).map(|t| &t.tileset)
     }
 
-    /// Retrieve the [`tiled::Tile`] associated with this tileset ID and [`tiled::TileId`].
+    /// Retrieve the [`tiled::Tile`] associated with this [`TilesetId`] and [`tiled::TileId`].
     ///
     /// Contrary to [`tile_from_map`], it also works for tilesets only referenced by templates.
-    pub fn tile(&self, tileset_id: u32, tile_id: tiled::TileId) -> Option<tiled::Tile<'_>> {
+    pub fn tile(&self, tileset_id: TilesetId, tile_id: tiled::TileId) -> Option<tiled::Tile<'_>> {
         self.tileset(tileset_id).and_then(|t| t.get_tile(tile_id))
     }
 

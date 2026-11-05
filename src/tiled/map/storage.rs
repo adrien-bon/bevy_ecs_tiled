@@ -10,7 +10,7 @@ use bevy::{platform::collections::HashMap, prelude::*};
 /// [`Component`] storing all the Tiled items composing this map.
 ///
 /// Gives the [`TiledLayer`] and [`TiledObject`] entities of the map, and indexes its [`TiledTile`] entities
-/// by tileset ID and [`tiled::TileId`], and by [`TilePos`].
+/// by [`TilesetId`] and [`tiled::TileId`], and by [`TilePos`].
 ///
 /// Should not be manually inserted but can be accessed from the map [`Entity`].
 ///
@@ -30,7 +30,7 @@ pub struct TiledMapStorage {
     ///
     /// Note that we can have multiple entities (ie.several instances) of the same tile since
     /// it references the tile on the tileset and not the tile on the tilemap.
-    pub(crate) tiles: HashMap<(u32, tiled::TileId), Vec<Entity>>,
+    pub(crate) tiles: HashMap<(TilesetId, tiled::TileId), Vec<Entity>>,
 
     /// Mapping between a [`TilePos`] and the [`TiledTile`] [`Entity`]s at this position, whatever their layer
     pub(crate) tiles_positions: HashMap<TilePos, Vec<Entity>>,
@@ -41,7 +41,7 @@ pub struct TiledMapStorage {
 ///
 /// Storing it on the tile itself allows removing a tile from the storage in constant time.
 #[derive(Component, Default, Copy, Clone, Debug)]
-pub(crate) struct TiledTileStorageIndex(pub(crate) Option<((u32, tiled::TileId), usize)>);
+pub(crate) struct TiledTileStorageIndex(pub(crate) Option<((TilesetId, tiled::TileId), usize)>);
 
 impl TiledMapStorage {
     /// Clear the [`TiledMapStorage`], removing all children layers in the process
@@ -80,13 +80,13 @@ impl TiledMapStorage {
     }
 
     /// Index the next [`TiledTile`] [`Entity`] registered for this tileset ID + [`tiled::TileId`] will get
-    pub(crate) fn next_tile_index(&self, key: (u32, tiled::TileId)) -> usize {
+    pub(crate) fn next_tile_index(&self, key: (TilesetId, tiled::TileId)) -> usize {
         self.tiles.get(&key).map_or(0, Vec::len)
     }
 
     /// Register a [`TiledTile`] [`Entity`] for the given tileset ID + [`tiled::TileId`],
     /// returning its index in the corresponding list of entities
-    pub(crate) fn insert_tile(&mut self, key: (u32, tiled::TileId), entity: Entity) -> usize {
+    pub(crate) fn insert_tile(&mut self, key: (TilesetId, tiled::TileId), entity: Entity) -> usize {
         let entities = self.tiles.entry(key).or_default();
         entities.push(entity);
         entities.len() - 1
@@ -98,7 +98,7 @@ impl TiledMapStorage {
     /// Otherwise, returns the [`Entity`] which took its place, if any: its index must be updated.
     pub(crate) fn remove_tile(
         &mut self,
-        key: (u32, tiled::TileId),
+        key: (TilesetId, tiled::TileId),
         index: usize,
         entity: Entity,
     ) -> Option<Entity> {
@@ -133,14 +133,14 @@ impl TiledMapStorage {
     }
 
     /// Returns an iterator over the tileset ID + [`tiled::TileId`] and [`TiledTile`] [`Entity`]s associations
-    pub fn tiles(&self) -> impl Iterator<Item = ((u32, tiled::TileId), &[Entity])> + '_ {
+    pub fn tiles(&self) -> impl Iterator<Item = ((TilesetId, tiled::TileId), &[Entity])> + '_ {
         self.tiles
             .iter()
             .map(|(&id, entities)| (id, entities.as_slice()))
     }
 
     /// Retrieve the [`TiledTile`] [`Entity`] list associated with this tileset ID and [`tiled::TileId`]
-    pub fn tile_entities(&self, tileset_id: u32, tile_id: tiled::TileId) -> &[Entity] {
+    pub fn tile_entities(&self, tileset_id: TilesetId, tile_id: tiled::TileId) -> &[Entity] {
         self.tiles
             .get(&(tileset_id, tile_id))
             .map(Vec::as_slice)
@@ -314,17 +314,17 @@ mod tests {
         let mut storage = TiledMapStorage::default();
         storage.layers.extend([a, c]);
         storage.objects.extend([b, a, c]);
-        storage.insert_tile((0, 3), b);
-        storage.insert_tile((0, 3), c);
+        storage.insert_tile((TilesetId(0), 3), b);
+        storage.insert_tile((TilesetId(0), 3), c);
 
         assert_eq!(storage.layers().collect::<Vec<_>>(), vec![a, c]);
         assert_eq!(storage.objects().collect::<Vec<_>>(), vec![b, a, c]);
         assert_eq!(
             storage.tiles().collect::<Vec<_>>(),
-            vec![((0, 3), [b, c].as_slice())]
+            vec![((TilesetId(0), 3), [b, c].as_slice())]
         );
-        assert_eq!(storage.tile_entities(0, 3), &[b, c]);
-        assert!(storage.tile_entities(0, 4).is_empty());
+        assert_eq!(storage.tile_entities(TilesetId(0), 3), &[b, c]);
+        assert!(storage.tile_entities(TilesetId(0), 4).is_empty());
 
         // Removing an entity keeps the order of the other ones
         remove_entity(&mut storage.objects, a);
@@ -343,28 +343,28 @@ mod tests {
         );
 
         let mut storage = TiledMapStorage::default();
-        assert_eq!(storage.next_tile_index((0, 1)), 0);
-        assert_eq!(storage.insert_tile((0, 1), a), 0);
-        assert_eq!(storage.insert_tile((0, 1), b), 1);
-        assert_eq!(storage.next_tile_index((0, 1)), 2);
-        assert_eq!(storage.insert_tile((0, 1), c), 2);
-        assert_eq!(storage.tile_entities(0, 1), &[a, b, c]);
+        assert_eq!(storage.next_tile_index((TilesetId(0), 1)), 0);
+        assert_eq!(storage.insert_tile((TilesetId(0), 1), a), 0);
+        assert_eq!(storage.insert_tile((TilesetId(0), 1), b), 1);
+        assert_eq!(storage.next_tile_index((TilesetId(0), 1)), 2);
+        assert_eq!(storage.insert_tile((TilesetId(0), 1), c), 2);
+        assert_eq!(storage.tile_entities(TilesetId(0), 1), &[a, b, c]);
 
         // Removing an entity moves the last one at its place
-        assert_eq!(storage.remove_tile((0, 1), 0, a), Some(c));
-        assert_eq!(storage.tile_entities(0, 1), &[c, b]);
+        assert_eq!(storage.remove_tile((TilesetId(0), 1), 0, a), Some(c));
+        assert_eq!(storage.tile_entities(TilesetId(0), 1), &[c, b]);
 
         // Removing an entity which is not registered at this index does nothing
-        assert_eq!(storage.remove_tile((0, 1), 0, a), None);
-        assert_eq!(storage.remove_tile((0, 1), 1, c), None);
-        assert_eq!(storage.tile_entities(0, 1), &[c, b]);
+        assert_eq!(storage.remove_tile((TilesetId(0), 1), 0, a), None);
+        assert_eq!(storage.remove_tile((TilesetId(0), 1), 1, c), None);
+        assert_eq!(storage.tile_entities(TilesetId(0), 1), &[c, b]);
 
         // Removing the last entity does not move any other one
-        assert_eq!(storage.remove_tile((0, 1), 1, b), None);
-        assert_eq!(storage.tile_entities(0, 1), &[c]);
+        assert_eq!(storage.remove_tile((TilesetId(0), 1), 1, b), None);
+        assert_eq!(storage.tile_entities(TilesetId(0), 1), &[c]);
 
         // Removing the last entity for a key removes the key
-        assert_eq!(storage.remove_tile((0, 1), 0, c), None);
+        assert_eq!(storage.remove_tile((TilesetId(0), 1), 0, c), None);
         assert_eq!(storage.tiles().count(), 0);
     }
 

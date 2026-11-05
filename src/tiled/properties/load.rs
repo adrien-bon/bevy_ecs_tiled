@@ -23,9 +23,9 @@ use std::path::PathBuf;
 #[derive(Debug, Clone)]
 pub(crate) struct DeserializedMapProperties<const HYDRATED: bool = false> {
     pub(crate) map: DeserializedProperties,
-    pub(crate) layers: HashMap<u32, DeserializedProperties>,
-    pub(crate) tiles: HashMap<u32, HashMap<tiled::TileId, DeserializedProperties>>,
-    pub(crate) objects: HashMap<u32, DeserializedProperties>,
+    pub(crate) layers: HashMap<LayerId, DeserializedProperties>,
+    pub(crate) tiles: HashMap<TilesetId, HashMap<tiled::TileId, DeserializedProperties>>,
+    pub(crate) objects: HashMap<ObjectId, DeserializedProperties>,
 }
 
 impl DeserializedMapProperties<false> {
@@ -34,7 +34,7 @@ impl DeserializedMapProperties<false> {
     /// `tilesets` gives the tilesets for which tiles properties should be loaded, along with their tileset ID.
     pub(crate) fn load<'a>(
         map: &tiled::Map,
-        tilesets: impl Iterator<Item = (u32, &'a tiled::Tileset)>,
+        tilesets: impl Iterator<Item = (TilesetId, &'a tiled::Tileset)>,
         registry: &TypeRegistry,
         load_context: &mut LoadContext<'_>,
     ) -> Self {
@@ -45,14 +45,14 @@ impl DeserializedMapProperties<false> {
         let mut to_process = Vec::from_iter(map.layers());
         while let Some(layer) = to_process.pop() {
             layers.insert(
-                layer.id(),
+                LayerId(layer.id()),
                 DeserializedProperties::load(&layer.properties, registry, load_context, false),
             );
             match layer.layer_type() {
                 tiled::LayerType::Objects(object) => {
                     for object in object.objects() {
                         objects.insert(
-                            object.id(),
+                            ObjectId(object.id()),
                             DeserializedProperties::load(
                                 &object.properties,
                                 registry,
@@ -102,9 +102,9 @@ impl DeserializedMapProperties<false> {
     /// Retrieve the hydrated properties of a tile, if it has any
     pub(crate) fn tile_properties(
         &self,
-        tileset_id: u32,
+        tileset_id: TilesetId,
         tile_id: tiled::TileId,
-        entity_map: &HashMap<u32, Entity>,
+        entity_map: &HashMap<ObjectId, Entity>,
     ) -> Option<DeserializedProperties> {
         let mut properties = self.tiles.get(&tileset_id)?.get(&tile_id)?.clone();
         if properties.properties.is_empty() {
@@ -116,7 +116,7 @@ impl DeserializedMapProperties<false> {
 
     pub(crate) fn hydrate(
         mut self,
-        entity_map: &HashMap<u32, Entity>,
+        entity_map: &HashMap<ObjectId, Entity>,
     ) -> DeserializedMapProperties<true> {
         self.map.hydrate(entity_map);
         for (_, layer) in self.layers.iter_mut() {
@@ -366,14 +366,15 @@ impl DeserializedProperties {
                 if o == 0 {
                     Err("empty object reference".to_string())
                 } else {
-                    entity_from_object_id(o).map(|e| Box::new(e) as Box<dyn PartialReflect>)
+                    entity_from_object_id(ObjectId(o))
+                        .map(|e| Box::new(e) as Box<dyn PartialReflect>)
                 }
             }
             ("core::option::Option<bevy_ecs::entity::Entity>", PV::ObjectValue(o), _) => {
                 let entity = if o == 0 {
                     None
                 } else {
-                    Some(entity_from_object_id(o)?)
+                    Some(entity_from_object_id(ObjectId(o))?)
                 };
                 Ok(Box::new(entity))
             }
@@ -741,7 +742,7 @@ impl DeserializedProperties {
         }
     }
 
-    pub(crate) fn hydrate(&mut self, obj_entity_map: &HashMap<u32, Entity>) {
+    pub(crate) fn hydrate(&mut self, obj_entity_map: &HashMap<ObjectId, Entity>) {
         for resource in self.properties.iter_mut() {
             hydrate(resource.as_mut(), obj_entity_map);
         }
@@ -764,8 +765,9 @@ where
 }
 
 /// Temporary [`Entity`] holding a Tiled object ID, replaced by the actual entity on hydration
-fn entity_from_object_id(object_id: u32) -> Result<Entity, String> {
-    Entity::from_raw_u32(object_id).ok_or_else(|| format!("invalid object reference `{object_id}`"))
+fn entity_from_object_id(object_id: ObjectId) -> Result<Entity, String> {
+    Entity::from_raw_u32(object_id.0)
+        .ok_or_else(|| format!("invalid object reference `{object_id}`"))
 }
 
 fn default_value_from_type_path(registry: &TypeRegistry, path: &str) -> Option<Box<dyn Reflect>> {
@@ -776,12 +778,12 @@ fn default_value_from_type_path(registry: &TypeRegistry, path: &str) -> Option<B
 
 fn object_ref(
     obj: &dyn PartialReflect,
-    obj_entity_map: &HashMap<u32, Entity>,
+    obj_entity_map: &HashMap<ObjectId, Entity>,
 ) -> Option<Box<dyn PartialReflect>> {
     if obj.represents::<Entity>() {
         let obj = Entity::take_from_reflect(obj.to_dynamic().expect("Obj can't be made dynamic"))
             .unwrap();
-        if let Some(&e) = obj_entity_map.get(&obj.index_u32()) {
+        if let Some(&e) = obj_entity_map.get(&ObjectId(obj.index_u32())) {
             Some(Box::new(e))
         } else {
             bevy::log::error!(
@@ -797,14 +799,14 @@ fn object_ref(
                 obj.to_dynamic().expect("obj can't be made dynamic"),
             )
             .unwrap()
-            .and_then(|obj| obj_entity_map.get(&obj.index_u32()).copied()),
+            .and_then(|obj| obj_entity_map.get(&ObjectId(obj.index_u32())).copied()),
         ))
     } else {
         None
     }
 }
 
-fn hydrate(object: &mut dyn PartialReflect, obj_entity_map: &HashMap<u32, Entity>) {
+fn hydrate(object: &mut dyn PartialReflect, obj_entity_map: &HashMap<ObjectId, Entity>) {
     if let Some(obj) = object_ref(object, obj_entity_map) {
         object.apply(obj.as_partial_reflect());
         return;

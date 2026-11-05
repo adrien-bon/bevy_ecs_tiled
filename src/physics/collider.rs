@@ -164,7 +164,7 @@ fn flip_tile_coord(coord: geo::Coord<f32>, size: Vec2, flip: &TileFlip) -> geo::
 pub(crate) fn tiles_polygons(
     map_asset: &TiledMapAsset,
     anchor: &TilemapAnchor,
-    tiles: impl Iterator<Item = (TilePos, u32, tiled::TileId, TileFlip)>,
+    tiles: impl Iterator<Item = (TilePos, TilesetId, tiled::TileId, TileFlip)>,
     filter: &TiledFilter,
 ) -> Vec<geo::Polygon<f32>> {
     let mut acc = vec![];

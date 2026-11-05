@@ -164,7 +164,7 @@ fn on_map_created(
     };
 
     // We will iterate over all tiles from our map and try to access our custom properties
-    for ((_tile_id, _tileset_id), entities_list) in map_storage.tiles() {
+    for ((_tileset_id, _tile_id), entities_list) in map_storage.tiles() {
         for tile_entity in entities_list {
             let Ok((pos, biome, resource)) = tiles_query.get(*tile_entity) else {
                 continue;

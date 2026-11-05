@@ -57,10 +57,10 @@ pub enum TiledMapLoaderError {
 
 fn process_layers<'a>(
     layers: impl Iterator<Item = tiled::Layer<'a>>,
-    images: &mut HashMap<u32, Handle<Image>>,
+    images: &mut HashMap<LayerId, Handle<Image>>,
     largest_tile_size: &mut TilemapTileSize,
-    tilesets: &mut HashMap<u32, TiledMapTileset>,
-    tilesets_id_by_label: &mut HashMap<String, u32>,
+    tilesets: &mut HashMap<TilesetId, TiledMapTileset>,
+    tilesets_id_by_label: &mut HashMap<String, TilesetId>,
     load_context: &mut LoadContext,
 ) {
     for layer in layers {
@@ -144,7 +144,7 @@ fn process_layers<'a>(
                 let asset_path = AssetPath::from(image.source.clone());
                 let handle: Handle<Image> = load_context.load(asset_path);
 
-                images.insert(layer.id(), handle);
+                images.insert(LayerId(layer.id()), handle);
             }
             tiled::LayerType::Group(group_layer) => {
                 process_layers(
@@ -215,8 +215,8 @@ impl AssetLoader for TiledMapLoader {
                 continue;
             };
 
-            tilesets_id_by_label.insert(label, tileset_index as u32);
-            tilesets.insert(tileset_index as u32, tiled_map_tileset);
+            tilesets_id_by_label.insert(label, TilesetId(tileset_index as u32));
+            tilesets.insert(TilesetId(tileset_index as u32), tiled_map_tileset);
         }
 
         let mut images = HashMap::default();
@@ -351,11 +351,11 @@ impl AssetLoader for TiledMapLoader {
             map.tilesets()
                 .iter()
                 .enumerate()
-                .map(|(id, t)| (id as u32, t.as_ref()))
+                .map(|(id, t)| (TilesetId(id as u32), t.as_ref()))
                 .chain(
                     tilesets
                         .iter()
-                        .filter(|(id, _)| **id as usize >= map.tilesets().len())
+                        .filter(|(id, _)| id.0 as usize >= map.tilesets().len())
                         .map(|(id, t)| (*id, t.tileset.as_ref())),
                 ),
             self.registry.read().deref(),
@@ -484,8 +484,8 @@ fn tileset_to_tiled_map_tileset(
 ///
 /// Map tilesets are inserted first using their index, so this ID never
 /// conflicts with a map tileset, even if some of them failed to load.
-fn next_tileset_id(tilesets: &HashMap<u32, TiledMapTileset>) -> u32 {
-    tilesets.keys().max().map(|id| id + 1).unwrap_or(0)
+fn next_tileset_id(tilesets: &HashMap<TilesetId, TiledMapTileset>) -> TilesetId {
+    TilesetId(tilesets.keys().max().map(|id| id.0 + 1).unwrap_or(0))
 }
 
 pub(crate) fn plugin(app: &mut App) {

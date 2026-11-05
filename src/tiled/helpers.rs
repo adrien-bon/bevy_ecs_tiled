@@ -9,13 +9,37 @@ use crate::prelude::*;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::{HexCoordSystem, IsoCoordSystem};
 
-/// Retrieves a [`tiled::Layer`] from a [`tiled::Map`] given a layer ID.
+/// Implements conversions from and to [`u32`] and [`std::fmt::Display`] for an ID newtype.
+macro_rules! impl_id {
+    ($id:ident) => {
+        impl From<u32> for $id {
+            fn from(id: u32) -> Self {
+                Self(id)
+            }
+        }
+
+        impl From<$id> for u32 {
+            fn from(id: $id) -> Self {
+                id.0
+            }
+        }
+
+        impl std::fmt::Display for $id {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                self.0.fmt(f)
+            }
+        }
+    };
+}
+pub(crate) use impl_id;
+
+/// Retrieves a [`tiled::Layer`] from a [`tiled::Map`] given a [`LayerId`].
 ///
 /// Returns `Some(tiled::Layer)` if the layer exists, or `None` if it does not
-pub fn layer_from_map(map: &tiled::Map, layer_id: u32) -> Option<tiled::Layer<'_>> {
+pub fn layer_from_map(map: &tiled::Map, layer_id: LayerId) -> Option<tiled::Layer<'_>> {
     fn find_layer_by_id<'a, T: 'a + ExactSizeIterator<Item = tiled::Layer<'a>>>(
         layers: T,
-        layer_id: u32,
+        layer_id: LayerId,
     ) -> Option<tiled::Layer<'a>> {
         layers
             .filter_map(|l| match l.layer_type() {
@@ -23,7 +47,7 @@ pub fn layer_from_map(map: &tiled::Map, layer_id: u32) -> Option<tiled::Layer<'_
                     find_layer_by_id(group_layer.layers(), layer_id)
                 }
                 _ => {
-                    if l.id() == layer_id {
+                    if l.id() == layer_id.0 {
                         Some(l)
                     } else {
                         None
@@ -35,36 +59,36 @@ pub fn layer_from_map(map: &tiled::Map, layer_id: u32) -> Option<tiled::Layer<'_
     find_layer_by_id(map.layers(), layer_id)
 }
 
-/// Retrieves a [`tiled::Tileset`] from a [`tiled::Map`] given a tileset ID.
+/// Retrieves a [`tiled::Tileset`] from a [`tiled::Map`] given a [`TilesetId`].
 ///
 /// Returns a reference to the tileset if found, or `None` if the ID is invalid.
-pub fn tileset_from_map(map: &tiled::Map, tileset_id: u32) -> Option<&Arc<tiled::Tileset>> {
+pub fn tileset_from_map(map: &tiled::Map, tileset_id: TilesetId) -> Option<&Arc<tiled::Tileset>> {
     for (id, tileset) in map.tilesets().iter().enumerate() {
-        if id == tileset_id as usize {
+        if id == tileset_id.0 as usize {
             return Some(tileset);
         }
     }
     None
 }
 
-/// Retrieves a [`tiled::Tile`] from a [`tiled::Map`] given a tileset ID and a [`tiled::TileId`].
+/// Retrieves a [`tiled::Tile`] from a [`tiled::Map`] given a [`TilesetId`] and a [`tiled::TileId`].
 ///
 /// Returns `Some(tiled::Tile)` if the tile exists in the specified tileset, or `None` otherwise.
 pub fn tile_from_map(
     map: &tiled::Map,
-    tileset_id: u32,
+    tileset_id: TilesetId,
     tile_id: tiled::TileId,
 ) -> Option<tiled::Tile<'_>> {
     tileset_from_map(map, tileset_id).and_then(|t| t.get_tile(tile_id))
 }
 
-/// Retrieves an [`tiled::Object`] from a [`tiled::Map`] given an object ID.
+/// Retrieves an [`tiled::Object`] from a [`tiled::Map`] given an [`ObjectId`].
 ///
 /// Searches all object layers for the specified object ID and returns it if found.
-pub fn object_from_map(map: &tiled::Map, object_id: u32) -> Option<tiled::Object<'_>> {
+pub fn object_from_map(map: &tiled::Map, object_id: ObjectId) -> Option<tiled::Object<'_>> {
     fn find_object_by_id<'a, T: 'a + ExactSizeIterator<Item = tiled::Layer<'a>>>(
         layers: T,
-        object_id: u32,
+        object_id: ObjectId,
     ) -> Option<tiled::Object<'a>> {
         layers
             .filter_map(|l| match l.layer_type() {
@@ -72,7 +96,7 @@ pub fn object_from_map(map: &tiled::Map, object_id: u32) -> Option<tiled::Object
                     find_object_by_id(group_layer.layers(), object_id)
                 }
                 tiled::LayerType::Objects(object_layer) => {
-                    object_layer.objects().find(|o| o.id() == object_id)
+                    object_layer.objects().find(|o| o.id() == object_id.0)
                 }
                 _ => None,
             })

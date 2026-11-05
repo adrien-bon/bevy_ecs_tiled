@@ -7,6 +7,15 @@ use crate::tiled::{helpers::iso_projection, map::loader::tileset_label};
 use ::tiled::{HorizontalAlignment, VerticalAlignment};
 use bevy::{prelude::*, sprite::Anchor};
 
+/// ID of an object, as defined in Tiled.
+///
+/// This ID is unique within a map.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord, Reflect)]
+#[reflect(Clone, Debug, Default, PartialEq, Hash)]
+pub struct ObjectId(pub u32);
+
+crate::tiled::helpers::impl_id!(ObjectId);
+
 /// Relationship and Marker [`Component`] for the visual representation of a [`TiledObject`].
 ///
 /// Added on the child [`Entity`] of a [`TiledObject::Tile`] or of a [`TiledObject::Text`].
@@ -81,11 +90,11 @@ pub enum TiledObject {
         width: f32,
         /// The height of the tile.
         height: f32,
-        /// The tileset ID of the tile.
+        /// The [`TilesetId`] of the tile.
         ///
         /// Use [`TiledMapAsset::tileset`] to retrieve the corresponding [`tiled::Tileset`], since it
         /// can be a tileset only referenced by a template.
-        tileset_id: u32,
+        tileset_id: TilesetId,
         /// The [`tiled::TileId`] of the tile.
         tile_id: tiled::TileId,
         /// Whether the tile is flipped horizontally.
@@ -192,7 +201,7 @@ impl TiledObject {
         if let Some(tile_data) = object_data.tile_data() {
             if let tiled::ObjectShape::Rect { width, height } = object_data.shape {
                 let tileset_id = match tile_data.tileset_location() {
-                    tiled::TilesetLocation::Map(index) => Some(*index as u32),
+                    tiled::TilesetLocation::Map(index) => Some(TilesetId(*index as u32)),
                     tiled::TilesetLocation::Template(tileset) => tileset_label(tileset)
                         .and_then(|label| map_asset.tilesets_id_by_label.get(&label).copied()),
                 };
@@ -507,6 +516,7 @@ impl TiledObject {
 }
 
 pub(crate) fn plugin(app: &mut App) {
+    app.register_type::<ObjectId>();
     app.register_type::<TiledObject>();
     app.register_type::<TiledObjectVisualOf>();
     app.register_type::<TiledObjectVisuals>();
@@ -642,7 +652,7 @@ fn sync_object_visuals(
 /// Build the [`Sprite`], offset [`Transform`] and eventual [`TiledAnimation`] of a [`TiledObject::Tile`].
 fn tile_object_visual(
     map_asset: &TiledMapAsset,
-    tileset_id: u32,
+    tileset_id: TilesetId,
     tile_id: tiled::TileId,
     size: Vec2,
     flip_x: bool,

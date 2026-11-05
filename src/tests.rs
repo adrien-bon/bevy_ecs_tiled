@@ -124,7 +124,7 @@ fn tile_at(app: &mut App, layer: Entity, pos: TilePos) -> Entity {
 }
 
 /// Returns the tileset ID + tile ID under which a tile is registered in the map storage
-fn storage_key(storage: &TiledMapStorage, entity: Entity) -> Option<(u32, tiled::TileId)> {
+fn storage_key(storage: &TiledMapStorage, entity: Entity) -> Option<(TilesetId, tiled::TileId)> {
     storage
         .tiles()
         .find(|(_, entities)| entities.contains(&entity))
@@ -133,7 +133,7 @@ fn storage_key(storage: &TiledMapStorage, entity: Entity) -> Option<(u32, tiled:
 
 #[cfg(feature = "render")]
 /// Returns the tilemap of a layer for a given tileset ID
-fn tilemap_of(app: &App, layer: Entity, tileset_id: u32) -> Option<Entity> {
+fn tilemap_of(app: &App, layer: Entity, tileset_id: TilesetId) -> Option<Entity> {
     let world = app.world();
     world
         .get::<TiledTilemaps>(layer)?
@@ -182,7 +182,7 @@ fn map_load_spawns_data_and_render_components() {
 
     // Tiles and tilemaps are both direct children of the layer
     let tile = tile_at(&mut app, ground, TilePos::new(0, 3));
-    let tilemap = tilemap_of(&app, ground, 0).expect("missing tilemap");
+    let tilemap = tilemap_of(&app, ground, TilesetId(0)).expect("missing tilemap");
     assert_eq!(
         app.world().get::<ChildOf>(tilemap).unwrap().parent(),
         ground
@@ -217,7 +217,7 @@ fn despawning_tiles_updates_tilemaps_and_storage() {
 
     // The only tile from tileset 1 in the ground layer
     let tile = tile_at(&mut app, ground, TilePos::new(3, 0));
-    let tilemap = tilemap_of(&app, ground, 1).expect("missing tilemap");
+    let tilemap = tilemap_of(&app, ground, TilesetId(1)).expect("missing tilemap");
     app.world_mut().entity_mut(tile).despawn();
     app.update();
 
@@ -225,18 +225,18 @@ fn despawning_tiles_updates_tilemaps_and_storage() {
     assert!(app.world().get_entity(tilemap).is_err());
     assert_eq!(tilemaps_count(&app, ground), 1);
     let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    assert!(storage.tile_entities(1, 1).is_empty());
+    assert!(storage.tile_entities(TilesetId(1), 1).is_empty());
     assert_eq!(storage_key(storage, tile), None);
 
     // Despawn a tile which shares its tilemap with another one
     let tile = tile_at(&mut app, ground, TilePos::new(0, 3));
-    let tilemap = tilemap_of(&app, ground, 0).expect("missing tilemap");
+    let tilemap = tilemap_of(&app, ground, TilesetId(0)).expect("missing tilemap");
     app.world_mut().entity_mut(tile).despawn();
     app.update();
     assert_eq!(storage_at(&app, tilemap, TilePos::new(0, 3)), None);
     assert!(storage_at(&app, tilemap, TilePos::new(1, 3)).is_some());
     let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    assert_eq!(storage.tile_entities(0, 0).len(), 1);
+    assert_eq!(storage.tile_entities(TilesetId(0), 0).len(), 1);
 }
 
 #[test]
@@ -245,8 +245,8 @@ fn modifying_tiles_updates_tilemaps_and_storage() {
     let mut app = test_app();
     let map = spawn_test_map(&mut app);
     let ground = layer_by_name(&mut app, "ground");
-    let tilemap_0 = tilemap_of(&app, ground, 0).unwrap();
-    let tilemap_1 = tilemap_of(&app, ground, 1).unwrap();
+    let tilemap_0 = tilemap_of(&app, ground, TilesetId(0)).unwrap();
+    let tilemap_1 = tilemap_of(&app, ground, TilesetId(1)).unwrap();
 
     // Move a tile
     let tile = tile_at(&mut app, ground, TilePos::new(0, 3));
@@ -263,13 +263,13 @@ fn modifying_tiles_updates_tilemaps_and_storage() {
         Some(&TileTextureIndex(3))
     );
     let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    assert_eq!(storage_key(storage, tile), Some((0, 3)));
+    assert_eq!(storage_key(storage, tile), Some((TilesetId(0), 3)));
 
     // Change its tileset: it moves to the other tilemap of the layer
     app.world_mut()
         .get_mut::<TiledTile>(tile)
         .unwrap()
-        .tileset_id = 1;
+        .tileset_id = TilesetId(1);
     app.update();
     assert_eq!(
         app.world().get::<TilemapId>(tile),
@@ -278,7 +278,7 @@ fn modifying_tiles_updates_tilemaps_and_storage() {
     assert_eq!(storage_at(&app, tilemap_0, TilePos::new(2, 2)), None);
     assert_eq!(storage_at(&app, tilemap_1, TilePos::new(2, 2)), Some(tile));
     let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    assert_eq!(storage_key(storage, tile), Some((1, 3)));
+    assert_eq!(storage_key(storage, tile), Some((TilesetId(1), 3)));
 }
 
 #[test]
@@ -287,20 +287,20 @@ fn spawning_tiles_creates_tilemaps() {
     let mut app = test_app();
     let map = spawn_test_map(&mut app);
     let decoration = layer_by_name(&mut app, "decoration");
-    assert!(tilemap_of(&app, decoration, 1).is_none());
+    assert!(tilemap_of(&app, decoration, TilesetId(1)).is_none());
 
     // Only the data components are needed to spawn a new tile
     let tile = app
         .world_mut()
         .spawn((
-            TiledTile::new(1, 2),
+            TiledTile::new(TilesetId(1), 2),
             ChildOf(decoration),
             TilePos::new(2, 2),
         ))
         .id();
     app.update();
 
-    let tilemap = tilemap_of(&app, decoration, 1).expect("tilemap was not created");
+    let tilemap = tilemap_of(&app, decoration, TilesetId(1)).expect("tilemap was not created");
     assert_eq!(storage_at(&app, tilemap, TilePos::new(2, 2)), Some(tile));
     assert_eq!(
         app.world().resource::<Received>().tilemaps_created.last(),
@@ -308,7 +308,7 @@ fn spawning_tiles_creates_tilemaps() {
     );
     assert_eq!(app.world().get::<TiledMapReference>(tile).unwrap().0, map);
     let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    assert_eq!(storage.tile_entities(1, 2), &[tile]);
+    assert_eq!(storage.tile_entities(TilesetId(1), 2), &[tile]);
 }
 
 #[test]
@@ -370,7 +370,11 @@ fn layer_tiles_index_is_only_on_tiles_layers() {
         .id();
     let tile = app
         .world_mut()
-        .spawn((TiledTile::new(0, 1), ChildOf(layer), TilePos::new(2, 2)))
+        .spawn((
+            TiledTile::new(TilesetId(0), 1),
+            ChildOf(layer),
+            TilePos::new(2, 2),
+        ))
         .id();
     app.update();
     assert_eq!(layer_index(&app, layer), vec![(TilePos::new(2, 2), tile)]);
@@ -449,7 +453,7 @@ fn moving_a_tile_onto_another_replaces_it() {
 
     #[cfg(feature = "render")]
     {
-        let tilemap = tilemap_of(&app, ground, 0).unwrap();
+        let tilemap = tilemap_of(&app, ground, TilesetId(0)).unwrap();
         assert_eq!(storage_at(&app, tilemap, TilePos::new(1, 3)), None);
         assert_eq!(storage_at(&app, tilemap, TilePos::new(0, 3)), Some(a));
     }
@@ -487,7 +491,11 @@ fn spawning_a_tile_onto_another_replaces_it() {
     // Another tileset: tiles are still replaced
     let new_tile = app
         .world_mut()
-        .spawn((TiledTile::new(1, 2), ChildOf(ground), TilePos::new(0, 3)))
+        .spawn((
+            TiledTile::new(TilesetId(1), 2),
+            ChildOf(ground),
+            TilePos::new(0, 3),
+        ))
         .id();
     app.update();
     assert!(app.world().get_entity(a).is_err());
@@ -511,7 +519,11 @@ fn layer_index_follows_tiles() {
     // Add a tile
     let tile = app
         .world_mut()
-        .spawn((TiledTile::new(0, 1), ChildOf(ground), TilePos::new(2, 2)))
+        .spawn((
+            TiledTile::new(TilesetId(0), 1),
+            ChildOf(ground),
+            TilePos::new(2, 2),
+        ))
         .id();
     app.update();
     assert!(layer_index(&app, ground).contains(&(TilePos::new(2, 2), tile)));
@@ -541,7 +553,7 @@ fn tiles_outside_of_map_are_not_rendered() {
     let mut app = test_app();
     spawn_test_map(&mut app);
     let ground = layer_by_name(&mut app, "ground");
-    let tilemap = tilemap_of(&app, ground, 0).unwrap();
+    let tilemap = tilemap_of(&app, ground, TilesetId(0)).unwrap();
     let tile = tile_at(&mut app, ground, TilePos::new(0, 3));
 
     // Move the tile outside of the map: it is detached from its tilemap
@@ -585,7 +597,7 @@ fn spawned_objects_inherit_map_reference() {
             TiledObject::Tile {
                 width: 16.,
                 height: 16.,
-                tileset_id: 0,
+                tileset_id: TilesetId(0),
                 tile_id: 1,
                 flip_x: false,
                 flip_y: false,
@@ -677,6 +689,19 @@ fn tiled_properties_are_inserted() {
         .get(std::any::TypeId::of::<TiledProperties>())
         .expect("TiledProperties is not registered");
     assert!(registration.data::<ReflectComponent>().is_some());
+}
+
+#[test]
+fn id_types_are_registered() {
+    let app = test_app();
+    let registry = app.world().resource::<AppTypeRegistry>().read();
+    for (name, type_id) in [
+        ("TilesetId", std::any::TypeId::of::<TilesetId>()),
+        ("LayerId", std::any::TypeId::of::<LayerId>()),
+        ("ObjectId", std::any::TypeId::of::<ObjectId>()),
+    ] {
+        assert!(registry.get(type_id).is_some(), "{name} is not registered");
+    }
 }
 
 /// Check that the tile count of each tilemap matches the content of its storage
@@ -773,7 +798,7 @@ fn storage_indexes_tiles_positions() {
     let c = app
         .world_mut()
         .spawn((
-            TiledTile::new(1, 2),
+            TiledTile::new(TilesetId(1), 2),
             ChildOf(decoration),
             TilePos::new(0, 3),
         ))
@@ -818,7 +843,7 @@ fn storage_follows_tiles() {
         .map(|i| {
             app.world_mut()
                 .spawn((
-                    TiledTile::new(0, 0),
+                    TiledTile::new(TilesetId(0), 0),
                     ChildOf(ground),
                     TilePos::new(i % 4, 1 + i / 4),
                 ))
@@ -838,7 +863,7 @@ fn storage_follows_tiles() {
     app.world_mut()
         .get_mut::<TiledTile>(tiles[5])
         .unwrap()
-        .tileset_id = 1;
+        .tileset_id = TilesetId(1);
     app.update();
     assert_storage_matches_tiles(&mut app, map);
 
@@ -892,7 +917,11 @@ impl MapWithoutAsset {
             .id();
         let tile = app
             .world_mut()
-            .spawn((TiledTile::new(0, 0), ChildOf(layer), TilePos::new(1, 1)))
+            .spawn((
+                TiledTile::new(TilesetId(0), 0),
+                ChildOf(layer),
+                TilePos::new(1, 1),
+            ))
             .id();
         Self {
             loaded,
@@ -1003,7 +1032,7 @@ fn check_tile_move(path: &str) {
             let handle = &app.world().get::<TiledMap>(_map).unwrap().0;
             let assets = app.world().resource::<Assets<TiledMapAsset>>();
             let map_asset = assets.get(handle).unwrap();
-            let tile_size = tile_size(&map_asset.tile(0, 0).unwrap());
+            let tile_size = tile_size(&map_asset.tile(TilesetId(0), 0).unwrap());
             let anchor = TilemapAnchor::default();
             map_asset.tile_relative_position(&to, &tile_size, &anchor)
                 - map_asset.tile_relative_position(&from, &tile_size, &anchor)
@@ -1115,7 +1144,11 @@ mod physics {
         let tile_pos = TilePos::new(2, 1);
         let tile = app
             .world_mut()
-            .spawn((TiledTile::new(0, 3), ChildOf(decoration), tile_pos))
+            .spawn((
+                TiledTile::new(TilesetId(0), 3),
+                ChildOf(decoration),
+                tile_pos,
+            ))
             .id();
         app.update();
 
@@ -1263,7 +1296,7 @@ mod physics {
         app.world_mut()
             .get_mut::<TiledTile>(tile)
             .unwrap()
-            .tileset_id = 1;
+            .tileset_id = TilesetId(1);
         app.update();
         assert!(colliders_area(&app, ground).is_empty());
 
@@ -1357,11 +1390,19 @@ mod properties {
 
         let tile = app
             .world_mut()
-            .spawn((TiledTile::new(0, 0), ChildOf(ground), TilePos::new(2, 2)))
+            .spawn((
+                TiledTile::new(TilesetId(0), 0),
+                ChildOf(ground),
+                TilePos::new(2, 2),
+            ))
             .id();
         let other_tile = app
             .world_mut()
-            .spawn((TiledTile::new(0, 1), ChildOf(ground), TilePos::new(3, 3)))
+            .spawn((
+                TiledTile::new(TilesetId(0), 1),
+                ChildOf(ground),
+                TilePos::new(3, 3),
+            ))
             .id();
         let tile_object = app
             .world_mut()
@@ -1369,7 +1410,7 @@ mod properties {
                 TiledObject::Tile {
                     width: 16.,
                     height: 16.,
-                    tileset_id: 0,
+                    tileset_id: TilesetId(0),
                     tile_id: 0,
                     flip_x: false,
                     flip_y: false,

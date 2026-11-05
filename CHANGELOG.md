@@ -37,6 +37,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - `TiledMapStorage` is kept up to date when layers, objects or tiles are added, modified or removed
 - `TiledTile` holds the tile tileset ID and tile ID, and `TiledTilemap` holds its tileset ID: `TiledTilesetId` and `TiledTileId` components are removed
 - `TiledLayerId` and `TiledObjectId` components are removed: `TiledMapStorage` lists layers and objects entities without their Tiled ID, and `TiledEvent` does not hold layer and object IDs anymore. `TiledEvent::layer_id()`, `layer()`, `object_id()`, `object()` and `TiledMapStorage::layer_entity()`, `layer_id()`, `layer()`, `object_entity()`, `object_id()`, `object()`, `tile_id()`, `tile()` are removed
+- Tileset IDs, Tiled layer and object IDs and world maps indexes use the dedicated `TilesetId`, `LayerId`, `ObjectId` and `WorldMapId` types instead of `u32`
 
 ## v0.15.1
 
