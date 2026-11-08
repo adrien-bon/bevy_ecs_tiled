@@ -24,6 +24,9 @@ pub mod debug;
 #[cfg(feature = "physics")]
 pub mod physics;
 
+#[cfg(test)]
+mod tests;
+
 /// `bevy_ecs_tiled` public exports.
 pub mod prelude {
     #[cfg(feature = "debug")]
@@ -63,21 +66,25 @@ pub mod prelude {
             tilemap_type_from_map, tileset_from_map, try_tilemap_type_from_map,
         },
         image::TiledImage,
-        layer::{TiledLayer, TiledLayerId, TiledLayerParallax, TiledParallaxCamera},
+        layer::{LayerId, TiledLayer, TiledLayerParallax, TiledParallaxCamera},
         map::{
             RespawnTiledMap, TiledMap, TiledMapImageRepeatMargin, TiledMapLayerZOffset,
             TiledMapReference, asset::TiledMapAsset, loader::TiledMapLoaderError,
             storage::TiledMapStorage,
         },
         object::{
-            TiledObject, TiledObjectId, TiledObjectText, TiledObjectTextBox, TiledObjectVisualOf,
+            ObjectId, TiledObject, TiledObjectText, TiledObjectTextBox, TiledObjectVisualOf,
             TiledObjectVisuals,
         },
+        properties_raw::TiledProperties,
         sets::{TiledPostUpdateSystems, TiledPreUpdateSystems, TiledUpdateSystems},
-        tile::{TiledTile, TiledTileId, TiledTilemap, TiledTilesetId},
+        tile::{TiledTile, TiledTilemap, TiledTilemapOf, TiledTilemaps, TilesetId},
         world::{
-            RespawnTiledWorld, TiledWorld, asset::TiledWorldAsset, chunking::TiledWorldChunking,
-            loader::TiledWorldLoaderError, storage::TiledWorldStorage,
+            RespawnTiledWorld, TiledWorld,
+            asset::TiledWorldAsset,
+            chunking::TiledWorldChunking,
+            loader::TiledWorldLoaderError,
+            storage::{TiledWorldStorage, WorldMapId},
         },
     };
 

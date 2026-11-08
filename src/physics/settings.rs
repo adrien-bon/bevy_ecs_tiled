@@ -11,6 +11,10 @@ use bevy::prelude::*;
 ///
 /// Allows filtering which objects and tiles receive colliders.
 /// Attach this component to TiledWorld or TiledMap entities to control their physics behavior.
+///
+/// Note that modifying this component respawns the whole map (or world) from its asset, so colliders
+/// are computed again: all the modifications made to its layers, tiles or objects since it has been
+/// spawned are lost.
 #[derive(Component, Reflect, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
 pub struct TiledPhysicsSettings<T: TiledPhysicsBackend> {

@@ -12,6 +12,8 @@ This plugin aims to provide a simple and ergonomic workflow for integrating Tile
   Supports animated tiles, image layers, tile objects, and [Tiled worlds](https://doc.mapeditor.org/en/stable/manual/worlds/) for multi-map projects.
 - **Entity-Based Architecture:**  
   Every Tiled item (layer, tile, object, etc.) is represented as a Bevy entity, organized in a clear hierarchy: layers are children of the map entity, tiles and objects are children of their respective layers. `Visibility` and `Transform` are automatically propagated.
+- **Dynamic Maps:**  
+  Spawn, despawn or modify tiles, objects and images after a map has been loaded: their rendering and physics colliders are automatically updated.
 - **Flexible Map Lifecycle:**  
   Control how maps are spawned and despawned. Use Bevy events and observers to customize scene setup or react when a map is loaded and ready.
 - **Automatic Physics Integration:**  

@@ -120,7 +120,7 @@ fn handle_world_chunking(
         } else if storage.maps.is_empty() {
             // No chunking and we don't have spawned any map yet: just spawn all maps
             for idx in 0..tiled_world.maps.len() {
-                to_spawn.push(idx as u32);
+                to_spawn.push(WorldMapId(idx as u32));
             }
         }
 
@@ -135,7 +135,7 @@ fn handle_world_chunking(
         // Spawn maps
         let offset = tiled_world.offset(anchor);
         for idx in to_spawn {
-            let Some((rect, handle)) = tiled_world.maps.get(idx as usize) else {
+            let Some((rect, handle)) = tiled_world.maps.get(idx.0 as usize) else {
                 continue;
             };
             let map_entity = commands
@@ -222,7 +222,7 @@ mod tests {
                 .expect("world entity should have a storage");
             assert_eq!(
                 storage.maps.keys().copied().collect::<Vec<_>>(),
-                vec![0],
+                vec![WorldMapId(0)],
                 "unexpected spawned maps at frame {frame}"
             );
         }

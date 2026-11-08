@@ -11,6 +11,7 @@ pub mod image;
 pub mod layer;
 pub mod map;
 pub mod object;
+pub mod properties_raw;
 pub mod sets;
 pub mod tile;
 pub mod world;
@@ -103,6 +104,7 @@ impl Plugin for TiledPlugin {
             tile::plugin,
             sets::plugin,
             filter::plugin,
+            properties_raw::plugin,
             #[cfg(feature = "user_properties")]
             properties::plugin,
         ));

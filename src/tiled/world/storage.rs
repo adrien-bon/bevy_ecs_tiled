@@ -8,15 +8,22 @@
 use crate::prelude::*;
 use bevy::{platform::collections::HashMap, prelude::*};
 
+/// ID of a map in a [`TiledWorldAsset`], as its index in the `.world` file.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord, Reflect)]
+#[reflect(Clone, Debug, Default, PartialEq, Hash)]
+pub struct WorldMapId(pub u32);
+
+crate::tiled::helpers::impl_id!(WorldMapId);
+
 /// [`Component`] storing all the Tiled maps that are composing this world.
-/// Makes the association between the map index in the `.world` file and corresponding Bevy [`Entity`].
+/// Makes the association between the [`WorldMapId`] of a map and corresponding Bevy [`Entity`].
 ///
 /// Should not be manually inserted but can be accessed from the world [`Entity`].
 #[derive(Component, Default, Reflect, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
 pub struct TiledWorldStorage {
-    /// Mapping between a map index (in the `.world` file) with corresponding [`TiledMap`] [`Entity`]
-    pub(crate) maps: HashMap<u32, Entity>,
+    /// Mapping between a [`WorldMapId`] with corresponding [`TiledMap`] [`Entity`]
+    pub(crate) maps: HashMap<WorldMapId, Entity>,
 }
 
 impl TiledWorldStorage {
@@ -30,18 +37,18 @@ impl TiledWorldStorage {
         self.maps.clear();
     }
 
-    /// Returns an iterator over the map index and [`TiledMap`] [`Entity`] associations
-    pub fn maps(&self) -> impl Iterator<Item = (u32, Entity)> + '_ {
+    /// Returns an iterator over the [`WorldMapId`] and [`TiledMap`] [`Entity`] associations
+    pub fn maps(&self) -> impl Iterator<Item = (WorldMapId, Entity)> + '_ {
         self.maps.iter().map(|(&idx, &entity)| (idx, entity))
     }
 
-    /// Retrieve the [`TiledMap`] [`Entity`] associated with this map index
-    pub fn map_entity(&self, map_id: u32) -> Option<Entity> {
+    /// Retrieve the [`TiledMap`] [`Entity`] associated with this [`WorldMapId`]
+    pub fn map_entity(&self, map_id: WorldMapId) -> Option<Entity> {
         self.maps.get(&map_id).cloned()
     }
 
-    /// Retrieve the map index associated with this [`TiledMap`] [`Entity`]
-    pub fn map_id(&self, entity: Entity) -> Option<u32> {
+    /// Retrieve the [`WorldMapId`] associated with this [`TiledMap`] [`Entity`]
+    pub fn map_id(&self, entity: Entity) -> Option<WorldMapId> {
         self.maps
             .iter()
             .find(|(_, e)| **e == entity)
@@ -50,5 +57,6 @@ impl TiledWorldStorage {
 }
 
 pub(crate) fn plugin(app: &mut App) {
+    app.register_type::<WorldMapId>();
     app.register_type::<TiledWorldStorage>();
 }

@@ -15,12 +15,14 @@
 
 - [Getting started](guides/getting-started.md)
 - [Spawn / Despawn / Reload a map](guides/spawn_reload.md)
+- [Modify a map at runtime](guides/dynamic_maps.md)
 - [Add physics colliders](guides/physics.md)
 - [Using Tiled custom properties](guides/properties.md)
 - [Debug your project](guides/debug.md)
 
 # Migration Guides
 
+- [Migration to v0.16](migrations/v0_16.md)
 - [Migration to v0.15](migrations/v0_15.md)
 - [Migration to v0.14](migrations/v0_14.md)
 - [Migration to v0.13](migrations/v0_13.md)

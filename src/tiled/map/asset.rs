@@ -5,14 +5,17 @@
 
 use crate::{prelude::*, tiled::helpers::iso_projection};
 use bevy::{platform::collections::HashMap, prelude::*};
-use std::fmt;
+use std::{fmt, sync::Arc};
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub(crate) struct TiledMapTileset {
+    /// The raw Tiled tileset data
+    pub(crate) tileset: Arc<tiled::Tileset>,
     /// Does this tileset can be used for tiles layer ?
     ///
     /// A tileset can be used for tiles layer only if all the images it contains have the
     /// same dimensions (restriction from bevy_ecs_tilemap).
+    #[cfg_attr(not(feature = "render"), allow(dead_code))]
     pub(crate) usable_for_tiles_layer: bool,
     /// Tileset texture (ie. a single image or an images collection)
     pub(crate) tilemap_texture: TilemapTexture,
@@ -60,23 +63,37 @@ pub struct TiledMapAsset {
     pub(crate) bottomright_chunk: (i32, i32),
     /// HashMap of the map tilesets
     ///
+    /// Key is the [`TilesetId`].
+    pub(crate) tilesets: HashMap<TilesetId, TiledMapTileset>,
+    /// HashMap of the tilesets ID by label
+    ///
     /// Key is a unique label to identify the Tiled tileset within the map.
     /// See [`tileset_label`](crate::tiled::map::loader::tileset_label) function.
-    pub(crate) tilesets: HashMap<String, TiledMapTileset>,
-    /// HashMap of the label to tilesets
-    ///
-    /// Key is the Tiled tileset index
-    pub(crate) tilesets_label_by_index: HashMap<u32, String>,
+    pub(crate) tilesets_id_by_label: HashMap<String, TilesetId>,
     /// HashMap of the images used in the map
     ///
-    /// Key is the layer id of the image layer using this image
-    pub(crate) images: HashMap<u32, Handle<Image>>,
+    /// Key is the [`LayerId`] of the image layer using this image
+    pub(crate) images: HashMap<LayerId, Handle<Image>>,
     /// Map properties
     #[cfg(feature = "user_properties")]
     pub(crate) properties: crate::tiled::properties::load::DeserializedMapProperties,
 }
 
 impl TiledMapAsset {
+    /// Retrieve the [`tiled::Tileset`] associated with this [`TilesetId`].
+    ///
+    /// Contrary to [`tileset_from_map`], it also works for tilesets only referenced by templates.
+    pub fn tileset(&self, tileset_id: TilesetId) -> Option<&Arc<tiled::Tileset>> {
+        self.tilesets.get(&tileset_id).map(|t| &t.tileset)
+    }
+
+    /// Retrieve the [`tiled::Tile`] associated with this [`TilesetId`] and [`tiled::TileId`].
+    ///
+    /// Contrary to [`tile_from_map`], it also works for tilesets only referenced by templates.
+    pub fn tile(&self, tileset_id: TilesetId, tile_id: tiled::TileId) -> Option<tiled::Tile<'_>> {
+        self.tileset(tileset_id).and_then(|t| t.get_tile(tile_id))
+    }
+
     /// Position of Tiled "screen" origin, relative to the map entity.
     ///
     /// This is the point from which Tiled image layers are positioned (before applying the layer offset).
@@ -382,7 +399,7 @@ impl TiledMapAsset {
         )
     }
 
-    /// Returns the world position (center) of a tile relative to its parent [`TiledTilemap`] [`Entity`].
+    /// Returns the world position (center) of a tile relative to its [`TiledTilemap`] [`Entity`].
     ///
     /// This function computes the world-space position of a tile, given its [`TilePos`], tile size, and map anchor.
     /// It is especially useful because tiles do not have their own [`Transform`] component, so their world position must be calculated manually.
@@ -397,7 +414,7 @@ impl TiledMapAsset {
     /// * `anchor` - The [`TilemapAnchor`] used for the map.
     ///
     /// # Returns
-    /// * `Vec2` - The world-space position of the tile's center, relative to its parent tilemap entity.
+    /// * `Vec2` - The world-space position of the tile's center, relative to its tilemap entity (see [`TilemapId`]).
     ///
     /// # Example
     /// ```rust,no_run
@@ -406,34 +423,30 @@ impl TiledMapAsset {
     ///
     /// fn tile_position_system(
     ///     assets: Res<Assets<TiledMapAsset>>,
-    ///     map_query: Query<(&TiledMap, &TiledMapStorage, &TilemapAnchor)>,
-    ///     tile_query: Query<(&TilePos, &ChildOf), With<TiledTile>>,
+    ///     map_query: Query<(&TiledMap, &TilemapAnchor)>,
+    ///     tile_query: Query<(&TilePos, &TiledTile, &TilemapId, &TiledMapReference)>,
     ///     tilemap_query: Query<&GlobalTransform, With<TiledTilemap>>,
     /// ) {
-    ///     for (tiled_map, storage, anchor) in map_query.iter() {
+    ///     for (tile_pos, tiled_tile, tilemap_id, map_ref) in tile_query.iter() {
+    ///         let Ok((tiled_map, anchor)) = map_query.get(map_ref.0) else { continue; };
     ///         let Some(map_asset) = assets.get(&tiled_map.0) else { continue; };
-    ///         for (_, entities) in storage.tiles() {
-    ///             for entity in entities {
-    ///                 let Ok((tile_pos, child_of)) = tile_query.get(*entity) else { continue; };
-    ///                 let Some(tile) = storage.tile(&map_asset.map, *entity) else { continue; };
-    ///                 // Compute the tile's world position (center) relative to its tilemap
-    ///                 let tile_rel_pos = map_asset.tile_relative_position(
-    ///                     tile_pos,
-    ///                     &tile_size(&tile),
-    ///                     anchor
-    ///                 );
-    ///                 // To get the tile's global transform, combine with the parent tilemap's transform
-    ///                 let Ok(parent_transform) = tilemap_query.get(child_of.parent()) else { continue; };
-    ///                 let tile_transform = *parent_transform * Transform::from_translation(tile_rel_pos.extend(0.));
-    ///             }
-    ///         }
+    ///         let Some(tile) = map_asset.tile(tiled_tile.tileset_id, tiled_tile.tile_id) else { continue; };
+    ///         // Compute the tile's world position (center) relative to its tilemap
+    ///         let tile_rel_pos = map_asset.tile_relative_position(
+    ///             tile_pos,
+    ///             &tile_size(&tile),
+    ///             anchor
+    ///         );
+    ///         // To get the tile's global transform, combine with the tilemap's transform
+    ///         let Ok(tilemap_transform) = tilemap_query.get(tilemap_id.0) else { continue; };
+    ///         let tile_transform = *tilemap_transform * Transform::from_translation(tile_rel_pos.extend(0.));
     ///     }
     /// }
     /// ```
     ///
     /// # Notes
-    /// - The returned position is relative to the parent tilemap entity, not global coordinates.
-    /// - For global/world coordinates, combine with the parent tilemap's [`GlobalTransform`].
+    /// - The returned position is relative to the tile tilemap entity, not global coordinates.
+    /// - For global/world coordinates, combine with the tilemap's [`GlobalTransform`].
     pub fn tile_relative_position(
         &self,
         tile_pos: &TilePos,

@@ -45,6 +45,15 @@ pub trait TiledPhysicsBackend:
     /// # Returns
     /// The [`Entity`] holding the spawned collider(s), which can be `origin` itself.
     /// If the provided collider is not supported, the function should return [`None`].
+    ///
+    /// # Colliders updates
+    /// Colliders are spawned again when their source changes (for instance when a tile of the layer is
+    /// added, modified or removed): previous collider entities are then despawned before calling this function.
+    ///
+    /// However, if colliders are inserted on `origin` itself, they are never removed: they are only replaced
+    /// the next time this function is called, which does not happen if the source does not produce any
+    /// collider anymore (eg. all the tiles of a layer have been despawned).
+    /// Prefer spawning colliders on a dedicated child entity, as the built-in backends do.
     fn spawn_colliders(
         &self,
         commands: &mut Commands,

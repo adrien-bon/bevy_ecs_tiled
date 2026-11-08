@@ -7,22 +7,31 @@
 use crate::prelude::*;
 use bevy::prelude::*;
 
+/// ID of a layer, as defined in Tiled.
+///
+/// This ID is unique within a map, whatever the layer type.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord, Reflect)]
+#[reflect(Clone, Debug, Default, PartialEq, Hash)]
+pub struct LayerId(pub u32);
+
+crate::tiled::helpers::impl_id!(LayerId);
+
 /// Marker [`Component`] for a Tiled map layer.
 ///
 /// This enum is attached to entities representing Tiled layers in the ECS world.
 /// Each variant corresponds to a specific Tiled layer type and indicates the expected children entities.
 ///
-/// - `Tiles`: A layer containing tiles, parent of [`TiledTilemap`] entities.
+/// - `Tiles`: A layer containing tiles, parent of [`TiledTile`] and [`TiledTilemap`] entities.
 /// - `Objects`: A layer containing objects, parent of [`TiledObject`] entities.
 /// - `Image`: A layer containing an image, parent of a single [`TiledImage`] entity.
 /// - `Group`: A group of layers, used to organize multiple layers hierarchically.
 #[derive(Component, Reflect, Copy, Clone, Debug)]
 #[reflect(Component, Debug)]
-#[require(Visibility, Transform, TiledName, TiledLayerId)]
+#[require(Visibility, Transform, TiledName)]
 pub enum TiledLayer {
     /// A layer containing tiles.
     ///
-    /// Parent of [`TiledTilemap`] entities.
+    /// Parent of [`TiledTile`] entities and of the [`TiledTilemap`] entities rendering them.
     Tiles,
     /// A layer containing objects.
     ///
@@ -35,13 +44,6 @@ pub enum TiledLayer {
     /// A group of layers, used to organize multiple layers hierarchically.
     Group,
 }
-
-/// Tiled layer ID associated with this [`TiledLayer`].
-///
-/// You can retrieve the corresponding [`tiled::Layer`] using the [`layer_from_map`] helper function.
-#[derive(Component, Default, Clone, Copy, Reflect, Debug, Deref)]
-#[reflect(Component, Default, Debug)]
-pub struct TiledLayerId(pub u32);
 
 /// Component that stores parallax information for Tiled layers.
 #[derive(Component, Reflect, Clone, Debug, Copy)]
@@ -61,8 +63,8 @@ pub struct TiledLayerParallax {
 pub struct TiledParallaxCamera;
 
 pub(crate) fn plugin(app: &mut App) {
+    app.register_type::<LayerId>();
     app.register_type::<TiledLayer>();
-    app.register_type::<TiledLayerId>();
     app.register_type::<TiledLayerParallax>();
     app.register_type::<TiledParallaxCamera>();
     app.add_systems(

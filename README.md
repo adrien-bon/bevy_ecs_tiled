@@ -23,6 +23,8 @@ This plugin aims to provide a simple and ergonomic workflow for integrating Tile
   Supports animated tiles, image layers, tile objects, and [Tiled worlds](https://doc.mapeditor.org/en/stable/manual/worlds/) for multi-map projects.
 - **Entity-Based Architecture:**
   Every Tiled item (layer, tile, object, etc.) is represented as a Bevy entity, organized in a clear hierarchy: layers are children of the map entity, tiles and objects are children of their respective layers. `Visibility` and `Transform` are automatically propagated.
+- **Dynamic Maps:**
+  Spawn, despawn or modify tiles, objects and images after a map has been loaded: their rendering and physics colliders are automatically updated.
 - **Flexible Map Lifecycle:**
   Control how maps are spawned and despawned. Use Bevy events and observers to customize scene setup or react when a map is loaded and ready.
 - **Automatic Physics Integration:**
@@ -152,16 +154,13 @@ fn spawn_map(
                 info!("Loaded map: {:?}", map);
 
                 // Additionally, we can access Tiled items using the TiledMapStorage
-                // component: we can retrieve Tiled items entity and access
+                // component: we can retrieve Tiled items entities and access
                 // their own components with another query (not shown here).
                 // This can be useful if you want for instance to create a resource
                 // based upon tiles or objects data but make it available only when
                 // the map is actually spawned.
-                for (id, entity) in storage.objects() {
-                    info!(
-                        "(map) Object ID {:?} was spawned as entity {:?}",
-                        id, entity
-                    );
+                for entity in storage.objects() {
+                    info!("(map) An object was spawned as entity {:?}", entity);
                 }
             }
         );

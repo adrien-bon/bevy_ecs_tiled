@@ -4,6 +4,10 @@
 //! schedules. These sets help organize and order the execution of systems related to Tiled map and
 //! world processing, including asset loading, physics initialization, animation, debugging, and
 //! chunk management.
+//!
+//! Rendering and physics components are derived from Tiled data components during the
+//! [`TiledPostUpdateSystems::SyncMapStorage`], [`TiledPostUpdateSystems::SyncRender`] and
+//! [`TiledPostUpdateSystems::SyncPhysics`] sets.
 
 use bevy::prelude::*;
 
@@ -18,8 +22,6 @@ pub enum TiledPreUpdateSystems {
     ProcessLoadedMaps,
     /// Initializes physics settings for Tiled maps and worlds.
     InitializePhysicsSettings,
-    /// Spawns physics colliders.
-    SpawnPhysicsColliders,
     /// Marker for the last system in the pre-update phase.
     Last,
 }
@@ -54,6 +56,12 @@ pub enum TiledPostUpdateSystems {
     HandleWorldChunking,
     /// Handles asset events for Tiled maps.
     HandleMapAssetEvents,
+    /// Keeps [`TiledMapStorage`](crate::prelude::TiledMapStorage) in sync with added or modified tiles.
+    SyncMapStorage,
+    /// Creates or updates rendering components (tilemaps, sprites, texts) from Tiled data components.
+    SyncRender,
+    /// Creates or updates physics colliders from Tiled data components.
+    SyncPhysics,
     /// Marker for the last system in the post-update phase.
     Last,
 }
@@ -66,7 +74,6 @@ pub(crate) fn plugin(app: &mut App) {
             TiledPreUpdateSystems::ProcessLoadedWorlds,
             TiledPreUpdateSystems::ProcessLoadedMaps,
             TiledPreUpdateSystems::InitializePhysicsSettings,
-            TiledPreUpdateSystems::SpawnPhysicsColliders,
             TiledPreUpdateSystems::Last,
         )
             .chain(),
@@ -91,8 +98,22 @@ pub(crate) fn plugin(app: &mut App) {
             TiledPostUpdateSystems::HandleWorldAssetEvents,
             TiledPostUpdateSystems::HandleWorldChunking,
             TiledPostUpdateSystems::HandleMapAssetEvents,
+            TiledPostUpdateSystems::SyncMapStorage,
+            TiledPostUpdateSystems::SyncRender,
+            TiledPostUpdateSystems::SyncPhysics,
             TiledPostUpdateSystems::Last,
         )
             .chain(),
+    );
+    // Rendering and physics components derived from Tiled data must be
+    // up to date before computing transforms and visibility
+    app.configure_sets(
+        PostUpdate,
+        (
+            TiledPostUpdateSystems::SyncRender,
+            TiledPostUpdateSystems::SyncPhysics,
+        )
+            .before(bevy::transform::TransformSystems::Propagate)
+            .before(bevy::camera::visibility::VisibilitySystems::VisibilityPropagate),
     );
 }

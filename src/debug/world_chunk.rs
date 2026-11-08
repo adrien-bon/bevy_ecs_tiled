@@ -109,7 +109,7 @@ fn draw_maps_rect(
                 gizmos.rect_2d(
                     Isometry2d::from_translation(aabb.center()),
                     aabb.half_size() * 2.,
-                    config.maps_colors_list[idx as usize % config.maps_colors_list.len()],
+                    config.maps_colors_list[idx.0 as usize % config.maps_colors_list.len()],
                 );
             });
         }

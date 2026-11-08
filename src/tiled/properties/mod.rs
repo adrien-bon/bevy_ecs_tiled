@@ -10,7 +10,7 @@ pub(crate) mod export;
 pub(crate) mod load;
 pub(crate) mod types_json;
 
-use crate::prelude::*;
+use crate::{prelude::*, tiled::properties::command::PropertiesCommandExt};
 use bevy::prelude::*;
 use std::{
     fs::File,
@@ -40,6 +40,10 @@ pub fn export_types(
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_systems(
+        PostUpdate,
+        insert_tile_properties.in_set(TiledPostUpdateSystems::SyncMapStorage),
+    );
+    app.add_systems(
         Startup,
         |reg: Res<AppTypeRegistry>, config: Res<TiledPluginConfig>| {
             if let Some(path) = &config.tiled_types_export_file {
@@ -50,6 +54,63 @@ pub(crate) fn plugin(app: &mut App) {
             }
         },
     );
+}
+
+/// Insert tile properties on tiles and tile objects added after their map has been spawned.
+///
+/// Entities spawned along with the map already got their properties when spawning the map.
+///
+/// Object references in these properties cannot be resolved: they are set to [`Entity::PLACEHOLDER`].
+fn insert_tile_properties(
+    mut commands: Commands,
+    tiles_query: Query<
+        (Entity, &TiledTile, &TiledMapReference),
+        (
+            Added<TiledTile>,
+            Without<crate::tiled::map::spawn::TiledTilePropertiesInserted>,
+        ),
+    >,
+    objects_query: Query<
+        (Entity, &TiledObject, &TiledMapReference),
+        (
+            Added<TiledObject>,
+            Without<crate::tiled::map::spawn::TiledTilePropertiesInserted>,
+        ),
+    >,
+    maps_query: Query<&TiledMap>,
+    assets: Res<Assets<TiledMapAsset>>,
+) {
+    let tiles = tiles_query
+        .iter()
+        .map(|(entity, tile, map_ref)| (entity, map_ref, tile.tileset_id, tile.tile_id));
+    let tile_objects = objects_query
+        .iter()
+        .filter_map(|(entity, object, map_ref)| match object {
+            TiledObject::Tile {
+                tileset_id,
+                tile_id,
+                ..
+            } => Some((entity, map_ref, *tileset_id, *tile_id)),
+            _ => None,
+        });
+
+    for (entity, map_ref, tileset_id, tile_id) in tiles.chain(tile_objects) {
+        let Some(map_asset) = maps_query
+            .get(map_ref.0)
+            .ok()
+            .and_then(|m| assets.get(&m.0))
+        else {
+            continue;
+        };
+        // Object IDs are not known anymore once the map has been spawned
+        if let Some(properties) = map_asset.properties.tile_properties(
+            tileset_id,
+            tile_id,
+            &bevy::platform::collections::HashMap::default(),
+        ) {
+            commands.entity(entity).insert_properties(properties);
+        }
+    }
 }
 
 #[cfg(test)]

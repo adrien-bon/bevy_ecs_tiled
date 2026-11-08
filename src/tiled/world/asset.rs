@@ -54,7 +54,7 @@ impl TiledWorldAsset {
         anchor: &TilemapAnchor,
         mut f: F,
     ) where
-        F: FnMut(u32, Aabb2d),
+        F: FnMut(WorldMapId, Aabb2d),
     {
         let offset = self.offset(anchor);
         let offset = offset.extend(0.0);
@@ -67,7 +67,7 @@ impl TiledWorldAsset {
         }
         let world_isometry = Isometry2d::new(Vec2::new(t.x, t.y), Rot2::radians(angle));
         for (idx, (rect, _)) in self.maps.iter().enumerate() {
-            let idx = idx as u32;
+            let idx = WorldMapId(idx as u32);
             f(
                 idx,
                 Aabb2d::from_point_cloud(

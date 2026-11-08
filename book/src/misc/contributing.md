@@ -39,6 +39,43 @@ When submitting a pull request, please ensure that:
 
 If you're not sure about something, feel free to open a draft PR or ask questions in your issue or PR.
 
+## Manual Checks
+
+Some behaviors cannot be checked by automated tests and must be checked manually.
+
+### Tiles Rendering
+
+Tests run without a renderer: they check that tiles are added to or removed from their tilemap `TileStorage`, but not what is actually drawn.
+However, how a tile is drawn after it has been modified relies on `bevy_ecs_tilemap` internals: to make sure a moved or replaced tile is removed from its previous location, its `TilePos` component is removed then inserted again (see `sync_tiles` in `src/tiled/tile.rs`).
+
+When changing tiles rendering code, when upgrading `bevy_ecs_tilemap` and before each release, run the `map_dynamic` example with physics colliders displayed:
+
+```sh
+cargo run --example map_dynamic --features avian
+```
+
+Then check that rendering and colliders always match:
+
+- `[1]` (despawn a tile): the tile and its collider disappear.
+- `[2]` (change a tile): the tile texture changes and its collider follows the new tile shape.
+- `[3]` (move a tile), several times in a row: the tile is drawn at its new position only, along with its collider.
+  Also move a tile onto another one, then away: the tile it replaced is neither drawn nor has a collider anymore.
+- `[4]` (spawn a tile): the new tile is drawn, along with its collider.
+- `[5]` and `[6]` (despawn an object, change an object shape): the object collider follows.
+- `[R]` (reload the map): the map is back to its initial state.
+
+### Performance
+
+A performance test measures, on a large map, the time needed to spawn, modify and despawn its tiles and objects.
+It is ignored by default: run it in release mode to compare performance before and after a change.
+
+```sh
+cargo test --release --all-features --lib perf -- --ignored --nocapture
+```
+
+Each scenario is run several times (5 by default, or the value of the `PERF_RUNS` environment variable): the test prints the median and minimum duration of a frame, along with the time spent spawning map data and in the `SyncMapStorage`, `SyncRender` and `SyncPhysics` system sets.
+Measures can vary significantly from one run to another: when comparing two versions, alternate their runs rather than comparing runs made at different times.
+
 ---
 
 Thanks in advance for helping make `bevy_ecs_tiled` better!

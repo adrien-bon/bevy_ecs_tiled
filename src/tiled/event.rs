@@ -18,7 +18,7 @@ use bevy::{ecs::system::SystemParam, prelude::*};
 
 #[allow(unused_imports)]
 use crate::tiled::{
-    helpers::{layer_from_map, object_from_map, tile_from_map, tileset_from_map},
+    helpers::{tile_from_map, tileset_from_map},
     layer::TiledLayer,
     map::{TiledMap, asset::TiledMapAsset},
     object::TiledObject,
@@ -44,10 +44,10 @@ pub struct TiledEvent<E: Debug + Clone + Copy + Reflect> {
     world: Option<(Entity, AssetId<TiledWorldAsset>)>,
     /// [`AssetId`] of the [`TiledMapAsset`]
     map: Option<(Entity, AssetId<TiledMapAsset>)>,
-    layer: Option<(Entity, u32)>,
-    tilemap: Option<(Entity, u32)>,
-    tile: Option<(Entity, TilePos, tiled::TileId)>,
-    object: Option<(Entity, u32)>,
+    layer: Option<Entity>,
+    tilemap: Option<(Entity, TilesetId)>,
+    tile: Option<(Entity, TilePos, TilesetId, tiled::TileId)>,
+    object: Option<Entity>,
 }
 
 impl<E> TiledEvent<E>
@@ -100,19 +100,19 @@ where
     }
 
     /// Update the layer information for this [`TiledEvent`]
-    pub fn with_layer(&mut self, entity: Entity, layer_id: u32) -> &mut Self {
-        self.layer = Some((entity, layer_id));
+    pub fn with_layer(&mut self, entity: Entity) -> &mut Self {
+        self.layer = Some(entity);
         self
     }
 
     /// Update the object information for this [`TiledEvent`]
-    pub fn with_object(&mut self, entity: Entity, object_id: u32) -> &mut Self {
-        self.object = Some((entity, object_id));
+    pub fn with_object(&mut self, entity: Entity) -> &mut Self {
+        self.object = Some(entity);
         self
     }
 
     /// Update the tilemap information for this [`TiledEvent`]
-    pub fn with_tilemap(&mut self, entity: Entity, tileset_id: u32) -> &mut Self {
+    pub fn with_tilemap(&mut self, entity: Entity, tileset_id: TilesetId) -> &mut Self {
         self.tilemap = Some((entity, tileset_id));
         self
     }
@@ -122,9 +122,10 @@ where
         &mut self,
         entity: Entity,
         position: TilePos,
+        tileset_id: TilesetId,
         tile_id: tiled::TileId,
     ) -> &mut Self {
-        self.tile = Some((entity, position, tile_id));
+        self.tile = Some((entity, position, tileset_id, tile_id));
         self
     }
 
@@ -171,18 +172,7 @@ where
 
     /// Retrieve the [`TiledLayer`] [`Entity`] associated with this [`TiledEvent`]
     pub fn layer_entity(&self) -> Option<Entity> {
-        self.layer.map(|(e, _)| e)
-    }
-
-    /// Retrieve the layer ID associated with this [`TiledEvent`]
-    pub fn layer_id(&self) -> Option<u32> {
-        self.layer.map(|(_, id)| id)
-    }
-
-    /// Retrieve the [`tiled::Layer`] associated with this [`TiledEvent`]
-    pub fn layer(&self, assets: &'a Assets<TiledMapAsset>) -> Option<tiled::Layer<'a>> {
-        self.map(assets)
-            .and_then(|map| self.layer_id().and_then(|id| layer_from_map(map, id)))
+        self.layer
     }
 
     /// Retrieve the [`TiledTilemap`] [`Entity`] associated with this [`TiledEvent`]
@@ -190,8 +180,8 @@ where
         self.tilemap.map(|(e, _)| e)
     }
 
-    /// Retrieve the tilemap tileset ID associated with this [`TiledEvent`]
-    pub fn tilemap_tileset_id(&self) -> Option<u32> {
+    /// Retrieve the tilemap [`TilesetId`] associated with this [`TiledEvent`]
+    pub fn tilemap_tileset_id(&self) -> Option<TilesetId> {
         self.tilemap.map(|(_, id)| id)
     }
 
@@ -208,23 +198,28 @@ where
 
     /// Retrieve the [`TiledTile`] [`Entity`] associated with this [`TiledEvent`]
     pub fn tile_entity(&self) -> Option<Entity> {
-        self.tile.map(|(e, _, _)| e)
+        self.tile.map(|(e, _, _, _)| e)
     }
 
     /// Retrieve the [`TilePos`] associated with this [`TiledEvent`]
     pub fn tile_pos(&self) -> Option<TilePos> {
-        self.tile.map(|(_, pos, _)| pos)
+        self.tile.map(|(_, pos, _, _)| pos)
+    }
+
+    /// Retrieve the [`TilesetId`] of the tile associated with this [`TiledEvent`]
+    pub fn tile_tileset_id(&self) -> Option<TilesetId> {
+        self.tile.map(|(_, _, tileset_id, _)| tileset_id)
     }
 
     /// Retrieve the [`tiled::TileId`] associated with this [`TiledEvent`]
     pub fn tile_id(&self) -> Option<tiled::TileId> {
-        self.tile.map(|(_, _, id)| id)
+        self.tile.map(|(_, _, _, id)| id)
     }
 
     /// Retrieve the [`tiled::Tile`] associated with this [`TiledEvent`]
     pub fn tile(&self, assets: &'a Assets<TiledMapAsset>) -> Option<tiled::Tile<'a>> {
         self.map(assets).and_then(|map| {
-            self.tilemap_tileset_id().and_then(|tileset_id| {
+            self.tile_tileset_id().and_then(|tileset_id| {
                 self.tile_id()
                     .and_then(|id| tile_from_map(map, tileset_id, id))
             })
@@ -233,18 +228,7 @@ where
 
     /// Retrieve the [`TiledObject`] [`Entity`] associated with this [`TiledEvent`]
     pub fn object_entity(&self) -> Option<Entity> {
-        self.object.map(|(e, _)| e)
-    }
-
-    /// Retrieve the object ID associated with this [`TiledEvent`]
-    pub fn object_id(&self) -> Option<u32> {
-        self.object.map(|(_, id)| id)
-    }
-
-    /// Retrieve the [`tiled::Object`] associated with this [`TiledEvent`]
-    pub fn object(&self, assets: &'a Assets<TiledMapAsset>) -> Option<tiled::Object<'a>> {
-        self.map(assets)
-            .and_then(|map| self.object_id().and_then(|id| object_from_map(map, id)))
+        self.object
     }
 }
 
@@ -270,12 +254,19 @@ pub struct LayerCreated;
 
 /// A [`TiledTilemap`] was created
 ///
+/// Tilemaps are rendering entities: this event is sent when a tilemap is spawned during
+/// [`TiledPostUpdateSystems::SyncRender`], either when the map is loaded or later on, when a tile
+/// is added to a layer which does not have a tilemap for this tile tileset yet.
+/// It is only sent when the `render` feature is enabled.
+///
 /// See also [`TiledEvent`]
 #[derive(Clone, Copy, PartialEq, Debug, Reflect)]
 #[reflect(Clone, PartialEq)]
 pub struct TilemapCreated;
 
 /// A [`TiledTile`] with custom properties was created
+///
+/// Only sent when a map is loaded, not for tiles spawned afterwards.
 ///
 /// See also [`TiledEvent`]
 #[derive(Clone, Copy, PartialEq, Debug, Reflect)]
@@ -298,8 +289,6 @@ pub(crate) struct TiledMessageWriters<'w> {
     pub map_created: MessageWriter<'w, TiledEvent<MapCreated>>,
     /// Layer events writer
     pub layer_created: MessageWriter<'w, TiledEvent<LayerCreated>>,
-    /// Tilemap events writer
-    pub tilemap_created: MessageWriter<'w, TiledEvent<TilemapCreated>>,
     /// Tile events writer
     pub tile_created: MessageWriter<'w, TiledEvent<TileCreated>>,
     /// Object events writer
@@ -360,16 +349,19 @@ mod tests {
         let entity = app.world_mut().spawn_empty().id();
         let event = TiledEvent::new(entity, LayerCreated)
             .with_map(entity, handle.id())
-            .with_layer(entity, 1)
+            .with_layer(entity)
             .to_owned();
 
         // No system involved: assets are borrowed directly from the World
         let assets = app.world().resource::<Assets<TiledMapAsset>>();
-        assert!(event.map(assets).is_some());
         assert_eq!(
-            event.layer(assets).map(|layer| layer.name.clone()),
+            event
+                .map(assets)
+                .and_then(|map| map.layers().next())
+                .map(|layer| layer.name.clone()),
             Some("ground".to_string())
         );
-        assert!(event.object(assets).is_none());
+        assert_eq!(event.layer_entity(), Some(entity));
+        assert!(event.object_entity().is_none());
     }
 }

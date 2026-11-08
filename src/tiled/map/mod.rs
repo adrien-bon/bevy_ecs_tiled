@@ -28,6 +28,10 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 /// - [`TilemapAnchor`]: Controls the anchor point of the map.
 /// - [`Visibility`] and [`Transform`]: Standard Bevy components.
 ///
+/// Note that modifying the [`TiledMap`], [`TiledMapLayerZOffset`], [`TilemapRenderSettings`] or [`TilemapAnchor`]
+/// components of a map entity respawns the whole map from its asset: all the modifications made to its layers,
+/// tiles or objects since it has been spawned are lost.
+///
 /// Example:
 /// ```rust,no_run
 /// use bevy::prelude::*;
@@ -105,8 +109,12 @@ impl Default for TiledMapImageRepeatMargin {
 /// Component that stores a reference to the parent Tiled map entity for a given Tiled item.
 ///
 /// This component is automatically attached to all entities that are part of a Tiled map hierarchy,
-/// such as layers [`TiledLayer`], tilemaps [`TiledTilemap`], objects [`TiledObject`], and images [`TiledImage`].
+/// such as layers [`TiledLayer`], tilemaps [`TiledTilemap`], tiles [`TiledTile`], objects [`TiledObject`],
+/// and images [`TiledImage`].
 /// It allows systems and queries to easily retrieve the root map entity associated with any Tiled sub-entity.
+///
+/// When spawning a [`TiledTile`] or a [`TiledObject`] yourself, you do not need to insert it: it is
+/// automatically inserted from the parent [`TiledLayer`] of the tile or object during [`TiledPostUpdateSystems::First`].
 #[derive(Component, Reflect, Copy, Clone, Debug, Deref)]
 #[reflect(Component, Debug)]
 pub struct TiledMapReference(pub Entity);
@@ -117,6 +125,7 @@ pub struct TiledMapReference(pub Entity);
 /// This is useful for hot-reloading, resetting, or programmatically refreshing the map state at runtime.
 ///
 /// When present, the plugin will despawn all child entities and re-instantiate the map from its asset, preserving the top-level entity and its components.
+/// All the modifications made to the map layers, tiles or objects since it has been spawned are lost.
 ///
 /// Example:
 /// ```rust,no_run
@@ -149,7 +158,52 @@ pub(crate) fn plugin(app: &mut bevy::prelude::App) {
         handle_map_events.in_set(TiledPostUpdateSystems::HandleMapAssetEvents),
     );
 
+    app.add_systems(
+        PostUpdate,
+        insert_missing_map_references.in_set(TiledPostUpdateSystems::First),
+    );
+
     app.add_plugins((asset::plugin, loader::plugin, storage::plugin));
+}
+
+/// Retrieve the map of a tile or an object: either its own [`TiledMapReference`] or the one of its parent layer.
+pub(crate) fn resolve_map_reference(
+    map_ref: Option<&TiledMapReference>,
+    child_of: Option<&ChildOf>,
+    layers_query: &Query<&TiledMapReference, With<TiledLayer>>,
+) -> Option<TiledMapReference> {
+    map_ref
+        .copied()
+        .or_else(|| child_of.and_then(|c| layers_query.get(c.parent()).ok().copied()))
+}
+
+/// Insert a [`TiledMapReference`] on new tiles and objects which do not have one,
+/// using the one of their parent layer.
+fn insert_missing_map_references(
+    mut commands: Commands,
+    tiles_query: Query<(Entity, Option<&ChildOf>), (Added<TiledTile>, Without<TiledMapReference>)>,
+    objects_query: Query<
+        (Entity, Option<&ChildOf>),
+        (Added<TiledObject>, Without<TiledMapReference>),
+    >,
+    layers_query: Query<&TiledMapReference, With<TiledLayer>>,
+) {
+    // No need to warn for tiles: tiles which are not children of a tiles layer are reported when syncing them
+    for (entity, child_of) in tiles_query.iter() {
+        if let Some(map_ref) = resolve_map_reference(None, child_of, &layers_query) {
+            commands.entity(entity).insert(map_ref);
+        }
+    }
+    for (entity, child_of) in objects_query.iter() {
+        match resolve_map_reference(None, child_of, &layers_query) {
+            Some(map_ref) => {
+                commands.entity(entity).insert(map_ref);
+            }
+            None => warn!(
+                "Object {entity} is not a child of an objects layer: it will not have any visual or collider"
+            ),
+        }
+    }
 }
 
 /// System to spawn a map once it has been fully loaded.
@@ -176,7 +230,7 @@ fn process_loaded_maps(
     >,
     mut message_writers: TiledMessageWriters,
 ) {
-    for (map_entity, map_handle, mut tiled_storage, render_settings, anchor, layer_offset) in
+    for (map_entity, map_handle, mut tiled_storage, _render_settings, anchor, layer_offset) in
         map_query.iter_mut()
     {
         if let Some(load_state) = asset_server.get_recursive_dependency_load_state(&map_handle.0) {
@@ -220,7 +274,6 @@ fn process_loaded_maps(
                 map_handle.0.id(),
                 tiled_map,
                 &mut tiled_storage,
-                render_settings,
                 layer_offset,
                 &mut message_writers,
                 anchor,

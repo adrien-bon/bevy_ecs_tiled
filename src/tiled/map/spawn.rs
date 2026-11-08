@@ -3,19 +3,25 @@
 //! This module contains logic for instantiating Bevy entities and components from Tiled map data.
 //! It handles the creation of map layers, tiles, objects, and their associated components in the ECS world,
 //! enabling the rendering and interaction of Tiled maps within a Bevy application.
+//!
+//! Only Tiled data components are spawned here: rendering components (tilemaps, sprites, texts)
+//! and physics colliders are derived from these data later on, so they are also updated
+//! when these data are modified after the map has been spawned.
 
-use crate::{prelude::*, tiled::event::TiledMessageWriters};
-#[cfg(feature = "text")]
-use bevy::camera::primitives::Aabb;
+use crate::{
+    prelude::*,
+    tiled::{
+        event::TiledMessageWriters, map::storage::TiledTileStorageIndex,
+        tile::TiledTileIndexedPosition,
+    },
+};
+use bevy::prelude::*;
 
-use bevy::{prelude::*, sprite::Anchor};
-#[cfg(feature = "render")]
-use bevy_ecs_tilemap::prelude::{TilemapBundle, TilemapSpacing};
+#[cfg(feature = "user_properties")]
+use bevy::platform::collections::HashMap;
 
 #[cfg(feature = "user_properties")]
 use crate::tiled::properties::command::PropertiesCommandExt;
-
-use super::loader::tileset_label;
 
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn spawn_map(
@@ -24,15 +30,17 @@ pub(crate) fn spawn_map(
     map_asset_id: AssetId<TiledMapAsset>,
     tiled_map: &TiledMapAsset,
     map_storage: &mut TiledMapStorage,
-    render_settings: &TilemapRenderSettings,
     layer_z_offset: &TiledMapLayerZOffset,
     message_writers: &mut TiledMessageWriters,
     anchor: &TilemapAnchor,
 ) {
-    commands.entity(map_entity).insert(Name::new(format!(
-        "TiledMap: {}",
-        tiled_map.map.source.display()
-    )));
+    commands.entity(map_entity).insert((
+        Name::new(format!("TiledMap: {}", tiled_map.map.source.display())),
+        TiledProperties {
+            class: tiled_map.map.user_type.clone(),
+            properties: tiled_map.map.properties.clone(),
+        },
+    ));
 
     let map_event = TiledEvent::new(map_entity, MapCreated)
         .with_map(map_entity, map_asset_id)
@@ -43,7 +51,6 @@ pub(crate) fn spawn_map(
         tiled_map,
         map_entity,
         map_storage,
-        render_settings,
         anchor,
         layer_z_offset: layer_z_offset.0,
         // Order of the differents layers in the .TMX file is important:
@@ -52,8 +59,13 @@ pub(crate) fn spawn_map(
         acc_z_offset: tiled_map.map.layers().len() as f32 * (-layer_z_offset.0),
         layer_events: Vec::new(),
         object_events: Vec::new(),
-        tilemap_events: Vec::new(),
         tile_events: Vec::new(),
+        #[cfg(feature = "user_properties")]
+        tile_objects: Vec::new(),
+        #[cfg(feature = "user_properties")]
+        layer_entities: HashMap::default(),
+        #[cfg(feature = "user_properties")]
+        object_entities: HashMap::default(),
     };
     ctx.spawn_layers(tiled_map.map.layers(), map_entity, &map_event);
     #[cfg(feature = "user_properties")]
@@ -63,19 +75,15 @@ pub(crate) fn spawn_map(
         commands,
         layer_events,
         object_events,
-        tilemap_events,
         tile_events,
         ..
     } = ctx;
 
-    // Send events and trigger observers
+    // Send events and trigger observers, only once all the map entities have been spawned
     map_event.send(commands, &mut message_writers.map_created);
 
     for e in layer_events {
         e.send(commands, &mut message_writers.layer_created);
-    }
-    for e in tilemap_events {
-        e.send(commands, &mut message_writers.tilemap_created);
     }
     for e in tile_events {
         e.send(commands, &mut message_writers.tile_created);
@@ -91,8 +99,6 @@ struct SpawnContext<'a, 'w, 's> {
     tiled_map: &'a TiledMapAsset,
     map_entity: Entity,
     map_storage: &'a mut TiledMapStorage,
-    #[cfg_attr(not(feature = "render"), allow(dead_code))]
-    render_settings: &'a TilemapRenderSettings,
     anchor: &'a TilemapAnchor,
     /// Z offset between two consecutive layers
     layer_z_offset: f32,
@@ -101,9 +107,35 @@ struct SpawnContext<'a, 'w, 's> {
     /// Events sent once the whole map has been spawned
     layer_events: Vec<TiledEvent<LayerCreated>>,
     object_events: Vec<TiledEvent<ObjectCreated>>,
-    tilemap_events: Vec<TiledEvent<TilemapCreated>>,
     tile_events: Vec<TiledEvent<TileCreated>>,
+    /// Tile objects, along with their tileset ID and tile ID
+    #[cfg(feature = "user_properties")]
+    tile_objects: Vec<(Entity, TilesetId, tiled::TileId)>,
+    /// Spawned layers, by Tiled layer ID
+    #[cfg(feature = "user_properties")]
+    layer_entities: HashMap<LayerId, Entity>,
+    /// Spawned objects, by Tiled object ID: used to resolve object references in custom properties
+    #[cfg(feature = "user_properties")]
+    object_entities: HashMap<ObjectId, Entity>,
 }
+
+/// Marker for the entities whose tile properties have been inserted when spawning the map.
+///
+/// Tile properties of tiles and tile objects added after the map has been spawned are inserted
+/// in [`TiledPostUpdateSystems::SyncMapStorage`]: this marker prevents inserting them twice.
+///
+/// The marker is never removed: if the [`TiledTile`] (or [`TiledObject`]) component of such an entity
+/// is removed then inserted again, tile properties are not inserted again. This is not a supported
+/// use case: spawn a new entity instead.
+#[cfg(feature = "user_properties")]
+#[derive(Component, Copy, Clone, Debug)]
+pub(crate) struct TiledTilePropertiesInserted;
+
+/// [`TiledTilePropertiesInserted`] marker, or nothing if user properties are disabled
+#[cfg(feature = "user_properties")]
+const TILE_PROPERTIES_INSERTED: TiledTilePropertiesInserted = TiledTilePropertiesInserted;
+#[cfg(not(feature = "user_properties"))]
+const TILE_PROPERTIES_INSERTED: () = ();
 
 impl SpawnContext<'_, '_, '_> {
     /// Insert user properties on the map and all its spawned layers, objects and tiles
@@ -115,19 +147,27 @@ impl SpawnContext<'_, '_, '_> {
             .tiled_map
             .properties
             .clone()
-            .hydrate(&map_storage.objects);
+            .hydrate(&self.object_entities);
 
         commands
             .entity(self.map_entity)
             .insert_properties(props.map);
 
-        for (id, &entity) in map_storage.objects.iter() {
+        // Tile objects inherit the properties of their tile: insert them before
+        // the object own properties, so the latter take precedence
+        for &(entity, tileset_id, tile_id) in self.tile_objects.iter() {
+            if let Some(p) = props.tiles.get(&tileset_id).and_then(|t| t.get(&tile_id)) {
+                commands.entity(entity).insert_properties(p.clone());
+            }
+        }
+
+        for (id, &entity) in self.object_entities.iter() {
             commands
                 .entity(entity)
                 .insert_properties(props.objects.remove(id).unwrap());
         }
 
-        for (id, &entity) in map_storage.layers.iter() {
+        for (id, &entity) in self.layer_entities.iter() {
             commands
                 .entity(entity)
                 .insert_properties(props.layers.remove(id).unwrap());
@@ -150,7 +190,7 @@ impl SpawnContext<'_, '_, '_> {
         map_event: &TiledEvent<MapCreated>,
     ) {
         for layer in layers {
-            let layer_id = layer.id();
+            let layer_id = LayerId(layer.id());
             let layer_position = Vec2::new(layer.offset_x, -layer.offset_y);
 
             // Increment Z offset and compute layer transform offset
@@ -166,7 +206,10 @@ impl SpawnContext<'_, '_, '_> {
                     ChildOf(parent_entity),
                     TiledMapReference(self.map_entity),
                     TiledName(layer.name.clone()),
-                    TiledLayerId(layer.id()),
+                    TiledProperties {
+                        class: layer.user_type.clone(),
+                        properties: layer.properties.clone(),
+                    },
                     // Apply layer Transform using both layer base Transform and Tiled offset
                     layer_transform,
                     // Determine layer default visibility
@@ -188,7 +231,7 @@ impl SpawnContext<'_, '_, '_> {
 
             let layer_event = map_event
                 .transmute(Some(layer_entity), LayerCreated)
-                .with_layer(layer_entity, layer_id)
+                .with_layer(layer_entity)
                 .to_owned();
 
             match layer.layer_type() {
@@ -197,7 +240,7 @@ impl SpawnContext<'_, '_, '_> {
                         Name::new(format!("TiledMapTileLayer({})", layer.name)),
                         TiledLayer::Tiles,
                     ));
-                    self.spawn_tiles_layer(&layer_event, layer, tile_layer);
+                    self.spawn_tiles_layer(&layer_event, tile_layer);
                 }
                 tiled::LayerType::Objects(object_layer) => {
                     self.commands.entity(layer_entity).insert((
@@ -218,11 +261,12 @@ impl SpawnContext<'_, '_, '_> {
                         Name::new(format!("TiledMapImageLayer({})", layer.name)),
                         TiledLayer::Image,
                     ));
-                    self.spawn_image_layer(&layer_event, image_layer);
+                    self.spawn_image_layer(&layer_event, layer_id, image_layer);
                 }
             };
 
-            self.map_storage.layers.insert(layer.id(), layer_entity);
+            #[cfg(feature = "user_properties")]
+            self.layer_entities.insert(layer_id, layer_entity);
             self.layer_events.push(layer_event);
         }
     }
@@ -230,180 +274,58 @@ impl SpawnContext<'_, '_, '_> {
     fn spawn_tiles_layer(
         &mut self,
         layer_event: &TiledEvent<LayerCreated>,
-        layer: tiled::Layer,
         tiles_layer: tiled::TileLayer,
     ) {
         let tiled_map = self.tiled_map;
-        // The `TilemapBundle` requires that all tile images come exclusively from a single
-        // tiled texture or from a Vec of independent per-tile images. Furthermore, all of
-        // the per-tile images must be the same size. Since Tiled allows tiles of mixed
-        // tilesets on each layer and allows differently-sized tile images in each tileset,
-        // this means we need to load each combination of tileset and layer separately.
-        for (tileset_index, tileset) in tiled_map.map.tilesets().iter().enumerate() {
-            let tileset_index = tileset_index as u32;
-            let Some(label) = tiled_map.tilesets_label_by_index.get(&tileset_index) else {
-                log::warn!("Skipped layer with missing tileset (index: {tileset_index})");
-                continue;
-            };
-
-            let Some(t) = tiled_map.tilesets.get(label) else {
-                log::warn!("Skipped layer with missing tileset (label: {label:?})");
-                continue;
-            };
-
-            if !t.usable_for_tiles_layer {
-                continue;
-            }
-
-            let tilemap_entity = self
-                .commands
-                .spawn((
-                    Name::new(format!("TiledTilemap({}, {})", layer.name, tileset.name)),
-                    TiledMapReference(layer_event.map_entity().unwrap()),
-                    TiledTilemap,
-                    TiledTilesetId(tileset_index),
-                    TiledName(tileset.name.clone()),
-                    ChildOf(layer_event.origin),
-                ))
-                .id();
-
-            let tilemap_event = layer_event
-                .transmute(Some(tilemap_entity), TilemapCreated)
-                .with_tilemap(tilemap_entity, tileset_index)
-                .to_owned();
-            self.tilemap_events.push(tilemap_event);
-
-            let _tile_storage = self.spawn_tiles(
-                &tilemap_event,
-                tilemap_entity,
-                &t.tilemap_texture,
-                tileset_index,
-                &tiles_layer,
-            );
-
-            #[cfg(feature = "render")]
-            {
-                let grid_size = grid_size_from_map(&tiled_map.map);
-                self.commands.entity(tilemap_entity).insert(TilemapBundle {
-                    grid_size,
-                    size: tiled_map.tilemap_size,
-                    storage: _tile_storage,
-                    texture: t.tilemap_texture.clone(),
-                    tile_size: TilemapTileSize {
-                        x: tileset.tile_width as f32,
-                        y: tileset.tile_height as f32,
-                    },
-                    spacing: TilemapSpacing {
-                        x: tileset.spacing as f32,
-                        y: tileset.spacing as f32,
-                    },
-                    transform: Transform::from_translation(
-                        crate::tiled::helpers::tilemap_offset(&tiled_map.map, tileset).extend(0.0),
-                    ),
-                    map_type: tilemap_type_from_map(&tiled_map.map),
-                    render_settings: *self.render_settings,
-                    anchor: *self.anchor,
-                    ..default()
-                });
-            }
-        }
-    }
-
-    fn spawn_tiles(
-        &mut self,
-        layer_event: &TiledEvent<TilemapCreated>,
-        tilemap_entity: Entity,
-        tilemap_texture: &TilemapTexture,
-        tileset_id: u32,
-        tiles_layer: &tiled::TileLayer,
-    ) -> TileStorage {
-        let tiled_map = self.tiled_map;
+        let map_entity = self.map_entity;
         let commands = &mut *self.commands;
-        let entity_map = &mut self.map_storage.tiles;
+        let map_storage = &mut *self.map_storage;
         let tile_events = &mut self.tile_events;
-        let tilemap_size = tiled_map.tilemap_size;
-        let mut tile_storage = TileStorage::empty(tilemap_size);
-        tiled_map.for_each_tile(
-        tiles_layer,
-        |layer_tile, layer_tile_data, tile_pos, _| {
-            let Some(tile) = layer_tile.get_tile() else {
-                return;
-            };
+        let layer_entity = layer_event.origin;
 
-            if tileset_id as usize != layer_tile.tileset_index() {
-                return;
-            }
-
-            #[cfg(not(feature = "atlas"))]
-            let Some(label) = tiled_map.tilesets_label_by_index.get(&tileset_id) else {
-                return;
-            };
-
-            let texture_index = match tilemap_texture {
-                TilemapTexture::Single(_) => layer_tile.id(),
-                #[cfg(not(feature = "atlas"))]
-                TilemapTexture::Vector(_) => *tiled_map
-                    .tilesets
-                    .get(label)
-                    .and_then(|t| t.tile_image_offsets.get(&layer_tile.id()))
-                    .expect(
-                        "The offset into the image vector for tilemap should have been saved during the initial load.",
-                    ),
-                #[cfg(not(feature = "atlas"))]
-                _ => unreachable!(),
-            };
-
+        // Only spawn tiles data: associated tilemaps, which hold the actual rendering
+        // components, are derived from these data in `TiledPostUpdateSystems::SyncRender`
+        tiled_map.for_each_tile(&tiles_layer, |layer_tile, layer_tile_data, tile_pos, _| {
+            let tileset_id = TilesetId(layer_tile.tileset_index() as u32);
             let tile_id = layer_tile.id();
+            let key = (tileset_id, tile_id);
+            let storage_index = map_storage.next_tile_index(key);
             let tile_entity = commands
                 .spawn((
                     Name::new(format!("TiledMapTile({},{})", tile_pos.x, tile_pos.y)),
-                    TiledTile,
-                    TiledTilesetId(tileset_id),
-                    TiledTileId(tile_id),
-                    TileBundle {
-                        position: tile_pos,
-                        tilemap_id: TilemapId(tilemap_entity),
-                        texture_index: TileTextureIndex(texture_index),
-                        flip: TileFlip {
-                            x: layer_tile_data.flip_h,
-                            y: layer_tile_data.flip_v,
-                            d: layer_tile_data.flip_d,
-                        },
-                        ..default()
+                    TiledTile::new(tileset_id, tile_id),
+                    tile_pos,
+                    TileFlip {
+                        x: layer_tile_data.flip_h,
+                        y: layer_tile_data.flip_v,
+                        d: layer_tile_data.flip_d,
                     },
-                    ChildOf(tilemap_entity),
+                    ChildOf(layer_entity),
+                    TiledMapReference(map_entity),
+                    TiledTileStorageIndex(Some((key, storage_index))),
+                    TiledTileIndexedPosition(Some(tile_pos)),
+                    TILE_PROPERTIES_INSERTED,
                 ))
                 .id();
 
-            // Handle animated tiles
-            if let Some(animated_tile) = get_animated_tile(&tile) {
-                commands.entity(tile_entity).insert(animated_tile);
-            }
-
             // Handle custom tiles (with user properties)
-            if !tile.properties.is_empty() {
-                let tile_event = layer_event.transmute(Some(tile_entity), TileCreated).with_tile(
-                    tile_entity,
-                    tile_pos,
-                    tile_id,
-                ).to_owned();
+            if layer_tile
+                .get_tile()
+                .is_some_and(|tile| !tile.properties.is_empty())
+            {
+                let tile_event = layer_event
+                    .transmute(Some(tile_entity), TileCreated)
+                    .with_tile(tile_entity, tile_pos, tileset_id, tile_id)
+                    .to_owned();
                 tile_events.push(tile_event);
             }
 
             // Update map storage with tile entity
-            let key = (tileset_id, tile_id);
-            entity_map
-                .entry(key)
-                .and_modify(|entities| {
-                    entities.push(tile_entity);
-                })
-                .or_insert(vec![tile_entity]);
-
-            // Add our tile to the bevy_ecs_tilemap::TileStorage
-            tile_storage.set(&tile_pos, tile_entity);
-        },
-    );
-        tile_storage
+            let index = map_storage.insert_tile(key, tile_entity);
+            debug_assert_eq!(index, storage_index);
+            // Index the tile position right away, so it does not need to be indexed in `TiledPostUpdateSystems::SyncMapStorage`
+            map_storage.insert_tile_position(tile_pos, tile_entity);
+        });
     }
 
     fn spawn_objects_layer(
@@ -414,10 +336,22 @@ impl SpawnContext<'_, '_, '_> {
         let tiled_map = self.tiled_map;
         let anchor = self.anchor;
         let commands = &mut *self.commands;
-        let entity_map = &mut self.map_storage.objects;
+        #[cfg(feature = "user_properties")]
+        let object_entities = &mut self.object_entities;
         let object_events = &mut self.object_events;
+        #[cfg(feature = "user_properties")]
+        let tile_objects = &mut self.tile_objects;
         for (index, object_data) in object_layer.objects().enumerate() {
-            let tiled_object = TiledObject::from_object_data(&object_data);
+            let tiled_object = TiledObject::from_object_data(tiled_map, &object_data);
+            #[cfg(feature = "user_properties")]
+            let object_tile = match tiled_object {
+                TiledObject::Tile {
+                    tileset_id,
+                    tile_id,
+                    ..
+                } => Some((tileset_id, tile_id)),
+                _ => None,
+            };
             let mut pos = tiled_map.object_relative_position(&object_data, anchor);
 
             // For isometric maps, we need to adjust the position of tile objects
@@ -425,7 +359,7 @@ impl SpawnContext<'_, '_, '_> {
             if matches!(
                 tilemap_type_from_map(&tiled_map.map),
                 TilemapType::Isometric(..)
-            ) && let TiledObject::Tile { width, height: _ } = tiled_object
+            ) && let TiledObject::Tile { width, .. } = tiled_object
             {
                 pos.x -= width / 2.;
             }
@@ -437,101 +371,38 @@ impl SpawnContext<'_, '_, '_> {
                     ))),
             );
 
-            let object_kind = match tiled_object {
-                TiledObject::Point => "Point",
-                TiledObject::Tile { .. } => "Tile",
-                TiledObject::Text { .. } => "Text",
-                TiledObject::Rectangle { .. } => "Rectangle",
-                TiledObject::Ellipse { .. } => "Ellipse",
-                TiledObject::Polygon { .. } => "Polygon",
-                TiledObject::Polyline { .. } => "Polyline",
-                TiledObject::Capsule { .. } => "Capsule",
-            };
-
+            // Only spawn object data: its visual representation (if any) is derived
+            // from the TiledObject component in `TiledPostUpdateSystems::SyncRender`
             let object_entity = commands
                 .spawn((
-                    Name::new(format!("{object_kind}({})", object_data.name)),
+                    Name::new(format!("{}({})", tiled_object.kind(), object_data.name)),
                     ChildOf(layer_event.origin),
-                    TiledMapReference(layer_event.map_entity().unwrap()),
-                    TiledObjectId(object_data.id()),
-                    tiled_object.clone(),
+                    TiledMapReference(self.map_entity),
+                    tiled_object,
                     TiledName(object_data.name.clone()),
+                    TiledProperties {
+                        class: object_data.user_type.clone(),
+                        properties: object_data.properties.clone(),
+                    },
                     transform,
                     match &object_data.visible {
                         true => Visibility::Inherited,
                         false => Visibility::Hidden,
                     },
+                    TILE_PROPERTIES_INSERTED,
                 ))
                 .id();
 
-            #[cfg(feature = "text")]
-            if let TiledObject::Text {
-                width,
-                height,
-                text,
-                offset,
-                font_size,
-            } = tiled_object
-            {
-                commands.spawn((
-                    ChildOf(object_entity),
-                    Name::new("TiledObjectTextBox"),
-                    TiledObjectTextBox,
-                    Aabb::from_min_max(Vec3::ZERO, Vec3::new(width, height, 0.)),
-                    Transform::from_translation(Vec3::ZERO),
-                    Anchor::TOP_LEFT,
-                    Visibility::Inherited,
-                    children![(
-                        Name::new("TiledObjectText"),
-                        TiledObjectText,
-                        Text2d::new(text),
-                        TextFont {
-                            font_size: FontSize::Px(font_size as f32),
-                            ..default()
-                        },
-                        Anchor::from(offset),
-                        Transform::from_translation(Vec3::new(
-                            offset.x * width + width / 2.,
-                            offset.y * height - height / 2.,
-                            1.
-                        )),
-                        Visibility::Inherited,
-                    )],
-                ));
+            #[cfg(feature = "user_properties")]
+            if let Some((tileset_id, tile_id)) = object_tile {
+                tile_objects.push((object_entity, tileset_id, tile_id));
             }
 
-            // Handle objects containing tile data:
-            // we want to add a Sprite component to the object entity
-            // and possibly an animation component if the tile is animated.
-            match handle_tile_object(&object_data, tiled_map) {
-                (Some((sprite, offset_transform)), None) => {
-                    commands.spawn((
-                        Name::new("TiledObjectVisual"),
-                        TiledObjectVisualOf(object_entity),
-                        ChildOf(object_entity),
-                        sprite,
-                        Anchor::BOTTOM_LEFT,
-                        offset_transform,
-                    ));
-                }
-                (Some((sprite, offset_transform)), Some(animation)) => {
-                    commands.spawn((
-                        Name::new("TiledObjectVisual"),
-                        TiledObjectVisualOf(object_entity),
-                        ChildOf(object_entity),
-                        sprite,
-                        Anchor::BOTTOM_LEFT,
-                        offset_transform,
-                        animation,
-                    ));
-                }
-                _ => {}
-            };
-
-            entity_map.insert(object_data.id(), object_entity);
+            #[cfg(feature = "user_properties")]
+            object_entities.insert(ObjectId(object_data.id()), object_entity);
             let object_event = layer_event
                 .transmute(Some(object_entity), ObjectCreated)
-                .with_object(object_entity, object_data.id())
+                .with_object(object_entity)
                 .to_owned();
             object_events.push(object_event);
         }
@@ -540,190 +411,30 @@ impl SpawnContext<'_, '_, '_> {
     fn spawn_image_layer(
         &mut self,
         layer_event: &TiledEvent<LayerCreated>,
+        layer_id: LayerId,
         image_layer: tiled::ImageLayer,
     ) {
         let tiled_map = self.tiled_map;
-        let anchor = self.anchor;
-        if let Some(image) = &image_layer.image {
-            let Some(handle) = layer_event
-                .layer_id()
-                .and_then(|id| tiled_map.images.get(&id))
-            else {
-                return;
-            };
-
-            let image_size = Vec2::new(image.width as f32, image.height as f32);
-            let image_position = tiled_map.screen_origin(anchor);
-            self.commands.spawn((
-                Name::new(format!("Image({})", image.source.display())),
-                TiledImage {
-                    base_position: image_position,
-                    base_size: image_size,
-                },
-                ChildOf(layer_event.origin),
-                TiledMapReference(layer_event.map_entity().unwrap()),
-                Sprite {
-                    image: handle.clone(),
-                    custom_size: Some(image_size),
-                    image_mode: SpriteImageMode::Tiled {
-                        tile_x: image_layer.repeat_x,
-                        tile_y: image_layer.repeat_y,
-                        stretch_value: 1.,
-                    },
-                    ..default()
-                },
-                Anchor::TOP_LEFT,
-                Transform::from_translation(image_position.extend(0.)),
-            ));
-        }
-    }
-}
-
-fn handle_tile_object(
-    object: &tiled::Object,
-    tiled_map: &TiledMapAsset,
-) -> (Option<(Sprite, Transform)>, Option<TiledAnimation>) {
-    let Some(tile) = (*object).get_tile() else {
-        return (None, None);
-    };
-
-    // Assume tile objets always have a rectangular shape
-    let tiled::ObjectShape::Rect { width, height } = object.shape else {
-        return (None, None);
-    };
-
-    let label = match tile.tileset_location() {
-        tiled::TilesetLocation::Map(tileset_index) => {
-            let tileset_index = *tileset_index as u32;
-            let Some(label) = tiled_map.tilesets_label_by_index.get(&tileset_index) else {
-                log::warn!("Skipped object with missing tileset (index: {tileset_index})");
-                return (None, None);
-            };
-            label
-        }
-        tiled::TilesetLocation::Template(tileset) => {
-            let Some(label) = tileset_label(tileset) else {
-                log::warn!("Skipped object with missing template");
-                return (None, None);
-            };
-            &label.to_owned()
-        }
-    };
-
-    let Some(transform) = tile.get_tile().map(|t| {
-        let unscaled_tile_size = match &t.image {
-            Some(image) => {
-                // tile is in image collection
-                Vec2::new(image.width as f32, image.height as f32)
-            }
-            None => Vec2::new(
-                t.tileset().tile_width as f32,
-                t.tileset().tile_height as f32,
-            ),
+        let Some(image) = &image_layer.image else {
+            return;
         };
-        let scale = Vec2::new(width, height) / unscaled_tile_size;
-        Transform::from_xyz(
-            t.tileset().offset_x as f32 * scale.x,
-            -t.tileset().offset_y as f32 * scale.y,
-            0.0,
-        )
-    }) else {
-        return (None, None);
-    };
+        let Some(handle) = tiled_map.images.get(&layer_id) else {
+            return;
+        };
 
-    let Some(sprite) = tiled_map.tilesets.get(label).and_then(|t| {
-        match &t.tilemap_texture {
-            TilemapTexture::Single(single) => {
-                t.texture_atlas_layout_handle.as_ref().map(|handle| {
-                    Sprite {
-                        image: single.clone(),
-                        texture_atlas: Some(TextureAtlas {
-                            layout: handle.clone(),
-                            index: tile.id() as usize,
-                        }),
-                        flip_x: tile.flip_h,
-                        flip_y: tile.flip_v,
-                        custom_size: Some(Vec2::new(
-                            width,
-                            height
-                        )),
-                        ..default()
-                    }
-                })
+        // Only spawn image data: the associated Sprite is derived from
+        // the TiledImage component in `TiledPostUpdateSystems::SyncRender`
+        self.commands.spawn((
+            Name::new(format!("Image({})", image.source.display())),
+            TiledImage {
+                image: handle.clone(),
+                base_position: tiled_map.screen_origin(self.anchor),
+                base_size: Vec2::new(image.width as f32, image.height as f32),
+                repeat_x: image_layer.repeat_x,
+                repeat_y: image_layer.repeat_y,
             },
-            #[cfg(not(feature = "atlas"))]
-            TilemapTexture::Vector(vector) => {
-                let index = *t.tile_image_offsets.get(&tile.id())
-                    .expect("The offset into the image vector for template should have been saved during the initial load.");
-                vector.get(index as usize).map(|image| {
-                    Sprite {
-                        image: image.clone(),
-                        flip_x: tile.flip_h,
-                        flip_y: tile.flip_v,
-                        custom_size: Some(Vec2::new(
-                            width,
-                            height
-                        )),
-                        ..default()
-                    }
-                })
-            }
-            #[cfg(not(feature = "atlas"))]
-            _ => unreachable!(),
-        }
-    }) else {
-        return (None, None);
-    };
-
-    // Handle the case of an animated tile
-    let animation = tile.get_tile().and_then(|t| {
-        t.animation.as_ref().map(|frames| {
-            let frame_vec: Vec<(usize, f32)> = frames
-                .iter()
-                .map(|f| (f.tile_id as usize, f.duration as f32 / 1000.0))
-                .collect();
-            let first_duration = frame_vec.first().map(|(_, d)| *d).unwrap_or(0.1);
-            TiledAnimation {
-                frames: frame_vec,
-                current_frame: 0,
-                timer: Timer::from_seconds(first_duration, TimerMode::Once),
-            }
-        })
-    });
-
-    (Some((sprite, transform)), animation)
-}
-
-// Tile-layer animations go through bevy_ecs_tilemap's `AnimatedTile`, which requires
-// consecutive frame IDs and a uniform duration. Object-layer animations use `TiledAnimation`
-// instead, which stores per-frame (index, duration) pairs and has no such constraints.
-fn get_animated_tile(tile: &tiled::Tile) -> Option<AnimatedTile> {
-    let Some(animation_data) = &tile.animation else {
-        return None;
-    };
-    let mut previous_tile_id = None;
-    let first_tile = animation_data.iter().next()?;
-    let last_tile = animation_data.iter().last()?;
-
-    // Sanity checks: current limitations from bevy_ecs_tilemap
-    for frame in animation_data {
-        if frame.duration != first_tile.duration {
-            log::warn!("Animated tile with non constant frame duration is currently not supported");
-            return None;
-        }
-        if let Some(id) = previous_tile_id
-            && frame.tile_id != id + 1
-        {
-            log::warn!("Animated tile with non-aligned frame tiles is currently not supported");
-            return None;
-        }
-        previous_tile_id = Some(frame.tile_id);
+            ChildOf(layer_event.origin),
+            TiledMapReference(self.map_entity),
+        ));
     }
-
-    // duration is in ms and we want a 'frames per second' speed
-    Some(AnimatedTile {
-        start: first_tile.tile_id,
-        end: last_tile.tile_id + 1,
-        speed: 1000. / (first_tile.duration * (last_tile.tile_id - first_tile.tile_id + 1)) as f32,
-    })
 }
