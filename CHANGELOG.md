@@ -8,36 +8,35 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 
 ### Features
 
-- Maps can be modified after they have been loaded: tilemaps, objects visuals, image sprites and physics colliders are derived from tiles, objects and images entities and are automatically updated when these entities are spawned, despawned or modified (including when their `TiledObject` component is removed)
-- Add `map_dynamic` example
+- Maps can be modified after they have been loaded: tilemaps, objects visuals, image sprites and physics colliders are derived from tiles, objects and images entities, and are automatically updated when these entities are spawned, despawned or modified
+- Add `map_dynamic` example and a "Modify a map at runtime" book guide
+- Add `TiledProperties` component, holding the class and custom properties of the map, layers and objects as defined in Tiled, whether the `user_properties` feature is enabled or not
+- Add `TiledMapStorage::tiles_at()`, giving the tiles at a given position, whatever their layer
 - Add `TiledTilemapOf` / `TiledTilemaps` relationship between a tilemap and its layer
 - Add `TiledMapAsset::tileset()` and `TiledMapAsset::tile()`, which also handle tilesets only used by templates
-- Add `TiledObject::kind()`
-- Add `TiledEvent::tile_tileset_id()`
-- Add `TiledMapStorage::tiles_at()`, giving the tiles at a given position, whatever their layer
-- Add `TiledProperties` component, holding the class and custom properties of the map, layers and objects as defined in Tiled, whether the `user_properties` feature is enabled or not
+- Add `TiledObject::kind()` and `TiledEvent::tile_tileset_id()`
 - Add `SyncMapStorage`, `SyncRender` and `SyncPhysics` variants to `TiledPostUpdateSystems`
-- Colliders of tiles layers take tiles flips (including diagonal flip) into account and are updated when a `TileFlip` changes
-- A position of a tiles layer only holds a single tile: spawning or moving a tile onto another one of the same layer despawns the latter
-- Tiles outside of the map bounds are neither rendered nor used to compute physics colliders
-- Tiles and objects spawned without a `TiledMapReference` get the one of their parent layer
 - Tile objects inherit the custom properties of their tile, and tile properties are inserted on tiles and tile objects spawned after the map has been loaded
 
 ### Changed
 
-- Tiles are now direct children of their `TiledLayer::Tiles` entity instead of their `TiledTilemap`, and have a `TiledMapReference`
+- Tiles are direct children of their `TiledLayer::Tiles` entity instead of their `TiledTilemap`, and have a `TiledMapReference`
 - Tilemaps, objects visuals and image sprites are spawned during `TiledPostUpdateSystems::SyncRender` instead of when spawning the map; empty tilemaps are despawned
 - `TiledEvent<TilemapCreated>` is sent whenever a tilemap is spawned during `TiledPostUpdateSystems::SyncRender`, only with the `render` feature
-- Physics colliders are computed from ECS components and spawned during `TiledPostUpdateSystems::SyncPhysics`; `TiledPreUpdateSystems::SpawnPhysicsColliders` is removed
+- Physics colliders are computed from ECS components and spawned during `TiledPostUpdateSystems::SyncPhysics`, and spawned again when their source changes; `TiledPreUpdateSystems::SpawnPhysicsColliders` is removed
+- `TiledTile` holds its tileset ID and tile ID, and `TiledTilemap` holds its tileset ID: `TiledTilesetId` and `TiledTileId` components are removed
+- `TiledLayerId` and `TiledObjectId` components are removed. `TiledEvent::layer_id()`, `layer()`, `object_id()`, `object()` and `TiledMapStorage::layer_entity()`, `layer_id()`, `layer()`, `object_entity()`, `object_id()`, `object()`, `tile_id()`, `tile()` are removed
+- `TiledMapStorage::layers()` and `objects()` yield entities only, and `TiledMapStorage` is kept up to date when layers, objects or tiles are added, modified or removed
+- Tileset, layer and object IDs and world maps indexes use the dedicated `TilesetId`, `LayerId`, `ObjectId` and `WorldMapId` types instead of `u32`
+- `TiledEvent::with_tile()` takes the tile tileset ID, `with_layer()` and `with_object()` only take the entity; `TileCreated` events do not hold tilemap information anymore
 - `TiledObject::Tile` holds its tileset ID, tile ID and flip flags; `TiledObject::from_object_data()` takes the `TiledMapAsset` as first argument
-- `TiledImage` holds the image handle and repeat settings
+- `TiledImage` holds the image handle and repeat settings, and is not `Copy` anymore
 - `TiledObjectVisualOf` no longer requires a `Sprite` and is also used for text objects text box
-- `TiledEvent::with_tile()` takes the tile tileset ID
-- `TiledEvent<ColliderCreated>::tiles()` is removed: it did not reflect tiles modified after the map has been spawned
-- `TiledMapStorage` is kept up to date when layers, objects or tiles are added, modified or removed
-- `TiledTile` holds the tile tileset ID and tile ID, and `TiledTilemap` holds its tileset ID: `TiledTilesetId` and `TiledTileId` components are removed
-- `TiledLayerId` and `TiledObjectId` components are removed: `TiledMapStorage` lists layers and objects entities without their Tiled ID, and `TiledEvent` does not hold layer and object IDs anymore. `TiledEvent::layer_id()`, `layer()`, `object_id()`, `object()` and `TiledMapStorage::layer_entity()`, `layer_id()`, `layer()`, `object_entity()`, `object_id()`, `object()`, `tile_id()`, `tile()` are removed
-- Tileset IDs, Tiled layer and object IDs and world maps indexes use the dedicated `TilesetId`, `LayerId`, `ObjectId` and `WorldMapId` types instead of `u32`
+- `TiledEvent<ColliderCreated>::tiles()` is removed
+
+### Fixed
+
+- Colliders of tiles layers take tiles flips (including diagonal flip) into account
 
 ## v0.15.1
 
