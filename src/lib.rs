@@ -53,9 +53,10 @@ pub mod prelude {
         geometry::{multi_polygon_as_line_strings, multi_polygon_as_triangles, simplify_geometry},
         settings::TiledPhysicsSettings,
     };
+    #[cfg(feature = "render")]
+    pub use super::tiled::animation::TiledAnimation;
     pub use super::tiled::{
         TiledPlugin, TiledPluginConfig,
-        animation::TiledAnimation,
         event::{
             LayerCreated, MapCreated, ObjectCreated, TileCreated, TiledEvent, TilemapCreated,
             WorldCreated,

@@ -3,17 +3,30 @@
 //! This module defines Bevy components used to represent Tiled images within the ECS world.
 
 use crate::prelude::*;
-use bevy::{prelude::*, sprite::Anchor};
+use bevy::prelude::*;
+#[cfg(feature = "render")]
+use bevy::sprite::Anchor;
 
 /// [`Component`] holding the image of an image layer.
 ///
-/// The associated [`Sprite`] is derived from this component: it is automatically updated when
+/// The associated [`Transform`] is derived from this component: it is automatically updated when
 /// this component changes, during [`TiledPostUpdateSystems::SyncRender`].
+///
+/// With the `render` feature, it is also the case of the associated [`Sprite`], and the
+/// [`Transform`] of a repeated image is updated along its repeated axes to cover what the camera can see.
+///
+/// Without the `render` feature, the image is not loaded and this component has no image handle.
 #[derive(Component, Default, Reflect, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
-#[require(Visibility, Transform, Sprite)]
+#[cfg_attr(feature = "render", require(Visibility, Transform, Sprite))]
+#[cfg_attr(not(feature = "render"), require(Visibility, Transform))]
+// Not `Copy` with the `render` feature: code should not stop compiling when enabling it
+#[cfg_attr(not(feature = "render"), allow(missing_copy_implementations))]
 pub struct TiledImage {
     /// Image handle
+    ///
+    /// Only available with the `render` feature.
+    #[cfg(feature = "render")]
     pub image: Handle<Image>,
     /// Base position, relative to parent layer
     pub base_position: Vec2,
@@ -27,21 +40,44 @@ pub struct TiledImage {
 
 pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledImage>();
-    app.add_systems(
-        Update,
-        update_image_position_and_size.in_set(TiledUpdateSystems::UpdateTiledImagePositionAndSize),
-    );
-    // When the TiledImage changes, its Sprite is built again from scratch: compute repeated images
-    // position and size again right after, so the Sprite is not displayed with its base size for a frame
+    #[cfg(feature = "render")]
+    {
+        app.add_systems(
+            Update,
+            update_image_position_and_size
+                .in_set(TiledUpdateSystems::UpdateTiledImagePositionAndSize),
+        );
+        // When the TiledImage changes, its Sprite is built again from scratch: compute repeated images
+        // position and size again right after, so the Sprite is not displayed with its base size for a frame
+        app.add_systems(
+            PostUpdate,
+            (
+                sync_image_transform,
+                sync_image_sprite,
+                update_image_position_and_size,
+            )
+                .chain()
+                .in_set(TiledPostUpdateSystems::SyncRender),
+        );
+    }
+    #[cfg(not(feature = "render"))]
     app.add_systems(
         PostUpdate,
-        (sync_image_sprite, update_image_position_and_size)
-            .chain()
-            .in_set(TiledPostUpdateSystems::SyncRender),
+        sync_image_transform.in_set(TiledPostUpdateSystems::SyncRender),
     );
 }
 
+/// Update the [`Transform`] of new or modified [`TiledImage`]s
+fn sync_image_transform(
+    mut image_query: Query<(&TiledImage, &mut Transform), Changed<TiledImage>>,
+) {
+    for (image, mut transform) in image_query.iter_mut() {
+        *transform = Transform::from_translation(image.base_position.extend(0.));
+    }
+}
+
 /// Update the [`Sprite`] of new or modified [`TiledImage`]s
+#[cfg(feature = "render")]
 fn sync_image_sprite(
     mut commands: Commands,
     image_query: Query<(Entity, &TiledImage), Changed<TiledImage>>,
@@ -59,11 +95,11 @@ fn sync_image_sprite(
                 ..default()
             },
             Anchor::TOP_LEFT,
-            Transform::from_translation(image.base_position.extend(0.)),
         ));
     }
 }
 
+#[cfg(feature = "render")]
 fn update_image_position_and_size(
     mut image_query: Query<(&TiledImage, &ChildOf, &mut Transform, &mut Sprite), With<TiledImage>>,
     map_query: Query<&TiledMapImageRepeatMargin, With<TiledMap>>,

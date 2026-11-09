@@ -33,6 +33,9 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - `TiledImage` holds the image handle and repeat settings, and is not `Copy` anymore
 - `TiledObjectVisualOf` no longer requires a `Sprite` and is also used for text objects text box
 - `TiledEvent<ColliderCreated>::tiles()` is removed
+- Without the `render` feature, images and texture atlas layouts are not loaded anymore: `ImagePlugin` and `TextureAtlasPlugin` are no longer required to load a map, which can be done on a headless server
+- Without the `render` feature, nothing is displayed: objects do not have any visual (tile sprite or text), image layers do not have a `Sprite`, `TiledImage::image` and `TiledAnimation` do not exist
+- The `text` and `debug` features now enable the `render` feature
 
 ### Fixed
 

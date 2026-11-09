@@ -15,14 +15,16 @@ pub(crate) struct TiledMapTileset {
     ///
     /// A tileset can be used for tiles layer only if all the images it contains have the
     /// same dimensions (restriction from bevy_ecs_tilemap).
-    #[cfg_attr(not(feature = "render"), allow(dead_code))]
+    #[cfg(feature = "render")]
     pub(crate) usable_for_tiles_layer: bool,
     /// Tileset texture (ie. a single image or an images collection)
+    #[cfg(feature = "render")]
     pub(crate) tilemap_texture: TilemapTexture,
     /// The [`TextureAtlasLayout`] handle associated to each tileset, if any.
+    #[cfg(feature = "render")]
     pub(crate) texture_atlas_layout_handle: Option<Handle<TextureAtlasLayout>>,
     /// The offset into the tileset_images for each tile id within each tileset.
-    #[cfg(not(feature = "atlas"))]
+    #[cfg(all(feature = "render", not(feature = "atlas")))]
     pub(crate) tile_image_offsets: HashMap<tiled::TileId, u32>,
 }
 
@@ -73,6 +75,7 @@ pub struct TiledMapAsset {
     /// HashMap of the images used in the map
     ///
     /// Key is the [`LayerId`] of the image layer using this image
+    #[cfg(feature = "render")]
     pub(crate) images: HashMap<LayerId, Handle<Image>>,
     /// Map properties
     #[cfg(feature = "user_properties")]

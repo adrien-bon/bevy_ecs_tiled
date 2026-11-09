@@ -19,16 +19,19 @@ struct Received {
 /// [`TilemapPlugin`](bevy_ecs_tilemap::TilemapPlugin), which requires a renderer.
 fn test_app() -> App {
     let mut app = App::new();
-    app.add_plugins((
-        MinimalPlugins,
-        AssetPlugin::default(),
-        bevy::image::ImagePlugin::default(),
-        bevy::image::TextureAtlasPlugin,
-    ));
-    // Image loader is usually registered by the render plugin
-    app.register_asset_loader(bevy::image::ImageLoader::new(
-        bevy::image::CompressedImageFormats::empty(),
-    ));
+    app.add_plugins((MinimalPlugins, AssetPlugin::default()));
+    // Without the `render` feature, loading a map must not require any image related plugin
+    #[cfg(feature = "render")]
+    {
+        app.add_plugins((
+            bevy::image::ImagePlugin::default(),
+            bevy::image::TextureAtlasPlugin,
+        ));
+        // Image loader is usually registered by the render plugin
+        app.register_asset_loader(bevy::image::ImageLoader::new(
+            bevy::image::CompressedImageFormats::empty(),
+        ));
+    }
     app.insert_resource(TiledPluginConfig {
         tiled_types_export_file: None,
         tiled_types_filter: TiledFilter::None,
@@ -36,6 +39,7 @@ fn test_app() -> App {
     app.insert_resource(crate::tiled::cache::TiledResourceCache::new());
     app.add_plugins((
         crate::tiled::map::plugin,
+        #[cfg(feature = "render")]
         crate::tiled::animation::plugin,
         crate::tiled::cache::plugin,
         crate::tiled::event::plugin,
@@ -312,6 +316,7 @@ fn spawning_tiles_creates_tilemaps() {
 }
 
 #[test]
+#[cfg(feature = "render")]
 fn modifying_objects_updates_visuals() {
     let mut app = test_app();
     spawn_test_map(&mut app);
@@ -631,6 +636,7 @@ fn spawned_objects_inherit_map_reference() {
     assert_eq!(app.world().get::<TiledMapReference>(object).unwrap().0, map);
     let storage = app.world().get::<TiledMapStorage>(map).unwrap();
     assert_eq!(storage.objects().last(), Some(object));
+    #[cfg(feature = "render")]
     assert_eq!(
         app.world()
             .get::<TiledObjectVisuals>(object)
@@ -987,7 +993,149 @@ fn tiles_are_rendered_once_map_asset_is_available() {
     );
 }
 
+/// Image collection tilesets are skipped with the `atlas` feature, whether rendering or not
 #[test]
+fn image_collection_tilesets_only_depend_on_atlas_feature() {
+    let mut app = test_app();
+    let map = spawn_map(&mut app, "maps/orthogonal/finite.tmx");
+
+    let handle = app.world().get::<TiledMap>(map).unwrap().0.clone();
+    let assets = app.world().resource::<Assets<TiledMapAsset>>();
+    let asset = assets.get(&handle).unwrap();
+    assert_eq!(
+        asset.tileset(TilesetId(0)).is_some(),
+        cfg!(not(feature = "atlas"))
+    );
+}
+
+/// The position of an image does not depend on rendering, except along
+/// a repeated axis where it also depends on what the camera can see
+#[test]
+fn image_transform_follows_base_position() {
+    let mut app = test_app();
+    spawn_map(&mut app, "maps/orthogonal/finite.tmx");
+
+    let (image, transform) = app
+        .world_mut()
+        .query::<(&TiledImage, &Transform)>()
+        .single(app.world())
+        .unwrap();
+    assert!(!image.repeat_x);
+    assert_ne!(image.base_position.x, 0.);
+    assert_eq!(transform.translation.x, image.base_position.x);
+}
+
+/// Minimal set of plugins needed to load and spawn a map without the `render` feature
+#[test]
+#[cfg(not(feature = "render"))]
+fn tiled_plugin_only_requires_asset_plugin() {
+    let mut app = App::new();
+    app.add_plugins((
+        MinimalPlugins,
+        AssetPlugin::default(),
+        TiledPlugin(TiledPluginConfig {
+            tiled_types_export_file: None,
+            tiled_types_filter: TiledFilter::None,
+        }),
+    ));
+    let handle = app
+        .world()
+        .resource::<AssetServer>()
+        .load::<TiledMapAsset>("maps/orthogonal/finite.tmx");
+    let map = app.world_mut().spawn(TiledMap(handle)).id();
+
+    let deadline = Instant::now() + Duration::from_secs(10);
+    while app
+        .world()
+        .get::<TiledMapStorage>(map)
+        .is_none_or(|storage| storage.layers().count() == 0)
+    {
+        assert!(Instant::now() < deadline, "test map did not spawn in time");
+        app.update();
+        std::thread::sleep(Duration::from_millis(1));
+    }
+}
+
+#[test]
+#[cfg(not(feature = "render"))]
+fn text_objects_are_not_displayed_without_render() {
+    let mut app = test_app();
+    spawn_map(&mut app, "maps/orthogonal/text.tmx");
+
+    // Text data is still available...
+    let texts = app
+        .world_mut()
+        .query::<&TiledObject>()
+        .iter(app.world())
+        .filter_map(|object| match object {
+            TiledObject::Text { text, .. } => Some(text.clone()),
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    assert!(!texts.is_empty());
+    assert!(texts.iter().all(|text| text == "Hello World"));
+
+    // ...but nothing is displayed
+    assert_eq!(
+        app.world_mut()
+            .query_filtered::<(), Or<(
+                With<TiledObjectVisualOf>,
+                With<TiledObjectTextBox>,
+                With<TiledObjectText>
+            )>>()
+            .iter(app.world())
+            .count(),
+        0
+    );
+}
+
+#[test]
+#[cfg(not(feature = "render"))]
+fn map_is_spawned_without_image_assets() {
+    let mut app = test_app();
+    spawn_map(&mut app, "maps/orthogonal/finite.tmx");
+
+    assert!(!app.world().contains_resource::<Assets<Image>>());
+    assert!(
+        !app.world()
+            .contains_resource::<Assets<TextureAtlasLayout>>()
+    );
+
+    // Image data is still available, but nothing is rendered
+    let (image, transform) = app
+        .world_mut()
+        .query::<(&TiledImage, &Transform)>()
+        .single(app.world())
+        .unwrap();
+    assert!(image.base_size.x > 0. && image.base_size.y > 0.);
+    assert!(image.repeat_y);
+    assert_eq!(transform.translation, image.base_position.extend(0.));
+    assert_eq!(
+        app.world_mut()
+            .query_filtered::<(), With<Sprite>>()
+            .iter(app.world())
+            .count(),
+        0
+    );
+
+    // Tile objects are spawned without any visual
+    assert!(
+        app.world_mut()
+            .query::<&TiledObject>()
+            .iter(app.world())
+            .any(|object| matches!(object, TiledObject::Tile { .. }))
+    );
+    assert_eq!(
+        app.world_mut()
+            .query_filtered::<(), With<TiledObjectVisualOf>>()
+            .iter(app.world())
+            .count(),
+        0
+    );
+}
+
+#[test]
+#[cfg(feature = "render")]
 fn repeated_images_are_sized_on_first_frame() {
     let mut app = test_app();
     spawn_test_map(&mut app);

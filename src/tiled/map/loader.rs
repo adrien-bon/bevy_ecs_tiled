@@ -10,8 +10,10 @@ use crate::{
     prelude::*,
     tiled::{cache::TiledResourceCache, map::asset::TiledMapTileset, reader::BytesResourceReader},
 };
+#[cfg(feature = "render")]
+use bevy::asset::AssetPath;
 use bevy::{
-    asset::{AssetLoader, AssetPath, LoadContext, io::Reader},
+    asset::{AssetLoader, LoadContext, io::Reader},
     platform::collections::HashMap,
     prelude::*,
 };
@@ -57,7 +59,6 @@ pub enum TiledMapLoaderError {
 
 fn process_layers<'a>(
     layers: impl Iterator<Item = tiled::Layer<'a>>,
-    images: &mut HashMap<LayerId, Handle<Image>>,
     largest_tile_size: &mut TilemapTileSize,
     tilesets: &mut HashMap<TilesetId, TiledMapTileset>,
     tilesets_id_by_label: &mut HashMap<String, TilesetId>,
@@ -135,8 +136,30 @@ fn process_layers<'a>(
                     tilesets.insert(id, tiled_map_tileset);
                 }
             }
+            tiled::LayerType::Image(_) => {}
+            tiled::LayerType::Group(group_layer) => {
+                process_layers(
+                    group_layer.layers(),
+                    largest_tile_size,
+                    tilesets,
+                    tilesets_id_by_label,
+                    load_context,
+                );
+            }
+        }
+    }
+}
+
+/// Load image assets used in image layers
+#[cfg(feature = "render")]
+fn load_image_layers<'a>(
+    layers: impl Iterator<Item = tiled::Layer<'a>>,
+    images: &mut HashMap<LayerId, Handle<Image>>,
+    load_context: &mut LoadContext,
+) {
+    for layer in layers {
+        match layer.layer_type() {
             tiled::LayerType::Image(image_layer) => {
-                // Load image assets used in image layers
                 let Some(image) = &image_layer.image else {
                     continue;
                 };
@@ -147,15 +170,9 @@ fn process_layers<'a>(
                 images.insert(LayerId(layer.id()), handle);
             }
             tiled::LayerType::Group(group_layer) => {
-                process_layers(
-                    group_layer.layers(),
-                    images,
-                    largest_tile_size,
-                    tilesets,
-                    tilesets_id_by_label,
-                    load_context,
-                );
+                load_image_layers(group_layer.layers(), images, load_context);
             }
+            _ => {}
         }
     }
 }
@@ -219,18 +236,23 @@ impl AssetLoader for TiledMapLoader {
             tilesets.insert(TilesetId(tileset_index as u32), tiled_map_tileset);
         }
 
-        let mut images = HashMap::default();
         let mut largest_tile_size = TilemapTileSize::new(grid_size.x, grid_size.y);
 
         // Start processing from root layers
         process_layers(
             map.layers(),
-            &mut images,
             &mut largest_tile_size,
             &mut tilesets,
             &mut tilesets_id_by_label,
             load_context,
         );
+
+        #[cfg(feature = "render")]
+        let images = {
+            let mut images = HashMap::default();
+            load_image_layers(map.layers(), &mut images, load_context);
+            images
+        };
 
         let mut infinite = false;
 
@@ -376,6 +398,7 @@ impl AssetLoader for TiledMapLoader {
             bottomright_chunk: bottomright,
             tilesets,
             tilesets_id_by_label,
+            #[cfg(feature = "render")]
             images,
             #[cfg(feature = "user_properties")]
             properties,
@@ -390,7 +413,34 @@ impl AssetLoader for TiledMapLoader {
     }
 }
 
+/// Build a [`TiledMapTileset`] from a Tiled tileset, or `None` if this tileset is skipped.
+///
+/// Which tilesets are skipped must not depend on the `render` feature:
+/// it only controls whether their images are loaded.
+#[cfg_attr(not(feature = "render"), allow(unused_variables))]
 fn tileset_to_tiled_map_tileset(
+    tileset: Arc<tiled::Tileset>,
+    load_context: &mut LoadContext<'_>,
+    path: &str,
+) -> Option<TiledMapTileset> {
+    #[cfg(feature = "atlas")]
+    if tileset.image.is_none() {
+        warn!(
+            "Skipping image collection tileset '{}' which is incompatible with atlas feature",
+            tileset.name
+        );
+        return None;
+    }
+
+    #[cfg(feature = "render")]
+    return load_tileset_textures(tileset, load_context, path);
+
+    #[cfg(not(feature = "render"))]
+    Some(TiledMapTileset { tileset })
+}
+
+#[cfg(feature = "render")]
+fn load_tileset_textures(
     tileset: Arc<tiled::Tileset>,
     load_context: &mut LoadContext<'_>,
     path: &str,
@@ -403,12 +453,9 @@ fn tileset_to_tiled_map_tileset(
     let mut tile_image_offsets = HashMap::default();
     let (usable_for_tiles_layer, tilemap_texture) = match &tileset.image {
         None => {
+            // Already skipped by `tileset_to_tiled_map_tileset()`
             #[cfg(feature = "atlas")]
             {
-                warn!(
-                    "Skipping image collection tileset '{}' which is incompatible with atlas feature",
-                    tileset.name
-                );
                 return None;
             }
 

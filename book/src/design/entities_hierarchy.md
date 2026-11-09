@@ -125,6 +125,8 @@ A [`TiledObject::Tile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/til
 This child holds the `Sprite` of the tile and, if the tile is animated, a [`TiledAnimation`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/animation/struct.TiledAnimation.html).  
 From the object entity, you can reach it through the [`TiledObjectVisuals`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/struct.TiledObjectVisuals.html) relationship.
 
+Visual entities and `TiledAnimation` only exist with the `render` feature.
+
 ### Text objects
 
 A [`TiledObject::Text`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html#variant.Text) is rendered using two nested entities, if the `text` feature is enabled (it is by default):
@@ -153,7 +155,8 @@ See the [`map_text` example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/m
 
 An image layer has a single [`TiledImage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/image/struct.TiledImage.html) child.
 It holds the image handle, position, size and repeat settings, from which its `Sprite` is derived.  
-When the image is repeated along an axis, the sprite size is updated to cover what the camera can see.
+When the image is repeated along an axis, the sprite size is updated to cover what the camera can see.  
+Without the `render` feature, it has no image handle and no `Sprite`.
 
 ## Physics Colliders
 

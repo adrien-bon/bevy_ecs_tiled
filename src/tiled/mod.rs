@@ -3,6 +3,7 @@
 //! This module contains the main logic for loading, processing, and managing Tiled maps and worlds within Bevy.
 //! It organizes submodules for assets, components, systems, events and utilities related to Tiled support.
 
+#[cfg(feature = "render")]
 pub mod animation;
 pub mod event;
 pub mod filter;
@@ -95,6 +96,7 @@ impl Plugin for TiledPlugin {
         app.add_plugins((
             map::plugin,
             world::plugin,
+            #[cfg(feature = "render")]
             animation::plugin,
             cache::plugin,
             event::plugin,

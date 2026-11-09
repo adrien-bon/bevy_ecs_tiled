@@ -5,7 +5,9 @@
 use crate::prelude::{geo::Centroid, *};
 use crate::tiled::{helpers::iso_projection, map::loader::tileset_label};
 use ::tiled::{HorizontalAlignment, VerticalAlignment};
-use bevy::{prelude::*, sprite::Anchor};
+use bevy::prelude::*;
+#[cfg(feature = "render")]
+use bevy::sprite::Anchor;
 
 /// ID of an object, as defined in Tiled.
 ///
@@ -24,6 +26,8 @@ crate::tiled::helpers::impl_id!(ObjectId);
 ///
 /// Visual entities are derived from the [`TiledObject`] component: they are automatically despawned
 /// and spawned again when this component changes, during [`TiledPostUpdateSystems::SyncRender`].
+///
+/// Without the `render` feature, objects do not have any visual.
 #[derive(Component, Reflect, Copy, Clone, Debug, Deref)]
 #[reflect(Component, Debug)]
 #[require(Visibility, Transform)]
@@ -520,14 +524,18 @@ pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledObject>();
     app.register_type::<TiledObjectVisualOf>();
     app.register_type::<TiledObjectVisuals>();
-    app.add_systems(
-        PostUpdate,
-        sync_object_visuals.in_set(TiledPostUpdateSystems::SyncRender),
-    );
-    app.add_observer(on_object_removed);
+    #[cfg(feature = "render")]
+    {
+        app.add_systems(
+            PostUpdate,
+            sync_object_visuals.in_set(TiledPostUpdateSystems::SyncRender),
+        );
+        app.add_observer(on_object_removed);
+    }
 }
 
 /// Despawn the visual representation of an object when its [`TiledObject`] component is removed.
+#[cfg(feature = "render")]
 fn on_object_removed(
     removed: On<Remove<TiledObject>>,
     mut commands: Commands,
@@ -544,6 +552,7 @@ fn on_object_removed(
 }
 
 /// Spawn the visual representation of new or modified [`TiledObject`]s, removing the previous one.
+#[cfg(feature = "render")]
 fn sync_object_visuals(
     mut commands: Commands,
     objects_query: Query<
@@ -650,6 +659,7 @@ fn sync_object_visuals(
 }
 
 /// Build the [`Sprite`], offset [`Transform`] and eventual [`TiledAnimation`] of a [`TiledObject::Tile`].
+#[cfg(feature = "render")]
 fn tile_object_visual(
     map_asset: &TiledMapAsset,
     tileset_id: TilesetId,

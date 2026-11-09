@@ -408,6 +408,7 @@ impl SpawnContext<'_, '_, '_> {
         }
     }
 
+    #[cfg_attr(not(feature = "render"), allow(unused_variables))]
     fn spawn_image_layer(
         &mut self,
         layer_event: &TiledEvent<LayerCreated>,
@@ -418,6 +419,7 @@ impl SpawnContext<'_, '_, '_> {
         let Some(image) = &image_layer.image else {
             return;
         };
+        #[cfg(feature = "render")]
         let Some(handle) = tiled_map.images.get(&layer_id) else {
             return;
         };
@@ -427,6 +429,7 @@ impl SpawnContext<'_, '_, '_> {
         self.commands.spawn((
             Name::new(format!("Image({})", image.source.display())),
             TiledImage {
+                #[cfg(feature = "render")]
                 image: handle.clone(),
                 base_position: tiled_map.screen_origin(self.anchor),
                 base_size: Vec2::new(image.width as f32, image.height as f32),
