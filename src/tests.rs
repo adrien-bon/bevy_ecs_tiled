@@ -1170,6 +1170,7 @@ fn repeated_images_are_sized_on_first_frame() {
     assert_eq!(size.y, 16.);
 }
 
+#[cfg(feature = "render")]
 #[test]
 fn repeated_images_cover_camera_area_when_map_is_rotated() {
     let mut app = test_app();
