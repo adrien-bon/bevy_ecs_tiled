@@ -174,6 +174,8 @@ Moving an object (ie. modifying its `Transform`) does not need any update: its v
 An image layer has a single child holding a [`TiledImage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/image/struct.TiledImage.html) component: the image handle, its position, size and repeat settings.
 Its `Sprite` is derived from it: to change the image, modify the `TiledImage` component instead of the `Sprite`.
 
+Without the `render` feature, the image is not loaded: `TiledImage` has no image handle and there is no `Sprite`.
+
 ---
 
 ## Reacting to Changes

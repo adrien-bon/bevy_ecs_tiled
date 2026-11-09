@@ -97,6 +97,28 @@ Note that respawning a map, for instance when it is hot-reloaded, discards all t
 
 ---
 
+## Can I load a map on a headless server?
+
+Yes: disable the default features, in particular `render`. The `text` and `debug` features both enable it, so do not use them either.
+
+```toml
+[dependencies]
+bevy_ecs_tiled = { version = "0.16", default-features = false }
+```
+
+```rust,ignore
+App::new().add_plugins((
+    MinimalPlugins,
+    AssetPlugin::default(),
+    TiledPlugin::default(),
+));
+```
+
+Images and texture atlas layouts are not loaded and nothing is displayed: there are no tilemaps, sprites or texts.
+Maps, layers, tiles and objects are still spawned with their data, and you can use the `physics` feature to get their colliders.
+
+---
+
 ## How do I enable map hot-reload?
 
 Enable the Bevy `file_watcher` feature in your project.

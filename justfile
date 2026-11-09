@@ -16,7 +16,7 @@ export RUSTDOCFLAGS := "-Dwarnings -Zshare-generics=y -Zthreads=0 -C debuginfo=l
 
 check: clippy fmt build
 
-check-ci: check doc-test build-all test doc-build book-build
+check-ci: check doc-test build-all test test-no-render doc-build book-build
 
 check-all: check-ci check-all-features
 
@@ -33,6 +33,10 @@ fmt:
 
 test: build-tests
     cargo test {{ jobs_arg }} --workspace --all-features
+
+test-no-render:
+    cargo test {{ jobs_arg }} --workspace --no-default-features --lib
+    cargo test {{ jobs_arg }} --workspace --no-default-features --features atlas --lib
 
 #### Build jobs
 

@@ -24,14 +24,16 @@ gif = ["bevy/gif"]
 
 # Expose features of the bevy_ecs_tilemap crate.
 atlas = ["bevy_ecs_tilemap/atlas"]
+# Display the map. Without this feature nothing is displayed and no image is loaded,
+# so a map can be loaded on a headless server.
 render = ["bevy_ecs_tilemap/render"]
 serde = ["bevy_ecs_tilemap/serde"]
 
 # Text
-text = ["bevy/bevy_text", "bevy/bevy_sprite", "bevy/bevy_camera"]
+text = ["render", "bevy/bevy_text", "bevy/bevy_sprite", "bevy/bevy_camera"]
 
 # Debug
-debug = ["bevy/bevy_gizmos", "bevy/bevy_text"]
+debug = ["render", "bevy/bevy_gizmos", "bevy/bevy_text"]
 
 # Physics
 physics = []
