@@ -93,6 +93,11 @@ fn update_image_position_and_size(
             })
         });
 
+    // Nothing to cover without any camera
+    if visible_area.is_empty() {
+        return;
+    }
+
     for (image, child_of_image, mut transform, mut sprite) in image_query.iter_mut() {
         let (repeat_x, repeat_y) = (image.repeat_x, image.repeat_y);
 
@@ -111,18 +116,33 @@ fn update_image_position_and_size(
             continue;
         };
 
-        // Compute image absolute base position, using layer GlobalTransform
-        let base = image.base_position.extend(0.) + layer_transform.translation();
+        // Express the visible area in the layer local space, so the computation remains
+        // correct when the map (or any of its ancestors) is rotated or scaled
+        let world_to_layer = layer_transform.affine().inverse();
+        let local_area = [
+            visible_area.min,
+            Vec2::new(visible_area.min.x, visible_area.max.y),
+            Vec2::new(visible_area.max.x, visible_area.min.y),
+            visible_area.max,
+        ]
+        .into_iter()
+        .fold(Rect::EMPTY, |acc, corner| {
+            let local = world_to_layer.transform_point3(corner.extend(0.));
+            acc.union_point(local.truncate())
+        });
+
+        // Image base position, relative to its layer
+        let base = image.base_position;
 
         // X axis tiling
         let (x, width) = if repeat_x {
             let tile_w = image.base_size.x;
-            let min_x = visible_area.min.x;
-            let max_x = visible_area.max.x;
+            let min_x = local_area.min.x;
+            let max_x = local_area.max.x;
             let n = ((base.x - min_x) / tile_w).ceil().max(0.) + repeat_margin.0 as f32;
             (
                 base.x - n * tile_w,
-                (max_x - base.x).abs().max(visible_area.width())
+                (max_x - base.x).abs().max(local_area.width())
                     + (1. + 2. * repeat_margin.0 as f32) * tile_w,
             )
         } else {
@@ -132,12 +152,12 @@ fn update_image_position_and_size(
         // Y axis tiling
         let (y, height) = if repeat_y {
             let tile_h = image.base_size.y;
-            let min_y = visible_area.max.y;
-            let max_y = visible_area.min.y;
+            let min_y = local_area.max.y;
+            let max_y = local_area.min.y;
             let n = ((min_y - base.y) / tile_h).ceil().max(0.) + repeat_margin.0 as f32;
             (
                 base.y + n * tile_h,
-                (max_y - base.y).abs().max(visible_area.height())
+                (max_y - base.y).abs().max(local_area.height())
                     + (1. + 2. * repeat_margin.0 as f32) * tile_h,
             )
         } else {
@@ -145,11 +165,7 @@ fn update_image_position_and_size(
         };
 
         // Update Sprite relative Transform and size
-        transform.translation = Vec3::new(
-            x - layer_transform.translation().x,
-            y - layer_transform.translation().y,
-            0.,
-        );
+        transform.translation = Vec3::new(x, y, 0.);
         sprite.custom_size = Some(Vec2::new(width, height));
     }
 }

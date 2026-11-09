@@ -1022,6 +1022,51 @@ fn repeated_images_are_sized_on_first_frame() {
     assert_eq!(size.y, 16.);
 }
 
+#[test]
+fn repeated_images_cover_camera_area_when_map_is_rotated() {
+    let mut app = test_app();
+    app.add_plugins(bevy::transform::TransformPlugin);
+    let map = spawn_test_map(&mut app);
+    let layer = layer_by_name(&mut app, "objects");
+
+    // Rotate the map by a quarter turn: the image X axis is now the world Y axis
+    app.world_mut()
+        .entity_mut(map)
+        .insert(Transform::from_rotation(Quat::from_rotation_z(
+            core::f32::consts::FRAC_PI_2,
+        )));
+
+    // A camera seeing a 200 pixels wide and 2000 pixels high area
+    app.world_mut().spawn((
+        Camera2d,
+        Projection::Orthographic(OrthographicProjection {
+            area: Rect::new(-100., -1000., 100., 1000.),
+            ..OrthographicProjection::default_2d()
+        }),
+    ));
+
+    let image = app
+        .world_mut()
+        .spawn((
+            TiledImage {
+                base_size: Vec2::new(16., 16.),
+                repeat_x: true,
+                ..default()
+            },
+            ChildOf(layer),
+        ))
+        .id();
+    // Let the map rotation propagate to the layer GlobalTransform
+    app.update();
+    app.update();
+
+    // The repeated image covers the camera area height, not its width
+    let sprite = app.world().get::<Sprite>(image).unwrap();
+    let size = sprite.custom_size.unwrap();
+    assert!(size.x >= 2000., "repeated image width is {}", size.x);
+    assert_eq!(size.y, 16.);
+}
+
 /// Move a tile of the given map, then check that it moved in its tilemap and that its collider followed it
 #[cfg(any(feature = "render", feature = "physics"))]
 fn check_tile_move(path: &str) {
