@@ -29,6 +29,8 @@ mod tests;
 
 /// `bevy_ecs_tiled` public exports.
 pub mod prelude {
+    #[cfg(all(feature = "debug", feature = "world"))]
+    pub use super::debug::world_chunk::{TiledDebugWorldChunkConfig, TiledDebugWorldChunkPlugin};
     #[cfg(feature = "debug")]
     pub use super::debug::{
         TiledDebugPluginGroup,
@@ -36,7 +38,6 @@ pub mod prelude {
         map_aabb::{TiledDebugMapAabbConfig, TiledDebugMapAabbPlugin},
         objects::{TiledDebugObjectsConfig, TiledDebugObjectsPlugin},
         tiles::{TiledDebugTilesConfig, TiledDebugTilesPlugin},
-        world_chunk::{TiledDebugWorldChunkConfig, TiledDebugWorldChunkPlugin},
     };
     #[cfg(feature = "avian")]
     pub use super::physics::backend::avian::TiledPhysicsAvianBackend;
@@ -57,10 +58,7 @@ pub mod prelude {
     pub use super::tiled::animation::TiledAnimation;
     pub use super::tiled::{
         TiledPlugin, TiledPluginConfig,
-        event::{
-            LayerCreated, MapCreated, ObjectCreated, TileCreated, TiledEvent, TilemapCreated,
-            WorldCreated,
-        },
+        event::{LayerCreated, MapCreated, ObjectCreated, TileCreated, TiledEvent, TilemapCreated},
         filter::{TiledFilter, TiledName},
         helpers::{
             grid_size_from_map, layer_from_map, object_from_map, tile_from_map, tile_size,
@@ -80,6 +78,10 @@ pub mod prelude {
         properties_raw::TiledProperties,
         sets::{TiledPostUpdateSystems, TiledPreUpdateSystems, TiledUpdateSystems},
         tile::{TiledTile, TiledTilemap, TiledTilemapOf, TiledTilemaps, TilesetId},
+    };
+    #[cfg(feature = "world")]
+    pub use super::tiled::{
+        event::WorldCreated,
         world::{
             RespawnTiledWorld, TiledWorld,
             asset::TiledWorldAsset,

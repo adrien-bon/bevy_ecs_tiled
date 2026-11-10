@@ -17,6 +17,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Add `TiledObject::kind()` and `TiledEvent::tile_tileset_id()`
 - Add `SyncMapStorage`, `SyncRender` and `SyncPhysics` variants to `TiledPostUpdateSystems`
 - Tile objects inherit the custom properties of their tile, and tile properties are inserted on tiles and tile objects spawned after the map has been loaded
+- Add `world` feature, enabled by default: without it, Tiled worlds (`.world` files) support is not compiled
 
 ### Changed
 

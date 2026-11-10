@@ -15,6 +15,7 @@ pub mod object;
 pub mod properties_raw;
 pub mod sets;
 pub mod tile;
+#[cfg(feature = "world")]
 pub mod world;
 
 pub(crate) mod cache;
@@ -95,6 +96,7 @@ impl Plugin for TiledPlugin {
 
         app.add_plugins((
             map::plugin,
+            #[cfg(feature = "world")]
             world::plugin,
             #[cfg(feature = "render")]
             animation::plugin,

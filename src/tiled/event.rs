@@ -3,7 +3,7 @@
 //! This module defines a generic [`TiledEvent`] type that can be used to represent various
 //! events related to Tiled maps and worlds.
 //!
-//! It also defines specific events such as [`WorldCreated`] or [`MapCreated`] that are used
+//! It also defines specific events such as `WorldCreated` or [`MapCreated`] that are used
 //! to signal the creation of a Tiled world or map.
 //!
 //! The events in this module can be received using either Bevy's buffered events or entity observers.
@@ -16,6 +16,8 @@ use std::{
 use crate::prelude::*;
 use bevy::{ecs::system::SystemParam, prelude::*};
 
+#[cfg(feature = "world")]
+use crate::tiled::world::asset::TiledWorldAsset;
 #[allow(unused_imports)]
 use crate::tiled::{
     helpers::{tile_from_map, tileset_from_map},
@@ -23,7 +25,6 @@ use crate::tiled::{
     map::{TiledMap, asset::TiledMapAsset},
     object::TiledObject,
     tile::{TiledTile, TiledTilemap},
-    world::{TiledWorld, asset::TiledWorldAsset},
 };
 
 /// Wrapper around Tiled events
@@ -41,6 +42,7 @@ pub struct TiledEvent<E: Debug + Clone + Copy + Reflect> {
     pub event: E,
 
     /// [`AssetId`] of the [`TiledWorldAsset`]
+    #[cfg(feature = "world")]
     world: Option<(Entity, AssetId<TiledWorldAsset>)>,
     /// [`AssetId`] of the [`TiledMapAsset`]
     map: Option<(Entity, AssetId<TiledMapAsset>)>,
@@ -60,6 +62,7 @@ where
             entity: origin,
             origin,
             event,
+            #[cfg(feature = "world")]
             world: None,
             map: None,
             layer: None,
@@ -78,6 +81,7 @@ where
             entity: self.entity,
             origin: origin.unwrap_or(self.origin),
             event,
+            #[cfg(feature = "world")]
             world: self.world,
             map: self.map,
             layer: self.layer,
@@ -88,6 +92,7 @@ where
     }
 
     /// Update the world information for this [`TiledEvent`]
+    #[cfg(feature = "world")]
     pub fn with_world(&mut self, entity: Entity, asset_id: AssetId<TiledWorldAsset>) -> &mut Self {
         self.world = Some((entity, asset_id));
         self
@@ -141,16 +146,19 @@ where
     E: Debug + Clone + Copy + Reflect,
 {
     /// Retrieve the [`TiledWorld`] [`Entity`] associated with this [`TiledEvent`]
+    #[cfg(feature = "world")]
     pub fn world_entity(&self) -> Option<Entity> {
         self.world.map(|(e, _)| e)
     }
 
     /// Retrieve the [`TiledWorldAsset`] associated with this [`TiledEvent`]
+    #[cfg(feature = "world")]
     pub fn world_asset(&self, assets: &'a Assets<TiledWorldAsset>) -> Option<&'a TiledWorldAsset> {
         self.world.and_then(|(_, id)| assets.get(id))
     }
 
     /// Retrieve the [`tiled::World`] associated with this [`TiledEvent`]
+    #[cfg(feature = "world")]
     pub fn world(&self, assets: &'a Assets<TiledWorldAsset>) -> Option<&'a tiled::World> {
         self.world_asset(assets).map(|w| &w.world)
     }
@@ -232,8 +240,10 @@ where
     }
 }
 
+/// A [`TiledWorld`] was created
 ///
 /// See also [`TiledEvent`]
+#[cfg(feature = "world")]
 #[derive(Clone, Copy, PartialEq, Debug, Reflect)]
 #[reflect(Clone, PartialEq)]
 pub struct WorldCreated;
@@ -284,6 +294,7 @@ pub struct ObjectCreated;
 #[derive(SystemParam)]
 pub(crate) struct TiledMessageWriters<'w> {
     /// World events writer
+    #[cfg(feature = "world")]
     pub world_created: MessageWriter<'w, TiledEvent<WorldCreated>>,
     /// Map events writer
     pub map_created: MessageWriter<'w, TiledEvent<MapCreated>>,
@@ -302,6 +313,7 @@ impl fmt::Debug for TiledMessageWriters<'_> {
 }
 
 pub(crate) fn plugin(app: &mut App) {
+    #[cfg(feature = "world")]
     app.add_message::<TiledEvent<WorldCreated>>()
         .register_type::<TiledEvent<WorldCreated>>();
     app.add_message::<TiledEvent<MapCreated>>()

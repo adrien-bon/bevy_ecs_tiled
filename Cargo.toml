@@ -14,7 +14,7 @@ keywords = ["bevy", "tiled", "tilemap", "game", "2d"]
 exclude = ["assets/*", "res/*"]
 
 [features]
-default = ["render", "png", "text"]
+default = ["render", "png", "text", "world"]
 
 # Expose image formats from bevy
 png = ["bevy/png"]
@@ -28,6 +28,9 @@ atlas = ["bevy_ecs_tilemap/atlas"]
 # so a map can be loaded on a headless server.
 render = ["bevy_ecs_tilemap/render"]
 serde = ["bevy_ecs_tilemap/serde"]
+
+# Load and spawn Tiled worlds (`.world` files)
+world = ["tiled/world"]
 
 # Text
 text = ["render", "bevy/bevy_text", "bevy/bevy_sprite", "bevy/bevy_camera"]
@@ -50,7 +53,7 @@ user_properties = ["dep:serde", "dep:serde_json"]
 # Main dependencies
 bevy = { version = "0.20", default-features = false }
 bevy_ecs_tilemap = { version = "0.20", default-features = false }
-tiled = { version = "0.16", default-features = false, features = ["world"] }
+tiled = { version = "0.16", default-features = false }
 
 # Utilities
 log = "0.4"
@@ -164,7 +167,9 @@ required-features = ["user_properties"]
 
 [[example]]
 name = "world_basic"
+required-features = ["world"]
 
 [[example]]
 name = "world_chunking"
-required-features = ["debug"]
+required-features = ["debug", "world"]
+

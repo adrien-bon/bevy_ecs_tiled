@@ -8,6 +8,7 @@ pub mod axis;
 pub mod map_aabb;
 pub mod objects;
 pub mod tiles;
+#[cfg(feature = "world")]
 pub mod world_chunk;
 
 use bevy::app::{PluginGroup, PluginGroupBuilder};
@@ -27,10 +28,12 @@ pub struct TiledDebugPluginGroup;
 
 impl PluginGroup for TiledDebugPluginGroup {
     fn build(self) -> PluginGroupBuilder {
-        PluginGroupBuilder::start::<Self>()
+        let group = PluginGroupBuilder::start::<Self>()
             .add(objects::TiledDebugObjectsPlugin::default())
-            .add(tiles::TiledDebugTilesPlugin::default())
-            .add(world_chunk::TiledDebugWorldChunkPlugin::default())
+            .add(tiles::TiledDebugTilesPlugin::default());
+        #[cfg(feature = "world")]
+        let group = group.add(world_chunk::TiledDebugWorldChunkPlugin::default());
+        group
             .add(map_aabb::TiledDebugMapAabbPlugin::default())
             .add(axis::TiledDebugAxisPlugin)
     }

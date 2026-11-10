@@ -68,19 +68,22 @@ pub(crate) fn plugin<T: TiledPhysicsBackend>(app: &mut App) {
     app.register_type::<TiledPhysicsSettings<T>>();
     app.add_systems(
         PreUpdate,
-        (
-            initialize_settings_for_worlds::<T>,
-            initialize_settings_for_maps::<T>,
-        )
-            .chain()
-            .in_set(TiledPreUpdateSystems::InitializePhysicsSettings),
+        initialize_settings_for_maps::<T>.in_set(TiledPreUpdateSystems::InitializePhysicsSettings),
     );
     app.add_systems(
         PostUpdate,
         handle_settings_update::<T>.in_set(TiledPostUpdateSystems::HandlePhysicsSettingsUpdate),
     );
+    #[cfg(feature = "world")]
+    app.add_systems(
+        PreUpdate,
+        initialize_settings_for_worlds::<T>
+            .before(initialize_settings_for_maps::<T>)
+            .in_set(TiledPreUpdateSystems::InitializePhysicsSettings),
+    );
 }
 
+#[cfg(feature = "world")]
 fn initialize_settings_for_worlds<T: TiledPhysicsBackend>(
     mut commands: Commands,
     worlds_query: Query<Entity, (With<TiledWorld>, Without<TiledPhysicsSettings<T>>)>,
@@ -98,23 +101,30 @@ fn initialize_settings_for_maps<T: TiledPhysicsBackend>(
         (Entity, Option<&ChildOf>),
         (With<TiledMap>, Without<TiledPhysicsSettings<T>>),
     >,
-    worlds_query: Query<&TiledPhysicsSettings<T>, With<TiledWorld>>,
+    #[cfg(feature = "world")] worlds_query: Query<&TiledPhysicsSettings<T>, With<TiledWorld>>,
 ) {
-    for (map, child_of) in maps_query.iter() {
-        commands.entity(map).insert(
-            child_of
-                .and_then(|child_of| worlds_query.get(child_of.parent()).ok())
-                .cloned()
-                .unwrap_or_default(),
-        );
+    for (map, _child_of) in maps_query.iter() {
+        // A map belonging to a world inherits the world settings
+        #[cfg(feature = "world")]
+        let settings = _child_of
+            .and_then(|child_of| worlds_query.get(child_of.parent()).ok())
+            .cloned()
+            .unwrap_or_default();
+        #[cfg(not(feature = "world"))]
+        let settings = TiledPhysicsSettings::<T>::default();
+        commands.entity(map).insert(settings);
     }
 }
 
 fn handle_settings_update<T: TiledPhysicsBackend>(
     mut commands: Commands,
     maps_query: Query<(Entity, Ref<TiledPhysicsSettings<T>>), With<TiledMap>>,
-    worlds_query: Query<(Entity, Ref<TiledPhysicsSettings<T>>), With<TiledWorld>>,
+    #[cfg(feature = "world")] worlds_query: Query<
+        (Entity, Ref<TiledPhysicsSettings<T>>),
+        With<TiledWorld>,
+    >,
 ) {
+    #[cfg(feature = "world")]
     for (world, settings) in worlds_query.iter() {
         if settings.is_changed() && !settings.is_added() {
             commands.entity(world).insert(RespawnTiledWorld);

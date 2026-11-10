@@ -3,13 +3,17 @@ use bevy_ecs_tiled::prelude::*;
 
 const ROTATION_SPEED: f32 = 45.;
 
-#[allow(clippy::type_complexity)]
+#[cfg(feature = "world")]
+type MapOrWorld = Or<(With<TiledMap>, With<TiledWorld>)>;
+#[cfg(not(feature = "world"))]
+type MapOrWorld = With<TiledMap>;
+
 pub fn rotate(
     time: Res<Time>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut world_or_map_query: Query<
         (Option<&ChildOf>, Option<&TiledMap>, &mut Transform),
-        Or<(With<TiledMap>, With<TiledWorld>)>,
+        MapOrWorld,
     >,
 ) {
     for (parent, map_marker, mut transform) in world_or_map_query.iter_mut() {
