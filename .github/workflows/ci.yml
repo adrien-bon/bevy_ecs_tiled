@@ -45,6 +45,7 @@ jobs:
           # Maps must load without any image related plugin when `render` is disabled
           cargo test --workspace --no-default-features --lib
           cargo test --workspace --no-default-features --features atlas --lib
+          cargo test --workspace --no-default-features --features world --lib
 
   # Run clippy lints.
   clippy:
