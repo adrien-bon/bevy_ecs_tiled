@@ -173,3 +173,6 @@ required-features = ["world"]
 name = "world_chunking"
 required-features = ["debug", "world"]
 
+[[example]]
+name = "world_orientation"
+required-features = ["debug", "world"]

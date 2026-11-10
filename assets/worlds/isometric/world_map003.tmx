@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.0" orientation="isometric" tilewidth="232" tileheight="110" renderorder="right-down" width="8" height="6" infinite="0" nextlayerid="3" nextobjectid="1">
+ <tileset firstgid="1" source="../../tiles/kenney-sketch-desert.tsx"/>
+ <layer id="1" name="Ground" width="8" height="6">
+  <data encoding="csv">
+3,3,3,3,3,3,3,3,
+3,2,2,2,2,2,2,3,
+3,2,2,2,2,2,2,3,
+3,2,2,2,2,2,2,3,
+3,2,2,2,2,2,2,3,
+3,3,3,3,3,3,3,3
+</data>
+ </layer>
+ <layer id="2" name="Decoration" width="8" height="6">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,4,0,0,0,
+0,0,1,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0
+</data>
+ </layer>
+</map>

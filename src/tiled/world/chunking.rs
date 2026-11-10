@@ -41,6 +41,7 @@ fn handle_world_chunking(
     // a frame where no camera moved would be seen as "no map visible" and despawn every map.
     camera_query: Query<&Transform, With<Camera>>,
     worlds: Res<Assets<TiledWorldAsset>>,
+    maps: Res<Assets<TiledMapAsset>>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     mut world_query: Query<(
@@ -138,18 +139,24 @@ fn handle_world_chunking(
             let Some((rect, handle)) = tiled_world.maps.get(idx.0 as usize) else {
                 continue;
             };
+            // Force map anchor to TopLeft: everything is handled at world level.
+            // Depending on the map orientation and its tiles size, `TilemapAnchor::TopLeft`
+            // does not always put the top-left corner of the map, as Tiled sees it, at the
+            // map origin (for instance, isometric maps with tiles larger than the grid):
+            // compensate so the map exactly covers the rect defined in the `.world` file.
+            let anchor = TilemapAnchor::TopLeft;
+            let map_origin = maps
+                .get(handle)
+                .map(|map_asset| map_asset.screen_origin(&anchor))
+                .unwrap_or_default();
             let map_entity = commands
                 .spawn((
                     ChildOf(world_entity),
                     TiledMap(handle.clone()),
                     Transform::from_translation(
-                        offset.extend(0.0) + Vec3::new(rect.min.x, rect.max.y, 0.0),
+                        (offset + Vec2::new(rect.min.x, rect.max.y) - map_origin).extend(0.0),
                     ),
-                    // Force map anchor to TopLeft: everything is handled at
-                    // world level. This makes it so each map's
-                    // `Transform.translation` will have the same values for `x`
-                    // and `y` that Tiled uses in its FILE.world.
-                    TilemapAnchor::TopLeft,
+                    anchor,
                     *layer_offset,
                     *image_repeat_margin,
                     *render_settings,
@@ -167,7 +174,7 @@ fn handle_world_chunking(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::{Duration, Instant};
+    use crate::tiled::world::tests::load_world;
 
     fn chunking_app() -> App {
         let mut app = App::new();
@@ -183,27 +190,10 @@ mod tests {
         app
     }
 
-    fn wait_until_loaded(app: &mut App, handle: &Handle<TiledWorldAsset>) {
-        let deadline = Instant::now() + Duration::from_secs(10);
-        while !app
-            .world()
-            .resource::<AssetServer>()
-            .is_loaded_with_dependencies(handle)
-        {
-            assert!(Instant::now() < deadline, "test world did not load in time");
-            app.update();
-            std::thread::sleep(Duration::from_millis(1));
-        }
-    }
-
     #[test]
     fn static_camera_keeps_visible_maps_spawned() {
         let mut app = chunking_app();
-        let handle: Handle<TiledWorldAsset> = app
-            .world()
-            .resource::<AssetServer>()
-            .load("tests/chunking/two_maps.world");
-        wait_until_loaded(&mut app, &handle);
+        let handle = load_world(&mut app, "tests/chunking/two_maps.world");
 
         // Camera at origin only overlaps the first map (second one is 1000px away)
         app.world_mut()

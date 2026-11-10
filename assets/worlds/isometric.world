@@ -1,0 +1,34 @@
+{
+    "maps": [
+        {
+            "fileName": "isometric/world_map001.tmx",
+            "height": 770,
+            "width": 1624,
+            "x": 696,
+            "y": 0
+        },
+        {
+            "fileName": "isometric/world_map002.tmx",
+            "height": 770,
+            "width": 1624,
+            "x": 1624,
+            "y": 440
+        },
+        {
+            "fileName": "isometric/world_map003.tmx",
+            "height": 770,
+            "width": 1624,
+            "x": 0,
+            "y": 330
+        },
+        {
+            "fileName": "isometric/world_map004.tmx",
+            "height": 770,
+            "width": 1624,
+            "x": 928,
+            "y": 770
+        }
+    ],
+    "onlyShowAdjacentMaps": false,
+    "type": "world"
+}

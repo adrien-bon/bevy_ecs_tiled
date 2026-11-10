@@ -1,0 +1,34 @@
+{
+    "maps": [
+        {
+            "fileName": "hexagonal_flat_top/world_map001.tmx",
+            "height": 338,
+            "width": 375,
+            "x": 0,
+            "y": 0
+        },
+        {
+            "fileName": "hexagonal_flat_top/world_map002.tmx",
+            "height": 338,
+            "width": 375,
+            "x": 360,
+            "y": 0
+        },
+        {
+            "fileName": "hexagonal_flat_top/world_map003.tmx",
+            "height": 338,
+            "width": 375,
+            "x": 0,
+            "y": 312
+        },
+        {
+            "fileName": "hexagonal_flat_top/world_map004.tmx",
+            "height": 338,
+            "width": 375,
+            "x": 360,
+            "y": 312
+        }
+    ],
+    "onlyShowAdjacentMaps": false,
+    "type": "world"
+}
