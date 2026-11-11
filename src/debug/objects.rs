@@ -92,14 +92,8 @@ fn draw_debug_gizmos(
             let color = config.objects_colors_list[idx % config.objects_colors_list.len()];
             let origin = Vec2::new(transform.translation().x, transform.translation().y);
             gizmos.arrow_2d(origin + config.arrow_length, origin, color);
-            let positions = object
-                .line_string(
-                    transform,
-                    matches!(map_asset.map_type, TilemapType::Isometric(..)),
-                    &map_asset.tilemap_size,
-                    &map_asset.grid_size,
-                    map_asset.tiled_offset,
-                )
+            let positions = map_asset
+                .object_line_string(object, transform)
                 .map(|ls| ls.coords().map(|c| Vec2::new(c.x, c.y)).collect::<Vec<_>>());
             if let Some(pos) = positions {
                 gizmos.linestrip_2d(pos, color);

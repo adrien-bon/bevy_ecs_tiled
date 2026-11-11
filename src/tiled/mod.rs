@@ -41,8 +41,8 @@ use std::{env, path::PathBuf};
 ///
 /// App::new()
 ///     .add_plugins(TiledPlugin(TiledPluginConfig {
-///         tiled_types_export_file: Some(path),
-///         tiled_types_filter: TiledFilter::All,
+///         types_export_file: Some(path),
+///         types_filter: TiledFilter::All,
 ///     }));
 /// ```
 #[derive(Resource, Reflect, Clone, Debug)]
@@ -51,11 +51,11 @@ pub struct TiledPluginConfig {
     /// Path to the Tiled types export file.
     ///
     /// If [`None`], will not export Tiled types at startup.
-    pub tiled_types_export_file: Option<PathBuf>,
+    pub types_export_file: Option<PathBuf>,
     /// Tiled types filter
     ///
     /// Only types matching this filter will be exported at startup.
-    pub tiled_types_filter: TiledFilter,
+    pub types_filter: TiledFilter,
 }
 
 impl Default for TiledPluginConfig {
@@ -63,8 +63,8 @@ impl Default for TiledPluginConfig {
         let mut path = env::current_dir().unwrap_or_default();
         path.push("tiled_types_export.json");
         Self {
-            tiled_types_export_file: Some(path),
-            tiled_types_filter: TiledFilter::All,
+            types_export_file: Some(path),
+            types_filter: TiledFilter::All,
         }
     }
 }

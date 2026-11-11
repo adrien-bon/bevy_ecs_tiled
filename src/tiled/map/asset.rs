@@ -91,16 +91,30 @@ pub struct TiledMapAsset {
 impl TiledMapAsset {
     /// Retrieve the [`tiled::Tileset`] associated with this [`TilesetId`].
     ///
-    /// Contrary to [`tileset_from_map`], it also works for tilesets only referenced by templates.
+    /// It also works for tilesets only referenced by templates, which are not part of [`tiled::Map::tilesets`].
     pub fn tileset(&self, tileset_id: TilesetId) -> Option<&Arc<tiled::Tileset>> {
         self.tilesets.get(&tileset_id).map(|t| &t.tileset)
     }
 
     /// Retrieve the [`tiled::Tile`] associated with this [`TilesetId`] and [`tiled::TileId`].
     ///
-    /// Contrary to [`tile_from_map`], it also works for tilesets only referenced by templates.
+    /// It also works for tilesets only referenced by templates, which are not part of [`tiled::Map::tilesets`].
     pub fn tile(&self, tileset_id: TilesetId, tile_id: tiled::TileId) -> Option<tiled::Tile<'_>> {
         self.tileset(tileset_id).and_then(|t| t.get_tile(tile_id))
+    }
+
+    /// Retrieve the [`tiled::Layer`] associated with this [`LayerId`], whatever its type.
+    ///
+    /// Layers nested in group layers are found as well.
+    pub fn layer(&self, layer_id: LayerId) -> Option<tiled::Layer<'_>> {
+        crate::tiled::helpers::layer_from_map(&self.map, layer_id)
+    }
+
+    /// Retrieve the [`tiled::Object`] associated with this [`ObjectId`].
+    ///
+    /// All objects layers are searched, including the ones nested in group layers.
+    pub fn object(&self, object_id: ObjectId) -> Option<tiled::Object<'_>> {
+        crate::tiled::helpers::object_from_map(&self.map, object_id)
     }
 
     /// Position of Tiled "screen" origin, relative to the map entity.

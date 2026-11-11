@@ -33,8 +33,8 @@ pub(crate) fn test_app() -> App {
         ));
     }
     app.insert_resource(TiledPluginConfig {
-        tiled_types_export_file: None,
-        tiled_types_filter: TiledFilter::None,
+        types_export_file: None,
+        types_filter: TiledFilter::None,
     });
     app.add_plugins((
         crate::tiled::cache::plugin,
@@ -1024,8 +1024,8 @@ fn tiled_plugin_only_requires_asset_plugin() {
         MinimalPlugins,
         AssetPlugin::default(),
         TiledPlugin(TiledPluginConfig {
-            tiled_types_export_file: None,
-            tiled_types_filter: TiledFilter::None,
+            types_export_file: None,
+            types_filter: TiledFilter::None,
         }),
     ));
     let handle = app

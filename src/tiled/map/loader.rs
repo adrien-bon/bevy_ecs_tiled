@@ -209,10 +209,13 @@ impl AssetLoader for TiledMapLoader {
             loader.load_tmx_map(map_path)?
         };
 
-        let Some(map_type) = try_tilemap_type_from_map(&map) else {
+        let Some(map_type) = crate::tiled::helpers::tilemap_type_from_map(&map) else {
             return Err(TiledMapLoaderError::UnsupportedOrientation(map.orientation));
         };
-        let grid_size = grid_size_from_map(&map);
+        let grid_size = TilemapGridSize {
+            x: map.tile_width as f32,
+            y: map.tile_height as f32,
+        };
         let mut tilesets = HashMap::default();
         let mut tilesets_id_by_label = HashMap::default();
 

@@ -46,9 +46,9 @@ pub(crate) fn plugin(app: &mut App) {
     app.add_systems(
         Startup,
         |reg: Res<AppTypeRegistry>, config: Res<TiledPluginConfig>| {
-            if let Some(path) = &config.tiled_types_export_file {
+            if let Some(path) = &config.types_export_file {
                 info!("Export Tiled types to '{:?}'", &path);
-                if let Err(e) = export_types(&reg, path, &config.tiled_types_filter) {
+                if let Err(e) = export_types(&reg, path, &config.types_filter) {
                     error!("Failed to export Tiled types to '{:?}': {e}", &path);
                 }
             }

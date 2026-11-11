@@ -22,6 +22,9 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Add `TiledDebugGizmos` gizmo config group, used by all debug plugins, and `tiled_debug_gizmos_enabled` run condition: debug gizmos can be configured or hidden at runtime using `GizmoConfigStore`
 - Add `TiledDebugTogglePlugin`, part of `TiledDebugPluginGroup`, to toggle debug gizmos display using a keyboard key (none by default)
 - Add `TiledMapAsset::map_type` and `TiledMapAsset::grid_size` fields
+- Add `TiledMapAsset::layer()` and `TiledMapAsset::object()`
+- `TiledFilter` implements `FromIterator` for any iterator of names
+- `TiledLayer`, `TiledTile`, `TiledTilemap`, `TiledName` and `TiledObject` implement `PartialEq` (and `Eq` / `Hash` when possible)
 - Physics: add `TiledColliderStrategy` (`Polyline`, `Triangulation` or `LineStrip`), selecting how colliders are created from Tiled shapes. It is set for a whole map using `TiledPhysicsSettings::collider_strategy` and can be overridden for a given layer or object by inserting it as a component on this entity (or from Tiled, using a custom property)
 - Physics: colliders of tiles layers can be split in chunks, so only the chunks whose tiles are modified are computed again instead of the whole layer. The chunk size is set for a whole map using `TiledPhysicsSettings::tiles_chunk_size` (no chunk by default) and can be overridden for a given layer by inserting a `TiledColliderChunkSize` component on it. Each chunk colliders are held by a `TiledColliderChunk` entity
 - Add `TiledDebugColliderChunksPlugin`, part of `TiledDebugPluginGroup` when the `physics` feature is enabled, displaying the bounding box of physics collider chunks
@@ -50,8 +53,16 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Without the `render` feature, images and texture atlas layouts are not loaded anymore: `ImagePlugin` and `TextureAtlasPlugin` are no longer required to load a map, which can be done on a headless server
 - Without the `render` feature, nothing is displayed: objects do not have any visual (tile sprite or text), image layers do not have a `Sprite`, `TiledImage::image` and `TiledAnimation` do not exist
 - The `text` and `debug` features now enable the `render` feature
-- Repeated images position and size are only updated once per frame, during `TiledPostUpdateSystems::SyncRender`: `TiledUpdateSystems::UpdateTiledImagePositionAndSize` is not used anymore
+- Repeated images position and size are only updated once per frame, during `TiledPostUpdateSystems::SyncRender`
 - Tiles entities only have a `Name` component when the `debug` feature is enabled
+- Helper functions `tileset_from_map()`, `tile_from_map()`, `layer_from_map()`, `object_from_map()`, `tilemap_type_from_map()`, `try_tilemap_type_from_map()` and `grid_size_from_map()` are removed: use `TiledMapAsset::tileset()`, `tile()`, `layer()`, `object()`, `map_type` and `grid_size`
+- `TiledEvent::tilemap_tileset()` and `TiledEvent::tile()` also work for tilesets only used by object templates
+- `TiledEvent` builder functions (`with_map()`, `with_layer()`, ...) take and return the event by value, `TiledEvent::transmute()` is renamed to `with_event()`, and `TiledEvent` is no longer a `Component`
+- `TiledObject::center()`, `vertices()`, `line_string()` and `polygon()` are no longer public: use `TiledMapAsset::object_*()` functions
+- `TiledObject::Text::font_size` is a `f32`
+- `TiledPluginConfig` fields are renamed to `types_export_file` and `types_filter`
+- `simplify_geometry()` is removed
+- `TiledUpdateSystems::UpdateTiledImagePositionAndSize` is removed
 - Physics: modifying `TiledPhysicsSettings` no longer respawns the map (or world): only colliders are spawned again, so modifications made to the map at runtime are kept
 - Physics: colliders are computed much faster. Polygons of each kind of tile are only computed once per layer, and are merged using a single union operation instead of pairwise unions
 - Debug plugins draw their gizmos using the `TiledDebugGizmos` group instead of `DefaultGizmoConfigGroup`
@@ -63,7 +74,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Physics: a tiles layer or an object which does not produce any collider anymore (eg. all the tiles of the layer have been despawned) no longer keeps the collider previously inserted on its own entity by the Avian and Rapier backends
 - Physics: additional colliders of a tiles layer or an object (`LineStrip` strategy, or geometry simplification disabled) are despawned when colliders are spawned again, instead of piling up
 - World chunking: a map visible from several cameras is no longer spawned once per camera
-- `layer_from_map()` finds group layers
+- Group layers can be retrieved from their ID (`TiledMapAsset::layer()`)
 - Tilesets and templates cache is actually cleared when a map is hot-reloaded
 - Infinite maps whose tiles layers do not have any chunk no longer get an invalid size
 - `TiledAnimation` no longer drifts: time left when a frame ends is carried over to the next frame

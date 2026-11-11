@@ -56,8 +56,8 @@ crate::tiled::helpers::impl_id!(TilesetId);
 ///   if the tile does not have one.
 /// - rendering components derived from these data, which you should not modify since they are overwritten
 ///   when the tile changes: [`TilemapId`], [`TileTextureIndex`] and [`AnimatedTile`].
-#[derive(Component, Default, Reflect, Copy, Clone, Debug)]
-#[reflect(Component, Default, Debug)]
+#[derive(Component, Default, Reflect, Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[reflect(Component, Default, Debug, PartialEq, Hash)]
 #[require(
     TilePos,
     TilePosOld,
@@ -71,12 +71,11 @@ crate::tiled::helpers::impl_id!(TilesetId);
 pub struct TiledTile {
     /// [`TilesetId`] of the tile.
     ///
-    /// You can retrieve the corresponding [`tiled::Tileset`] using the [`tileset_from_map`] helper function.
+    /// You can retrieve the corresponding [`tiled::Tileset`] using [`TiledMapAsset::tileset`].
     pub tileset_id: TilesetId,
     /// [`tiled::TileId`] of the tile in its tileset.
     ///
-    /// You can retrieve the corresponding [`tiled::Tile`] using [`TiledMapAsset::tile`]
-    /// or the [`tile_from_map`] helper function.
+    /// You can retrieve the corresponding [`tiled::Tile`] using [`TiledMapAsset::tile`].
     pub tile_id: tiled::TileId,
 }
 
@@ -118,13 +117,13 @@ pub(crate) struct TiledTileIndexedPosition(pub(crate) Option<TilePos>);
 /// once they do not contain any tile anymore: you should not spawn them yourself.
 ///
 /// See [`TilemapBundle`] for more information on available [`Component`]s.
-#[derive(Component, Default, Reflect, Copy, Clone, Debug)]
-#[reflect(Component, Default, Debug)]
+#[derive(Component, Default, Reflect, Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[reflect(Component, Default, Debug, PartialEq, Hash)]
 #[require(Visibility, Transform, TiledName)]
 pub struct TiledTilemap {
     /// [`TilesetId`] of the tiles rendered by this tilemap.
     ///
-    /// You can retrieve the corresponding [`tiled::Tileset`] using the [`tileset_from_map`] helper function.
+    /// You can retrieve the corresponding [`tiled::Tileset`] using [`TiledMapAsset::tileset`].
     pub tileset_id: TilesetId,
 }
 
@@ -453,8 +452,7 @@ pub(crate) mod render {
                             let event = TiledEvent::new(tilemap_entity, TilemapCreated)
                                 .with_map(map_ref.0, tiled_map.0.id())
                                 .with_layer(layer_entity)
-                                .with_tilemap(tilemap_entity, tile.tileset_id)
-                                .to_owned();
+                                .with_tilemap(tilemap_entity, tile.tileset_id);
                             commands.entity(tilemap_entity).insert((
                                 Name::new(format!(
                                     "TiledTilemap({}, {})",
@@ -619,7 +617,7 @@ pub(crate) mod render {
                 y: tiled_tileset.spacing as f32,
             },
             transform: Transform::from_translation(
-                tilemap_offset(&map_asset.map, tiled_tileset).extend(0.0),
+                tilemap_offset(map_asset, tiled_tileset).extend(0.0),
             ),
             map_type: map_asset.map_type,
             render_settings: *render_settings,

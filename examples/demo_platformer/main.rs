@@ -73,7 +73,7 @@ fn main() {
     // Note: properties will still be loaded from the map
     #[cfg(feature = "wasm")]
     {
-        config.tiled_types_export_file = None;
+        config.types_export_file = None;
     }
 
     // Only export properties when WASM is disabled
@@ -83,10 +83,10 @@ fn main() {
         let mut path = std::env::current_dir().unwrap();
         path.push("exports");
         path.push("demo_platformer_types.json");
-        config.tiled_types_export_file = Some(path);
+        config.types_export_file = Some(path);
 
         // Custom filter to chose which properties should be exported
-        config.tiled_types_filter =
+        config.types_filter =
             TiledFilter::from(regex::RegexSet::new([r"^demo_platformer::.*"]).unwrap());
     }
 

@@ -49,8 +49,8 @@ pub struct TiledObjectTextBox;
 pub struct TiledObjectText;
 
 /// Marker [`Component`] for a Tiled map object.
-#[derive(Component, Default, Reflect, Clone, Debug)]
-#[reflect(Component, Default, Debug)]
+#[derive(Component, Default, Reflect, Clone, Debug, PartialEq)]
+#[reflect(Component, Default, Debug, PartialEq)]
 #[require(Visibility, Transform, TiledName)]
 pub enum TiledObject {
     /// A point shape.
@@ -117,7 +117,7 @@ pub enum TiledObject {
         /// the vertical and horizontal alignment of the text.
         offset: Vec2,
         /// the font size in pixels.
-        font_size: usize,
+        font_size: f32,
     },
     /// A capsule shape.
     Capsule {
@@ -289,7 +289,7 @@ impl TiledObject {
                         height,
                         text,
                         offset,
-                        font_size: pixel_size,
+                        font_size: pixel_size as f32,
                     }
                 }
                 tiled::ObjectShape::Capsule { width, height } => {
@@ -320,7 +320,7 @@ impl TiledObject {
     ///
     /// # Returns
     /// * `Option<geo::Coord<f32>>` - The computed center, or `None` if not applicable.
-    pub fn center(
+    pub(crate) fn center(
         &self,
         transform: &GlobalTransform,
         isometric_projection: bool,
@@ -353,7 +353,7 @@ impl TiledObject {
     ///
     /// # Returns
     /// * `Vec<geo::Coord<f32>>` - The transformed vertices.
-    pub fn vertices(
+    pub(crate) fn vertices(
         &self,
         transform: &GlobalTransform,
         isometric_projection: bool,
@@ -448,7 +448,7 @@ impl TiledObject {
     ///
     /// # Returns
     /// * `Option<geo::LineString<f32>>` - The resulting line string, or `None` if not applicable.
-    pub fn line_string(
+    pub(crate) fn line_string(
         &self,
         transform: &GlobalTransform,
         isometric_projection: bool,
@@ -493,7 +493,7 @@ impl TiledObject {
     ///
     /// # Returns
     /// * `Option<geo::Polygon<f32>>` - The resulting polygon, or `None` if not applicable.
-    pub fn polygon(
+    pub(crate) fn polygon(
         &self,
         transform: &GlobalTransform,
         isometric_projection: bool,
@@ -636,7 +636,7 @@ fn sync_object_visuals(
                         TiledObjectText,
                         Text2d::new(text),
                         TextFont {
-                            font_size: FontSize::Px(*font_size as f32),
+                            font_size: FontSize::Px(*font_size),
                             ..default()
                         },
                         Anchor::from(offset),

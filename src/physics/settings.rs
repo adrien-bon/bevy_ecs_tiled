@@ -38,10 +38,10 @@ pub struct TiledPhysicsSettings<T: TiledPhysicsBackend> {
     /// Colliders will be automatically added for all tiles collision objects whose name matches this filter.
     /// By default, we add colliders for all collision objects.
     pub tiles_objects_filter: TiledFilter,
-    /// Enables tree reduction (combining) of colliders.
+    /// Enables merging of colliders.
     ///
-    /// When `true`, complex collision shapes (e.g., multiple overlapping or connected polygons) are reduced
-    /// into simpler, combined shapes using the [`simplify_geometry`] algorithm. This improves physics performance
+    /// When `true`, complex collision shapes (e.g., multiple overlapping or connected polygons) are merged
+    /// into simpler, combined shapes using a boolean union. This improves physics performance
     /// by reducing the number of colliders and simplifying collision queries.
     ///
     /// When `false`, all collision shapes are kept as-is without simplification. This preserves exact geometry

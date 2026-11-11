@@ -9,8 +9,8 @@ use bevy::prelude::*;
 /// Component holding the name of a Tiled item as it appears in the Tiled editor.
 ///
 /// Apply for Layers, Tilesets and Objects.
-#[derive(Component, Reflect, Clone, Debug, Default)]
-#[reflect(Component, Debug, Default)]
+#[derive(Component, Reflect, Clone, Debug, Default, PartialEq, Eq, Hash)]
+#[reflect(Component, Debug, Default, PartialEq, Hash)]
 pub struct TiledName(pub String);
 
 impl TiledName {
@@ -68,6 +68,13 @@ impl From<Vec<&str>> for TiledFilter {
     }
 }
 
+impl<S: Into<String>> FromIterator<S> for TiledFilter {
+    /// Builds a [`TiledFilter::Names`] from an iterator of names.
+    fn from_iter<I: IntoIterator<Item = S>>(names: I) -> Self {
+        Self::Names(names.into_iter().map(Into::into).collect())
+    }
+}
+
 impl TiledFilter {
     /// Returns `true` if the provided name matches the filter.
     pub fn matches(&self, name: &str) -> bool {
@@ -112,6 +119,14 @@ mod tests {
         assert!(filter.matches(" Player "));
         assert!(filter.matches("enemy"));
         assert!(!filter.matches("npc"));
+    }
+
+    #[test]
+    fn names_filter_can_be_collected() {
+        let filter = ["Player", "enemy"].into_iter().collect::<TiledFilter>();
+        assert!(filter.matches("player"));
+        let filter = TiledFilter::from_iter(vec![String::from("npc")]);
+        assert!(filter.matches("NPC"));
     }
 
     #[test]

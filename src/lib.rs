@@ -58,7 +58,7 @@ pub mod prelude {
         },
         geometry::{
             TiledColliderShape, collider_shapes, multi_polygon_as_line_strings,
-            multi_polygon_as_triangles, simplify_geometry,
+            multi_polygon_as_triangles,
         },
         settings::TiledPhysicsSettings,
     };
@@ -68,10 +68,7 @@ pub mod prelude {
         TiledPlugin, TiledPluginConfig,
         event::{LayerCreated, MapCreated, ObjectCreated, TileCreated, TiledEvent, TilemapCreated},
         filter::{TiledFilter, TiledName},
-        helpers::{
-            grid_size_from_map, layer_from_map, object_from_map, tile_from_map, tile_size,
-            tilemap_type_from_map, tileset_from_map, try_tilemap_type_from_map,
-        },
+        helpers::tile_size,
         image::TiledImage,
         layer::{
             LayerId, TiledLayer, TiledLayerParallax, TiledParallaxCamera, TiledTileLayerStorage,

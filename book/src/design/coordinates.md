@@ -119,7 +119,7 @@ However, flipping the Y axis changes which rows (or columns) are "staggered", so
 | Y | Even | `RowOdd` |
 | Y | Odd | `RowEven` |
 
-This is handled by [`tilemap_type_from_map`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/helpers/fn.tilemap_type_from_map.html), which you can use if you need the `TilemapType` of a map.
+The resulting `TilemapType` of a map is available in [`TiledMapAsset::map_type`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html#structfield.map_type).
 
 ---
 

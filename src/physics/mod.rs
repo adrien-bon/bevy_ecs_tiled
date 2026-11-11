@@ -41,7 +41,7 @@ use std::marker::PhantomData;
 #[derive(Default, Copy, Clone, Debug)]
 pub struct TiledPhysicsPlugin<T: TiledPhysicsBackend>(std::marker::PhantomData<T>);
 
-/// When added to a Tiled entity, will prevent tree reduction (combining) of colliders.
+/// When added to a Tiled entity, will prevent merging of its colliders shapes.
 ///
 /// It is taken into account the next time the colliders of this entity are computed: adding or removing
 /// it does not spawn colliders again by itself. Insert it when the entity is spawned, for instance in an
@@ -404,8 +404,7 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
                 ColliderCreated::new(TiledColliderSource::TilesLayer, layer_entity),
             )
             .with_map(map_ref.0, tiled_map.0.id())
-            .with_layer(layer_entity)
-            .to_owned();
+            .with_layer(layer_entity);
             let entities = collider::spawn_colliders::<T>(
                 settings,
                 strategy.copied().unwrap_or(settings.collider_strategy),
@@ -518,8 +517,7 @@ fn update_objects_colliders<T: TiledPhysicsBackend>(
         )
         .with_map(map_ref.0, tiled_map.0.id())
         .with_layer(layer_entity)
-        .with_object(object_entity)
-        .to_owned();
+        .with_object(object_entity);
         collider::spawn_colliders::<T>(
             settings,
             // Object own strategy, then the one of its layer, then the one of the map

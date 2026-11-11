@@ -3,8 +3,6 @@
 //! This module provides a collection of utility functions used throughout the crate for tasks such as
 //! coordinate conversions, data extraction, and other operations related to Tiled maps and worlds.
 
-use std::sync::Arc;
-
 use crate::prelude::*;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::{HexCoordSystem, IsoCoordSystem};
@@ -33,10 +31,8 @@ macro_rules! impl_id {
 }
 pub(crate) use impl_id;
 
-/// Retrieves a [`tiled::Layer`] from a [`tiled::Map`] given a [`LayerId`].
-///
-/// Returns `Some(tiled::Layer)` if the layer exists, or `None` if it does not
-pub fn layer_from_map(map: &tiled::Map, layer_id: LayerId) -> Option<tiled::Layer<'_>> {
+/// Retrieves a [`tiled::Layer`] from a [`tiled::Map`] given a [`LayerId`], including group layers and their children.
+pub(crate) fn layer_from_map(map: &tiled::Map, layer_id: LayerId) -> Option<tiled::Layer<'_>> {
     fn find_layer_by_id<'a, T: 'a + ExactSizeIterator<Item = tiled::Layer<'a>>>(
         layers: T,
         layer_id: LayerId,
@@ -58,28 +54,9 @@ pub fn layer_from_map(map: &tiled::Map, layer_id: LayerId) -> Option<tiled::Laye
     find_layer_by_id(map.layers(), layer_id)
 }
 
-/// Retrieves a [`tiled::Tileset`] from a [`tiled::Map`] given a [`TilesetId`].
-///
-/// Returns a reference to the tileset if found, or `None` if the ID is invalid.
-pub fn tileset_from_map(map: &tiled::Map, tileset_id: TilesetId) -> Option<&Arc<tiled::Tileset>> {
-    map.tilesets().get(tileset_id.0 as usize)
-}
-
-/// Retrieves a [`tiled::Tile`] from a [`tiled::Map`] given a [`TilesetId`] and a [`tiled::TileId`].
-///
-/// Returns `Some(tiled::Tile)` if the tile exists in the specified tileset, or `None` otherwise.
-pub fn tile_from_map(
-    map: &tiled::Map,
-    tileset_id: TilesetId,
-    tile_id: tiled::TileId,
-) -> Option<tiled::Tile<'_>> {
-    tileset_from_map(map, tileset_id).and_then(|t| t.get_tile(tile_id))
-}
-
-/// Retrieves an [`tiled::Object`] from a [`tiled::Map`] given an [`ObjectId`].
-///
-/// Searches all object layers for the specified object ID and returns it if found.
-pub fn object_from_map(map: &tiled::Map, object_id: ObjectId) -> Option<tiled::Object<'_>> {
+/// Retrieves an [`tiled::Object`] from a [`tiled::Map`] given an [`ObjectId`],
+/// searching all objects layers, including the ones in group layers.
+pub(crate) fn object_from_map(map: &tiled::Map, object_id: ObjectId) -> Option<tiled::Object<'_>> {
     fn find_object_by_id<'a, T: 'a + ExactSizeIterator<Item = tiled::Layer<'a>>>(
         layers: T,
         object_id: ObjectId,
@@ -102,8 +79,9 @@ pub fn object_from_map(map: &tiled::Map, object_id: ObjectId) -> Option<tiled::O
 /// Converts a [`tiled::Map`]'s [`tiled::Orientation`] to a [`TilemapType`].
 ///
 /// Returns [`None`] if the orientation is not supported by this plugin, ie.
-/// [`tiled::Orientation::Staggered`] or [`tiled::Orientation::Oblique`].
-pub fn try_tilemap_type_from_map(map: &tiled::Map) -> Option<TilemapType> {
+/// [`tiled::Orientation::Staggered`] or [`tiled::Orientation::Oblique`]:
+/// such maps are rejected by the map loader.
+pub(crate) fn tilemap_type_from_map(map: &tiled::Map) -> Option<TilemapType> {
     match map.orientation {
         tiled::Orientation::Orthogonal => Some(TilemapType::Square),
         tiled::Orientation::Hexagonal => Some(TilemapType::Hexagon(
@@ -116,28 +94,6 @@ pub fn try_tilemap_type_from_map(map: &tiled::Map) -> Option<TilemapType> {
         )),
         tiled::Orientation::Isometric => Some(TilemapType::Isometric(IsoCoordSystem::Diamond)),
         tiled::Orientation::Staggered | tiled::Orientation::Oblique => None,
-    }
-}
-
-/// Converts a [`tiled::Map`]'s [`tiled::Orientation`] to a [`TilemapType`].
-///
-/// Maps with an unsupported orientation are rejected by the map loader with
-/// [`TiledMapLoaderError::UnsupportedOrientation`], so this function never panics
-/// for a map coming from a [`TiledMapAsset`].
-///
-/// # Panics
-/// Panics if the orientation is [`tiled::Orientation::Staggered`] or [`tiled::Orientation::Oblique`],
-/// which are not supported by this plugin. See [`try_tilemap_type_from_map`] for a non-panicking version.
-pub fn tilemap_type_from_map(map: &tiled::Map) -> TilemapType {
-    try_tilemap_type_from_map(map)
-        .unwrap_or_else(|| panic!("{:?} map orientation is not supported", map.orientation))
-}
-
-/// Converts a [`tiled::Map`]'s grid size to a [`TilemapGridSize`].
-pub fn grid_size_from_map(map: &tiled::Map) -> TilemapGridSize {
-    TilemapGridSize {
-        x: map.tile_width as f32,
-        y: map.tile_height as f32,
     }
 }
 
@@ -160,10 +116,10 @@ pub fn tile_size(tile: &tiled::Tile) -> TilemapTileSize {
 /// `bevy_ecs_tilemap` centering tiles images on their grid cell whereas Tiled aligns them
 /// on the cell bottom-left corner.
 #[allow(dead_code)] // Not used when no feature is enabled
-pub(crate) fn tilemap_offset(map: &tiled::Map, tileset: &tiled::Tileset) -> Vec2 {
+pub(crate) fn tilemap_offset(map_asset: &TiledMapAsset, tileset: &tiled::Tileset) -> Vec2 {
     let mut offset = Vec2::new(tileset.offset_x as f32, -tileset.offset_y as f32);
-    if matches!(tilemap_type_from_map(map), TilemapType::Isometric(..)) {
-        let grid_size = grid_size_from_map(map);
+    if matches!(map_asset.map_type, TilemapType::Isometric(..)) {
+        let grid_size = map_asset.grid_size;
         offset += Vec2::new(
             tileset.tile_width as f32 - grid_size.x,
             tileset.tile_height as f32 - grid_size.y,

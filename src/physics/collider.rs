@@ -306,7 +306,7 @@ impl CachedTilePolygons {
         Some(Self {
             polygons,
             tile_size,
-            offset: tilemap_offset(&map_asset.map, tile.tileset()),
+            offset: tilemap_offset(map_asset, tile.tileset()),
         })
     }
 }

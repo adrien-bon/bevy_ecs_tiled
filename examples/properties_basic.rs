@@ -12,7 +12,7 @@ fn main() {
     // Note: properties will still be loaded from the map
     #[cfg(feature = "wasm")]
     {
-        config.tiled_types_export_file = None;
+        config.types_export_file = None;
     }
 
     // Only export properties when the `wasm` feature is disabled
@@ -22,10 +22,10 @@ fn main() {
         let mut path = std::env::current_dir().unwrap();
         path.push("exports");
         path.push("properties_basic_types.json");
-        config.tiled_types_export_file = Some(path);
+        config.types_export_file = Some(path);
 
         // Custom filter to chose which properties should be exported
-        config.tiled_types_filter = TiledFilter::from(
+        config.types_filter = TiledFilter::from(
             regex::RegexSet::new([
                 r"^properties_basic::.*",
                 r"^bevy_sprite::text2d::Text2d$",

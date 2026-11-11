@@ -20,7 +20,6 @@ use bevy::{ecs::system::SystemParam, prelude::*};
 use crate::tiled::world::asset::TiledWorldAsset;
 #[allow(unused_imports)]
 use crate::tiled::{
-    helpers::{tile_from_map, tileset_from_map},
     layer::TiledLayer,
     map::{TiledMap, asset::TiledMapAsset},
     object::TiledObject,
@@ -30,9 +29,9 @@ use crate::tiled::{
 /// Wrapper around Tiled events
 ///
 /// Contains generic informations about origin of a particular Tiled event
-#[derive(Message, EntityEvent, Clone, Copy, PartialEq, Debug, Reflect, Component)]
+#[derive(Message, EntityEvent, Clone, Copy, PartialEq, Debug, Reflect)]
 #[entity_event(auto_propagate, propagate = &'static ChildOf)]
-#[reflect(Component, Debug, Clone)]
+#[reflect(Debug, Clone)]
 pub struct TiledEvent<E: Debug + Clone + Copy + Reflect> {
     /// The entity this event happened for
     pub entity: Entity,
@@ -72,8 +71,10 @@ where
         }
     }
 
-    /// Transmute a [`TiledEvent`] from one kind to another
-    pub fn transmute<O>(&self, origin: Option<Entity>, event: O) -> TiledEvent<O>
+    /// Creates a [`TiledEvent`] of another kind, keeping the context of this one (world, map, layer, ...).
+    ///
+    /// If `origin` is [`None`], the new event keeps the origin of this one.
+    pub fn with_event<O>(&self, origin: Option<Entity>, event: O) -> TiledEvent<O>
     where
         O: Debug + Clone + Copy + Reflect,
     {
@@ -93,43 +94,43 @@ where
 
     /// Update the world information for this [`TiledEvent`]
     #[cfg(feature = "world")]
-    pub fn with_world(&mut self, entity: Entity, asset_id: AssetId<TiledWorldAsset>) -> &mut Self {
+    pub fn with_world(mut self, entity: Entity, asset_id: AssetId<TiledWorldAsset>) -> Self {
         self.world = Some((entity, asset_id));
         self
     }
 
     /// Update the map information for this [`TiledEvent`]
-    pub fn with_map(&mut self, entity: Entity, asset_id: AssetId<TiledMapAsset>) -> &mut Self {
+    pub fn with_map(mut self, entity: Entity, asset_id: AssetId<TiledMapAsset>) -> Self {
         self.map = Some((entity, asset_id));
         self
     }
 
     /// Update the layer information for this [`TiledEvent`]
-    pub fn with_layer(&mut self, entity: Entity) -> &mut Self {
+    pub fn with_layer(mut self, entity: Entity) -> Self {
         self.layer = Some(entity);
         self
     }
 
     /// Update the object information for this [`TiledEvent`]
-    pub fn with_object(&mut self, entity: Entity) -> &mut Self {
+    pub fn with_object(mut self, entity: Entity) -> Self {
         self.object = Some(entity);
         self
     }
 
     /// Update the tilemap information for this [`TiledEvent`]
-    pub fn with_tilemap(&mut self, entity: Entity, tileset_id: TilesetId) -> &mut Self {
+    pub fn with_tilemap(mut self, entity: Entity, tileset_id: TilesetId) -> Self {
         self.tilemap = Some((entity, tileset_id));
         self
     }
 
     /// Update the tile information for this [`TiledEvent`]
     pub fn with_tile(
-        &mut self,
+        mut self,
         entity: Entity,
         position: TilePos,
         tileset_id: TilesetId,
         tile_id: tiled::TileId,
-    ) -> &mut Self {
+    ) -> Self {
         self.tile = Some((entity, position, tileset_id, tile_id));
         self
     }
@@ -198,10 +199,9 @@ where
         &self,
         assets: &'a Assets<TiledMapAsset>,
     ) -> Option<&'a Arc<tiled::Tileset>> {
-        self.map(assets).and_then(|map| {
-            self.tilemap_tileset_id()
-                .and_then(|id| tileset_from_map(map, id))
-        })
+        self.map_asset(assets)
+            .zip(self.tilemap_tileset_id())
+            .and_then(|(map_asset, id)| map_asset.tileset(id))
     }
 
     /// Retrieve the [`TiledTile`] [`Entity`] associated with this [`TiledEvent`]
@@ -226,12 +226,8 @@ where
 
     /// Retrieve the [`tiled::Tile`] associated with this [`TiledEvent`]
     pub fn tile(&self, assets: &'a Assets<TiledMapAsset>) -> Option<tiled::Tile<'a>> {
-        self.map(assets).and_then(|map| {
-            self.tile_tileset_id().and_then(|tileset_id| {
-                self.tile_id()
-                    .and_then(|id| tile_from_map(map, tileset_id, id))
-            })
-        })
+        let map_asset = self.map_asset(assets)?;
+        map_asset.tile(self.tile_tileset_id()?, self.tile_id()?)
     }
 
     /// Retrieve the [`TiledObject`] [`Entity`] associated with this [`TiledEvent`]
@@ -361,8 +357,7 @@ mod tests {
         let entity = app.world_mut().spawn_empty().id();
         let event = TiledEvent::new(entity, LayerCreated)
             .with_map(entity, handle.id())
-            .with_layer(entity)
-            .to_owned();
+            .with_layer(entity);
 
         // No system involved: assets are borrowed directly from the World
         let assets = app.world().resource::<Assets<TiledMapAsset>>();

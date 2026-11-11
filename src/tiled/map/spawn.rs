@@ -42,9 +42,7 @@ pub(crate) fn spawn_map(
         },
     ));
 
-    let map_event = TiledEvent::new(map_entity, MapCreated)
-        .with_map(map_entity, map_asset_id)
-        .to_owned();
+    let map_event = TiledEvent::new(map_entity, MapCreated).with_map(map_entity, map_asset_id);
 
     let mut ctx = SpawnContext {
         commands,
@@ -258,9 +256,8 @@ impl SpawnContext<'_, '_, '_> {
             }
 
             let layer_event = map_event
-                .transmute(Some(layer_entity), LayerCreated)
-                .with_layer(layer_entity)
-                .to_owned();
+                .with_event(Some(layer_entity), LayerCreated)
+                .with_layer(layer_entity);
 
             match layer.layer_type() {
                 tiled::LayerType::Tiles(tile_layer) => {
@@ -344,9 +341,8 @@ impl SpawnContext<'_, '_, '_> {
                 .is_some_and(|tile| !tile.properties.is_empty())
             {
                 let tile_event = layer_event
-                    .transmute(Some(tile_entity), TileCreated)
-                    .with_tile(tile_entity, tile_pos, tileset_id, tile_id)
-                    .to_owned();
+                    .with_event(Some(tile_entity), TileCreated)
+                    .with_tile(tile_entity, tile_pos, tileset_id, tile_id);
                 tile_events.push(tile_event);
             }
 
@@ -431,9 +427,8 @@ impl SpawnContext<'_, '_, '_> {
             #[cfg(feature = "user_properties")]
             object_entities.insert(ObjectId(object_data.id()), object_entity);
             let object_event = layer_event
-                .transmute(Some(object_entity), ObjectCreated)
-                .with_object(object_entity)
-                .to_owned();
+                .with_event(Some(object_entity), ObjectCreated)
+                .with_object(object_entity);
             object_events.push(object_event);
         }
     }
