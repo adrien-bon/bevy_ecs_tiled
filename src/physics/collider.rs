@@ -21,6 +21,50 @@ pub enum TiledColliderSource {
     Object,
 }
 
+/// How physics colliders are created from the geometry of Tiled objects and tiles.
+///
+/// The strategy used for a whole map is given by [`TiledPhysicsSettings::collider_strategy`].
+///
+/// This enum is also a [`Component`], which can be inserted on a given [`TiledLayer`] or [`TiledObject`]
+/// entity to override the strategy of the map: an object uses its own strategy if it has one, otherwise
+/// the one of its layer, otherwise the one of the map.
+/// Colliders are spawned again when this component is inserted, modified or removed.
+///
+/// Since it is a regular component, it can also be set from Tiled using a custom property
+/// (see the `user_properties` feature).
+///
+/// Example:
+/// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
+/// // Use triangulated colliders for the layer named "water"
+/// fn on_layer_created(
+///     layer_created: On<TiledEvent<LayerCreated>>,
+///     layers_query: Query<&TiledName, With<TiledLayer>>,
+///     mut commands: Commands,
+/// ) {
+///     let layer = layer_created.event().origin;
+///     if layers_query.get(layer).is_ok_and(|name| name.0 == "water") {
+///         commands.entity(layer).insert(TiledColliderStrategy::Triangulation);
+///     }
+/// }
+/// ```
+///
+/// The description of each strategy is the one of built-in physics backends: a custom
+/// [`TiledPhysicsBackend`] is free to interpret them differently.
+#[derive(Component, Reflect, Default, Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[reflect(Component, Default, Debug, PartialEq, Hash)]
+pub enum TiledColliderStrategy {
+    /// Aggregate all the line strings of the geometry in a single polyline collider.
+    #[default]
+    Polyline,
+    /// Triangulate the geometry and aggregate all the triangles in a single compound collider.
+    Triangulation,
+    /// Create a line strip collider for each line string of the geometry: this produces several colliders.
+    LineStrip,
+}
+
 /// Relationship [`Component`] for the collider of a [`TiledObject`] or [`TiledLayer::Tiles`].
 #[derive(Component, Reflect, Copy, PartialEq, Clone, Debug, Deref)]
 #[reflect(Component, Debug)]
@@ -33,7 +77,10 @@ pub struct TiledColliderOf(pub Entity);
 #[relationship_target(relationship = TiledColliderOf)]
 pub struct TiledColliders(Vec<Entity>);
 
-/// Physics collider raw geometry
+/// Raw geometry a physics collider was created from.
+///
+/// If several colliders are created from the same geometry (see [`TiledColliderStrategy::LineStrip`]),
+/// each of them holds the whole geometry.
 #[derive(Component, PartialEq, Clone, Debug, Deref)]
 #[require(Transform)]
 pub struct TiledColliderPolygons(pub Vec<geo::MultiPolygon<f32>>);
@@ -63,6 +110,7 @@ impl ColliderCreated {
 
 pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledColliderSource>();
+    app.register_type::<TiledColliderStrategy>();
     app.register_type::<TiledColliderOf>();
     app.register_type::<TiledColliders>();
     app.add_message::<TiledEvent<ColliderCreated>>()
@@ -213,55 +261,70 @@ pub(crate) fn tiles_polygons(
 }
 
 /// Spawn colliders for the given polygons using the physics backend from `settings`.
+///
+/// The first collider is inserted on the source entity itself (ie. `collider_created.event.collider_of`)
+/// and the next ones, if any, on dedicated child entities.
 pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
     settings: &TiledPhysicsSettings<T>,
+    strategy: TiledColliderStrategy,
     commands: &mut Commands,
     polygons: Vec<geo::Polygon<f32>>,
     collider_created: TiledEvent<ColliderCreated>,
     message_writer: &mut MessageWriter<TiledEvent<ColliderCreated>>,
     disable_geometry_simplification: bool,
 ) {
-    let polygons = polygons
-        .into_iter()
-        .map(|p| geo::MultiPolygon::new(vec![p]))
-        .collect::<Vec<_>>();
-
     if polygons.is_empty() {
         return;
     }
 
+    let geometries = polygons
+        .into_iter()
+        .map(|p| geo::MultiPolygon::new(vec![p]))
+        .collect::<Vec<_>>();
+
     // Try to simplify geometry by merging together adjacent polygons
-    let polygons = if !disable_geometry_simplification && settings.simplify_geometry {
-        let Some(polygons) = simplify_geometry(polygons, |a, b| a.union(&b)) else {
+    let geometries = if !disable_geometry_simplification && settings.simplify_geometry {
+        let Some(geometry) = simplify_geometry(geometries, |a, b| a.union(&b)) else {
             warn!(
                 "Failed to simplify geometry, skipping this polygon (entity {})",
                 collider_created.origin
             );
             return;
         };
-        vec![polygons]
+        vec![geometry]
     } else {
-        polygons
+        geometries
     };
 
-    // Actually spawn our collider using provided physics backend
-    if let Some(entity) = settings.backend.spawn_colliders(
-        commands,
-        collider_created.event.source,
-        collider_created.event.collider_of.0,
-        polygons.to_owned(),
-    ) {
-        // Attach collider to its parent and insert additional components
-        commands.entity(entity).insert((
-            collider_created.event.source,
-            TiledColliderPolygons(polygons),
-            collider_created.event.collider_of,
-        ));
+    let source = collider_created.event.source;
+    let collider_of = collider_created.event.collider_of;
+    let mut index = 0;
+    for geometry in geometries {
+        // Actually create our colliders using provided physics backend
+        for collider in settings.backend.colliders(strategy, source, &geometry) {
+            let entity = if index == 0 {
+                collider_of.0
+            } else {
+                commands
+                    .spawn((
+                        Name::new(format!("TiledCollider({index})")),
+                        ChildOf(collider_of.0),
+                    ))
+                    .id()
+            };
+            index += 1;
+            commands.entity(entity).insert((
+                collider,
+                source,
+                TiledColliderPolygons(vec![geometry.clone()]),
+                collider_of,
+            ));
 
-        // Patch origin entity and send collider event
-        let mut event = collider_created;
-        event.origin = entity;
-        event.send(commands, message_writer);
+            // Patch origin entity and send collider event
+            let mut event = collider_created;
+            event.origin = entity;
+            event.send(commands, message_writer);
+        }
     }
 }
 

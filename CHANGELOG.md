@@ -22,7 +22,9 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Add `TiledDebugGizmos` gizmo config group, used by all debug plugins, and `tiled_debug_gizmos_enabled` run condition: debug gizmos can be configured or hidden at runtime using `GizmoConfigStore`
 - Add `TiledDebugTogglePlugin`, part of `TiledDebugPluginGroup`, to toggle debug gizmos display using a keyboard key (none by default)
 - Add `TiledMapAsset::map_type` and `TiledMapAsset::grid_size` fields
-- Add `TiledPhysicsBackend::remove_colliders()`, to remove physics components a backend inserted on the layer or object entity itself
+- Physics: add `TiledColliderStrategy` (`Polyline`, `Triangulation` or `LineStrip`), selecting how colliders are created from Tiled shapes. It is set for a whole map using `TiledPhysicsSettings::collider_strategy` and can be overridden for a given layer or object by inserting it as a component on this entity (or from Tiled, using a custom property)
+- Physics: add `TiledColliderShape` and the `collider_shapes()` helper, to easily write a custom physics backend supporting all collider strategies
+- Add `TiledPhysicsDisableGeometrySimplification` to the prelude
 
 ### Changed
 
@@ -39,6 +41,10 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - `TiledImage` holds the image handle and repeat settings, and is not `Copy` anymore
 - `TiledObjectVisualOf` no longer requires a `Sprite` and is also used for text objects text box
 - `TiledEvent<ColliderCreated>::tiles()` is removed
+- Physics: `TiledPhysicsBackend` trait only creates colliders, through its new `Collider` associated type and `colliders()` function replacing `spawn_colliders()`: colliders entities are now spawned and despawned by `bevy_ecs_tiled`
+- Physics: `TiledPhysicsAvianBackend` and `TiledPhysicsRapierBackend` are unit structs: their `Polyline`, `Triangulation` and `LineStrip` variants moved to `TiledColliderStrategy`
+- Physics: the first collider of a tiles layer or an object is always the layer or object entity itself, next ones (if any) are children entities named `TiledCollider(<index>)`. Each of them has the `TiledColliderOf`, `TiledColliderSource` and `TiledColliderPolygons` components, and gets its own `TiledEvent<ColliderCreated>`
+- Physics: `multi_polygon_as_line_strings()` returns an iterator over borrowed line strings, and `multi_polygon_as_triangles()` returns an empty list instead of panicking when triangulation fails
 - Without the `render` feature, images and texture atlas layouts are not loaded anymore: `ImagePlugin` and `TextureAtlasPlugin` are no longer required to load a map, which can be done on a headless server
 - Without the `render` feature, nothing is displayed: objects do not have any visual (tile sprite or text), image layers do not have a `Sprite`, `TiledImage::image` and `TiledAnimation` do not exist
 - The `text` and `debug` features now enable the `render` feature
@@ -49,6 +55,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 
 - Colliders of tiles layers take tiles flips (including diagonal flip) into account
 - Physics: a tiles layer or an object which does not produce any collider anymore (eg. all the tiles of the layer have been despawned) no longer keeps the collider previously inserted on its own entity by the Avian and Rapier backends
+- Physics: additional colliders of a tiles layer or an object (`LineStrip` strategy, or geometry simplification disabled) are despawned when colliders are spawned again, instead of piling up
 - `layer_from_map()` finds group layers
 - Tilesets and templates cache is actually cleared when a map is hot-reloaded
 - Infinite maps whose tiles layers do not have any chunk no longer get an invalid size

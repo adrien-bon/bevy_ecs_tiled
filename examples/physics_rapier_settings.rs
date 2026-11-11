@@ -86,6 +86,35 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ));
         },
     ));
+    mgr.add_map(helper::assets::MapInfos::new(
+        &asset_server,
+        "maps/orthogonal/finite.tmx",
+        "A finite orthogonal map with triangulated colliders, except for objects which use line strips",
+        |c| {
+            c.insert((
+                TilemapAnchor::Center,
+                // Strategy used to create colliders for the whole map...
+                TiledPhysicsSettings::<TiledPhysicsRapierBackend> {
+                    collider_strategy: TiledColliderStrategy::Triangulation,
+                    ..default()
+                },
+            ))
+            // ... which can be overridden for a given layer (or a given object)
+            // by inserting a `TiledColliderStrategy` component on it
+            .observe(
+                |layer_created: On<TiledEvent<LayerCreated>>,
+                 layers_query: Query<&TiledLayer>,
+                 mut commands: Commands| {
+                    let layer = layer_created.event().origin;
+                    if let Ok(TiledLayer::Objects) = layers_query.get(layer) {
+                        commands
+                            .entity(layer)
+                            .insert(TiledColliderStrategy::LineStrip);
+                    }
+                },
+            );
+        },
+    ));
     commands.insert_resource(mgr);
 }
 

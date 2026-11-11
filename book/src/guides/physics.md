@@ -81,8 +81,8 @@ Colliders are derived from the map entities: if you add, modify or remove a tile
 
 We provide two [`TiledPhysicsBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/trait.TiledPhysicsBackend.html) that can be used out of the box:
 
-- [`TiledPhysicsAvianBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/avian/enum.TiledPhysicsAvianBackend.html): for the Avian 2D physics engine
-- [`TiledPhysicsRapierBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/rapier/enum.TiledPhysicsRapierBackend.html): for the Rapier 2D physics engine
+- [`TiledPhysicsAvianBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/avian/struct.TiledPhysicsAvianBackend.html): for the Avian 2D physics engine
+- [`TiledPhysicsRapierBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/rapier/struct.TiledPhysicsRapierBackend.html): for the Rapier 2D physics engine
 
 > **Note:**
 > You can actually use several physics backends at the same time if you register the [`TiledPhysicsPlugin<T>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/struct.TiledPhysicsPlugin.html) plugin multiple times, but with different [`TiledPhysicsBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/trait.TiledPhysicsBackend.html).
@@ -133,17 +133,71 @@ To reduce the number of physics colliders and improve performance, `bevy_ecs_til
 - **Regular objects:** If an object references a tile, it will inherit that tile's collider and if the tile has several shapes, they will be merged.
   The collider entity is spawned at the object level and each object always gets its own collider.
 
-> **Note:**
-> Both [`TiledPhysicsAvianBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/avian/enum.TiledPhysicsAvianBackend.html) and [`TiledPhysicsRapierBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/rapier/enum.TiledPhysicsRapierBackend.html) provide several strategies to aggregate colliders. You can see their respective documentation for more information.
+The first collider of a tiles layer or an object is inserted on the layer or object entity itself, so you can directly add other physics components to it.
+If there are several colliders (see below), the next ones are spawned as children of this entity.
+
+---
+
+## Collider Strategy
+
+The [`TiledColliderStrategy`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderStrategy.html) selects how physics colliders are created from Tiled shapes:
+
+- `Polyline` (default): a single collider made of all the segments outlining the shapes. Bodies can end up inside of the shape.
+- `Triangulation`: shapes are triangulated and all triangles are aggregated in a single "solid" compound collider.
+- `LineStrip`: one collider for each ring outlining the shapes, so there can be several colliders.
+
+The strategy is set for the whole map, in [`TiledPhysicsSettings`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/settings/struct.TiledPhysicsSettings.html):
+
+```rust,no_run
+use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn((
+        TiledMap(asset_server.load("map.tmx")),
+        TiledPhysicsSettings::<TiledPhysicsAvianBackend> {
+            collider_strategy: TiledColliderStrategy::Triangulation,
+            ..default()
+        },
+    ));
+}
+```
+
+It can be overridden for a given layer or object: `TiledColliderStrategy` is also a component, which you can insert on a layer or an object entity.
+An object uses its own strategy if it has one, otherwise the one of its layer, otherwise the one of the map.
+
+```rust,no_run
+use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+// Use line strips for the tiles layer named "walls"
+fn on_layer_created(
+    layer_created: On<TiledEvent<LayerCreated>>,
+    layers_query: Query<&TiledName, With<TiledLayer>>,
+    mut commands: Commands,
+) {
+    let layer = layer_created.event().origin;
+    if layers_query.get(layer).is_ok_and(|name| name.0 == "walls") {
+        commands.entity(layer).insert(TiledColliderStrategy::LineStrip);
+    }
+}
+```
+
+Colliders are spawned again when this component is inserted, modified or removed.
+With the `user_properties` feature, you can also directly add it from Tiled as a [custom property](properties.md) of the layer or object.
 
 ---
 
 ## Custom Physics Backends
 
 For advanced use cases, you can implement your own physics backend.
-Just create a struct that implements the [`TiledPhysicsBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/trait.TiledPhysicsBackend.html) trait (i.e., provide a `spawn_colliders` function), and use it when registering the `TiledPhysicsPlugin<T>` plugin.
+Just create a struct that implements the [`TiledPhysicsBackend`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/trait.TiledPhysicsBackend.html) trait, and use it when registering the `TiledPhysicsPlugin<T>` plugin.
 
-See [this example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/physics_custom_backend.rs) for more information.
+A backend only has to create colliders out of a geometry: it declares the component(s) making a collider (the `Collider` associated type) and provides a `colliders()` function returning them for a given geometry and [`TiledColliderStrategy`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderStrategy.html).
+`bevy_ecs_tiled` takes care of inserting these colliders on the right entities and of removing them when their source changes.
+The [`collider_shapes()`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/geometry/fn.collider_shapes.html) helper converts a geometry into simple shapes (polylines or triangles) according to the requested strategy.
+
+See [this example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/physics_custom.rs) for more information.
 
 ---
 

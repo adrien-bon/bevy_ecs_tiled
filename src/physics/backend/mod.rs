@@ -18,8 +18,35 @@ use crate::prelude::*;
 
 /// Trait for implementing a custom physics backend for Tiled maps and worlds.
 ///
-/// Any physics backend must implement this trait to support spawning colliders for Tiled objects and tiles.
-/// The backend is responsible for creating the appropriate physics entities and returning information about them.
+/// A physics backend only creates physics colliders out of a geometry: `bevy_ecs_tiled` takes care of
+/// computing this geometry from Tiled objects and tiles, of inserting the colliders on the
+/// right entities and of removing them when their source changes.
+///
+/// Example:
+/// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
+/// /// A "collider" which only holds the number of polygons of its geometry
+/// #[derive(Component)]
+/// struct MyCollider(usize);
+///
+/// #[derive(Default, Debug, Clone, Reflect)]
+/// struct MyBackend;
+///
+/// impl TiledPhysicsBackend for MyBackend {
+///     type Collider = MyCollider;
+///
+///     fn colliders(
+///         &self,
+///         _strategy: TiledColliderStrategy,
+///         _source: TiledColliderSource,
+///         geometry: &geo::MultiPolygon<f32>,
+///     ) -> Vec<Self::Collider> {
+///         vec![MyCollider(geometry.0.len())]
+///     }
+/// }
+/// ```
 pub trait TiledPhysicsBackend:
     Default
     + Clone
@@ -30,47 +57,40 @@ pub trait TiledPhysicsBackend:
     + FromReflect
     + Reflectable
 {
-    /// Spawns one or more physics colliders for a given Tiled object or tile layer.
+    /// The components making a physics collider for this backend.
     ///
-    /// This function is called by the physics integration to generate colliders for Tiled objects or tiles.
-    /// The backend implementation is responsible for creating the appropriate physics entities and returning
-    /// information about them.
+    /// The first collider of a Tiled object or tiles layer is inserted on the object or layer entity
+    /// itself (so it is easy to add other physics components to it, such as a rigid body), and the next ones,
+    /// if any, on dedicated child entities.
+    ///
+    /// When the source of a collider changes (for instance when a tile of the layer is added, modified
+    /// or removed), child entities are despawned and this bundle is removed from the object or layer
+    /// entity, before creating colliders again.
+    /// Components which are not part of this bundle are not removed: if you need other components to
+    /// follow the collider (eg. a mesh to display it), use component hooks or observers.
+    type Collider: Bundle;
+
+    /// Creates physics colliders for the given geometry.
     ///
     /// # Arguments
-    /// * `commands` - The Bevy [`Commands`] instance for spawning entities.
-    /// * `source` - The kind of Tiled item the collider is created for.
-    /// * `origin` - The [`Entity`] of the Tiled item (layer or object) the collider is created for.
-    /// * `multi_polygons_list` - The [`geo::MultiPolygon<f32>`] geometries representing the collider shapes.
+    /// * `strategy` - How colliders should be created from the geometry. A backend which does not support
+    ///   all strategies is free to fall back to another one.
+    /// * `source` - The kind of Tiled item the colliders are created for.
+    /// * `geometry` - The [`geo::MultiPolygon<f32>`] representing the colliders shape, relative to
+    ///   the Tiled object or tiles layer entity.
     ///
     /// # Returns
-    /// The [`Entity`] holding the spawned collider(s), which can be `origin` itself.
-    /// If the provided collider is not supported, the function should return [`None`].
+    /// The colliders to spawn for this geometry: usually a single one, but there can be several
+    /// (see [`TiledColliderStrategy::LineStrip`]) or none if the geometry is not supported.
     ///
-    /// # Colliders updates
-    /// Colliders are spawned again when their source changes (for instance when a tile of the layer is
-    /// added, modified or removed): previous collider entities are then despawned before calling this function.
-    ///
-    /// If colliders are inserted on `origin` itself, as the built-in backends do for the first collider,
-    /// this entity is obviously not despawned: [`TiledPhysicsBackend::remove_colliders`] is called instead
-    /// and must remove the physics components this function inserted.
-    fn spawn_colliders(
+    /// See [`collider_shapes`] for an helper converting the geometry to shapes
+    /// which are easy to map to physics engines primitives.
+    fn colliders(
         &self,
-        commands: &mut Commands,
+        strategy: TiledColliderStrategy,
         source: TiledColliderSource,
-        origin: Entity,
-        multi_polygons_list: Vec<geo::MultiPolygon<f32>>,
-    ) -> Option<Entity>;
-
-    /// Removes the physics components inserted on `origin` itself by [`TiledPhysicsBackend::spawn_colliders`].
-    ///
-    /// This function is called before spawning again the colliders of `origin`, or when it does not
-    /// produce any collider anymore (eg. all the tiles of a layer have been despawned), if
-    /// [`TiledPhysicsBackend::spawn_colliders`] returned `origin`. Colliders spawned on other entities are
-    /// automatically despawned.
-    ///
-    /// The default implementation does nothing: it is only suitable for backends which never
-    /// insert components on `origin`.
-    fn remove_colliders(&self, _commands: &mut Commands, _origin: Entity) {}
+        geometry: &geo::MultiPolygon<f32>,
+    ) -> Vec<Self::Collider>;
 }
 
 pub(crate) fn plugin(_app: &mut App) {

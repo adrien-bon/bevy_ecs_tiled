@@ -1281,21 +1281,31 @@ mod physics {
     use super::*;
     use ::geo::{Area, BoundingRect};
 
-    /// Physics backend which only spawns an entity holding the collider polygons
+    /// Physics backend whose colliders do not hold any physics component
     #[derive(Default, Clone, Debug, Reflect)]
     pub(super) struct TestBackend;
 
     impl TiledPhysicsBackend for TestBackend {
-        fn spawn_colliders(
+        type Collider = TestCollider;
+
+        fn colliders(
             &self,
-            commands: &mut Commands,
+            strategy: TiledColliderStrategy,
             _source: TiledColliderSource,
-            origin: Entity,
-            _multi_polygons_list: Vec<geo::MultiPolygon<f32>>,
-        ) -> Option<Entity> {
-            Some(commands.spawn(ChildOf(origin)).id())
+            geometry: &geo::MultiPolygon<f32>,
+        ) -> Vec<Self::Collider> {
+            // Like built-in backends, the line strip strategy produces a collider for each ring
+            let count = match strategy {
+                TiledColliderStrategy::LineStrip => multi_polygon_as_line_strings(geometry).count(),
+                _ => 1,
+            };
+            vec![TestCollider(strategy); count]
         }
     }
+
+    /// Collider of the [`TestBackend`], holding the strategy it was created with
+    #[derive(Component, Clone, Copy, PartialEq, Debug)]
+    pub(super) struct TestCollider(pub(super) TiledColliderStrategy);
 
     fn colliders_area(app: &App, entity: Entity) -> Vec<f32> {
         app.world()
@@ -1489,6 +1499,207 @@ mod physics {
         map.insert_asset(&mut app);
         app.update();
         assert_eq!(colliders_area(&app, map.layer), vec![256.]);
+    }
+
+    /// Strategies of the colliders of an entity
+    fn colliders_strategies(app: &App, entity: Entity) -> Vec<TiledColliderStrategy> {
+        app.world()
+            .get::<TiledColliders>(entity)
+            .into_iter()
+            .flat_map(|c| c.iter())
+            .map(|e| app.world().get::<TestCollider>(e).unwrap().0)
+            .collect()
+    }
+
+    /// Number of [`ColliderCreated`] events received for each collider source
+    #[derive(Resource, Default)]
+    struct CollidersCreated(HashMap<Entity, usize>);
+
+    fn count_colliders_created(app: &mut App) {
+        app.init_resource::<CollidersCreated>();
+        app.add_observer(
+            |ev: On<TiledEvent<ColliderCreated>>, mut created: ResMut<CollidersCreated>| {
+                let ev = ev.event();
+                // Events are propagated to parent entities: only count the original one
+                if ev.entity == ev.event.collider_of.0 {
+                    *created.0.entry(ev.entity).or_default() += 1;
+                }
+            },
+        );
+    }
+
+    fn colliders_created(app: &App, entity: Entity) -> usize {
+        app.world()
+            .resource::<CollidersCreated>()
+            .0
+            .get(&entity)
+            .copied()
+            .unwrap_or(0)
+    }
+
+    #[test]
+    fn collider_strategy_can_be_overridden() {
+        use TiledColliderStrategy::*;
+
+        let mut app = test_app();
+        app.add_plugins(TiledPhysicsPlugin::<TestBackend>::default());
+        count_colliders_created(&mut app);
+        spawn_test_map(&mut app);
+        let ground = layer_by_name(&mut app, "ground");
+        let objects = layer_by_name(&mut app, "objects");
+        let rectangle = object_by_name(&mut app, "rectangle");
+
+        // Map strategy is used by default, and the first collider is the source entity itself
+        assert_eq!(colliders_strategies(&app, ground), vec![Polyline]);
+        assert_eq!(colliders_strategies(&app, rectangle), vec![Polyline]);
+        assert_eq!(
+            app.world().get::<TestCollider>(ground),
+            Some(&TestCollider(Polyline))
+        );
+        assert_eq!(
+            (
+                colliders_created(&app, ground),
+                colliders_created(&app, rectangle)
+            ),
+            (1, 1)
+        );
+
+        // Override for a tiles layer: only the colliders of this layer are spawned again
+        app.world_mut().entity_mut(ground).insert(Triangulation);
+        app.update();
+        assert_eq!(colliders_strategies(&app, ground), vec![Triangulation]);
+        assert_eq!(colliders_strategies(&app, rectangle), vec![Polyline]);
+        assert_eq!(
+            (
+                colliders_created(&app, ground),
+                colliders_created(&app, rectangle)
+            ),
+            (2, 1)
+        );
+
+        // Override for an objects layer applies to its objects
+        app.world_mut().entity_mut(objects).insert(LineStrip);
+        app.update();
+        assert_eq!(colliders_strategies(&app, rectangle), vec![LineStrip]);
+        assert_eq!(
+            (
+                colliders_created(&app, ground),
+                colliders_created(&app, rectangle)
+            ),
+            (2, 2)
+        );
+
+        // Override for an object takes precedence over the one of its layer
+        app.world_mut().entity_mut(rectangle).insert(Triangulation);
+        app.update();
+        assert_eq!(colliders_strategies(&app, rectangle), vec![Triangulation]);
+
+        // Removing overrides falls back to the layer strategy, then to the map one
+        app.world_mut()
+            .entity_mut(rectangle)
+            .remove::<TiledColliderStrategy>();
+        app.update();
+        assert_eq!(colliders_strategies(&app, rectangle), vec![LineStrip]);
+        app.world_mut()
+            .entity_mut(objects)
+            .remove::<TiledColliderStrategy>();
+        app.world_mut()
+            .entity_mut(ground)
+            .remove::<TiledColliderStrategy>();
+        app.update();
+        assert_eq!(colliders_strategies(&app, rectangle), vec![Polyline]);
+        assert_eq!(colliders_strategies(&app, ground), vec![Polyline]);
+        assert_eq!(colliders_created(&app, ground), 3);
+    }
+
+    #[test]
+    fn map_collider_strategy_is_used() {
+        let mut app = test_app();
+        app.add_plugins(TiledPhysicsPlugin::<TestBackend>::default());
+        let handle = app
+            .world()
+            .resource::<AssetServer>()
+            .load::<TiledMapAsset>(DYNAMIC_MAP);
+        app.world_mut().spawn((
+            TiledMap(handle),
+            TiledPhysicsSettings::<TestBackend> {
+                collider_strategy: TiledColliderStrategy::Triangulation,
+                ..default()
+            },
+        ));
+        let deadline = Instant::now() + Duration::from_secs(10);
+        while app
+            .world()
+            .resource::<Received>()
+            .storage_on_map_created
+            .is_none()
+        {
+            assert!(Instant::now() < deadline, "test map did not spawn in time");
+            app.update();
+            std::thread::sleep(Duration::from_millis(1));
+        }
+        app.update();
+
+        let ground = layer_by_name(&mut app, "ground");
+        let rectangle = object_by_name(&mut app, "rectangle");
+        assert_eq!(
+            colliders_strategies(&app, ground),
+            vec![TiledColliderStrategy::Triangulation]
+        );
+        assert_eq!(
+            colliders_strategies(&app, rectangle),
+            vec![TiledColliderStrategy::Triangulation]
+        );
+    }
+
+    #[test]
+    fn additional_colliders_are_children_and_are_despawned() {
+        let mut app = test_app();
+        app.add_plugins(TiledPhysicsPlugin::<TestBackend>::default());
+        spawn_test_map(&mut app);
+        let ground = layer_by_name(&mut app, "ground");
+        let colliders_of_ground = |app: &mut App| {
+            app.world_mut()
+                .query::<(Entity, &TiledColliderOf)>()
+                .iter(app.world())
+                .filter(|(_, of)| of.0 == ground)
+                .map(|(e, _)| e)
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(colliders_of_ground(&mut app), vec![ground]);
+
+        // Without geometry simplification, each of the two tiles gets its own collider:
+        // the first one is the layer itself, the other one is a child of the layer
+        app.world_mut().entity_mut(ground).insert((
+            TiledPhysicsDisableGeometrySimplification,
+            TiledColliderStrategy::LineStrip,
+        ));
+        app.update();
+        let colliders = colliders_of_ground(&mut app);
+        assert_eq!(colliders.len(), 2);
+        assert!(colliders.contains(&ground));
+        let child = *colliders.iter().find(|e| **e != ground).unwrap();
+        assert_eq!(app.world().get::<ChildOf>(child).unwrap().parent(), ground);
+        assert_eq!(colliders_area(&app, ground), vec![256., 256.]);
+
+        // Previous colliders are all removed when colliders are spawned again
+        app.world_mut()
+            .entity_mut(ground)
+            .insert(TiledColliderStrategy::Polyline);
+        app.update();
+        let colliders = colliders_of_ground(&mut app);
+        assert_eq!(colliders.len(), 2);
+        assert!(app.world().get_entity(child).is_err());
+
+        // And when the layer does not have any collider anymore
+        for pos in [TilePos::new(0, 3), TilePos::new(1, 3)] {
+            let tile = tile_at(&mut app, ground, pos);
+            app.world_mut().entity_mut(tile).despawn();
+        }
+        app.update();
+        assert!(colliders_of_ground(&mut app).is_empty());
+        assert!(app.world().get::<TestCollider>(ground).is_none());
+        assert!(app.world().get::<TiledColliderPolygons>(ground).is_none());
     }
 
     #[test]

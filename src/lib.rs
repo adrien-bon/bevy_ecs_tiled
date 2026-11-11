@@ -46,13 +46,16 @@ pub mod prelude {
     pub use super::physics::backend::rapier::TiledPhysicsRapierBackend;
     #[cfg(feature = "physics")]
     pub use super::physics::{
-        TiledPhysicsPlugin,
+        TiledPhysicsDisableGeometrySimplification, TiledPhysicsPlugin,
         backend::TiledPhysicsBackend,
         collider::{
             ColliderCreated, TiledColliderOf, TiledColliderPolygons, TiledColliderSource,
-            TiledColliders,
+            TiledColliderStrategy, TiledColliders,
         },
-        geometry::{multi_polygon_as_line_strings, multi_polygon_as_triangles, simplify_geometry},
+        geometry::{
+            TiledColliderShape, collider_shapes, multi_polygon_as_line_strings,
+            multi_polygon_as_triangles, simplify_geometry,
+        },
         settings::TiledPhysicsSettings,
     };
     #[cfg(feature = "render")]

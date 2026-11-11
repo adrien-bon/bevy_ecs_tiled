@@ -47,6 +47,11 @@ pub struct TiledPhysicsSettings<T: TiledPhysicsBackend> {
     /// When `false`, all collision shapes are kept as-is without simplification. This preserves exact geometry
     /// but may result in slower physics simulation for highly complex maps with many objects.
     pub simplify_geometry: bool,
+    /// How colliders are created from the geometry of Tiled objects and tiles.
+    ///
+    /// This strategy applies to the whole map, but can be overridden for a given layer or object
+    /// by inserting a [`TiledColliderStrategy`] component on its entity.
+    pub collider_strategy: TiledColliderStrategy,
     /// Physics backend to use for adding colliders.
     pub backend: T,
 }
@@ -59,6 +64,7 @@ impl<T: TiledPhysicsBackend> Default for TiledPhysicsSettings<T> {
             tiles_layer_filter: TiledFilter::default(),
             tiles_objects_filter: TiledFilter::default(),
             simplify_geometry: true,
+            collider_strategy: TiledColliderStrategy::default(),
             backend: T::default(),
         }
     }

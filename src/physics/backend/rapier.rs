@@ -17,120 +17,45 @@ use crate::prelude::*;
 use bevy::prelude::*;
 use bevy_rapier2d::{
     prelude::*,
-    rapier::prelude::{Pose, SharedShape, Vector},
+    rapier::prelude::{Pose, SharedShape},
 };
 
 /// The [`TiledPhysicsBackend`] to use for Rapier 2D integration.
 ///
-/// This enum allows you to select how colliders are generated from the input [`geo::MultiPolygon`]s list:
-/// - [`TiledPhysicsAvianBackend::Polyline`]: Convert each [`geo::MultiPolygon`] into several [`geo::LineString`]s and aggregate them all into a single polyline collider.
-/// - [`TiledPhysicsAvianBackend::Triangulation`]: Convert each [`geo::MultiPolygon`] into several triangles then into a compound collider.
-/// - [`TiledPhysicsAvianBackend::LineStrip`]: Convert each [`geo::MultiPolygon`] into several [`geo::LineString`]s and create a linestrip collider for each one of them.
+/// How colliders are created from Tiled shapes is selected using a [`TiledColliderStrategy`]
+/// (see [`TiledPhysicsSettings::collider_strategy`]):
+/// - [`TiledColliderStrategy::Polyline`]: a single collider, made of a [`SharedShape::polyline`].
+/// - [`TiledColliderStrategy::Triangulation`]: a single collider, made of a [`SharedShape::compound`] of [`SharedShape::triangle`]s.
+/// - [`TiledColliderStrategy::LineStrip`]: several colliders, each one made of a [`SharedShape::polyline`].
 #[derive(Default, Reflect, Copy, Clone, Debug)]
 #[reflect(Default, Debug)]
-pub enum TiledPhysicsRapierBackend {
-    #[default]
-    /// Create a single collider from a [`SharedShape::polyline`].
-    Polyline,
-    /// Performs triangulation and create a single collider by aggregating multiple [`SharedShape::triangle`]s.
-    Triangulation,
-    /// Produces several colliders from multiple [`SharedShape::polyline`].
-    LineStrip,
-}
+pub struct TiledPhysicsRapierBackend;
 
 impl TiledPhysicsBackend for TiledPhysicsRapierBackend {
-    fn spawn_colliders(
+    type Collider = Collider;
+
+    fn colliders(
         &self,
-        commands: &mut Commands,
+        strategy: TiledColliderStrategy,
         _source: TiledColliderSource,
-        origin: Entity,
-        multi_polygons_list: Vec<geo::MultiPolygon<f32>>,
-    ) -> Option<Entity> {
-        let mut out = None;
-        for multi_polygon in multi_polygons_list {
-            match self {
-                TiledPhysicsRapierBackend::Triangulation => {
-                    let shared_shapes = multi_polygon_as_triangles(&multi_polygon)
-                        .iter()
+        geometry: &geo::MultiPolygon<f32>,
+    ) -> Vec<Self::Collider> {
+        collider_shapes(strategy, geometry)
+            .into_iter()
+            .map(|shape| match shape {
+                TiledColliderShape::Polyline { vertices, indices } => {
+                    SharedShape::polyline(vertices, indices).into()
+                }
+                TiledColliderShape::Triangles(triangles) => SharedShape::compound(
+                    triangles
+                        .into_iter()
                         .map(|([a, b, c], centroid)| {
-                            (Pose::new(*centroid, 0.), SharedShape::triangle(*a, *b, *c))
+                            (Pose::new(centroid, 0.), SharedShape::triangle(a, b, c))
                         })
-                        .collect::<Vec<_>>();
-
-                    if !shared_shapes.is_empty() {
-                        let collider: Collider = SharedShape::compound(shared_shapes).into();
-                        let collider_entity = match out {
-                            Some(parent) => commands
-                                .spawn((ChildOf(parent), Name::from("Rapier[Triangulation]")))
-                                .id(),
-                            None => {
-                                out = Some(origin);
-                                origin
-                            }
-                        };
-                        commands.entity(collider_entity).insert(collider);
-                    }
-                }
-                TiledPhysicsRapierBackend::LineStrip => {
-                    multi_polygon_as_line_strings(&multi_polygon)
-                        .iter()
-                        .enumerate()
-                        .for_each(|(i, ls)| {
-                            let collider: Collider = SharedShape::polyline(
-                                ls.points().map(|v| Vector::new(v.x(), v.y())).collect(),
-                                None,
-                            )
-                            .into();
-                            let collider_entity = match out {
-                                Some(parent) => commands
-                                    .spawn((
-                                        ChildOf(parent),
-                                        Name::from(format!("Rapier[LineStrip {i}]")),
-                                    ))
-                                    .id(),
-                                None => {
-                                    out = Some(origin);
-                                    origin
-                                }
-                            };
-                            commands.entity(collider_entity).insert(collider);
-                        });
-                }
-                TiledPhysicsRapierBackend::Polyline => {
-                    let mut vertices = vec![];
-                    let mut indices = vec![];
-                    multi_polygon_as_line_strings(&multi_polygon)
-                        .iter()
-                        .for_each(|ls| {
-                            ls.lines().for_each(|l| {
-                                let points = l.points();
-                                let len = vertices.len();
-                                vertices.push(Vector::new(points.0.x(), points.0.y()));
-                                vertices.push(Vector::new(points.1.x(), points.1.y()));
-                                indices.push([len as u32, (len + 1) as u32]);
-                            });
-                        });
-                    if !vertices.is_empty() {
-                        let collider: Collider =
-                            SharedShape::polyline(vertices, Some(indices)).into();
-                        let collider_entity = match out {
-                            Some(parent) => commands
-                                .spawn((ChildOf(parent), Name::from("Rapier[Polyline]")))
-                                .id(),
-                            None => {
-                                out = Some(origin);
-                                origin
-                            }
-                        };
-                        commands.entity(collider_entity).insert(collider);
-                    }
-                }
-            }
-        }
-        out
-    }
-
-    fn remove_colliders(&self, commands: &mut Commands, origin: Entity) {
-        commands.entity(origin).try_remove::<Collider>();
+                        .collect(),
+                )
+                .into(),
+            })
+            .collect()
     }
 }
