@@ -42,11 +42,6 @@ pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledImage>();
     #[cfg(feature = "render")]
     {
-        app.add_systems(
-            Update,
-            update_image_position_and_size
-                .in_set(TiledUpdateSystems::UpdateTiledImagePositionAndSize),
-        );
         // When the TiledImage changes, its Sprite is built again from scratch: compute repeated images
         // position and size again right after, so the Sprite is not displayed with its base size for a frame
         app.add_systems(
@@ -201,7 +196,14 @@ fn update_image_position_and_size(
         };
 
         // Update Sprite relative Transform and size
-        transform.translation = Vec3::new(x, y, 0.);
-        sprite.custom_size = Some(Vec2::new(width, height));
+        // Do not trigger change detection (hence transform propagation) when nothing moved
+        let translation = Vec3::new(x, y, 0.);
+        if transform.translation != translation {
+            transform.translation = translation;
+        }
+        let size = Some(Vec2::new(width, height));
+        if sprite.custom_size != size {
+            sprite.custom_size = size;
+        }
     }
 }

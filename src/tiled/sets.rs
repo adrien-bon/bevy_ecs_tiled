@@ -35,7 +35,8 @@ pub enum TiledUpdateSystems {
     AnimateSprite,
     /// Updates parallax layers.
     UpdateParallaxLayers,
-    /// Update Tiled images position and size.
+    /// Not used anymore: Tiled images position and size are updated
+    /// during [`TiledPostUpdateSystems::SyncRender`].
     UpdateTiledImagePositionAndSize,
     /// Runs debug systems related to Tiled maps and worlds.
     Debug,

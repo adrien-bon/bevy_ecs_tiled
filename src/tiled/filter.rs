@@ -75,13 +75,24 @@ impl TiledFilter {
             Self::All => true,
             Self::Names(names) => {
                 // Normalize both sides: stored names may have been provided with uppercase letters
-                let name = name.trim().to_lowercase();
-                names.iter().any(|n| n.trim().to_lowercase() == name)
+                let name = name.trim();
+                names.iter().any(|n| eq_ignore_case(n.trim(), name))
             }
             Self::RegexSet(set) => set.is_match(name),
             Self::None => false,
         }
     }
+}
+
+/// Case-insensitive comparison of two strings, without allocating.
+fn eq_ignore_case(a: &str, b: &str) -> bool {
+    // Most names are ASCII
+    if a.is_ascii() && b.is_ascii() {
+        return a.eq_ignore_ascii_case(b);
+    }
+    a.chars()
+        .flat_map(char::to_lowercase)
+        .eq(b.chars().flat_map(char::to_lowercase))
 }
 
 pub(crate) fn plugin(app: &mut App) {
@@ -101,6 +112,14 @@ mod tests {
         assert!(filter.matches(" Player "));
         assert!(filter.matches("enemy"));
         assert!(!filter.matches("npc"));
+    }
+
+    #[test]
+    fn names_filter_handles_non_ascii_names() {
+        let filter = TiledFilter::from(vec!["Écluse"]);
+        assert!(filter.matches("écluse"));
+        assert!(filter.matches("ÉCLUSE"));
+        assert!(!filter.matches("ecluse"));
     }
 
     #[test]

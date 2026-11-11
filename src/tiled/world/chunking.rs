@@ -6,6 +6,7 @@
 
 use crate::prelude::*;
 use bevy::{
+    platform::collections::HashSet,
     prelude::*,
     shape::{Aabb2d, IntersectsVolume},
 };
@@ -85,7 +86,8 @@ fn handle_world_chunking(
         let mut to_spawn = Vec::new();
 
         if let Some(chunking) = world_chunking.0 {
-            let mut visible_maps = Vec::new();
+            // A map can be visible from several cameras: only consider it once
+            let mut visible_maps = HashSet::new();
             let cameras: Vec<Aabb2d> = camera_query
                 .iter()
                 .map(|transform| {
@@ -98,10 +100,8 @@ fn handle_world_chunking(
             // Check which map is visible by testing them against each camera (if there are multiple)
             // If map aabb overlaps with the camera_view, it is visible
             tiled_world.for_each_map(world_transform, anchor, |idx, aabb| {
-                for c in cameras.iter() {
-                    if aabb.intersects(c) {
-                        visible_maps.push(idx);
-                    }
+                if cameras.iter().any(|c| aabb.intersects(c)) {
+                    visible_maps.insert(idx);
                 }
             });
 
@@ -114,7 +114,7 @@ fn handle_world_chunking(
 
             // All the maps that are spawned but not visible should be removed
             for (idx, _) in storage.maps.iter() {
-                if !visible_maps.iter().any(|i| i == idx) {
+                if !visible_maps.contains(idx) {
                     to_remove.push(*idx);
                 }
             }

@@ -2009,10 +2009,18 @@ mod properties {
         app.add_observer(
             |_: On<TiledEvent<MapCreated>>,
              mut found: ResMut<PropertiesOnMapCreated>,
-             query: Query<(&Name, &TestTileProperty)>| {
+             query: Query<(Option<&Name>, Option<&TilePos>, &TestTileProperty)>| {
+                // Tiles only have a name with the `debug` feature: use their position instead
                 let mut values = query
                     .iter()
-                    .map(|(name, p)| (name.to_string(), p.value))
+                    .map(|(name, pos, p)| {
+                        let label = match (pos, name) {
+                            (Some(pos), _) => format!("TiledMapTile({},{})", pos.x, pos.y),
+                            (None, Some(name)) => name.to_string(),
+                            (None, None) => String::new(),
+                        };
+                        (label, p.value)
+                    })
                     .collect::<Vec<_>>();
                 values.sort();
                 found.0 = Some(values);

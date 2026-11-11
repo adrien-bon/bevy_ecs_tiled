@@ -137,6 +137,33 @@ const TILE_PROPERTIES_INSERTED: TiledTilePropertiesInserted = TiledTilePropertie
 #[cfg(not(feature = "user_properties"))]
 const TILE_PROPERTIES_INSERTED: () = ();
 
+/// Name of a tile entity: tiles only have a [`Name`] when the `debug` feature is enabled,
+/// since building it for each tile of a map has a cost.
+#[cfg(feature = "debug")]
+fn tile_name(tile_pos: &TilePos) -> Name {
+    Name::new(format!("TiledMapTile({},{})", tile_pos.x, tile_pos.y))
+}
+#[cfg(not(feature = "debug"))]
+fn tile_name(_tile_pos: &TilePos) {}
+
+/// Rendering components of a tile which is not rendered yet.
+///
+/// They are overwritten in [`TiledPostUpdateSystems::SyncRender`]: inserting them when spawning
+/// the tile prevents moving all the tiles of a map to another archetype right after they are spawned.
+#[cfg(feature = "render")]
+fn tile_render_placeholder(tile_pos: &TilePos) -> impl Bundle {
+    (
+        TilemapId(Entity::PLACEHOLDER),
+        TileTextureIndex::default(),
+        crate::tiled::tile::render::TiledTileRenderState {
+            tilemap: None,
+            position: *tile_pos,
+        },
+    )
+}
+#[cfg(not(feature = "render"))]
+fn tile_render_placeholder(_tile_pos: &TilePos) {}
+
 impl SpawnContext<'_, '_, '_> {
     /// Insert user properties on the map and all its spawned layers, objects and tiles
     #[cfg(feature = "user_properties")]
@@ -294,7 +321,8 @@ impl SpawnContext<'_, '_, '_> {
             let storage_index = map_storage.next_tile_index(key);
             let tile_entity = commands
                 .spawn((
-                    Name::new(format!("TiledMapTile({},{})", tile_pos.x, tile_pos.y)),
+                    tile_name(&tile_pos),
+                    tile_render_placeholder(&tile_pos),
                     TiledTile::new(tileset_id, tile_id),
                     tile_pos,
                     TileFlip {

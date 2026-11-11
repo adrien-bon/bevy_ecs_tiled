@@ -50,6 +50,8 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Without the `render` feature, images and texture atlas layouts are not loaded anymore: `ImagePlugin` and `TextureAtlasPlugin` are no longer required to load a map, which can be done on a headless server
 - Without the `render` feature, nothing is displayed: objects do not have any visual (tile sprite or text), image layers do not have a `Sprite`, `TiledImage::image` and `TiledAnimation` do not exist
 - The `text` and `debug` features now enable the `render` feature
+- Repeated images position and size are only updated once per frame, during `TiledPostUpdateSystems::SyncRender`: `TiledUpdateSystems::UpdateTiledImagePositionAndSize` is not used anymore
+- Tiles entities only have a `Name` component when the `debug` feature is enabled
 - Physics: modifying `TiledPhysicsSettings` no longer respawns the map (or world): only colliders are spawned again, so modifications made to the map at runtime are kept
 - Physics: colliders are computed much faster. Polygons of each kind of tile are only computed once per layer, and are merged using a single union operation instead of pairwise unions
 - Debug plugins draw their gizmos using the `TiledDebugGizmos` group instead of `DefaultGizmoConfigGroup`
@@ -60,6 +62,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Colliders of tiles layers take tiles flips (including diagonal flip) into account
 - Physics: a tiles layer or an object which does not produce any collider anymore (eg. all the tiles of the layer have been despawned) no longer keeps the collider previously inserted on its own entity by the Avian and Rapier backends
 - Physics: additional colliders of a tiles layer or an object (`LineStrip` strategy, or geometry simplification disabled) are despawned when colliders are spawned again, instead of piling up
+- World chunking: a map visible from several cameras is no longer spawned once per camera
 - `layer_from_map()` finds group layers
 - Tilesets and templates cache is actually cleared when a map is hot-reloaded
 - Infinite maps whose tiles layers do not have any chunk no longer get an invalid size

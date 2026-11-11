@@ -43,6 +43,8 @@ crate::tiled::helpers::impl_id!(TilesetId);
 ///   compute physics colliders: layers cannot grow,
 /// - moving a tile to another layer (ie. changing its [`ChildOf`]) is not supported: despawn it and spawn a new one instead.
 ///
+/// Tiles spawned along with their map only have a [`Name`] when the `debug` feature is enabled.
+///
 /// **Note:** Do not add [`Visibility`] or [`Transform`] to tile entities. Rendering is handled at the
 /// [`TiledTilemap`] level via [`TilemapBundle`], and adding
 /// these components to every tile entity can significantly degrade performance due to unnecessary
@@ -308,6 +310,11 @@ pub(crate) mod render {
     ) {
         if render_state.is_some_and(|state| state.tilemap.is_some()) {
             detach_tile(commands, entity, position);
+        } else {
+            // Tiles spawned along with their map have placeholder rendering components
+            commands
+                .entity(entity)
+                .try_remove::<(TilemapId, TileTextureIndex)>();
         }
         commands.entity(entity).insert(TiledTileRenderState {
             tilemap: None,
@@ -497,8 +504,10 @@ pub(crate) mod render {
 
             // Then update the tile rendering components
             let mut entity_commands = commands.entity(entity);
+            // Nothing to remove if the tile was not rendered yet
             if render_state.is_some_and(|state| {
-                state.tilemap != Some(tilemap_entity) || state.position != *tile_pos
+                state.tilemap.is_some()
+                    && (state.tilemap != Some(tilemap_entity) || state.position != *tile_pos)
             }) {
                 // The tile changed of tilemap or position: removing then re-inserting its TilePos
                 // makes sure it is removed from its previous location in bevy_ecs_tilemap render
