@@ -62,7 +62,7 @@ impl<T: TiledPhysicsBackend> Plugin for TiledPhysicsPlugin<T> {
                 .in_set(TiledPostUpdateSystems::SyncPhysics),
         );
         app.add_observer(on_tile_removed::<T>);
-        app.add_observer(on_object_removed);
+        app.add_observer(on_object_removed::<T>);
         app.add_plugins((backend::plugin, collider::plugin, settings::plugin::<T>));
     }
 }
@@ -113,24 +113,45 @@ fn on_tile_removed<T: TiledPhysicsBackend>(
 }
 
 /// Despawn the colliders of an object when its [`TiledObject`] component is removed
-fn on_object_removed(
+fn on_object_removed<T: TiledPhysicsBackend>(
     removed: On<Remove<TiledObject>>,
     mut commands: Commands,
-    colliders_query: Query<&TiledColliders>,
+    objects_query: Query<(&TiledColliders, &TiledMapReference)>,
+    maps_query: Query<&TiledPhysicsSettings<T>>,
 ) {
+    let Ok((colliders, map_ref)) = objects_query.get(removed.entity) else {
+        return;
+    };
+    let Ok(settings) = maps_query.get(map_ref.0) else {
+        return;
+    };
     despawn_colliders(
+        &settings.backend,
         &mut commands,
         removed.entity,
-        colliders_query.get(removed.entity).ok(),
+        Some(colliders),
     );
 }
 
-/// Despawn previous colliders of a Tiled entity, except if the collider is the entity itself
-fn despawn_colliders(commands: &mut Commands, entity: Entity, colliders: Option<&TiledColliders>) {
+/// Despawn previous colliders of a Tiled entity.
+///
+/// If the collider is the entity itself, the entity is kept
+/// and only its physics and collider components are removed.
+fn despawn_colliders<T: TiledPhysicsBackend>(
+    backend: &T,
+    commands: &mut Commands,
+    entity: Entity,
+    colliders: Option<&TiledColliders>,
+) {
     for collider in colliders.into_iter().flat_map(|c| c.iter()) {
         if collider != entity {
             // Colliders are also children of their source: they may already be despawned
             commands.entity(collider).try_despawn();
+        } else {
+            backend.remove_colliders(commands, entity);
+            commands
+                .entity(entity)
+                .try_remove::<(TiledColliderSource, TiledColliderPolygons, TiledColliderOf)>();
         }
     }
 }
@@ -189,7 +210,7 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
             .entity(layer_entity)
             .remove::<TiledTilesLayerCollidersDirty<T>>();
 
-        despawn_colliders(&mut commands, layer_entity, colliders);
+        despawn_colliders(&settings.backend, &mut commands, layer_entity, colliders);
 
         if !settings.tiles_layer_filter.matches(&layer_name.0) {
             continue;
@@ -266,7 +287,7 @@ fn update_objects_colliders<T: TiledPhysicsBackend>(
             continue;
         };
 
-        despawn_colliders(&mut commands, object_entity, colliders);
+        despawn_colliders(&settings.backend, &mut commands, object_entity, colliders);
 
         if !settings.objects_layer_filter.matches(&layer_name.0)
             || !settings.objects_filter.matches(&object_name.0)

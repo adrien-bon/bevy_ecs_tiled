@@ -133,4 +133,8 @@ impl TiledPhysicsBackend for TiledPhysicsAvianBackend {
         }
         out
     }
+
+    fn remove_colliders(&self, commands: &mut Commands, origin: Entity) {
+        commands.entity(origin).try_remove::<Collider>();
+    }
 }

@@ -50,10 +50,9 @@ pub trait TiledPhysicsBackend:
     /// Colliders are spawned again when their source changes (for instance when a tile of the layer is
     /// added, modified or removed): previous collider entities are then despawned before calling this function.
     ///
-    /// However, if colliders are inserted on `origin` itself, they are never removed: they are only replaced
-    /// the next time this function is called, which does not happen if the source does not produce any
-    /// collider anymore (eg. all the tiles of a layer have been despawned).
-    /// Prefer spawning colliders on a dedicated child entity, as the built-in backends do.
+    /// If colliders are inserted on `origin` itself, as the built-in backends do for the first collider,
+    /// this entity is obviously not despawned: [`TiledPhysicsBackend::remove_colliders`] is called instead
+    /// and must remove the physics components this function inserted.
     fn spawn_colliders(
         &self,
         commands: &mut Commands,
@@ -61,6 +60,17 @@ pub trait TiledPhysicsBackend:
         origin: Entity,
         multi_polygons_list: Vec<geo::MultiPolygon<f32>>,
     ) -> Option<Entity>;
+
+    /// Removes the physics components inserted on `origin` itself by [`TiledPhysicsBackend::spawn_colliders`].
+    ///
+    /// This function is called before spawning again the colliders of `origin`, or when it does not
+    /// produce any collider anymore (eg. all the tiles of a layer have been despawned), if
+    /// [`TiledPhysicsBackend::spawn_colliders`] returned `origin`. Colliders spawned on other entities are
+    /// automatically despawned.
+    ///
+    /// The default implementation does nothing: it is only suitable for backends which never
+    /// insert components on `origin`.
+    fn remove_colliders(&self, _commands: &mut Commands, _origin: Entity) {}
 }
 
 pub(crate) fn plugin(_app: &mut App) {

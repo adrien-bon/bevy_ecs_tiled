@@ -1536,6 +1536,46 @@ mod physics {
     }
 }
 
+/// Tests using a physics backend provided by the crate
+#[cfg(feature = "avian")]
+mod physics_avian {
+    use super::*;
+    use avian2d::prelude::Collider;
+
+    #[test]
+    fn colliders_are_removed_from_emptied_sources() {
+        let mut app = test_app();
+        app.add_plugins(TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default());
+        spawn_test_map(&mut app);
+        let ground = layer_by_name(&mut app, "ground");
+        let has_collider = |app: &mut App, entity: Entity| {
+            let on_entity = app.world().get::<Collider>(entity).is_some();
+            let on_children = app
+                .world_mut()
+                .query_filtered::<&ChildOf, With<Collider>>()
+                .iter(app.world())
+                .any(|c| c.parent() == entity);
+            on_entity || on_children
+        };
+        assert!(has_collider(&mut app, ground));
+
+        // Despawn all the tiles of the layer: it should not have any collider anymore
+        for pos in [TilePos::new(0, 3), TilePos::new(1, 3)] {
+            let tile = tile_at(&mut app, ground, pos);
+            app.world_mut().entity_mut(tile).despawn();
+        }
+        app.update();
+        assert!(!has_collider(&mut app, ground));
+
+        // Same for an object whose shape does not produce a collider anymore
+        let rectangle = object_by_name(&mut app, "rectangle");
+        assert!(has_collider(&mut app, rectangle));
+        *app.world_mut().get_mut::<TiledObject>(rectangle).unwrap() = TiledObject::Point;
+        app.update();
+        assert!(!has_collider(&mut app, rectangle));
+    }
+}
+
 #[cfg(all(feature = "user_properties", feature = "render"))]
 mod properties {
     use super::*;
