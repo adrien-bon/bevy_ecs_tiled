@@ -119,19 +119,15 @@ name = "map_spawn_delay"
 
 [[example]]
 name = "map_anchor"
-required-features = ["debug"]
 
 [[example]]
 name = "orientation_hexagonal"
-required-features = ["debug"]
 
 [[example]]
 name = "orientation_isometric"
-required-features = ["debug"]
 
 [[example]]
 name = "orientation_orthogonal"
-required-features = ["debug"]
 
 [[example]]
 name = "physics_avian_controller"
@@ -171,8 +167,8 @@ required-features = ["world"]
 
 [[example]]
 name = "world_chunking"
-required-features = ["debug", "world"]
+required-features = ["world"]
 
 [[example]]
 name = "world_orientation"
-required-features = ["debug", "world"]
+required-features = ["world"]

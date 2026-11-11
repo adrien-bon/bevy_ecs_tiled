@@ -15,8 +15,6 @@ fn main() {
         // Examples helper plugins, such as the logic to pan and zoom the camera
         // This should not be used directly in your game (but you can always have a look)
         .add_plugins(helper::HelperPlugin)
-        // Add bevy_ecs_tiled debug plugins
-        .add_plugins(TiledDebugPluginGroup)
         // Add our systems and run the app!
         .add_systems(Startup, startup)
         .add_systems(Update, switch_map)

@@ -19,6 +19,8 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Tile objects inherit the custom properties of their tile, and tile properties are inserted on tiles and tile objects spawned after the map has been loaded
 - Add `world` feature, enabled by default: without it, Tiled worlds (`.world` files) support is not compiled
 - Add isometric and hexagonal worlds, and the `world_orientation` example
+- Add `TiledDebugGizmos` gizmo config group, used by all debug plugins, and `tiled_debug_gizmos_enabled` run condition: debug gizmos can be configured or hidden at runtime using `GizmoConfigStore`
+- Add `TiledDebugTogglePlugin`, part of `TiledDebugPluginGroup`, to toggle debug gizmos display using a keyboard key (none by default)
 
 ### Changed
 
@@ -38,6 +40,8 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Without the `render` feature, images and texture atlas layouts are not loaded anymore: `ImagePlugin` and `TextureAtlasPlugin` are no longer required to load a map, which can be done on a headless server
 - Without the `render` feature, nothing is displayed: objects do not have any visual (tile sprite or text), image layers do not have a `Sprite`, `TiledImage::image` and `TiledAnimation` do not exist
 - The `text` and `debug` features now enable the `render` feature
+- Debug plugins draw their gizmos using the `TiledDebugGizmos` group instead of `DefaultGizmoConfigGroup`
+- Examples add all debug plugins through their helper plugin when the `debug` feature is enabled, and debug gizmos can be toggled using the F2 key: `map_anchor`, `orientation_*`, `world_chunking` and `world_orientation` examples no longer require the `debug` feature
 
 ### Fixed
 

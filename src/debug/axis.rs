@@ -3,6 +3,7 @@
 //! This module provides a simple plugin to display the world origin and axes in 2D using Bevy's gizmo system.
 //! It is useful for debugging map alignment, orientation, and coordinate systems in Tiled maps.
 
+use super::{TiledDebugGizmos, tiled_debug_gizmos_enabled};
 use bevy::prelude::*;
 
 #[derive(Debug, Clone, Copy)]
@@ -14,10 +15,11 @@ pub struct TiledDebugAxisPlugin;
 
 impl Plugin for TiledDebugAxisPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, origin_axes);
+        app.init_gizmo_group::<TiledDebugGizmos>()
+            .add_systems(Update, origin_axes.run_if(tiled_debug_gizmos_enabled));
     }
 }
 
-fn origin_axes(mut gizmos: Gizmos) {
+fn origin_axes(mut gizmos: Gizmos<TiledDebugGizmos>) {
     gizmos.axes_2d(Transform::IDENTITY, 1000.0);
 }

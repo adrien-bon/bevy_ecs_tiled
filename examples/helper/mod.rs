@@ -2,6 +2,8 @@ use bevy::{
     dev_tools::diagnostics_overlay::*, diagnostic::FrameTimeDiagnosticsPlugin,
     input::common_conditions::input_toggle_active, prelude::*,
 };
+#[cfg(feature = "debug")]
+use bevy_ecs_tiled::prelude::*;
 use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
 
 pub mod anchor;
@@ -22,6 +24,11 @@ impl Plugin for HelperPlugin {
             DiagnosticsOverlayPlugin,
             FrameTimeDiagnosticsPlugin::default(),
         ));
+        // Display all debug gizmos, which can be toggled using the F2 key.
+        #[cfg(feature = "debug")]
+        app.add_plugins(TiledDebugPluginGroup.set(TiledDebugTogglePlugin {
+            key: Some(KeyCode::F2),
+        }));
         app.add_systems(Startup, (setup_help_text, setup_diagnostics_overlay));
         app.add_systems(Update, (camera::movement, map::rotate));
     }
@@ -40,6 +47,8 @@ fn setup_help_text(mut commands: Commands) {
         ))
         .with_children(|builder| {
             builder.spawn(Text(String::from("Toggle inspector: [F1]")));
+            #[cfg(feature = "debug")]
+            builder.spawn(Text(String::from("Toggle debug gizmos: [F2]")));
             builder.spawn(Text(String::from("Pan camera: [W/A/S/D]")));
             builder.spawn(Text(String::from("Zoom camera: [Z/X]")));
             builder.spawn(Text(String::from("Rotate map / world: [Q/E]")));

@@ -6,6 +6,7 @@
 //!
 //! When enabled, the plugin draws a text above every rendered tile using [`Gizmos`], showing its [`TilePos`] coordinates.
 
+use super::tiled_debug_gizmos_enabled;
 use crate::prelude::*;
 use bevy::{color::palettes::css::FUCHSIA, prelude::*};
 
@@ -52,7 +53,8 @@ impl Plugin for TiledDebugTilesPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.register_type::<TiledDebugTilesConfig>()
             .insert_resource(self.0)
-            .add_systems(Update, draw_tile_infos);
+            .init_gizmo_group::<TiledDebugGizmos>()
+            .add_systems(Update, draw_tile_infos.run_if(tiled_debug_gizmos_enabled));
     }
 }
 
@@ -62,7 +64,7 @@ fn draw_tile_infos(
     map_query: Query<(&TiledMap, &TilemapAnchor)>,
     tilemap_query: Query<&GlobalTransform, With<TiledTilemap>>,
     tile_query: Query<(&TilePos, &TiledTile, &TilemapId, &TiledMapReference)>,
-    mut gizmos: Gizmos,
+    mut gizmos: Gizmos<TiledDebugGizmos>,
 ) {
     for (tile_pos, tiled_tile, tilemap_id, map_ref) in tile_query.iter() {
         let Some((map_asset, anchor)) = map_query

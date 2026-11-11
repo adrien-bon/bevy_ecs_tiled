@@ -9,6 +9,7 @@
 //!
 //! This allows you to easily verify where objects are spawned and how they are oriented in your world.
 
+use super::tiled_debug_gizmos_enabled;
 use crate::prelude::*;
 use bevy::{
     color::palettes::css::{BLUE, FUCHSIA, GREEN, LIME, RED, WHITE, YELLOW},
@@ -68,7 +69,8 @@ impl Plugin for TiledDebugObjectsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.register_type::<TiledDebugObjectsConfig>()
             .insert_resource(self.0.clone())
-            .add_systems(Update, draw_debug_gizmos);
+            .init_gizmo_group::<TiledDebugGizmos>()
+            .add_systems(Update, draw_debug_gizmos.run_if(tiled_debug_gizmos_enabled));
     }
 }
 
@@ -77,7 +79,7 @@ fn draw_debug_gizmos(
     assets: Res<Assets<TiledMapAsset>>,
     object_query: Query<(&TiledObject, &GlobalTransform)>,
     config: Res<TiledDebugObjectsConfig>,
-    mut gizmos: Gizmos,
+    mut gizmos: Gizmos<TiledDebugGizmos>,
 ) {
     for (tiled_map, storage) in map_query.iter() {
         let Some(map_asset) = assets.get(&tiled_map.0) else {

@@ -33,10 +33,11 @@ pub mod prelude {
     pub use super::debug::world_chunk::{TiledDebugWorldChunkConfig, TiledDebugWorldChunkPlugin};
     #[cfg(feature = "debug")]
     pub use super::debug::{
-        TiledDebugPluginGroup,
+        TiledDebugGizmos, TiledDebugPluginGroup, TiledDebugTogglePlugin,
         axis::TiledDebugAxisPlugin,
         map_aabb::{TiledDebugMapAabbConfig, TiledDebugMapAabbPlugin},
         objects::{TiledDebugObjectsConfig, TiledDebugObjectsPlugin},
+        tiled_debug_gizmos_enabled,
         tiles::{TiledDebugTilesConfig, TiledDebugTilesPlugin},
     };
     #[cfg(feature = "avian")]

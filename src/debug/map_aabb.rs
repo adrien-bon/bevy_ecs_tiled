@@ -11,6 +11,7 @@
 //!
 //! Both rectangles should overlap: any mismatch hints at an issue in coordinates conversion.
 
+use super::tiled_debug_gizmos_enabled;
 use crate::prelude::*;
 use bevy::{
     color::palettes::css::{AQUA, ORANGE},
@@ -69,7 +70,8 @@ impl Plugin for TiledDebugMapAabbPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.register_type::<TiledDebugMapAabbConfig>()
             .insert_resource(self.0)
-            .add_systems(Update, draw_maps_aabb);
+            .init_gizmo_group::<TiledDebugGizmos>()
+            .add_systems(Update, draw_maps_aabb.run_if(tiled_debug_gizmos_enabled));
     }
 }
 
@@ -77,7 +79,7 @@ fn draw_maps_aabb(
     map_query: Query<(&TiledMap, &GlobalTransform, &TilemapAnchor)>,
     assets: Res<Assets<TiledMapAsset>>,
     config: Res<TiledDebugMapAabbConfig>,
-    mut gizmos: Gizmos,
+    mut gizmos: Gizmos<TiledDebugGizmos>,
 ) {
     if config.tilemap_aabb_color.is_none() && config.tiled_aabb_color.is_none() {
         return;
@@ -171,7 +173,12 @@ fn tiled_corners(map_asset: &TiledMapAsset, anchor: &TilemapAnchor) -> [Vec2; 4]
     .map(|corner| map_asset.world_space_from_tiled_position(anchor, corner))
 }
 
-fn draw_aabb(gizmos: &mut Gizmos, transform: &GlobalTransform, corners: [Vec2; 4], color: Color) {
+fn draw_aabb(
+    gizmos: &mut Gizmos<TiledDebugGizmos>,
+    transform: &GlobalTransform,
+    corners: [Vec2; 4],
+    color: Color,
+) {
     let corners = corners.map(|c| transform.transform_point(c.extend(0.)).truncate());
     let aabb = Aabb2d::from_point_cloud(Isometry2d::IDENTITY, &corners);
     gizmos.rect_2d(

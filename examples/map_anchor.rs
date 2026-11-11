@@ -20,10 +20,6 @@ fn main() {
         // camera. This should not be used directly in your game (but you can
         // always have a look).
         .add_plugins(helper::HelperPlugin)
-        // Add the axis debug plugin so we can better visualize map anchor changes.
-        .add_plugins(TiledDebugAxisPlugin)
-        // Also display the map bounding box.
-        .add_plugins(TiledDebugMapAabbPlugin::default())
         // Add our systems and run the app!
         .add_systems(Startup, startup)
         .add_systems(Update, change_anchor)

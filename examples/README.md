@@ -21,6 +21,8 @@ Most examples support the following controls:
 - **WASD**: Move the camera
 - **Z/X**: Zoom out / zoom in
 - **A/E**: Rotate the map (not just the camera)
+- **F1**: Toggle the world inspector
+- **F2**: Toggle debug gizmos (requires the `debug` feature)
 
 > **Note for non-QWERTY layouts:**
 > Some keys may differ.
@@ -30,7 +32,7 @@ Most examples support the following controls:
 
 | Name | Required features | Description |
 |------|-------------------|-------------|
-| `map_anchor` | `debug` | This example shows the basic usage of `TilemapAnchor`. |
+| `map_anchor` | None | This example shows the basic usage of `TilemapAnchor`. |
 | `map_basic` | None | This example shows the basic usage of the plugin to load a Tiled map. |
 | `map_bsn` | None | This example shows the basic usage of the plugin with the Bevy bsn! macro. |
 | `map_dynamic` | None | This example shows how to modify a map (tiles, objects) after it has been spawned. |
@@ -40,9 +42,9 @@ Most examples support the following controls:
 | `map_settings` | None | This example cycles through different map settings that can be applied. |
 | `map_spawn_delay` | None | This example will delay map spawn from asset loading to demonstrate both are decoupled. |
 | `map_text` | text | This example demonstrates loading a map with a Tiled text. |
-| `orientation_hexagonal` | `debug` | This example cycles through different kinds of hexagonal maps. |
-| `orientation_isometric` | `debug` | This example cycles through different kinds of isometric maps. |
-| `orientation_orthogonal` | `debug` | This example cycles through different kinds of orthogonal maps. |
+| `orientation_hexagonal` | None | This example cycles through different kinds of hexagonal maps. |
+| `orientation_isometric` | None | This example cycles through different kinds of isometric maps. |
+| `orientation_orthogonal` | None | This example cycles through different kinds of orthogonal maps. |
 | `physics_avian_controller` | `avian_debug` | This example shows a simple player-controlled object using Avian2D physics. You can move the object using arrow keys. |
 | `physics_avian_orientation` | `avian_debug` | This example shows Avian2D physics backend with various map orientation. |
 | `physics_avian_settings` | `avian_debug` | This example shows how to use Avian2D physics backend. |
@@ -52,5 +54,5 @@ Most examples support the following controls:
 | `physics_rapier_settings` | `rapier_debug` | This example shows how to use Rapier physics backend. |
 | `properties_basic` | `user_properties` | This example shows how to map custom tiles and objects properties from Tiled to Bevy Components. |
 | `world_basic` | `world` | This example shows the basic usage of the plugin to load a Tiled world. |
-| `world_chunking` | `debug`, `world` | This example shows how to load Tiled World files and demonstrates chunking the loaded maps. |
-| `world_orientation` | `debug`, `world` | This example cycles through Tiled worlds made of maps with different orientations. |
+| `world_chunking` | `world` | This example shows how to load Tiled World files and demonstrates chunking the loaded maps. |
+| `world_orientation` | `world` | This example cycles through Tiled worlds made of maps with different orientations. |
