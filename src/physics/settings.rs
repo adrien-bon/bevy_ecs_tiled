@@ -4,6 +4,7 @@
 //! for Tiled maps and worlds in Bevy. It notably provides filtering options for selecting which Tiled objects and tiles
 //! should receive colliders.
 
+use super::{TiledCollidersDirty, TiledLayerColliders};
 use crate::prelude::*;
 use bevy::prelude::*;
 
@@ -12,9 +13,8 @@ use bevy::prelude::*;
 /// Allows filtering which objects and tiles receive colliders.
 /// Attach this component to TiledWorld or TiledMap entities to control their physics behavior.
 ///
-/// Note that modifying this component respawns the whole map (or world) from its asset, so colliders
-/// are computed again: all the modifications made to its layers, tiles or objects since it has been
-/// spawned are lost.
+/// Modifying this component spawns again all the colliders of the map, without respawning the map itself.
+/// Maps of a world inherit the settings of the world, including when they are modified.
 #[derive(Component, Reflect, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
 pub struct TiledPhysicsSettings<T: TiledPhysicsBackend> {
@@ -136,24 +136,40 @@ fn initialize_settings_for_maps<T: TiledPhysicsBackend>(
     }
 }
 
+/// Update colliders when physics settings are modified.
+///
+/// Colliders are derived from tiles and objects entities: there is no need to respawn the map.
 fn handle_settings_update<T: TiledPhysicsBackend>(
     mut commands: Commands,
-    maps_query: Query<(Entity, Ref<TiledPhysicsSettings<T>>), With<TiledMap>>,
+    maps_query: Query<&TiledMapStorage, (With<TiledMap>, Changed<TiledPhysicsSettings<T>>)>,
+    mut layers_query: Query<&mut TiledLayerColliders<T>>,
     #[cfg(feature = "world")] worlds_query: Query<
-        (Entity, Ref<TiledPhysicsSettings<T>>),
+        (Ref<TiledPhysicsSettings<T>>, &TiledWorldStorage),
         With<TiledWorld>,
     >,
 ) {
+    // Maps inherit the settings of their world: they are processed on next frame
     #[cfg(feature = "world")]
-    for (world, settings) in worlds_query.iter() {
+    for (settings, storage) in worlds_query.iter() {
         if settings.is_changed() && !settings.is_added() {
-            commands.entity(world).insert(RespawnTiledWorld);
+            for (_, map) in storage.maps() {
+                commands
+                    .entity(map)
+                    .try_insert(TiledPhysicsSettings::clone(&settings));
+            }
         }
     }
 
-    for (map, settings) in maps_query.iter() {
-        if settings.is_changed() && !settings.is_added() {
-            commands.entity(map).insert(RespawnTiledMap);
+    for storage in maps_query.iter() {
+        for layer in storage.layers() {
+            if let Ok(mut colliders) = layers_query.get_mut(layer) {
+                colliders.mark_all_dirty();
+            }
+        }
+        for object in storage.objects() {
+            commands
+                .entity(object)
+                .try_insert(TiledCollidersDirty::<T>::default());
         }
     }
 }

@@ -50,6 +50,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Without the `render` feature, images and texture atlas layouts are not loaded anymore: `ImagePlugin` and `TextureAtlasPlugin` are no longer required to load a map, which can be done on a headless server
 - Without the `render` feature, nothing is displayed: objects do not have any visual (tile sprite or text), image layers do not have a `Sprite`, `TiledImage::image` and `TiledAnimation` do not exist
 - The `text` and `debug` features now enable the `render` feature
+- Physics: modifying `TiledPhysicsSettings` no longer respawns the map (or world): only colliders are spawned again, so modifications made to the map at runtime are kept
 - Physics: colliders are computed much faster. Polygons of each kind of tile are only computed once per layer, and are merged using a single union operation instead of pairwise unions
 - Debug plugins draw their gizmos using the `TiledDebugGizmos` group instead of `DefaultGizmoConfigGroup`
 - Examples add all debug plugins through their helper plugin when the `debug` feature is enabled, and debug gizmos can be toggled using the F2 key: `map_anchor`, `orientation_*`, `world_chunking` and `world_orientation` examples no longer require the `debug` feature

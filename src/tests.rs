@@ -1782,6 +1782,55 @@ mod physics {
     }
 
     #[test]
+    fn modifying_settings_updates_colliders_without_respawning_the_map() {
+        let mut app = test_app();
+        app.add_plugins(TiledPhysicsPlugin::<TestBackend>::default());
+        let map = spawn_test_map(&mut app);
+        let ground = layer_by_name(&mut app, "ground");
+        let rectangle = object_by_name(&mut app, "rectangle");
+
+        // A modification made to the map at runtime
+        let tile = tile_at(&mut app, ground, TilePos::new(0, 3));
+        app.world_mut().entity_mut(tile).despawn();
+        app.update();
+        assert_eq!(colliders_area(&app, ground), vec![256.]);
+
+        let mut settings = app
+            .world_mut()
+            .get_mut::<TiledPhysicsSettings<TestBackend>>(map)
+            .unwrap();
+        settings.collider_strategy = TiledColliderStrategy::Triangulation;
+        settings.tiles_chunk_size = Some(UVec2::ONE);
+        app.update();
+
+        // Colliders follow the new settings, layers and objects are the same entities
+        // and the runtime modification is kept
+        assert_eq!(layer_by_name(&mut app, "ground"), ground);
+        assert_eq!(object_by_name(&mut app, "rectangle"), rectangle);
+        assert_eq!(collider_chunks(&mut app, ground).len(), 1);
+        assert_eq!(
+            colliders_strategies(&app, ground),
+            vec![TiledColliderStrategy::Triangulation]
+        );
+        assert_eq!(
+            colliders_strategies(&app, rectangle),
+            vec![TiledColliderStrategy::Triangulation]
+        );
+
+        // Filters are applied as well
+        let mut settings = app
+            .world_mut()
+            .get_mut::<TiledPhysicsSettings<TestBackend>>(map)
+            .unwrap();
+        settings.tiles_layer_filter = TiledFilter::None;
+        settings.objects_filter = TiledFilter::None;
+        app.update();
+        assert!(colliders_area(&app, ground).is_empty());
+        assert!(colliders_area(&app, rectangle).is_empty());
+        assert_eq!(layer_by_name(&mut app, "ground"), ground);
+    }
+
+    #[test]
     fn layers_are_not_chunked_by_default() {
         let mut app = test_app();
         app.add_plugins(TiledPhysicsPlugin::<TestBackend>::default());

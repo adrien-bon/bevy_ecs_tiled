@@ -48,7 +48,7 @@ pub enum TiledUpdateSystems {
 pub enum TiledPostUpdateSystems {
     /// Marker for the first system in the post-update phase.
     First,
-    /// Handle any physics settings update by respawning either the world or the map.
+    /// Handle any physics settings update by requesting an update of the colliders of the map.
     HandlePhysicsSettingsUpdate,
     /// Handles asset events for Tiled worlds.
     HandleWorldAssetEvents,

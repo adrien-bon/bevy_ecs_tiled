@@ -83,7 +83,7 @@ impl<T: TiledPhysicsBackend> Plugin for TiledPhysicsPlugin<T> {
 
 /// Marker [`Component`] for a [`TiledObject`] whose colliders must be updated.
 #[derive(Component)]
-struct TiledCollidersDirty<T: TiledPhysicsBackend>(PhantomData<T>);
+pub(crate) struct TiledCollidersDirty<T: TiledPhysicsBackend>(PhantomData<T>);
 
 impl<T: TiledPhysicsBackend> Default for TiledCollidersDirty<T> {
     fn default() -> Self {
@@ -95,7 +95,7 @@ impl<T: TiledPhysicsBackend> Default for TiledCollidersDirty<T> {
 ///
 /// Colliders are split in chunks of tiles: without chunking, the layer is made of a single chunk.
 #[derive(Component)]
-struct TiledLayerColliders<T: TiledPhysicsBackend> {
+pub(crate) struct TiledLayerColliders<T: TiledPhysicsBackend> {
     /// Whether all the colliders of the layer must be updated
     dirty_all: bool,
     /// Positions whose tile has been added, modified or removed since colliders were last updated
@@ -122,6 +122,11 @@ impl<T: TiledPhysicsBackend> Default for TiledLayerColliders<T> {
 impl<T: TiledPhysicsBackend> TiledLayerColliders<T> {
     fn is_dirty(&self) -> bool {
         self.dirty_all || !self.dirty_positions.is_empty()
+    }
+
+    /// Request an update of all the colliders of the layer
+    pub(crate) fn mark_all_dirty(&mut self) {
+        self.dirty_all = true;
     }
 }
 
