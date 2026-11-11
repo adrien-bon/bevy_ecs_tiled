@@ -6,8 +6,8 @@
 //! Colliders are computed from tiles and objects entities, and spawned again when these entities change.
 
 use crate::{prelude::*, tiled::helpers::tilemap_offset};
-use ::geo::{BooleanOps, MapCoords};
-use bevy::prelude::*;
+use ::geo::{MapCoords, Orient};
+use bevy::{platform::collections::HashMap, prelude::*};
 
 /// Marker component for collider's source
 ///
@@ -250,6 +250,67 @@ fn flip_tile_coord(coord: geo::Coord<f32>, size: Vec2, flip: &TileFlip) -> geo::
     }
 }
 
+/// Collider polygons of the tiles of a map, by tileset ID, [`tiled::TileId`] and [`TileFlip`].
+///
+/// Many tiles of a layer usually share the same tile: its polygons are only computed once,
+/// then translated for each tile. A cache is only valid for a given map asset and filter.
+#[derive(Default)]
+pub(crate) struct TilesPolygonsCache(
+    HashMap<(TilesetId, tiled::TileId, [bool; 3]), Option<CachedTilePolygons>>,
+);
+
+/// Collider polygons of a tile
+struct CachedTilePolygons {
+    /// Polygons, relative to the tile bottom-left corner, with tile flips applied
+    polygons: Vec<geo::Polygon<f32>>,
+    /// Size of the tile
+    tile_size: TilemapTileSize,
+    /// Offset of the tile tilemap
+    offset: Vec2,
+}
+
+impl CachedTilePolygons {
+    fn new(
+        map_asset: &TiledMapAsset,
+        tileset_id: TilesetId,
+        tile_id: tiled::TileId,
+        flip: &TileFlip,
+        filter: &TiledFilter,
+    ) -> Option<Self> {
+        let tile = map_asset.tile(tileset_id, tile_id)?;
+        let collision = tile.collision.as_ref()?;
+        let tile_size = tile_size(&tile);
+        let size = Vec2::new(tile_size.x, tile_size.y);
+        let flipped = flip.x || flip.y || flip.d;
+        // Compute polygons relative to the tile bottom-left corner, then apply tile flips
+        let polygons = polygons_from_tile(
+            map_asset,
+            collision,
+            filter,
+            &tile_size,
+            Vec2::ZERO,
+            Vec2::ONE,
+        )
+        .into_iter()
+        .map(|polygon| {
+            if flipped {
+                polygon.map_coords(|coord| flip_tile_coord(coord, size, flip))
+            } else {
+                polygon
+            }
+        })
+        .collect::<Vec<_>>();
+        if polygons.is_empty() {
+            return None;
+        }
+        Some(Self {
+            polygons,
+            tile_size,
+            offset: tilemap_offset(&map_asset.map, tile.tileset()),
+        })
+    }
+}
+
 /// Compute the collider polygons of a set of tiles, relative to their parent [`TiledLayer::Tiles`].
 ///
 /// Tiles are given as their position, tileset ID, [`tiled::TileId`] and [`TileFlip`].
@@ -259,6 +320,7 @@ pub(crate) fn tiles_polygons(
     anchor: &TilemapAnchor,
     tiles: impl Iterator<Item = (TilePos, TilesetId, tiled::TileId, TileFlip)>,
     filter: &TiledFilter,
+    cache: &mut TilesPolygonsCache,
 ) -> Vec<geo::Polygon<f32>> {
     let mut acc = vec![];
     for (tile_pos, tileset_id, tile_id, flip) in tiles {
@@ -266,44 +328,25 @@ pub(crate) fn tiles_polygons(
         if !tile_pos.within_map_bounds(&map_asset.tilemap_size) {
             continue;
         }
-        let Some(tile) = map_asset.tile(tileset_id, tile_id) else {
+        let Some(cached) = cache
+            .0
+            .entry((tileset_id, tile_id, [flip.x, flip.y, flip.d]))
+            .or_insert_with(|| {
+                CachedTilePolygons::new(map_asset, tileset_id, tile_id, &flip, filter)
+            })
+        else {
             continue;
         };
-        let Some(collision) = &tile.collision else {
-            continue;
-        };
-        let tile_size = tile_size(&tile);
-        let tile_position = map_asset.tile_relative_position(&tile_pos, &tile_size, anchor)
-            + tilemap_offset(&map_asset.map, tile.tileset());
-        let size = Vec2::new(tile_size.x, tile_size.y);
-        let bottom_left = tile_position - size / 2.;
-        let flipped = flip.x || flip.y || flip.d;
-        // Compute polygons relative to the tile bottom-left corner, apply
-        // tile flips then move them to the actual tile position
-        acc.extend(
-            polygons_from_tile(
-                map_asset,
-                collision,
-                filter,
-                &tile_size,
-                Vec2::ZERO,
-                Vec2::ONE,
-            )
-            .into_iter()
-            .map(|polygon| {
-                polygon.map_coords(|coord| {
-                    let coord = if flipped {
-                        flip_tile_coord(coord, size, &flip)
-                    } else {
-                        coord
-                    };
-                    geo::Coord {
-                        x: coord.x + bottom_left.x,
-                        y: coord.y + bottom_left.y,
-                    }
-                })
-            }),
-        );
+        // Move polygons to the actual tile position
+        let tile_position =
+            map_asset.tile_relative_position(&tile_pos, &cached.tile_size, anchor) + cached.offset;
+        let bottom_left = tile_position - Vec2::new(cached.tile_size.x, cached.tile_size.y) / 2.;
+        acc.extend(cached.polygons.iter().map(|polygon| {
+            polygon.map_coords(|coord| geo::Coord {
+                x: coord.x + bottom_left.x,
+                y: coord.y + bottom_left.y,
+            })
+        }));
     }
     acc
 }
@@ -335,24 +378,21 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
         return vec![];
     }
 
-    let geometries = polygons
-        .into_iter()
-        .map(|p| geo::MultiPolygon::new(vec![p]))
-        .collect::<Vec<_>>();
-
-    // Try to simplify geometry by merging together adjacent polygons
-    let geometries = if !disable_geometry_simplification && settings.simplify_geometry {
-        let Some(geometry) = simplify_geometry(geometries, |a, b| a.union(&b)) else {
-            warn!(
-                "Failed to simplify geometry, skipping this polygon (entity {})",
-                collider_created.origin
-            );
-            return vec![];
+    // Try to simplify geometry by merging together adjacent polygons: nothing to merge for a single one
+    let geometries =
+        if polygons.len() > 1 && !disable_geometry_simplification && settings.simplify_geometry {
+            // Boolean operations expect a consistent winding order
+            let polygons = polygons
+                .into_iter()
+                .map(|polygon| polygon.orient(::geo::orient::Direction::Default))
+                .collect::<Vec<_>>();
+            vec![::geo::unary_union(&polygons)]
+        } else {
+            polygons
+                .into_iter()
+                .map(|polygon| geo::MultiPolygon::new(vec![polygon]))
+                .collect()
         };
-        vec![geometry]
-    } else {
-        geometries
-    };
 
     let source = collider_created.event.source;
     let collider_of = collider_created.event.collider_of;

@@ -362,6 +362,8 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
         .collect::<Vec<_>>();
         // Spawn chunks in a deterministic order
         dirty_chunks.sort_unstable_by_key(|chunk| (chunk.y, chunk.x));
+        // Polygons of each kind of tile are the same for all the chunks of the layer
+        let mut polygons_cache = collider::TilesPolygonsCache::default();
 
         for chunk in dirty_chunks {
             if let Some(entities) = colliders.chunks.remove(&chunk) {
@@ -384,8 +386,13 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
                     .ok()
                     .map(|(tile, flip)| (position, tile.tileset_id, tile.tile_id, *flip))
             });
-            let polygons =
-                collider::tiles_polygons(map_asset, anchor, tiles, &settings.tiles_objects_filter);
+            let polygons = collider::tiles_polygons(
+                map_asset,
+                anchor,
+                tiles,
+                &settings.tiles_objects_filter,
+                &mut polygons_cache,
+            );
 
             let event = TiledEvent::new(
                 layer_entity,
