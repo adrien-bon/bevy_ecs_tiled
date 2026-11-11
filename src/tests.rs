@@ -2,7 +2,7 @@
 //! Tiled data components when they are modified after the map has been spawned.
 
 use crate::prelude::*;
-use bevy::{asset::LoadState, platform::collections::HashMap, prelude::*};
+use bevy::{asset::LoadState, prelude::*};
 use std::time::{Duration, Instant};
 
 const DYNAMIC_MAP: &str = "tests/dynamic/dynamic_map.tmx";
@@ -374,12 +374,14 @@ fn tiles_of_different_layers_at_the_same_position_are_kept() {
         .id();
     app.update();
     assert!(app.world().get_entity(ground_tile).is_ok());
-    let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    let mut tiles = storage.tiles_at(TilePos::new(0, 3)).to_vec();
-    tiles.sort();
-    let mut expected = vec![ground_tile, decoration_tile];
-    expected.sort();
-    assert_eq!(tiles, expected);
+    let tile_of = |layer| {
+        app.world()
+            .get::<TiledTileLayerStorage>(layer)
+            .unwrap()
+            .get(TilePos::new(0, 3))
+    };
+    assert_eq!(tile_of(ground), Some(ground_tile));
+    assert_eq!(tile_of(decoration), Some(decoration_tile));
     assert_eq!(layer_index(&app, ground), layer_tiles(&mut app, ground));
     assert_eq!(
         layer_index(&app, decoration),
@@ -417,21 +419,11 @@ fn tiles_of_different_layers_at_the_same_position_are_kept() {
     assert_eq!(layer_index(&app, layer), vec![(TilePos::new(2, 2), tile)]);
 }
 
-/// Tiles of a layer, as registered in its map storage positions index
+/// Tiles of a layer, as registered in its storage
 fn layer_index(app: &App, layer: Entity) -> Vec<(TilePos, Entity)> {
-    let world = app.world();
-    let map = world.get::<TiledMapReference>(layer).unwrap().0;
-    let storage = world.get::<TiledMapStorage>(map).unwrap();
-    let mut tiles = storage
-        .tiles_positions
-        .iter()
-        .flat_map(|(pos, entities)| entities.iter().map(move |e| (*pos, *e)))
-        .filter(|(_, e)| {
-            world
-                .get::<ChildOf>(*e)
-                .is_some_and(|c| c.parent() == layer)
-        })
-        .collect::<Vec<_>>();
+    let storage = app.world().get::<TiledTileLayerStorage>(layer).unwrap();
+    let mut tiles = storage.iter().collect::<Vec<_>>();
+    assert_eq!(tiles.len(), storage.len());
     tiles.sort();
     tiles
 }
@@ -772,28 +764,14 @@ fn assert_storage_matches_tiles(app: &mut App, map: Entity) {
         assert_eq!(index, Some((key, position.unwrap())));
     }
 
-    // The positions index holds exactly the tiles at each position
-    let mut expected = app
+    // Layers storages hold exactly the tiles of each layer, at their position
+    let layers = app
         .world_mut()
-        .query_filtered::<(Entity, &TilePos), With<TiledTile>>()
+        .query_filtered::<Entity, With<TiledLayer>>()
         .iter(app.world())
-        .fold(
-            HashMap::<TilePos, Vec<Entity>>::default(),
-            |mut positions, (entity, pos)| {
-                positions.entry(*pos).or_default().push(entity);
-                positions
-            },
-        );
-    let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    let mut actual = storage.tiles_positions.clone();
-    for entities in expected.values_mut().chain(actual.values_mut()) {
-        entities.sort();
-    }
-    assert_eq!(actual, expected);
-    for (position, entities) in expected {
-        let mut at = storage.tiles_at(position).to_vec();
-        at.sort();
-        assert_eq!(at, entities);
+        .collect::<Vec<_>>();
+    for layer in layers {
+        assert_eq!(layer_index(app, layer), layer_tiles(app, layer));
     }
 
     #[cfg(feature = "render")]
@@ -811,12 +789,15 @@ fn storage_indexes_tiles_positions() {
     let a = tile_at(&mut app, ground, TilePos::new(0, 3));
     let b = tile_at(&mut app, ground, TilePos::new(1, 3));
     let tiles_at = |app: &App, x, y| {
-        let mut tiles = app
-            .world()
-            .get::<TiledMapStorage>(map)
-            .unwrap()
-            .tiles_at(TilePos::new(x, y))
-            .to_vec();
+        let mut tiles = [ground, decoration]
+            .into_iter()
+            .filter_map(|layer| {
+                app.world()
+                    .get::<TiledTileLayerStorage>(layer)
+                    .unwrap()
+                    .get(TilePos::new(x, y))
+            })
+            .collect::<Vec<_>>();
         tiles.sort();
         tiles
     };
@@ -1280,6 +1261,7 @@ fn moving_tiles_on_hexagonal_map() {
 mod physics {
     use super::*;
     use ::geo::{Area, BoundingRect};
+    use bevy::platform::collections::HashMap;
 
     /// Physics backend whose colliders do not hold any physics component
     #[derive(Default, Clone, Debug, Reflect)]

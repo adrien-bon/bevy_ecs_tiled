@@ -283,6 +283,7 @@ impl SpawnContext<'_, '_, '_> {
         let map_storage = &mut *self.map_storage;
         let tile_events = &mut self.tile_events;
         let layer_entity = layer_event.origin;
+        let mut layer_storage = TiledTileLayerStorage::default();
 
         // Only spawn tiles data: associated tilemaps, which hold the actual rendering
         // components, are derived from these data in `TiledPostUpdateSystems::SyncRender`
@@ -325,8 +326,9 @@ impl SpawnContext<'_, '_, '_> {
             let index = map_storage.insert_tile(key, tile_entity);
             debug_assert_eq!(index, storage_index);
             // Index the tile position right away, so it does not need to be indexed in `TiledPostUpdateSystems::SyncMapStorage`
-            map_storage.insert_tile_position(tile_pos, tile_entity);
+            layer_storage.set(tile_pos, tile_entity);
         });
+        commands.entity(layer_entity).insert(layer_storage);
     }
 
     fn spawn_objects_layer(

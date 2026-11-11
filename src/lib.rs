@@ -69,7 +69,9 @@ pub mod prelude {
             tilemap_type_from_map, tileset_from_map, try_tilemap_type_from_map,
         },
         image::TiledImage,
-        layer::{LayerId, TiledLayer, TiledLayerParallax, TiledParallaxCamera},
+        layer::{
+            LayerId, TiledLayer, TiledLayerParallax, TiledParallaxCamera, TiledTileLayerStorage,
+        },
         map::{
             RespawnTiledMap, TiledMap, TiledMapImageRepeatMargin, TiledMapLayerZOffset,
             TiledMapReference, asset::TiledMapAsset, loader::TiledMapLoaderError,

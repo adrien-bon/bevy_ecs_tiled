@@ -70,19 +70,13 @@ fn move_tiles(mut tiles: Query<&mut TilePos, With<TiledTile>>) {
 }
 
 /// Despawn the tile at a given position of a given layer
-fn despawn_tile(
-    mut commands: Commands,
-    maps: Query<&TiledMapStorage>,
-    tiles: Query<&ChildOf, With<TiledTile>>,
-) {
+fn despawn_tile(mut commands: Commands, layers: Query<&TiledTileLayerStorage>) {
     let (layer, position) = (Entity::PLACEHOLDER, TilePos::new(3, 4));
-    for storage in maps.iter() {
-        // Tiles of all the layers of the map at this position
-        for &entity in storage.tiles_at(position) {
-            if tiles.get(entity).is_ok_and(|child_of| child_of.parent() == layer) {
-                commands.entity(entity).despawn();
-            }
-        }
+    // Each layer indexes its tiles by their position
+    if let Ok(storage) = layers.get(layer)
+        && let Some(entity) = storage.get(position)
+    {
+        commands.entity(entity).despawn();
     }
 }
 ```
@@ -188,7 +182,8 @@ Two events are however sent when derived entities are spawned:
 
 For instance, if you add a `RigidBody` to colliders when receiving `ColliderCreated` (see the [physics guide](physics.md)), new colliders will get it as well.
 
-The map [`TiledMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/storage/struct.TiledMapStorage.html) is also kept up to date, so you can keep using it to list the layers and objects of the map, to find the entities of a given tile (`tile_entities()`), or the tiles at a given position (`tiles_at()`, whatever their layer).
+The map [`TiledMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/storage/struct.TiledMapStorage.html) is also kept up to date, so you can keep using it to list the layers and objects of the map, or to find the entities of a given tile (`tile_entities()`).
+To find the tile at a given position of a layer, use the [`TiledTileLayerStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/struct.TiledTileLayerStorage.html) component of this layer.
 Layers and objects spawned at runtime are listed after the ones spawned along with the map.
 
 ---
