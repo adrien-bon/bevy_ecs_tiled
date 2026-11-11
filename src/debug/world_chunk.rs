@@ -7,6 +7,7 @@
 //! When enabled, the plugin draws a colored `rect_2d` gizmo for each world render chunk (centered on the camera)
 //! and for each map boundary.
 
+use super::tiled_debug_gizmos_enabled;
 use crate::prelude::*;
 use bevy::{
     color::palettes::css::{BLUE, FUCHSIA, GREEN, LIME, RED, WHITE, YELLOW},
@@ -67,7 +68,11 @@ impl Plugin for TiledDebugWorldChunkPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.register_type::<TiledDebugWorldChunkConfig>()
             .insert_resource(self.0.clone())
-            .add_systems(Update, (draw_camera_rect, draw_maps_rect));
+            .init_gizmo_group::<TiledDebugGizmos>()
+            .add_systems(
+                Update,
+                (draw_camera_rect, draw_maps_rect).run_if(tiled_debug_gizmos_enabled),
+            );
     }
 }
 
@@ -75,7 +80,7 @@ fn draw_camera_rect(
     camera_query: Query<&Transform, (With<Camera>, Changed<Transform>)>,
     world_query: Query<&TiledWorldChunking>,
     config: Res<TiledDebugWorldChunkConfig>,
-    mut gizmos: Gizmos,
+    mut gizmos: Gizmos<TiledDebugGizmos>,
 ) {
     let Some(color) = config.world_chunk_color else {
         return;
@@ -98,7 +103,7 @@ fn draw_maps_rect(
     world_query: Query<(&TiledWorld, &GlobalTransform, &TilemapAnchor)>,
     world_assets: Res<Assets<TiledWorldAsset>>,
     config: Res<TiledDebugWorldChunkConfig>,
-    mut gizmos: Gizmos,
+    mut gizmos: Gizmos<TiledDebugGizmos>,
 ) {
     if config.maps_colors_list.is_empty() {
         return;
