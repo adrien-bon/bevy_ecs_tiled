@@ -17,7 +17,7 @@ struct Received {
 
 /// Build an [`App`] with all the plugin internals but without bevy_ecs_tilemap
 /// [`TilemapPlugin`](bevy_ecs_tilemap::TilemapPlugin), which requires a renderer.
-fn test_app() -> App {
+pub(crate) fn test_app() -> App {
     let mut app = App::new();
     app.add_plugins((MinimalPlugins, AssetPlugin::default()));
     // Without the `render` feature, loading a map must not require any image related plugin
@@ -50,6 +50,8 @@ fn test_app() -> App {
         crate::tiled::sets::plugin,
         crate::tiled::filter::plugin,
         crate::tiled::properties_raw::plugin,
+        #[cfg(feature = "world")]
+        crate::tiled::world::plugin,
     ));
     app.init_resource::<Received>();
     app.add_observer(

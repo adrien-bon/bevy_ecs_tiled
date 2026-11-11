@@ -3,8 +3,15 @@ use bevy_ecs_tiled::prelude::*;
 
 pub type MapInfosCallback = fn(&mut EntityCommands);
 
+/// Handle to the asset to spawn: either a single map or a whole world
+enum AssetHandle {
+    Map(Handle<TiledMapAsset>),
+    #[cfg(feature = "world")]
+    World(Handle<TiledWorldAsset>),
+}
+
 pub struct MapInfos {
-    handle: Handle<TiledMapAsset>,
+    handle: AssetHandle,
     path: String,
     description: String,
     callback: MapInfosCallback,
@@ -18,7 +25,22 @@ impl MapInfos {
         callback: MapInfosCallback,
     ) -> Self {
         Self {
-            handle: asset_server.load(path.to_owned()),
+            handle: AssetHandle::Map(asset_server.load(path.to_owned())),
+            path: path.to_owned(),
+            description: description.to_owned(),
+            callback,
+        }
+    }
+
+    #[cfg(feature = "world")]
+    pub fn new_world(
+        asset_server: &Res<AssetServer>,
+        path: &str,
+        description: &str,
+        callback: MapInfosCallback,
+    ) -> Self {
+        Self {
+            handle: AssetHandle::World(asset_server.load(path.to_owned())),
             path: path.to_owned(),
             description: description.to_owned(),
             callback,
@@ -69,9 +91,12 @@ impl AssetsManager {
             commands.entity(entity).despawn();
         }
 
-        // Then spawn the new map
-        let mut entity_commands =
-            commands.spawn(TiledMap(self.map_assets[self.map_index].handle.to_owned()));
+        // Then spawn the new map (or world)
+        let mut entity_commands = match &self.map_assets[self.map_index].handle {
+            AssetHandle::Map(handle) => commands.spawn(TiledMap(handle.to_owned())),
+            #[cfg(feature = "world")]
+            AssetHandle::World(handle) => commands.spawn(TiledWorld(handle.to_owned())),
+        };
         (self.map_assets[self.map_index].callback)(&mut entity_commands);
         self.map_entity = Some(entity_commands.id());
 

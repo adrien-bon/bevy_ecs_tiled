@@ -9,6 +9,9 @@ pub mod chunking;
 pub mod loader;
 pub mod storage;
 
+#[cfg(test)]
+mod tests;
+
 use crate::{prelude::*, tiled::event::TiledMessageWriters};
 use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 
