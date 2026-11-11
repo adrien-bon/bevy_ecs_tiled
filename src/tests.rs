@@ -84,11 +84,19 @@ fn spawn_test_map(app: &mut App) -> Entity {
 
 /// Spawn the given map and run the app until it is spawned
 fn spawn_map(app: &mut App, path: &str) -> Entity {
+    spawn_map_with(app, path, ())
+}
+
+/// Spawn the given map with additional components and run the app until it is spawned
+fn spawn_map_with(app: &mut App, path: &str, bundle: impl Bundle) -> Entity {
     let handle = app
         .world()
         .resource::<AssetServer>()
         .load::<TiledMapAsset>(path.to_owned());
-    let map_entity = app.world_mut().spawn(TiledMap(handle.clone())).id();
+    let map_entity = app
+        .world_mut()
+        .spawn((TiledMap(handle.clone()), bundle))
+        .id();
 
     let deadline = Instant::now() + Duration::from_secs(10);
     while app
@@ -1598,29 +1606,14 @@ mod physics {
     fn map_collider_strategy_is_used() {
         let mut app = test_app();
         app.add_plugins(TiledPhysicsPlugin::<TestBackend>::default());
-        let handle = app
-            .world()
-            .resource::<AssetServer>()
-            .load::<TiledMapAsset>(DYNAMIC_MAP);
-        app.world_mut().spawn((
-            TiledMap(handle),
+        spawn_map_with(
+            &mut app,
+            DYNAMIC_MAP,
             TiledPhysicsSettings::<TestBackend> {
                 collider_strategy: TiledColliderStrategy::Triangulation,
                 ..default()
             },
-        ));
-        let deadline = Instant::now() + Duration::from_secs(10);
-        while app
-            .world()
-            .resource::<Received>()
-            .storage_on_map_created
-            .is_none()
-        {
-            assert!(Instant::now() < deadline, "test map did not spawn in time");
-            app.update();
-            std::thread::sleep(Duration::from_millis(1));
-        }
-        app.update();
+        );
 
         let ground = layer_by_name(&mut app, "ground");
         let rectangle = object_by_name(&mut app, "rectangle");
@@ -1632,6 +1625,177 @@ mod physics {
             colliders_strategies(&app, rectangle),
             vec![TiledColliderStrategy::Triangulation]
         );
+    }
+
+    /// Collider chunks of a layer: chunk index, chunk entity and area of its colliders
+    fn collider_chunks(app: &mut App, layer: Entity) -> Vec<((u32, u32), Entity, f32)> {
+        let mut chunks = app
+            .world_mut()
+            .query::<(Entity, &TiledColliderChunk, &ChildOf, &TiledColliderOf)>()
+            .iter(app.world())
+            .filter(|(_, _, child_of, collider_of)| {
+                child_of.parent() == layer && collider_of.0 == layer
+            })
+            .map(|(entity, chunk, _, _)| {
+                let area = app
+                    .world()
+                    .get::<TiledColliderPolygons>(entity)
+                    .unwrap()
+                    .iter()
+                    .map(|p| p.unsigned_area())
+                    .sum();
+                ((chunk.0.x, chunk.0.y), entity, area)
+            })
+            .collect::<Vec<_>>();
+        chunks.sort_by_key(|(chunk, _, _)| *chunk);
+        // When there are chunks, they are the only colliders of the layer
+        if !chunks.is_empty() {
+            assert_eq!(
+                app.world().get::<TiledColliders>(layer).unwrap().len(),
+                chunks.len()
+            );
+        }
+        chunks
+    }
+
+    #[test]
+    fn tiles_layers_colliders_are_split_in_chunks() {
+        let mut app = test_app();
+        app.add_plugins(TiledPhysicsPlugin::<TestBackend>::default());
+        spawn_map_with(
+            &mut app,
+            DYNAMIC_MAP,
+            TiledPhysicsSettings::<TestBackend> {
+                tiles_chunk_size: Some(UVec2::ONE),
+                ..default()
+            },
+        );
+        let ground = layer_by_name(&mut app, "ground");
+
+        // Each of the two tiles is in its own chunk, and the layer itself does not hold any collider
+        let chunks = collider_chunks(&mut app, ground);
+        assert_eq!(
+            chunks.iter().map(|(c, _, a)| (*c, *a)).collect::<Vec<_>>(),
+            vec![((0, 3), 256.), ((1, 3), 256.)]
+        );
+        assert!(app.world().get::<TestCollider>(ground).is_none());
+        let (first, second) = (chunks[0].1, chunks[1].1);
+
+        // Modifying a tile only spawns again the colliders of its chunk
+        let tile = tile_at(&mut app, ground, TilePos::new(1, 3));
+        app.world_mut().get_mut::<TileFlip>(tile).unwrap().x = true;
+        app.update();
+        let chunks = collider_chunks(&mut app, ground);
+        assert_eq!(chunks.len(), 2);
+        assert_eq!(chunks[0].1, first);
+        assert_ne!(chunks[1].1, second);
+        assert!(app.world().get_entity(second).is_err());
+        let second = chunks[1].1;
+
+        // Moving a tile updates both the chunk it leaves and the one it enters
+        let tile = tile_at(&mut app, ground, TilePos::new(0, 3));
+        *app.world_mut().get_mut::<TilePos>(tile).unwrap() = TilePos::new(2, 1);
+        app.update();
+        let chunks = collider_chunks(&mut app, ground);
+        assert_eq!(
+            chunks.iter().map(|(c, _, a)| (*c, *a)).collect::<Vec<_>>(),
+            vec![((1, 3), 256.), ((2, 1), 256.)]
+        );
+        assert_eq!(chunks[0].1, second);
+        assert!(app.world().get_entity(first).is_err());
+
+        // Despawning a tile removes its chunk
+        app.world_mut().entity_mut(tile).despawn();
+        app.update();
+        let chunks = collider_chunks(&mut app, ground);
+        assert_eq!(
+            chunks.iter().map(|(c, _, _)| *c).collect::<Vec<_>>(),
+            vec![(1, 3)]
+        );
+        assert_eq!(chunks[0].1, second);
+
+        // Spawning a tile creates one
+        app.world_mut().spawn((
+            TiledTile::new(TilesetId(0), 0),
+            ChildOf(ground),
+            TilePos::new(3, 0),
+        ));
+        app.update();
+        let chunks = collider_chunks(&mut app, ground);
+        assert_eq!(
+            chunks.iter().map(|(c, _, _)| *c).collect::<Vec<_>>(),
+            vec![(1, 3), (3, 0)]
+        );
+        assert_eq!(chunks[0].1, second);
+    }
+
+    #[test]
+    fn collider_chunk_size_can_be_overridden_for_a_layer() {
+        let mut app = test_app();
+        app.add_plugins(TiledPhysicsPlugin::<TestBackend>::default());
+        spawn_map_with(
+            &mut app,
+            DYNAMIC_MAP,
+            TiledPhysicsSettings::<TestBackend> {
+                tiles_chunk_size: Some(UVec2::ONE),
+                ..default()
+            },
+        );
+        let ground = layer_by_name(&mut app, "ground");
+        assert_eq!(collider_chunks(&mut app, ground).len(), 2);
+
+        // Disable chunking for this layer: a single collider, held by the layer itself
+        app.world_mut()
+            .entity_mut(ground)
+            .insert(TiledColliderChunkSize(None));
+        app.update();
+        assert!(collider_chunks(&mut app, ground).is_empty());
+        assert_eq!(colliders_area(&app, ground), vec![512.]);
+        assert!(app.world().get::<TestCollider>(ground).is_some());
+
+        // Use larger chunks for this layer: both tiles are in the same chunk
+        app.world_mut()
+            .entity_mut(ground)
+            .insert(TiledColliderChunkSize(Some(UVec2::splat(2))));
+        app.update();
+        let chunks = collider_chunks(&mut app, ground);
+        assert_eq!(
+            chunks.iter().map(|(c, _, a)| (*c, *a)).collect::<Vec<_>>(),
+            vec![((0, 1), 512.)]
+        );
+        assert!(app.world().get::<TestCollider>(ground).is_none());
+
+        // Remove the override: back to the map chunk size
+        app.world_mut()
+            .entity_mut(ground)
+            .remove::<TiledColliderChunkSize>();
+        app.update();
+        assert_eq!(collider_chunks(&mut app, ground).len(), 2);
+
+        // A null chunk size disables chunking
+        app.world_mut()
+            .entity_mut(ground)
+            .insert(TiledColliderChunkSize(Some(UVec2::new(4, 0))));
+        app.update();
+        assert!(collider_chunks(&mut app, ground).is_empty());
+        assert_eq!(colliders_area(&app, ground), vec![512.]);
+    }
+
+    #[test]
+    fn layers_are_not_chunked_by_default() {
+        let mut app = test_app();
+        app.add_plugins(TiledPhysicsPlugin::<TestBackend>::default());
+        spawn_test_map(&mut app);
+        let ground = layer_by_name(&mut app, "ground");
+        assert!(collider_chunks(&mut app, ground).is_empty());
+        assert_eq!(colliders_area(&app, ground), vec![512.]);
+
+        // But chunking can be enabled for a single layer
+        app.world_mut()
+            .entity_mut(ground)
+            .insert(TiledColliderChunkSize(Some(UVec2::ONE)));
+        app.update();
+        assert_eq!(collider_chunks(&mut app, ground).len(), 2);
     }
 
     #[test]
@@ -1880,6 +2044,10 @@ mod properties {
 ///
 /// Run with:
 /// `cargo test --release --all-features --lib perf -- --ignored --nocapture`
+///
+/// Environment variables:
+/// - `PERF_RUNS`: number of times each scenario is run
+/// - `PERF_CHUNK_SIZE`: size, in tiles, of physics colliders chunks (no chunk by default)
 mod perf {
     use super::*;
 
@@ -2022,6 +2190,16 @@ mod perf {
 
         // Spawn: map data, then rendering and physics components
         let map = app.world_mut().spawn(TiledMap(handle)).id();
+        // Colliders chunk size can be set using the `PERF_CHUNK_SIZE` environment variable
+        #[cfg(feature = "physics")]
+        if let Some(chunk_size) = chunk_size() {
+            app.world_mut()
+                .entity_mut(map)
+                .insert(TiledPhysicsSettings::<physics::TestBackend> {
+                    tiles_chunk_size: Some(UVec2::splat(chunk_size)),
+                    ..default()
+                });
+        }
         let mut spawn = Measure::default();
         while app
             .world()
@@ -2119,6 +2297,13 @@ mod perf {
         measures
     }
 
+    /// Size of colliders chunks, if the `PERF_CHUNK_SIZE` environment variable is set
+    fn chunk_size() -> Option<u32> {
+        std::env::var("PERF_CHUNK_SIZE")
+            .ok()
+            .and_then(|size| size.parse().ok())
+    }
+
     fn median(mut values: Vec<Duration>) -> Duration {
         values.sort();
         values[values.len() / 2]
@@ -2139,7 +2324,8 @@ mod perf {
         let all = (0..runs).map(|_| run_scenarios()).collect::<Vec<_>>();
 
         eprintln!(
-            "=== Performance on a 200x200 map with 2 tiles layers (44137 tiles), {runs} runs"
+            "=== Performance on a 200x200 map with 2 tiles layers (44137 tiles), {runs} runs, colliders chunk size: {:?}",
+            chunk_size()
         );
         eprintln!(
             "{:<32} {:>8} {:>8} | {:>8} {:>8} {:>8} {:>8}",

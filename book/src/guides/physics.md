@@ -128,10 +128,11 @@ To reduce the number of physics colliders and improve performance, `bevy_ecs_til
 
 - **Tiles:** Merging is actually performed at the tiles layer level.
   Eventhough you can use several shapes to define a tile's collider, these shape will be merged into a single collider and all tile colliders for a given tiles layer will also be merged together.
-  The collider entity is spawned at the tiles layer level, and spawned again whenever a tile of this layer is added, modified (including its `TileFlip`) or removed.
+  The collider is inserted on the tiles layer entity, and spawned again whenever a tile of this layer is added, modified (including its `TileFlip`) or removed.
+  Colliders of large layers can also be [split in chunks](#colliders-chunks).
   Tiles flips (horizontal, vertical and diagonal) are applied to their collider, the same way they are applied to their rendering.
 - **Regular objects:** If an object references a tile, it will inherit that tile's collider and if the tile has several shapes, they will be merged.
-  The collider entity is spawned at the object level and each object always gets its own collider.
+  The collider is inserted on the object entity and each object always gets its own collider.
 
 The first collider of a tiles layer or an object is inserted on the layer or object entity itself, so you can directly add other physics components to it.
 If there are several colliders (see below), the next ones are spawned as children of this entity.
@@ -185,6 +186,62 @@ fn on_layer_created(
 
 Colliders are spawned again when this component is inserted, modified or removed.
 With the `user_properties` feature, you can also directly add it from Tiled as a [custom property](properties.md) of the layer or object.
+
+---
+
+## Colliders Chunks
+
+By default, all the tiles of a layer are merged in a single set of colliders.
+This is the best option for maps which are not modified once loaded, but it means that all the colliders of the layer are computed again whenever one of its tiles is added, modified or removed, which can take a while on large maps.
+
+If you [modify your maps at runtime](dynamic_maps.md), you can split the colliders of tiles layers in chunks: each chunk of tiles gets its own colliders and only the chunks whose tiles are modified are computed again.
+
+The chunk size, in tiles, is set for all the tiles layers of the map in [`TiledPhysicsSettings`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/settings/struct.TiledPhysicsSettings.html):
+
+```rust,no_run
+use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn((
+        TiledMap(asset_server.load("map.tmx")),
+        TiledPhysicsSettings::<TiledPhysicsAvianBackend> {
+            // Split tiles layers colliders in chunks of 32x32 tiles
+            tiles_chunk_size: Some(UVec2::splat(32)),
+            ..default()
+        },
+    ));
+}
+```
+
+It can be overridden for a given tiles layer by inserting a [`TiledColliderChunkSize`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliderChunkSize.html) component on the layer entity, either to use another size or to disable chunking for this layer (`TiledColliderChunkSize(None)`).
+You can also only use this component, to enable chunking for a single layer of the map:
+
+```rust,no_run
+use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn on_layer_created(
+    layer_created: On<TiledEvent<LayerCreated>>,
+    layers_query: Query<&TiledName, With<TiledLayer>>,
+    mut commands: Commands,
+) {
+    let layer = layer_created.event().origin;
+    if layers_query.get(layer).is_ok_and(|name| name.0 == "destructible") {
+        commands
+            .entity(layer)
+            .insert(TiledColliderChunkSize(Some(UVec2::splat(16))));
+    }
+}
+```
+
+When chunking is enabled for a layer:
+
+- the layer entity does not hold any collider. Each chunk with at least one collider has its own [`TiledColliderChunk`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliderChunk.html) entity, child of the layer, holding the collider of the chunk;
+- colliders are not merged across chunks: two adjacent tiles which are not in the same chunk have separate colliders. Depending on your physics engine and collider strategy, bodies sliding over a chunk boundary can catch on it ("ghost collisions"): prefer larger chunks if this is an issue;
+- smaller chunks make updates faster, but produce more colliders.
+
+With the `debug` feature, the [`TiledDebugColliderChunksPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/collider_chunks/index.html) displays the bounding box of each chunk colliders.
 
 ---
 

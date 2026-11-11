@@ -9,8 +9,12 @@ pub mod collider;
 pub mod geometry;
 pub mod settings;
 
-use crate::prelude::*;
-use bevy::prelude::*;
+use crate::{prelude::*, tiled::tile::TiledTilePositionVacated};
+use bevy::{
+    platform::collections::{HashMap, HashSet},
+    prelude::*,
+};
+use std::marker::PhantomData;
 
 /// Physics plugin.
 ///
@@ -51,12 +55,18 @@ impl<T: TiledPhysicsBackend> Plugin for TiledPhysicsPlugin<T> {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.register_type::<T>();
         app.register_type::<TiledPhysicsDisableGeometrySimplification>();
+        // Each tiles layer keeps track of its colliders
+        if let Err(error) =
+            app.try_register_required_components::<TiledLayer, TiledLayerColliders<T>>()
+        {
+            warn!("Cannot register tiles layers colliders state: {error}");
+        }
         app.add_systems(
             PostUpdate,
             (
                 (
-                    mark_tiles_layers_colliders_dirty::<T>,
-                    mark_colliders_dirty_on_strategy_change::<T>,
+                    mark_tiles_colliders_dirty::<T>,
+                    mark_colliders_dirty_on_config_change::<T>,
                 ),
                 update_tiles_layers_colliders::<T>,
                 update_objects_colliders::<T>,
@@ -64,77 +74,104 @@ impl<T: TiledPhysicsBackend> Plugin for TiledPhysicsPlugin<T> {
                 .chain()
                 .in_set(TiledPostUpdateSystems::SyncPhysics),
         );
-        app.add_observer(on_tile_removed::<T>);
         app.add_observer(on_object_removed::<T>);
-        app.add_observer(on_strategy_removed::<T>);
+        app.add_observer(on_config_removed::<T, TiledColliderStrategy>);
+        app.add_observer(on_config_removed::<T, TiledColliderChunkSize>);
         app.add_plugins((backend::plugin, collider::plugin, settings::plugin::<T>));
     }
 }
 
-/// Marker [`Component`] for a [`TiledLayer::Tiles`] or a [`TiledObject`] whose colliders must be updated.
+/// Marker [`Component`] for a [`TiledObject`] whose colliders must be updated.
 #[derive(Component)]
-struct TiledCollidersDirty<T: TiledPhysicsBackend>(std::marker::PhantomData<T>);
+struct TiledCollidersDirty<T: TiledPhysicsBackend>(PhantomData<T>);
 
 impl<T: TiledPhysicsBackend> Default for TiledCollidersDirty<T> {
     fn default() -> Self {
-        Self(std::marker::PhantomData)
+        Self(PhantomData)
     }
 }
 
-/// Mark the parent layer of new or modified tiles so its colliders get updated
-fn mark_tiles_layers_colliders_dirty<T: TiledPhysicsBackend>(
-    mut commands: Commands,
+/// Colliders of a [`TiledLayer::Tiles`] for a given physics backend, and what must be updated.
+///
+/// Colliders are split in chunks of tiles: without chunking, the layer is made of a single chunk.
+#[derive(Component)]
+struct TiledLayerColliders<T: TiledPhysicsBackend> {
+    /// Whether all the colliders of the layer must be updated
+    dirty_all: bool,
+    /// Positions whose tile has been added, modified or removed since colliders were last updated
+    dirty_positions: Vec<TilePos>,
+    /// Chunk size used by the current colliders
+    chunk_size: Option<UVec2>,
+    /// Entities holding the colliders of each chunk
+    chunks: HashMap<UVec2, Vec<Entity>>,
+    _backend: PhantomData<T>,
+}
+
+impl<T: TiledPhysicsBackend> Default for TiledLayerColliders<T> {
+    fn default() -> Self {
+        Self {
+            dirty_all: false,
+            dirty_positions: Vec::new(),
+            chunk_size: None,
+            chunks: HashMap::default(),
+            _backend: PhantomData,
+        }
+    }
+}
+
+impl<T: TiledPhysicsBackend> TiledLayerColliders<T> {
+    fn is_dirty(&self) -> bool {
+        self.dirty_all || !self.dirty_positions.is_empty()
+    }
+}
+
+/// Record the positions of new, modified, moved or removed tiles so the colliders of their layer get updated
+fn mark_tiles_colliders_dirty<T: TiledPhysicsBackend>(
     tiles_query: Query<
-        &ChildOf,
+        (&ChildOf, &TilePos),
         (
             With<TiledTile>,
             Or<(Changed<TiledTile>, Changed<TilePos>, Changed<TileFlip>)>,
         ),
     >,
+    mut vacated: MessageReader<TiledTilePositionVacated>,
+    mut layers_query: Query<&mut TiledLayerColliders<T>>,
 ) {
-    let layers = tiles_query
+    let positions = tiles_query
         .iter()
-        .map(ChildOf::parent)
-        .collect::<bevy::platform::collections::HashSet<_>>();
-    for layer in layers {
-        commands
-            .entity(layer)
-            .try_insert(TiledCollidersDirty::<T>::default());
+        .map(|(child_of, position)| (child_of.parent(), *position))
+        .chain(
+            vacated
+                .read()
+                .map(|vacated| (vacated.layer, vacated.position)),
+        );
+    for (layer, position) in positions {
+        if let Ok(mut colliders) = layers_query.get_mut(layer) {
+            colliders.dirty_positions.push(position);
+        }
     }
 }
 
-/// Mark the parent layer of a removed tile so its colliders get updated
-fn on_tile_removed<T: TiledPhysicsBackend>(
-    removed: On<Remove<TiledTile>>,
-    mut commands: Commands,
-    tiles_query: Query<&ChildOf>,
-) {
-    if let Ok(child_of) = tiles_query.get(removed.entity) {
-        commands
-            .entity(child_of.parent())
-            .try_insert(TiledCollidersDirty::<T>::default());
-    }
-}
-
-/// Entities whose colliders depend on a [`TiledColliderStrategy`] component
-type StrategyOwner = (
+/// Entities whose colliders depend on a [`TiledColliderStrategy`] or [`TiledColliderChunkSize`] component
+type CollidersConfigOwner = (
     Entity,
     Option<&'static TiledLayer>,
     Has<TiledObject>,
     Option<&'static Children>,
 );
 
-/// Mark the colliders depending on the [`TiledColliderStrategy`] of the given layer or object so they get updated
-fn mark_strategy_owner_dirty<T: TiledPhysicsBackend>(
+/// Mark the colliders depending on the configuration components of the given layer or object so they get updated
+fn mark_config_owner_dirty<T: TiledPhysicsBackend>(
     commands: &mut Commands,
     (entity, layer, is_object, children): (Entity, Option<&TiledLayer>, bool, Option<&Children>),
     objects_query: &Query<(), With<TiledObject>>,
+    layers_query: &mut Query<&mut TiledLayerColliders<T>>,
 ) {
     match layer {
         Some(TiledLayer::Tiles) => {
-            commands
-                .entity(entity)
-                .try_insert(TiledCollidersDirty::<T>::default());
+            if let Ok(mut colliders) = layers_query.get_mut(entity) {
+                colliders.dirty_all = true;
+            }
         }
         // Objects use the strategy of their layer, unless they have their own
         Some(TiledLayer::Objects) => {
@@ -158,26 +195,36 @@ fn mark_strategy_owner_dirty<T: TiledPhysicsBackend>(
     }
 }
 
-/// Update the colliders of layers and objects whose [`TiledColliderStrategy`] has been inserted or modified
-fn mark_colliders_dirty_on_strategy_change<T: TiledPhysicsBackend>(
+/// Update the colliders of layers and objects whose [`TiledColliderStrategy`]
+/// or [`TiledColliderChunkSize`] has been inserted or modified
+fn mark_colliders_dirty_on_config_change<T: TiledPhysicsBackend>(
     mut commands: Commands,
-    changed_query: Query<StrategyOwner, Changed<TiledColliderStrategy>>,
+    changed_query: Query<
+        CollidersConfigOwner,
+        Or<(
+            Changed<TiledColliderStrategy>,
+            Changed<TiledColliderChunkSize>,
+        )>,
+    >,
     objects_query: Query<(), With<TiledObject>>,
+    mut layers_query: Query<&mut TiledLayerColliders<T>>,
 ) {
     for owner in changed_query.iter() {
-        mark_strategy_owner_dirty::<T>(&mut commands, owner, &objects_query);
+        mark_config_owner_dirty::<T>(&mut commands, owner, &objects_query, &mut layers_query);
     }
 }
 
-/// Update the colliders of layers and objects whose [`TiledColliderStrategy`] has been removed
-fn on_strategy_removed<T: TiledPhysicsBackend>(
-    removed: On<Remove<TiledColliderStrategy>>,
+/// Update the colliders of layers and objects whose configuration component `C`
+/// (ie. [`TiledColliderStrategy`] or [`TiledColliderChunkSize`]) has been removed
+fn on_config_removed<T: TiledPhysicsBackend, C: Component>(
+    removed: On<Remove<C>>,
     mut commands: Commands,
-    owners_query: Query<StrategyOwner>,
+    owners_query: Query<CollidersConfigOwner>,
     objects_query: Query<(), With<TiledObject>>,
+    mut layers_query: Query<&mut TiledLayerColliders<T>>,
 ) {
     if let Ok(owner) = owners_query.get(removed.entity) {
-        mark_strategy_owner_dirty::<T>(&mut commands, owner, &objects_query);
+        mark_config_owner_dirty::<T>(&mut commands, owner, &objects_query, &mut layers_query);
     }
 }
 
@@ -190,25 +237,28 @@ fn on_object_removed<T: TiledPhysicsBackend>(
     despawn_colliders::<T>(
         &mut commands,
         removed.entity,
-        colliders_query.get(removed.entity).ok(),
+        colliders_query
+            .get(removed.entity)
+            .into_iter()
+            .flat_map(|colliders| colliders.iter()),
     );
 }
 
-/// Despawn previous colliders of a Tiled entity.
+/// Despawn the given colliders of a source entity (a tiles layer or an object).
 ///
-/// If the collider is the entity itself, the entity is kept
+/// If the collider is the source entity itself, the entity is kept
 /// and only its physics and collider components are removed.
 fn despawn_colliders<T: TiledPhysicsBackend>(
     commands: &mut Commands,
-    entity: Entity,
-    colliders: Option<&TiledColliders>,
+    source: Entity,
+    colliders: impl IntoIterator<Item = Entity>,
 ) {
-    for collider in colliders.into_iter().flat_map(|c| c.iter()) {
-        if collider != entity {
-            // Colliders are also children of their source: they may already be despawned
+    for collider in colliders {
+        if collider != source {
+            // Colliders are also descendants of their source: they may already be despawned
             commands.entity(collider).try_despawn();
         } else {
-            commands.entity(entity).try_remove::<(
+            commands.entity(source).try_remove::<(
                 T::Collider,
                 TiledColliderSource,
                 TiledColliderPolygons,
@@ -218,23 +268,24 @@ fn despawn_colliders<T: TiledPhysicsBackend>(
     }
 }
 
-/// Spawn again the colliders of tiles layers which have been marked as dirty
+/// Spawn again the colliders of tiles layers, for the chunks whose tiles have been modified
 fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
     mut commands: Commands,
-    layers_query: Query<
+    mut layers_query: Query<
         (
             Entity,
             &TiledLayer,
             &TiledName,
             &TiledMapReference,
-            Option<&Children>,
-            Option<&TiledColliders>,
+            &TiledTileLayerStorage,
+            &mut TiledLayerColliders<T>,
             Option<&TiledColliderStrategy>,
+            Option<&TiledColliderChunkSize>,
             Has<TiledPhysicsDisableGeometrySimplification>,
         ),
-        With<TiledCollidersDirty<T>>,
+        With<TiledLayer>,
     >,
-    tiles_query: Query<(&TilePos, &TiledTile, &TileFlip)>,
+    tiles_query: Query<(&TiledTile, &TileFlip)>,
     maps_query: Query<(&TiledMap, &TiledPhysicsSettings<T>, &TilemapAnchor)>,
     assets: Res<Assets<TiledMapAsset>>,
     mut message_writer: MessageWriter<TiledEvent<ColliderCreated>>,
@@ -244,16 +295,19 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
         layer,
         layer_name,
         map_ref,
-        children,
-        colliders,
+        storage,
+        mut colliders,
         strategy,
+        chunk_size,
         disable_geometry_simplification,
-    ) in layers_query.iter()
+    ) in layers_query.iter_mut()
     {
+        if !colliders.is_dirty() {
+            continue;
+        }
         if !matches!(layer, TiledLayer::Tiles) {
-            commands
-                .entity(layer_entity)
-                .remove::<TiledCollidersDirty<T>>();
+            colliders.dirty_all = false;
+            colliders.dirty_positions.clear();
             continue;
         }
 
@@ -261,49 +315,102 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
             warn!(
                 "Cannot spawn colliders for entity {layer_entity}: parent map is missing or has no TiledPhysicsSettings"
             );
-            commands
-                .entity(layer_entity)
-                .remove::<TiledCollidersDirty<T>>();
+            colliders.dirty_all = false;
+            colliders.dirty_positions.clear();
             continue;
         };
-        // Map asset is not available (yet): keep the layer marked to try again later
+        // Map asset is not available (yet): keep the layer dirty to try again later
         let Some(map_asset) = assets.get(&tiled_map.0) else {
             continue;
         };
-        commands
-            .entity(layer_entity)
-            .remove::<TiledCollidersDirty<T>>();
 
-        despawn_colliders::<T>(&mut commands, layer_entity, colliders);
+        let dirty_all = std::mem::take(&mut colliders.dirty_all);
+        let dirty_positions = std::mem::take(&mut colliders.dirty_positions);
 
-        if !settings.tiles_layer_filter.matches(&layer_name.0) {
-            continue;
+        // Layer own chunk size, then the one of the map
+        let chunk_size = chunk_size
+            .map_or(settings.tiles_chunk_size, |size| size.0)
+            .filter(|size| size.x > 0 && size.y > 0);
+        let chunk_of = |position: &TilePos| {
+            chunk_size.map_or(UVec2::ZERO, |size| {
+                UVec2::new(position.x, position.y) / size
+            })
+        };
+        let matches = settings.tiles_layer_filter.matches(&layer_name.0);
+
+        // Chunks whose colliders must be spawned again
+        let mut dirty_chunks = if dirty_all || colliders.chunk_size != chunk_size {
+            // Start over
+            colliders.chunk_size = chunk_size;
+            for (_, entities) in colliders.chunks.drain() {
+                despawn_colliders::<T>(&mut commands, layer_entity, entities);
+            }
+            if matches {
+                storage
+                    .iter()
+                    .map(|(position, _)| chunk_of(&position))
+                    .collect::<HashSet<_>>()
+            } else {
+                HashSet::default()
+            }
+        } else if matches {
+            dirty_positions.iter().map(chunk_of).collect()
+        } else {
+            HashSet::default()
         }
+        .into_iter()
+        .collect::<Vec<_>>();
+        // Spawn chunks in a deterministic order
+        dirty_chunks.sort_unstable_by_key(|chunk| (chunk.y, chunk.x));
 
-        let tiles = children
-            .into_iter()
-            .flat_map(|children| children.iter())
-            .filter_map(|e| tiles_query.get(e).ok())
-            .map(|(pos, tile, flip)| (*pos, tile.tileset_id, tile.tile_id, *flip));
-        let polygons =
-            collider::tiles_polygons(map_asset, anchor, tiles, &settings.tiles_objects_filter);
+        for chunk in dirty_chunks {
+            if let Some(entities) = colliders.chunks.remove(&chunk) {
+                despawn_colliders::<T>(&mut commands, layer_entity, entities);
+            }
 
-        let event = TiledEvent::new(
-            layer_entity,
-            ColliderCreated::new(TiledColliderSource::TilesLayer, layer_entity),
-        )
-        .with_map(map_ref.0, tiled_map.0.id())
-        .with_layer(layer_entity)
-        .to_owned();
-        collider::spawn_colliders::<T>(
-            settings,
-            strategy.copied().unwrap_or(settings.collider_strategy),
-            &mut commands,
-            polygons,
-            event,
-            &mut message_writer,
-            disable_geometry_simplification,
-        );
+            let chunk_tiles: Box<dyn Iterator<Item = (TilePos, Entity)>> = match chunk_size {
+                Some(size) => {
+                    let min = chunk.saturating_mul(size);
+                    let max = min.saturating_add(size - UVec2::ONE);
+                    Box::new(
+                        storage.iter_in(TilePos::new(min.x, min.y), TilePos::new(max.x, max.y)),
+                    )
+                }
+                None => Box::new(storage.iter()),
+            };
+            let tiles = chunk_tiles.filter_map(|(position, entity)| {
+                tiles_query
+                    .get(entity)
+                    .ok()
+                    .map(|(tile, flip)| (position, tile.tileset_id, tile.tile_id, *flip))
+            });
+            let polygons =
+                collider::tiles_polygons(map_asset, anchor, tiles, &settings.tiles_objects_filter);
+
+            let event = TiledEvent::new(
+                layer_entity,
+                ColliderCreated::new(TiledColliderSource::TilesLayer, layer_entity),
+            )
+            .with_map(map_ref.0, tiled_map.0.id())
+            .with_layer(layer_entity)
+            .to_owned();
+            let entities = collider::spawn_colliders::<T>(
+                settings,
+                strategy.copied().unwrap_or(settings.collider_strategy),
+                match chunk_size {
+                    Some(_) => collider::ColliderTarget::Chunk(chunk),
+                    None => collider::ColliderTarget::Source,
+                },
+                &mut commands,
+                polygons,
+                event,
+                &mut message_writer,
+                disable_geometry_simplification,
+            );
+            if !entities.is_empty() {
+                colliders.chunks.insert(chunk, entities);
+            }
+        }
     }
 }
 
@@ -372,7 +479,11 @@ fn update_objects_colliders<T: TiledPhysicsBackend>(
             continue;
         };
 
-        despawn_colliders::<T>(&mut commands, object_entity, colliders);
+        despawn_colliders::<T>(
+            &mut commands,
+            object_entity,
+            colliders.into_iter().flat_map(|colliders| colliders.iter()),
+        );
 
         if !settings.objects_layer_filter.matches(&layer_name.0)
             || !settings.objects_filter.matches(&object_name.0)
@@ -404,6 +515,7 @@ fn update_objects_colliders<T: TiledPhysicsBackend>(
                 .or(layer_strategy)
                 .copied()
                 .unwrap_or(settings.collider_strategy),
+            collider::ColliderTarget::Source,
             &mut commands,
             polygons,
             event,

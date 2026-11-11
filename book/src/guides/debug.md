@@ -45,6 +45,7 @@ Or add them individually as needed:
 - [`TiledDebugTilesPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/tiles/index.html): `bevy_ecs_tilemap` index (`TilePos`) of each tile;
 - [`TiledDebugMapAabbPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/map_aabb/index.html): axis-aligned bounding box (AABB) of each map;
 - [`TiledDebugWorldChunkPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/world_chunk/index.html): maps boundaries and chunking area of each world (requires the `world` feature);
+- [`TiledDebugColliderChunksPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/collider_chunks/index.html): bounding box of each physics collider chunk of tiles layers (requires the `physics` feature, see the [physics guide](physics.md#colliders-chunks));
 - [`TiledDebugAxisPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/axis/index.html): axes at the world origin;
 - [`TiledDebugTogglePlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/struct.TiledDebugTogglePlugin.html): toggle all debug gizmos using a keyboard key.
 

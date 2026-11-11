@@ -77,6 +77,52 @@ pub struct TiledColliderOf(pub Entity);
 #[relationship_target(relationship = TiledColliderOf)]
 pub struct TiledColliders(Vec<Entity>);
 
+/// Size, in tiles, of the chunks used to split the colliders of a [`TiledLayer::Tiles`].
+///
+/// The chunk size used for all the tiles layers of a map is given by [`TiledPhysicsSettings::tiles_chunk_size`].
+/// Insert this [`Component`] on a [`TiledLayer::Tiles`] entity to override it for this layer only:
+/// `TiledColliderChunkSize(None)` disables chunking for this layer, whatever the map setting.
+/// Colliders of the layer are spawned again when this component is inserted, modified or removed.
+///
+/// Since it is a regular component, it can also be set from Tiled using a custom property
+/// (see the `user_properties` feature).
+///
+/// Example:
+/// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
+/// // Use 16x16 tiles collider chunks for the layer named "ground"
+/// fn on_layer_created(
+///     layer_created: On<TiledEvent<LayerCreated>>,
+///     layers_query: Query<&TiledName, With<TiledLayer>>,
+///     mut commands: Commands,
+/// ) {
+///     let layer = layer_created.event().origin;
+///     if layers_query.get(layer).is_ok_and(|name| name.0 == "ground") {
+///         commands
+///             .entity(layer)
+///             .insert(TiledColliderChunkSize(Some(UVec2::splat(16))));
+///     }
+/// }
+/// ```
+#[derive(Component, Reflect, Default, Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[reflect(Component, Default, Debug, PartialEq, Hash)]
+pub struct TiledColliderChunkSize(pub Option<UVec2>);
+
+/// Marker [`Component`] for the entity holding the colliders of a chunk of a [`TiledLayer::Tiles`].
+///
+/// Only used when the colliders of the layer are split in chunks: see [`TiledPhysicsSettings::tiles_chunk_size`].
+/// A chunk entity is a child of its layer and only exists if at least one tile of the chunk has a collider.
+/// It holds the first collider of the chunk: additional ones, if any, are children of the chunk entity.
+///
+/// The inner value is the chunk index: the chunk holds the colliders of tiles
+/// whose [`TilePos`] is within `index * chunk_size .. (index + 1) * chunk_size`.
+#[derive(Component, Reflect, Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[reflect(Component, Debug, PartialEq, Hash)]
+#[require(Transform, Visibility)]
+pub struct TiledColliderChunk(pub UVec2);
+
 /// Raw geometry a physics collider was created from.
 ///
 /// If several colliders are created from the same geometry (see [`TiledColliderStrategy::LineStrip`]),
@@ -111,6 +157,8 @@ impl ColliderCreated {
 pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledColliderSource>();
     app.register_type::<TiledColliderStrategy>();
+    app.register_type::<TiledColliderChunkSize>();
+    app.register_type::<TiledColliderChunk>();
     app.register_type::<TiledColliderOf>();
     app.register_type::<TiledColliders>();
     app.add_message::<TiledEvent<ColliderCreated>>()
@@ -260,21 +308,31 @@ pub(crate) fn tiles_polygons(
     acc
 }
 
+/// Where the colliders of a source (a tiles layer or an object) are spawned.
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum ColliderTarget {
+    /// First collider is inserted on the source entity itself, next ones on children of the source.
+    Source,
+    /// First collider is inserted on a new chunk entity, child of the source, next ones on children of the chunk.
+    Chunk(UVec2),
+}
+
 /// Spawn colliders for the given polygons using the physics backend from `settings`.
 ///
-/// The first collider is inserted on the source entity itself (ie. `collider_created.event.collider_of`)
-/// and the next ones, if any, on dedicated child entities.
+/// Returns all the entities holding a collider.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
     settings: &TiledPhysicsSettings<T>,
     strategy: TiledColliderStrategy,
+    target: ColliderTarget,
     commands: &mut Commands,
     polygons: Vec<geo::Polygon<f32>>,
     collider_created: TiledEvent<ColliderCreated>,
     message_writer: &mut MessageWriter<TiledEvent<ColliderCreated>>,
     disable_geometry_simplification: bool,
-) {
+) -> Vec<Entity> {
     if polygons.is_empty() {
-        return;
+        return vec![];
     }
 
     let geometries = polygons
@@ -289,7 +347,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
                 "Failed to simplify geometry, skipping this polygon (entity {})",
                 collider_created.origin
             );
-            return;
+            return vec![];
         };
         vec![geometry]
     } else {
@@ -298,21 +356,32 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
 
     let source = collider_created.event.source;
     let collider_of = collider_created.event.collider_of;
-    let mut index = 0;
+    // Entity holding the first collider, parent of the next ones
+    let mut first = None;
+    let mut entities = Vec::new();
     for geometry in geometries {
         // Actually create our colliders using provided physics backend
         for collider in settings.backend.colliders(strategy, source, &geometry) {
-            let entity = if index == 0 {
-                collider_of.0
-            } else {
-                commands
+            let entity = match first {
+                None => match target {
+                    ColliderTarget::Source => collider_of.0,
+                    ColliderTarget::Chunk(chunk) => commands
+                        .spawn((
+                            Name::new(format!("TiledColliderChunk({}, {})", chunk.x, chunk.y)),
+                            TiledColliderChunk(chunk),
+                            ChildOf(collider_of.0),
+                        ))
+                        .id(),
+                },
+                Some(parent) => commands
                     .spawn((
-                        Name::new(format!("TiledCollider({index})")),
-                        ChildOf(collider_of.0),
+                        Name::new(format!("TiledCollider({})", entities.len())),
+                        ChildOf(parent),
                     ))
-                    .id()
+                    .id(),
             };
-            index += 1;
+            first.get_or_insert(entity);
+            entities.push(entity);
             commands.entity(entity).insert((
                 collider,
                 source,
@@ -326,6 +395,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
             event.send(commands, message_writer);
         }
     }
+    entities
 }
 
 fn polygons_from_tile(

@@ -5,6 +5,8 @@
 //! gizmo overlays for objects, tiles, world chunks, maps bounding boxes, and axes.
 
 pub mod axis;
+#[cfg(feature = "physics")]
+pub mod collider_chunks;
 pub mod map_aabb;
 pub mod objects;
 pub mod tiles;
@@ -112,6 +114,8 @@ impl PluginGroup for TiledDebugPluginGroup {
             .add(tiles::TiledDebugTilesPlugin::default());
         #[cfg(feature = "world")]
         let group = group.add(world_chunk::TiledDebugWorldChunkPlugin::default());
+        #[cfg(feature = "physics")]
+        let group = group.add(collider_chunks::TiledDebugColliderChunksPlugin::default());
         group
             .add(map_aabb::TiledDebugMapAabbPlugin::default())
             .add(axis::TiledDebugAxisPlugin)

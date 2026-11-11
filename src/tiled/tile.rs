@@ -88,6 +88,18 @@ impl TiledTile {
     }
 }
 
+/// [`Message`] sent when a position of a tiles layer is vacated: its tile moved away or was removed.
+///
+/// Used to update what is derived from the tiles of a layer by position, such as physics colliders.
+#[derive(Message, Clone, Copy, Debug)]
+#[cfg_attr(not(feature = "physics"), allow(dead_code))]
+pub(crate) struct TiledTilePositionVacated {
+    /// The [`TiledLayer::Tiles`] entity
+    pub(crate) layer: Entity,
+    /// The position which does not hold the tile anymore
+    pub(crate) position: TilePos,
+}
+
 /// Position under which a [`TiledTile`] is registered in the [`TiledTileLayerStorage`] of its layer, if any.
 #[derive(Component, Default, Copy, Clone, Debug)]
 pub(crate) struct TiledTileIndexedPosition(pub(crate) Option<TilePos>);
@@ -132,6 +144,7 @@ pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledTilemap>();
     app.register_type::<TiledTilemapOf>();
     app.register_type::<TiledTilemaps>();
+    app.add_message::<TiledTilePositionVacated>();
     app.add_systems(
         PostUpdate,
         index_layers_tiles.in_set(TiledPostUpdateSystems::SyncMapStorage),
@@ -160,6 +173,7 @@ fn index_layers_tiles(
     >,
     positions_query: Query<&TilePos, With<TiledTile>>,
     mut layers_query: Query<&mut TiledTileLayerStorage>,
+    mut vacated: MessageWriter<TiledTilePositionVacated>,
 ) {
     for (entity, tile_pos, child_of, mut indexed) in tiles_query.iter_mut() {
         // Nothing to do if the tile is already indexed at its position
@@ -174,6 +188,10 @@ fn index_layers_tiles(
         // Remove the tile from its previous position
         if let Some(previous) = indexed.0 {
             storage.remove(previous, entity);
+            vacated.write(TiledTilePositionVacated {
+                layer: child_of.parent(),
+                position: previous,
+            });
         }
 
         // Replace the tile which was at this position, unless it moved away during this
@@ -194,6 +212,7 @@ fn unindex_tile(
     removed: On<Remove<TiledTile>>,
     mut tiles_query: Query<(Option<&ChildOf>, &mut TiledTileIndexedPosition)>,
     mut layers_query: Query<&mut TiledTileLayerStorage>,
+    mut vacated: MessageWriter<TiledTilePositionVacated>,
 ) {
     let entity = removed.entity;
     let Ok((child_of, mut indexed)) = tiles_query.get_mut(entity) else {
@@ -206,6 +225,10 @@ fn unindex_tile(
         && let Ok(mut storage) = layers_query.get_mut(child_of.parent())
     {
         storage.remove(position, entity);
+        vacated.write(TiledTilePositionVacated {
+            layer: child_of.parent(),
+            position,
+        });
     }
 }
 

@@ -29,6 +29,10 @@ mod tests;
 
 /// `bevy_ecs_tiled` public exports.
 pub mod prelude {
+    #[cfg(all(feature = "debug", feature = "physics"))]
+    pub use super::debug::collider_chunks::{
+        TiledDebugColliderChunksConfig, TiledDebugColliderChunksPlugin,
+    };
     #[cfg(all(feature = "debug", feature = "world"))]
     pub use super::debug::world_chunk::{TiledDebugWorldChunkConfig, TiledDebugWorldChunkPlugin};
     #[cfg(feature = "debug")]
@@ -49,8 +53,8 @@ pub mod prelude {
         TiledPhysicsDisableGeometrySimplification, TiledPhysicsPlugin,
         backend::TiledPhysicsBackend,
         collider::{
-            ColliderCreated, TiledColliderOf, TiledColliderPolygons, TiledColliderSource,
-            TiledColliderStrategy, TiledColliders,
+            ColliderCreated, TiledColliderChunk, TiledColliderChunkSize, TiledColliderOf,
+            TiledColliderPolygons, TiledColliderSource, TiledColliderStrategy, TiledColliders,
         },
         geometry::{
             TiledColliderShape, collider_shapes, multi_polygon_as_line_strings,

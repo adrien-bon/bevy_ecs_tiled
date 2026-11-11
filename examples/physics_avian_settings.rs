@@ -115,6 +115,24 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             );
         },
     ));
+    mgr.add_map(helper::assets::MapInfos::new(
+        &asset_server,
+        "maps/orthogonal/finite.tmx",
+        "A finite orthogonal map with tiles colliders split in chunks of 4x4 tiles",
+        |c| {
+            c.insert((
+                TilemapAnchor::Center,
+                // Each chunk of tiles gets its own colliders: only the chunks whose tiles
+                // are modified are computed again, instead of the whole layer.
+                // This size can be overridden for a given layer by inserting
+                // a `TiledColliderChunkSize` component on it.
+                TiledPhysicsSettings::<TiledPhysicsAvianBackend> {
+                    tiles_chunk_size: Some(UVec2::splat(4)),
+                    ..default()
+                },
+            ));
+        },
+    ));
     commands.insert_resource(mgr);
 }
 
