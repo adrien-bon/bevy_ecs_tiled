@@ -77,7 +77,7 @@ impl Plugin for TiledDebugWorldChunkPlugin {
 }
 
 fn draw_camera_rect(
-    camera_query: Query<&Transform, (With<Camera>, Changed<Transform>)>,
+    camera_query: Query<&Transform, With<Camera>>,
     world_query: Query<&TiledWorldChunking>,
     config: Res<TiledDebugWorldChunkConfig>,
     mut gizmos: Gizmos<TiledDebugGizmos>,

@@ -1,10 +1,11 @@
 //! Debug plugin for visualizing Tiled maps bounding boxes.
 //!
-//! This module provides a plugin and configuration for drawing the axis-aligned bounding box (AABB)
-//! of each Tiled map using Bevy [`Gizmos`]. It is useful for debugging map placement, anchoring
+//! This module provides a plugin and configuration for drawing the bounding box (AABB)
+//! of each Tiled map using Bevy [`Gizmos`]. The AABB is computed in the map local space,
+//! so the drawn box follows the map [`Transform`] (including rotation and scale). It is useful for debugging map placement, anchoring
 //! and coordinate conversions.
 //!
-//! When enabled, the plugin draws two `rect_2d` gizmos for each map:
+//! When enabled, the plugin draws two rectangles for each map:
 //!   - the AABB of the tiles grid, as computed by `bevy_ecs_tilemap` helpers (ie. where tiles are rendered);
 //!   - the AABB obtained by converting the map corners from Tiled coordinates using
 //!     [`TiledMapAsset::world_space_from_tiled_position`].
@@ -20,15 +21,15 @@ use bevy::{
 
 /// Configuration for the [`TiledDebugMapAabbPlugin`].
 ///
-/// Allows customization of the appearance of the `rect_2d` [`Gizmos`] drawn for each map.
+/// Allows customization of the appearance of the rectangles [`Gizmos`] drawn for each map.
 #[derive(Resource, Reflect, Copy, Clone, Debug)]
 #[reflect(Resource, Debug)]
 pub struct TiledDebugMapAabbConfig {
-    /// [`Color`] of the `rect_2d` [`Gizmos`] for the map tiles grid AABB as computed by `bevy_ecs_tilemap`.
+    /// [`Color`] of the [`Gizmos`] for the map tiles grid AABB as computed by `bevy_ecs_tilemap`.
     ///
     /// If [`None`], this AABB will not be displayed.
     pub tilemap_aabb_color: Option<Color>,
-    /// [`Color`] of the `rect_2d` [`Gizmos`] for the map AABB as computed using
+    /// [`Color`] of the [`Gizmos`] for the map AABB as computed using
     /// [`TiledMapAsset::world_space_from_tiled_position`].
     ///
     /// If [`None`], this AABB will not be displayed.
@@ -179,13 +180,19 @@ fn draw_aabb(
     corners: [Vec2; 4],
     color: Color,
 ) {
-    let corners = corners.map(|c| transform.transform_point(c.extend(0.)).truncate());
+    // Compute the AABB in map local space, then transform its corners to world space:
+    // the resulting box follows the map rotation and scale. Computing the AABB after
+    // transforming the corners would give different results for non-rectangular
+    // corners (eg. isometric maps diamond) as soon as the map is rotated.
     let aabb = Aabb2d::from_point_cloud(Isometry2d::IDENTITY, &corners);
-    gizmos.rect_2d(
-        Isometry2d::from_translation(aabb.center()),
-        aabb.half_size() * 2.,
-        color,
-    );
+    let [a, b, c, d] = [
+        Vec2::new(aabb.min.x, aabb.min.y),
+        Vec2::new(aabb.min.x, aabb.max.y),
+        Vec2::new(aabb.max.x, aabb.max.y),
+        Vec2::new(aabb.max.x, aabb.min.y),
+    ]
+    .map(|p| transform.transform_point(p.extend(0.)).truncate());
+    gizmos.linestrip_2d([a, b, c, d, a], color);
 }
 
 #[cfg(test)]
