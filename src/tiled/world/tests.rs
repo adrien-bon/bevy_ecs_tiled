@@ -149,9 +149,9 @@ impl MapGrid {
             .unwrap();
         Self {
             map_size: map_asset.tilemap_size,
-            grid_size: grid_size_from_map(&map_asset.map),
+            grid_size: map_asset.grid_size,
             tile_size: map_asset.largest_tile_size,
-            map_type: tilemap_type_from_map(&map_asset.map),
+            map_type: map_asset.map_type,
             anchor: *world.get::<TilemapAnchor>(map_entity).unwrap(),
             transform: *world.get::<GlobalTransform>(map_entity).unwrap(),
         }

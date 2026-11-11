@@ -299,20 +299,11 @@ impl TiledObject {
         }
     }
 
-    /// Apply rotation and scaling to given coordinate.
-    fn apply_rotation_and_scaling(
-        inverse_rotation: bool,
-        vertex: Vec2,
-        transform: &GlobalTransform,
-    ) -> Vec2 {
-        let mut rotation = transform.rotation().to_euler(EulerRot::ZYX).0;
-        if inverse_rotation {
-            rotation *= -1.;
-        }
-        let (cos, sin) = (rotation.cos(), rotation.sin());
+    /// Apply rotation (given by its sine and cosine) and scaling to given coordinate.
+    fn apply_rotation_and_scaling(vertex: Vec2, (sin, cos): (f32, f32), scale: Vec2) -> Vec2 {
         Vec2 {
-            x: (vertex.x * cos - vertex.y * sin) * transform.scale().x,
-            y: (vertex.x * sin + vertex.y * cos) * transform.scale().y,
+            x: (vertex.x * cos - vertex.y * sin) * scale.x,
+            y: (vertex.x * sin + vertex.y * cos) * scale.y,
         }
     }
 
@@ -376,6 +367,11 @@ impl TiledObject {
             y: transform.translation().y,
         };
 
+        // Rotation and scale are the same for all vertices
+        let (sin, cos) = transform.rotation().to_euler(EulerRot::ZYX).0.sin_cos();
+        let scale = transform.scale().truncate();
+        let iso_origin = iso_projection(offset, tilemap_size, grid_size);
+
         // Generate shape vertices relative to origin
         match self {
             TiledObject::Point => vec![Vec2::ZERO],
@@ -418,16 +414,16 @@ impl TiledObject {
                     tilemap_size,
                     grid_size,
                 );
-                let origin_projected = iso_projection(offset, tilemap_size, grid_size);
-                let relative_projected = offset_projected - origin_projected;
+                let relative_projected = offset_projected - iso_origin;
 
-                let v = Self::apply_rotation_and_scaling(true, relative_projected, transform);
+                // Rotation is inverted since Y axis is inverted below
+                let v = Self::apply_rotation_and_scaling(relative_projected, (-sin, cos), scale);
                 geo::Coord {
                     x: object_world_pos.x + v.x,
                     y: object_world_pos.y - v.y,
                 }
             } else {
-                let v = Self::apply_rotation_and_scaling(false, v, transform);
+                let v = Self::apply_rotation_and_scaling(v, (sin, cos), scale);
                 geo::Coord {
                     x: v.x + object_world_pos.x,
                     y: v.y + object_world_pos.y,

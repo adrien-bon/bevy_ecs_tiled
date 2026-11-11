@@ -162,15 +162,15 @@ impl SpawnContext<'_, '_, '_> {
         }
 
         for (id, &entity) in self.object_entities.iter() {
-            commands
-                .entity(entity)
-                .insert_properties(props.objects.remove(id).unwrap());
+            if let Some(p) = props.objects.remove(id) {
+                commands.entity(entity).insert_properties(p);
+            }
         }
 
         for (id, &entity) in self.layer_entities.iter() {
-            commands
-                .entity(entity)
-                .insert_properties(props.layers.remove(id).unwrap());
+            if let Some(p) = props.layers.remove(id) {
+                commands.entity(entity).insert_properties(p);
+            }
         }
 
         for (id, entities) in map_storage.tiles.iter() {
@@ -213,9 +213,10 @@ impl SpawnContext<'_, '_, '_> {
                     // Apply layer Transform using both layer base Transform and Tiled offset
                     layer_transform,
                     // Determine layer default visibility
-                    match &layer.visible {
-                        true => Visibility::Inherited,
-                        false => Visibility::Hidden,
+                    if layer.visible {
+                        Visibility::Inherited
+                    } else {
+                        Visibility::Hidden
                     },
                 ))
                 .id();
@@ -356,10 +357,8 @@ impl SpawnContext<'_, '_, '_> {
 
             // For isometric maps, we need to adjust the position of tile objects
             // to match the isometric grid.
-            if matches!(
-                tilemap_type_from_map(&tiled_map.map),
-                TilemapType::Isometric(..)
-            ) && let TiledObject::Tile { width, .. } = tiled_object
+            if matches!(tiled_map.map_type, TilemapType::Isometric(..))
+                && let TiledObject::Tile { width, .. } = tiled_object
             {
                 pos.x -= width / 2.;
             }
@@ -385,9 +384,10 @@ impl SpawnContext<'_, '_, '_> {
                         properties: object_data.properties.clone(),
                     },
                     transform,
-                    match &object_data.visible {
-                        true => Visibility::Inherited,
-                        false => Visibility::Hidden,
+                    if object_data.visible {
+                        Visibility::Inherited
+                    } else {
+                        Visibility::Hidden
                     },
                     TILE_PROPERTIES_INSERTED,
                 ))

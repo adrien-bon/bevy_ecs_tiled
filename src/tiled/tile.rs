@@ -596,7 +596,7 @@ pub(crate) mod render {
     ) -> TilemapBundle {
         let tiled_tileset = &tileset.tileset;
         TilemapBundle {
-            grid_size: grid_size_from_map(&map_asset.map),
+            grid_size: map_asset.grid_size,
             size: map_asset.tilemap_size,
             texture: tileset.tilemap_texture.clone(),
             tile_size: TilemapTileSize {
@@ -610,7 +610,7 @@ pub(crate) mod render {
             transform: Transform::from_translation(
                 tilemap_offset(&map_asset.map, tiled_tileset).extend(0.0),
             ),
-            map_type: tilemap_type_from_map(&map_asset.map),
+            map_type: map_asset.map_type,
             render_settings: *render_settings,
             anchor: *anchor,
             ..default()
@@ -647,15 +647,13 @@ pub(crate) mod render {
         // Sanity checks: current limitations from bevy_ecs_tilemap
         for frame in animation_data {
             if frame.duration != first_tile.duration {
-                log::warn!(
-                    "Animated tile with non constant frame duration is currently not supported"
-                );
+                warn!("Animated tile with non constant frame duration is currently not supported");
                 return None;
             }
             if let Some(id) = previous_tile_id
                 && frame.tile_id != id + 1
             {
-                log::warn!("Animated tile with non-aligned frame tiles is currently not supported");
+                warn!("Animated tile with non-aligned frame tiles is currently not supported");
                 return None;
             }
             previous_tile_id = Some(frame.tile_id);

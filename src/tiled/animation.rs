@@ -33,15 +33,23 @@ fn step_animation(anim: &mut TiledAnimation, delta: std::time::Duration) -> Opti
     if anim.frames.is_empty() {
         return None;
     }
+    // Time left once the current frame is over: carried over to the next
+    // frame so the animation does not drift
+    let overflow = delta.checked_sub(anim.timer.remaining());
     anim.timer.tick(delta);
-    if anim.timer.just_finished() {
-        anim.current_frame = (anim.current_frame + 1) % anim.frames.len();
-        let (atlas_index, duration) = anim.frames[anim.current_frame];
-        anim.timer = Timer::from_seconds(duration, TimerMode::Once);
-        Some(atlas_index)
-    } else {
-        None
+    if !anim.timer.just_finished() {
+        return None;
     }
+    anim.current_frame = (anim.current_frame + 1) % anim.frames.len();
+    let (atlas_index, duration) = anim.frames[anim.current_frame];
+    anim.timer = Timer::from_seconds(duration, TimerMode::Once);
+    if let Some(overflow) = overflow {
+        // Never skip a frame, whatever the overflow
+        let duration = anim.timer.duration();
+        anim.timer
+            .set_elapsed(overflow.min(duration.saturating_sub(std::time::Duration::from_nanos(1))));
+    }
+    Some(atlas_index)
 }
 
 fn animate_sprite(time: Res<Time>, mut query: Query<(&mut TiledAnimation, &mut Sprite)>) {
@@ -99,6 +107,21 @@ mod tests {
         let result = step_animation(&mut anim, Duration::from_millis(101)); // → frame 0
         assert_eq!(result, Some(0));
         assert_eq!(anim.current_frame, 0);
+    }
+
+    #[test]
+    fn overflow_is_carried_over_to_next_frame() {
+        let mut anim = make_anim(vec![(0, 0.5), (1, 0.5)]);
+        // 200ms after the end of frame 0
+        assert_eq!(
+            step_animation(&mut anim, Duration::from_millis(700)),
+            Some(1)
+        );
+        assert!(step_animation(&mut anim, Duration::from_millis(250)).is_none());
+        assert_eq!(
+            step_animation(&mut anim, Duration::from_millis(100)),
+            Some(0)
+        );
     }
 
     #[test]

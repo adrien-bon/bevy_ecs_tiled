@@ -56,7 +56,6 @@ bevy_ecs_tilemap = { version = "0.20", default-features = false }
 tiled = { version = "0.16", default-features = false }
 
 # Utilities
-log = "0.4"
 thiserror = "2.0"
 geo = "0.33"
 regex = "1.13"

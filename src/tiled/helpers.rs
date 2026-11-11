@@ -42,16 +42,15 @@ pub fn layer_from_map(map: &tiled::Map, layer_id: LayerId) -> Option<tiled::Laye
         layer_id: LayerId,
     ) -> Option<tiled::Layer<'a>> {
         layers
-            .filter_map(|l| match l.layer_type() {
-                tiled::LayerType::Group(group_layer) => {
-                    find_layer_by_id(group_layer.layers(), layer_id)
+            .filter_map(|l| {
+                if l.id() == layer_id.0 {
+                    return Some(l);
                 }
-                _ => {
-                    if l.id() == layer_id.0 {
-                        Some(l)
-                    } else {
-                        None
+                match l.layer_type() {
+                    tiled::LayerType::Group(group_layer) => {
+                        find_layer_by_id(group_layer.layers(), layer_id)
                     }
+                    _ => None,
                 }
             })
             .next()
@@ -63,12 +62,7 @@ pub fn layer_from_map(map: &tiled::Map, layer_id: LayerId) -> Option<tiled::Laye
 ///
 /// Returns a reference to the tileset if found, or `None` if the ID is invalid.
 pub fn tileset_from_map(map: &tiled::Map, tileset_id: TilesetId) -> Option<&Arc<tiled::Tileset>> {
-    for (id, tileset) in map.tilesets().iter().enumerate() {
-        if id == tileset_id.0 as usize {
-            return Some(tileset);
-        }
-    }
-    None
+    map.tilesets().get(tileset_id.0 as usize)
 }
 
 /// Retrieves a [`tiled::Tile`] from a [`tiled::Map`] given a [`TilesetId`] and a [`tiled::TileId`].

@@ -96,8 +96,11 @@ impl AssetLoader for TiledWorldLoader {
         // Load all maps
         let mut maps = Vec::new();
         for map in world.maps.iter() {
-            // Seems safe to unwrap() here since we do it on the world path (which should always have a parent)
-            let map_path = world_path.parent().unwrap().join(map.filename.clone());
+            // Maps paths are relative to the world file directory
+            let map_path = world_path
+                .parent()
+                .unwrap_or(std::path::Path::new(""))
+                .join(&map.filename);
 
             let (Some(map_width), Some(map_height)) = (map.width, map.height) else {
                 // Assume that we cannot get map width / map height because it's an infinite map

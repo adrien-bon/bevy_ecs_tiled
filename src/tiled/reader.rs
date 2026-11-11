@@ -7,6 +7,7 @@
 //! The reader supports loading external tileset files (`.tsx`) as well as embedded resources from memory.
 
 use bevy::asset::LoadContext;
+use bevy::log::warn;
 use bevy::platform::collections::HashMap;
 use std::{
     io::{Cursor, Error as IoError, ErrorKind, Read},
@@ -150,7 +151,7 @@ pub(crate) async fn preload_external_resources(
                 cache.insert(cache_key, bytes);
             }
             Err(e) => {
-                log::warn!(
+                warn!(
                     "Failed to pre-load external resource '{}': {}",
                     relative_path.display(),
                     e

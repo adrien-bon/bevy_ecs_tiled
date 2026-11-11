@@ -121,12 +121,9 @@ pub(crate) fn object_polygons(
         _ => tiled_object
             .polygon(
                 &GlobalTransform::default(),
-                matches!(
-                    tilemap_type_from_map(&map_asset.map),
-                    TilemapType::Isometric(..)
-                ),
+                matches!(map_asset.map_type, TilemapType::Isometric(..)),
                 &map_asset.tilemap_size,
-                &grid_size_from_map(&map_asset.map),
+                &map_asset.grid_size,
                 map_asset.tiled_offset,
             )
             .into_iter()

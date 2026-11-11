@@ -35,6 +35,12 @@ pub(crate) struct TiledMapTileset {
 pub struct TiledMapAsset {
     /// The raw Tiled map data
     pub map: tiled::Map,
+    /// Map type, converted from the Tiled map orientation.
+    ///
+    /// Maps with an unsupported orientation are rejected by the map loader.
+    pub map_type: TilemapType,
+    /// Size of a cell of the map grid, in pixels
+    pub grid_size: TilemapGridSize,
     /// Map size in tiles
     pub tilemap_size: TilemapSize,
     /// The largest tile size, in pixels, found among all tiles from this map
@@ -107,11 +113,11 @@ impl TiledMapAsset {
     pub(crate) fn screen_origin(&self, anchor: &TilemapAnchor) -> Vec2 {
         self.world_space_from_tiled_position(
             anchor,
-            match tilemap_type_from_map(&self.map) {
+            match self.map_type {
                 // In Tiled isometric coordinates, moving by `(-h/2, h/2)` tiles
                 // results in an horizontal move of `-h * tile_width / 2` pixels
                 TilemapType::Isometric(IsoCoordSystem::Diamond) => {
-                    let grid_size = grid_size_from_map(&self.map);
+                    let grid_size = self.grid_size;
                     let half_height = self.map.height as f32 * grid_size.y / 2.;
                     Vec2::new(-half_height, half_height)
                 }
@@ -136,49 +142,14 @@ impl TiledMapAsset {
         let map_size = self.tilemap_size;
         let tile_size = self.largest_tile_size;
         let map_height = self.rect.height();
-        let grid_size = grid_size_from_map(&self.map);
-        let map_type = tilemap_type_from_map(&self.map);
+        let grid_size = self.grid_size;
+        let map_type = self.map_type;
         let mut offset = anchor.as_offset(&map_size, &grid_size, &tile_size, &map_type);
         offset.x -= grid_size.x / 2.0;
         offset.y -= grid_size.y / 2.0;
         offset
             + match map_type {
-                TilemapType::Square => {
-                    self.tiled_offset
-                        + Vec2 {
-                            x: tiled_position.x,
-                            y: map_height - tiled_position.y,
-                        }
-                }
-                TilemapType::Hexagon(HexCoordSystem::ColumnOdd) => {
-                    self.tiled_offset
-                        + Vec2 {
-                            x: tiled_position.x,
-                            y: map_height - tiled_position.y,
-                        }
-                }
-                TilemapType::Hexagon(HexCoordSystem::ColumnEven) => {
-                    self.tiled_offset
-                        + Vec2 {
-                            x: tiled_position.x,
-                            y: map_height - grid_size.y / 2. - tiled_position.y,
-                        }
-                }
-                TilemapType::Hexagon(HexCoordSystem::RowOdd) => {
-                    self.tiled_offset
-                        + Vec2 {
-                            x: tiled_position.x,
-                            y: map_height - tiled_position.y,
-                        }
-                }
-                TilemapType::Hexagon(HexCoordSystem::RowEven) => {
-                    self.tiled_offset
-                        + Vec2 {
-                            x: tiled_position.x - grid_size.x / 2.,
-                            y: map_height - tiled_position.y,
-                        }
-                }
-                TilemapType::Isometric(IsoCoordSystem::Diamond) => {
+                TilemapType::Isometric(_) => {
                     let position =
                         iso_projection(tiled_position + self.tiled_offset, &map_size, &grid_size);
                     // Tiled tile (0, 0) top corner is located half a tile above
@@ -188,10 +159,24 @@ impl TiledMapAsset {
                         y: (map_size.y + 1) as f32 * grid_size.y / 2. - position.y,
                     }
                 }
-                TilemapType::Isometric(IsoCoordSystem::Staggered) => {
-                    unreachable!("staggered maps are rejected by the map loader")
+                TilemapType::Square | TilemapType::Hexagon(_) => {
+                    // Hexagonal maps whose first row / column is staggered are shifted by half a cell
+                    let stagger = match map_type {
+                        TilemapType::Hexagon(HexCoordSystem::ColumnEven) => {
+                            Vec2::new(0., -grid_size.y / 2.)
+                        }
+                        TilemapType::Hexagon(HexCoordSystem::RowEven) => {
+                            Vec2::new(-grid_size.x / 2., 0.)
+                        }
+                        _ => Vec2::ZERO,
+                    };
+                    self.tiled_offset
+                        + stagger
+                        + Vec2 {
+                            x: tiled_position.x,
+                            y: map_height - tiled_position.y,
+                        }
                 }
-                _ => unreachable!(),
             }
     }
 
@@ -329,9 +314,9 @@ impl TiledMapAsset {
     ) -> Option<geo::Coord<f32>> {
         tiled_object.center(
             transform,
-            matches!(tilemap_type_from_map(&self.map), TilemapType::Isometric(..)),
+            matches!(self.map_type, TilemapType::Isometric(..)),
             &self.tilemap_size,
-            &grid_size_from_map(&self.map),
+            &self.grid_size,
             self.tiled_offset,
         )
     }
@@ -351,9 +336,9 @@ impl TiledMapAsset {
     ) -> Vec<geo::Coord<f32>> {
         tiled_object.vertices(
             transform,
-            matches!(tilemap_type_from_map(&self.map), TilemapType::Isometric(..)),
+            matches!(self.map_type, TilemapType::Isometric(..)),
             &self.tilemap_size,
-            &grid_size_from_map(&self.map),
+            &self.grid_size,
             self.tiled_offset,
         )
     }
@@ -373,9 +358,9 @@ impl TiledMapAsset {
     ) -> Option<geo::LineString<f32>> {
         tiled_object.line_string(
             transform,
-            matches!(tilemap_type_from_map(&self.map), TilemapType::Isometric(..)),
+            matches!(self.map_type, TilemapType::Isometric(..)),
             &self.tilemap_size,
-            &grid_size_from_map(&self.map),
+            &self.grid_size,
             self.tiled_offset,
         )
     }
@@ -395,9 +380,9 @@ impl TiledMapAsset {
     ) -> Option<geo::Polygon<f32>> {
         tiled_object.polygon(
             transform,
-            matches!(tilemap_type_from_map(&self.map), TilemapType::Isometric(..)),
+            matches!(self.map_type, TilemapType::Isometric(..)),
             &self.tilemap_size,
-            &grid_size_from_map(&self.map),
+            &self.grid_size,
             self.tiled_offset,
         )
     }
@@ -458,9 +443,9 @@ impl TiledMapAsset {
     ) -> Vec2 {
         tile_pos.center_in_world(
             &self.tilemap_size,
-            &grid_size_from_map(&self.map),
+            &self.grid_size,
             tile_size,
-            &tilemap_type_from_map(&self.map),
+            &self.map_type,
             anchor,
         )
     }
@@ -470,6 +455,8 @@ impl fmt::Debug for TiledMapAsset {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("TiledMapAsset")
             .field("map", &self.map)
+            .field("map_type", &self.map_type)
+            .field("grid_size", &self.grid_size)
             .field("tilemap_size", &self.tilemap_size)
             .field("largest_tile_size", &self.largest_tile_size)
             .field("rect", &self.rect)

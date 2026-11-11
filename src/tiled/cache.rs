@@ -15,15 +15,8 @@ use std::sync::{Arc, RwLock};
 ///
 /// Wraps a [`tiled::DefaultResourceCache`] in an [`Arc<RwLock<...>>`] to allow safe concurrent access
 /// from multiple systems. Provides methods for clearing the cache and implements the [`tiled::ResourceCache`] trait.
-#[derive(Resource, Clone)]
+#[derive(Resource, Clone, Default)]
 pub(crate) struct TiledResourceCache(pub(crate) Arc<RwLock<tiled::DefaultResourceCache>>);
-
-impl TiledResourceCache {
-    /// Creates a new, empty Tiled resource cache.
-    pub(crate) fn new() -> Self {
-        Self(Arc::new(RwLock::new(tiled::DefaultResourceCache::new())))
-    }
-}
 
 impl TiledResourceCache {
     /// Clears all cached tilesets and templates.
@@ -68,5 +61,6 @@ impl tiled::ResourceCache for TiledResourceCache {
 }
 
 pub(crate) fn plugin(app: &mut App) {
-    app.insert_resource(TiledResourceCache::new());
+    // Asset loaders keep a clone of this cache: it must not be replaced once they are initialized
+    app.init_resource::<TiledResourceCache>();
 }

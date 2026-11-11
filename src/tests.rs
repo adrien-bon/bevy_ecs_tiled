@@ -36,12 +36,11 @@ pub(crate) fn test_app() -> App {
         tiled_types_export_file: None,
         tiled_types_filter: TiledFilter::None,
     });
-    app.insert_resource(crate::tiled::cache::TiledResourceCache::new());
     app.add_plugins((
+        crate::tiled::cache::plugin,
         crate::tiled::map::plugin,
         #[cfg(feature = "render")]
         crate::tiled::animation::plugin,
-        crate::tiled::cache::plugin,
         crate::tiled::event::plugin,
         crate::tiled::image::plugin,
         crate::tiled::layer::plugin,

@@ -44,7 +44,7 @@ impl TiledWorldStorage {
 
     /// Retrieve the [`TiledMap`] [`Entity`] associated with this [`WorldMapId`]
     pub fn map_entity(&self, map_id: WorldMapId) -> Option<Entity> {
-        self.maps.get(&map_id).cloned()
+        self.maps.get(&map_id).copied()
     }
 
     /// Retrieve the [`WorldMapId`] associated with this [`TiledMap`] [`Entity`]

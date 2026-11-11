@@ -91,16 +91,16 @@ impl Plugin for TiledPlugin {
         }
 
         app.insert_resource(self.0.clone());
-        app.insert_resource(cache::TiledResourceCache::new());
         app.register_type::<TiledPluginConfig>();
 
         app.add_plugins((
+            // Must come first: asset loaders use the resource cache
+            cache::plugin,
             map::plugin,
             #[cfg(feature = "world")]
             world::plugin,
             #[cfg(feature = "render")]
             animation::plugin,
-            cache::plugin,
             event::plugin,
             image::plugin,
             layer::plugin,

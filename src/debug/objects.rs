@@ -95,12 +95,9 @@ fn draw_debug_gizmos(
             let positions = object
                 .line_string(
                     transform,
-                    matches!(
-                        tilemap_type_from_map(&map_asset.map),
-                        TilemapType::Isometric(..)
-                    ),
+                    matches!(map_asset.map_type, TilemapType::Isometric(..)),
                     &map_asset.tilemap_size,
-                    &grid_size_from_map(&map_asset.map),
+                    &map_asset.grid_size,
                     map_asset.tiled_offset,
                 )
                 .map(|ls| ls.coords().map(|c| Vec2::new(c.x, c.y)).collect::<Vec<_>>());

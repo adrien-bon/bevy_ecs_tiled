@@ -110,8 +110,8 @@ fn draw_maps_aabb(
 
 /// Map grid corners, relative to the map entity, as computed by `bevy_ecs_tilemap`.
 fn tilemap_corners(map_asset: &TiledMapAsset, anchor: &TilemapAnchor) -> [Vec2; 4] {
-    let map_type = tilemap_type_from_map(&map_asset.map);
-    let grid_size = grid_size_from_map(&map_asset.map);
+    let map_type = map_asset.map_type;
+    let grid_size = map_asset.grid_size;
     let tile_size = map_asset.largest_tile_size;
     let map_size = map_asset.tilemap_size;
     // Only consider the grid footprint: tiles images bigger than the grid would otherwise
@@ -137,8 +137,8 @@ fn tilemap_corners(map_asset: &TiledMapAsset, anchor: &TilemapAnchor) -> [Vec2; 
 /// Map corners, relative to the map entity, as computed by converting
 /// Tiled coordinates using [`TiledMapAsset::world_space_from_tiled_position`].
 fn tiled_corners(map_asset: &TiledMapAsset, anchor: &TilemapAnchor) -> [Vec2; 4] {
-    let map_type = tilemap_type_from_map(&map_asset.map);
-    let grid_size = grid_size_from_map(&map_asset.map);
+    let map_type = map_asset.map_type;
+    let grid_size = map_asset.grid_size;
     let map_size = map_asset.tilemap_size;
 
     // Size of a Tiled "unit" along each axis, used to compute top-left chunk origin.
@@ -291,7 +291,7 @@ mod tests {
         let assets = app.world().resource::<Assets<TiledMapAsset>>();
         for (path, handle) in maps {
             let map_asset = assets.get(&handle).unwrap();
-            let grid_size = grid_size_from_map(&map_asset.map);
+            let grid_size = map_asset.grid_size;
             let map_size = map_asset.tilemap_size;
             // Top-left tile in bevy_ecs_tilemap coordinates (Y axis is flipped)
             // and its coordinates in Tiled (offset by the top-left chunk for infinite maps)
@@ -310,7 +310,7 @@ mod tests {
                     &map_size,
                     &grid_size,
                     &map_asset.largest_tile_size,
-                    &tilemap_type_from_map(&map_asset.map),
+                    &map_asset.map_type,
                     &anchor,
                 ) + Vec2::new(0., grid_size.y / 2.);
                 // Tiled Y axis points down

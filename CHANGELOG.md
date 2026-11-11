@@ -21,6 +21,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Add isometric and hexagonal worlds, and the `world_orientation` example
 - Add `TiledDebugGizmos` gizmo config group, used by all debug plugins, and `tiled_debug_gizmos_enabled` run condition: debug gizmos can be configured or hidden at runtime using `GizmoConfigStore`
 - Add `TiledDebugTogglePlugin`, part of `TiledDebugPluginGroup`, to toggle debug gizmos display using a keyboard key (none by default)
+- Add `TiledMapAsset::map_type` and `TiledMapAsset::grid_size` fields
 
 ### Changed
 
@@ -46,6 +47,10 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 ### Fixed
 
 - Colliders of tiles layers take tiles flips (including diagonal flip) into account
+- `layer_from_map()` finds group layers
+- Tilesets and templates cache is actually cleared when a map is hot-reloaded
+- Infinite maps whose tiles layers do not have any chunk no longer get an invalid size
+- `TiledAnimation` no longer drifts: time left when a frame ends is carried over to the next frame
 
 ## v0.15.1
 
