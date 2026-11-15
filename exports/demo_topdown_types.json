@@ -1,0 +1,144 @@
+[
+  {
+    "id": 1,
+    "name": "demo_topdown::highlight::HighlightLayer",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": []
+  },
+  {
+    "id": 2,
+    "name": "demo_topdown::interaction::Channel:::Variant",
+    "type": "enum",
+    "storageType": "string",
+    "values": [
+      "Red",
+      "Blue"
+    ],
+    "valuesAsFlags": false
+  },
+  {
+    "id": 3,
+    "name": "demo_topdown::interaction::Channel",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": ":variant",
+        "propertyType": "demo_topdown::interaction::Channel:::Variant",
+        "type": "string",
+        "value": "Red"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "demo_topdown::interaction::Button",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": "channel",
+        "propertyType": "demo_topdown::interaction::Channel",
+        "type": "class",
+        "value": {}
+      },
+      {
+        "name": "pressed_tile",
+        "type": "int",
+        "value": 0
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "demo_topdown::interaction::Destructible",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": []
+  },
+  {
+    "id": 6,
+    "name": "demo_topdown::interaction::Gate",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": "channel",
+        "propertyType": "demo_topdown::interaction::Channel",
+        "type": "class",
+        "value": {}
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "demo_topdown::level::Door",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": "target_map",
+        "type": "string",
+        "value": ""
+      },
+      {
+        "name": "target_spawn",
+        "type": "string",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "name": "demo_topdown::level::SpawnPoint",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": [
+      {
+        "name": "name",
+        "type": "string",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "name": "demo_topdown::navigation::Obstacle",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": []
+  }
+]

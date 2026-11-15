@@ -12,7 +12,7 @@ cargo run --example XXX
 > Some examples require one or more feature flags to be enabled.
 > If you attempt to run such an example without the required features, Cargo will display an error message with the correct command to use.
 
-For a more in-depth explanation of crate concepts, see the [dedicated book](https://adrien-bon.github.io/bevy_ecs_tiled/) or the [demo_platformer](./demo_platformer/) example..
+For a more in-depth explanation of crate concepts, see the [dedicated book](https://adrien-bon.github.io/bevy_ecs_tiled/) or the [demo_platformer](./demo_platformer/) and [demo_topdown](./demo_topdown/) examples.
 
 ## Keyboard Controls
 
@@ -32,6 +32,8 @@ Most examples support the following controls:
 
 | Name | Required features | Description |
 |------|-------------------|-------------|
+| `demo_platformer` | `avian`, `user_properties` | A small platformer game: objects properties, physics, one-way platforms and a minimap. |
+| `demo_topdown` | `user_properties` | A small top-down game: tiles properties, mouse picking, pathfinding, maps switching and a custom tilemap material. |
 | `map_anchor` | None | This example shows the basic usage of `TilemapAnchor`. |
 | `map_basic` | None | This example shows the basic usage of the plugin to load a Tiled map. |
 | `map_bsn` | None | This example shows the basic usage of the plugin with the Bevy bsn! macro. |

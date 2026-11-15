@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="20" height="14" tilewidth="64" tileheight="64" infinite="0" nextlayerid="5" nextobjectid="4">
+ <tileset firstgid="1" source="tilesets/sokoban.tsx"/>
+ <layer id="1" name="Ground" width="20" height="14">
+  <properties>
+   <property name="HighlightLayer" type="class" propertytype="demo_topdown::highlight::HighlightLayer"/>
+  </properties>
+  <data encoding="csv">
+89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,
+89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,
+89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,
+89,89,89,89,89,89,89,89,104,89,89,89,89,89,89,89,89,89,89,89,
+89,89,89,89,89,89,89,89,91,89,89,89,89,89,89,89,89,89,89,89,
+89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,
+89,89,89,89,89,89,89,89,91,89,89,89,89,89,89,89,89,89,89,89,
+89,89,89,89,89,89,89,89,91,89,89,89,89,89,89,89,89,89,89,89,
+89,89,89,89,89,89,89,89,91,89,89,89,89,89,89,89,89,89,89,89,
+89,89,89,89,89,89,89,89,91,91,91,91,89,89,89,89,89,89,89,89,
+89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,
+89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,
+89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,
+89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89,89
+</data>
+ </layer>
+ <layer id="2" name="Walls" width="20" height="14">
+  <properties>
+   <property name="HighlightLayer" type="class" propertytype="demo_topdown::highlight::HighlightLayer"/>
+  </properties>
+  <data encoding="csv">
+88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,
+88,0,0,0,0,0,98,98,98,98,98,0,0,0,0,0,0,0,0,88,
+88,0,0,0,0,0,98,98,98,98,98,0,0,0,0,0,0,0,0,88,
+88,0,0,0,0,0,85,85,0,85,85,0,0,0,0,0,0,0,0,88,
+88,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,88,
+88,88,88,88,88,88,88,88,0,88,88,88,88,88,88,88,88,88,88,88,
+88,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,88,
+88,0,0,0,0,0,0,0,0,0,0,0,0,88,0,88,0,0,0,88,
+88,0,0,0,0,0,0,0,0,0,0,0,0,88,0,88,0,0,0,88,
+88,0,0,0,0,0,0,0,0,0,0,0,0,88,88,88,0,0,0,88,
+88,0,0,0,0,88,88,88,88,88,88,88,0,0,0,0,0,0,0,88,
+88,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,88,
+88,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,88,
+88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88
+</data>
+ </layer>
+ <layer id="3" name="Items" width="20" height="14">
+  <properties>
+   <property name="HighlightLayer" type="class" propertytype="demo_topdown::highlight::HighlightLayer"/>
+  </properties>
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,2,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,39,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <objectgroup id="4" name="Objects">
+  <object id="1" name="Start" x="224" y="608">
+   <properties>
+    <property name="SpawnPoint" type="class" propertytype="demo_topdown::level::SpawnPoint">
+     <properties>
+      <property name="name" value="start"/>
+     </properties>
+    </property>
+   </properties>
+   <point/>
+  </object>
+  <object id="2" name="House door (outside)" x="544" y="288">
+   <properties>
+    <property name="SpawnPoint" type="class" propertytype="demo_topdown::level::SpawnPoint">
+     <properties>
+      <property name="name" value="house_door"/>
+     </properties>
+    </property>
+   </properties>
+   <point/>
+  </object>
+  <object id="3" name="Enter the house" x="544" y="224">
+   <properties>
+    <property name="Door" type="class" propertytype="demo_topdown::level::Door">
+     <properties>
+      <property name="target_map" value="demo_topdown/house.tmx"/>
+      <property name="target_spawn" value="entrance"/>
+     </properties>
+    </property>
+   </properties>
+   <point/>
+  </object>
+ </objectgroup>
+</map>

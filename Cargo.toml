@@ -69,9 +69,9 @@ getrandom = { version = "0.4", optional = true }
 
 # Pull in Bevy 'file_watcher' feature only for non-WASM builds
 [target.'cfg(all(target_family = "wasm", any(target_os = "unknown", target_os = "none")))'.dev-dependencies]
-bevy = { version = "0.20", features = ["bevy_dev_tools", "bevy_render", "render_dev_tools", "bevy_scene"] }
+bevy = { version = "0.20", features = ["bevy_dev_tools", "bevy_render", "render_dev_tools", "bevy_scene", "bevy_picking"] }
 [target.'cfg(any(not(target_family = "wasm"), all(not(target_os = "unknown"), not(target_os = "none"))))'.dev-dependencies]
-bevy = { version = "0.20", features = ["file_watcher", "bevy_dev_tools", "bevy_render", "render_dev_tools", "bevy_scene"] }
+bevy = { version = "0.20", features = ["file_watcher", "bevy_dev_tools", "bevy_render", "render_dev_tools", "bevy_scene", "bevy_picking"] }
 
 [dev-dependencies]
 bevy-inspector-egui = "0.38"
@@ -90,6 +90,10 @@ denylist = ["png", "bmp", "jpeg", "gif"]
 [[example]]
 name = "demo_platformer"
 required-features = ["avian", "user_properties"]
+
+[[example]]
+name = "demo_topdown"
+required-features = ["user_properties"]
 
 [[example]]
 name = "map_basic"

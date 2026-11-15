@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="12" height="9" tilewidth="64" tileheight="64" infinite="0" nextlayerid="5" nextobjectid="3">
+ <tileset firstgid="1" source="tilesets/sokoban.tsx"/>
+ <layer id="1" name="Ground" width="12" height="9">
+  <properties>
+   <property name="HighlightLayer" type="class" propertytype="demo_topdown::highlight::HighlightLayer"/>
+  </properties>
+  <data encoding="csv">
+90,90,90,90,90,90,90,90,90,90,90,90,
+90,90,90,90,90,90,90,90,90,90,90,90,
+90,90,90,90,90,90,90,90,90,90,90,90,
+90,90,90,90,90,90,90,90,90,90,90,90,
+90,90,90,90,90,90,90,90,90,90,90,90,
+90,90,90,90,90,90,90,90,90,90,90,90,
+90,90,90,90,90,90,90,90,90,90,90,90,
+90,90,90,90,90,90,90,90,90,90,90,90,
+90,90,103,90,90,90,90,90,90,90,90,90
+</data>
+ </layer>
+ <layer id="2" name="Walls" width="12" height="9">
+  <properties>
+   <property name="HighlightLayer" type="class" propertytype="demo_topdown::highlight::HighlightLayer"/>
+  </properties>
+  <data encoding="csv">
+87,87,87,87,87,87,87,87,87,87,87,87,
+87,0,0,0,0,87,0,0,0,0,0,87,
+87,0,0,0,0,87,0,0,0,0,0,87,
+87,0,0,0,0,0,0,0,0,0,0,87,
+87,0,0,0,0,87,0,0,0,0,0,87,
+87,0,0,0,0,87,0,0,0,0,0,87,
+87,0,0,0,0,87,0,0,0,0,0,87,
+87,0,0,0,0,87,0,0,0,0,0,87,
+87,87,0,87,87,87,87,87,87,87,87,87
+</data>
+ </layer>
+ <layer id="3" name="Items" width="12" height="9">
+  <properties>
+   <property name="HighlightLayer" type="class" propertytype="demo_topdown::highlight::HighlightLayer"/>
+  </properties>
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,2,0,0,0,
+0,0,52,0,0,4,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,2,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,2,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <objectgroup id="4" name="Objects">
+  <object id="1" name="Entrance" x="160" y="480">
+   <properties>
+    <property name="SpawnPoint" type="class" propertytype="demo_topdown::level::SpawnPoint">
+     <properties>
+      <property name="name" value="entrance"/>
+     </properties>
+    </property>
+   </properties>
+   <point/>
+  </object>
+  <object id="2" name="Leave the house" x="160" y="544">
+   <properties>
+    <property name="Door" type="class" propertytype="demo_topdown::level::Door">
+     <properties>
+      <property name="target_map" value="demo_topdown/outdoor.tmx"/>
+      <property name="target_spawn" value="house_door"/>
+     </properties>
+    </property>
+   </properties>
+   <point/>
+  </object>
+ </objectgroup>
+</map>
