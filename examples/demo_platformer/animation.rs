@@ -50,7 +50,7 @@ fn update_animation_atlas(mut query: Query<(&Animation, &mut Sprite)>) {
         let Some(atlas) = sprite.texture_atlas.as_mut() else {
             continue;
         };
-        if animation.changed() {
+        if animation.frame_changed() {
             atlas.index = animation.get_atlas_index();
         }
     }
@@ -71,20 +71,24 @@ pub struct Animation {
 #[derive(Reflect, Hash, Eq, PartialEq, Default, Debug, Copy, Clone)]
 pub enum AnimationState {
     #[default]
-    Unknown,
     Idling,
     Walking,
 }
 
 impl Animation {
-    pub fn add_state(
-        &mut self,
+    /// Declare the frames of a state and how long each of them is displayed.
+    pub fn with_state(
+        mut self,
         state: AnimationState,
         duration: Duration,
         frames: Vec<usize>,
     ) -> Self {
+        // Arm the timer if this is the state we start with
+        if state == self.state {
+            self.timer = Timer::new(duration, TimerMode::Repeating);
+        }
         self.config.insert(state, (duration, frames));
-        self.clone()
+        self
     }
 
     /// Update animation timers.
@@ -109,8 +113,8 @@ impl Animation {
         }
     }
 
-    /// Whether animation changed this tick.
-    pub fn changed(&self) -> bool {
+    /// Whether the animation moved to another frame this tick.
+    pub fn frame_changed(&self) -> bool {
         self.timer.is_finished()
     }
 

@@ -1,3 +1,15 @@
+//! A small platformer game, to showcase how to use `bevy_ecs_tiled` in an actual game.
+//!
+//! Everything is defined in the Tiled map and turned into game logic using user properties:
+//! - `level`: load the map and configure its physics colliders
+//! - `player`: spawn the player on its spawn point and handle keyboard inputs
+//! - `enemy` and `patrol`: enemies walking along a route drawn in Tiled
+//! - `trigger`: zones which kill or teleport the player
+//! - `platform`: one-way platforms
+//! - `controller`, `animation`, `camera`, `minimap`: not specific to Tiled
+//!
+//! See the `README.md` file next to this one for more information.
+
 use avian2d::prelude::*;
 use bevy::{asset::AssetMetaCheck, prelude::*};
 use bevy_ecs_tiled::prelude::*;
@@ -11,6 +23,7 @@ mod enemy;
 mod level;
 mod minimap;
 mod patrol;
+mod platform;
 mod player;
 mod trigger;
 
@@ -46,8 +59,6 @@ fn main() {
         (
             UpdateSystems::TickTimers,
             UpdateSystems::RecordInput,
-            UpdateSystems::ApplyMovement,
-            UpdateSystems::TriggerZones,
             UpdateSystems::UpdateSprite,
         )
             .chain(),
@@ -61,9 +72,10 @@ fn main() {
         player::plugin,
         enemy::plugin,
         patrol::plugin,
+        platform::plugin,
         level::plugin,
         trigger::plugin,
-        controller::CharacterControllerPlugin,
+        controller::plugin,
         minimap::plugin,
     ));
 
@@ -96,7 +108,10 @@ fn main() {
         TiledPlugin(config),
         // Setup physics
         TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default(),
-        PhysicsPlugins::default().with_length_unit(100.0),
+        PhysicsPlugins::default()
+            .with_length_unit(100.0)
+            // Custom collision hooks, used for one-way platforms
+            .with_collision_hooks::<platform::PlatformerCollisionHooks>(),
     ));
 
     // Set camera default clear color
@@ -110,7 +125,5 @@ fn main() {
 enum UpdateSystems {
     TickTimers,
     RecordInput,
-    ApplyMovement,
-    TriggerZones,
     UpdateSprite,
 }

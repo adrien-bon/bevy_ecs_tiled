@@ -29,17 +29,28 @@ pub(super) fn plugin(app: &mut App) {
 pub const DEFAULT_RENDER_LAYER: usize = 0;
 pub const MINIMAP_RENDER_LAYER: usize = 1;
 
+/// Size of the minimap, in logical pixels.
+const MINIMAP_SIZE: Vec2 = Vec2::new(300., 150.);
+
 #[derive(Component)]
 pub struct HideOnMinimap;
 
-fn setup_minimap(
-    mut commands: Commands,
-    window: Single<&Window>,
-    mut images: ResMut<Assets<Image>>,
-) {
-    let minimap_width = 300;
-    let minimap_height = 150;
+/// A colored rectangle only rendered on the minimap, to be spawned as a child of the entity to track.
+pub fn minimap_marker(color: impl Into<Color>) -> impl Bundle {
+    (
+        Name::new("Minimap Marker"),
+        Sprite {
+            custom_size: Some(Vec2::new(32., 96.)),
+            color: color.into(),
+            ..default()
+        },
+        Transform::from_xyz(0., 0., 100.0),
+        // Render on minimap only, position is inherited from parent
+        RenderLayers::layer(MINIMAP_RENDER_LAYER),
+    )
+}
 
+fn setup_minimap(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
     let mut image = Image::new_uninit(
         default(),
         TextureDimension::D2,
@@ -74,8 +85,8 @@ fn setup_minimap(
             position_type: PositionType::Absolute,
             top: Val::Px(0.0),
             left: Val::Px(0.0),
-            width: Val::Px(minimap_width as f32 / window.resolution.scale_factor()),
-            height: Val::Px(minimap_height as f32 / window.resolution.scale_factor()),
+            width: Val::Px(MINIMAP_SIZE.x),
+            height: Val::Px(MINIMAP_SIZE.y),
             ..default()
         },
         ViewportNode::new(camera),

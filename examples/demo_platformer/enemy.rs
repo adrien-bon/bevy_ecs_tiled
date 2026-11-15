@@ -1,15 +1,14 @@
+//! Enemy-specific behavior.
+
 use std::time::Duration;
 
 use avian2d::prelude::*;
-use bevy::{
-    camera::visibility::RenderLayers, color::palettes::css::RED, prelude::*, sprite::Anchor,
-};
-use std::f32::consts::PI;
+use bevy::{color::palettes::css::RED, prelude::*, sprite::Anchor};
 
 use crate::{
     animation::{Animation, AnimationState},
-    controller::CharacterControllerBundle,
-    minimap::{HideOnMinimap, MINIMAP_RENDER_LAYER},
+    controller::character_controller,
+    minimap::{HideOnMinimap, minimap_marker},
 };
 
 const ENEMY_SPRITE_FILE: &str =
@@ -17,31 +16,55 @@ const ENEMY_SPRITE_FILE: &str =
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<Enemy>();
+    app.init_resource::<EnemyAssets>();
     app.add_observer(on_enemy_added);
 }
 
+/// Marker component for enemies.
+///
+/// It is added from Tiled, on a point object: we then add everything else
+/// an enemy needs to the object entity.
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[require(Transform, Visibility)]
 #[reflect(Component)]
 pub struct Enemy;
 
+/// Assets shared by all the enemies: they are loaded only once.
+#[derive(Resource)]
+struct EnemyAssets {
+    image: Handle<Image>,
+    layout: Handle<TextureAtlasLayout>,
+}
+
+impl FromWorld for EnemyAssets {
+    fn from_world(world: &mut World) -> Self {
+        Self {
+            image: world.resource::<AssetServer>().load(ENEMY_SPRITE_FILE),
+            layout: world.resource_mut::<Assets<TextureAtlasLayout>>().add(
+                TextureAtlasLayout::from_grid(
+                    UVec2::splat(128),
+                    8,
+                    16,
+                    Some(UVec2::splat(2)),
+                    None,
+                ),
+            ),
+        }
+    }
+}
+
 fn on_enemy_added(
     add_enemy: On<Add<Enemy>>,
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    enemy_assets: Res<EnemyAssets>,
 ) {
-    let layout =
-        TextureAtlasLayout::from_grid(UVec2::splat(128), 8, 16, Some(UVec2::splat(2)), None);
-    let texture_atlas_layout = texture_atlas_layouts.add(layout);
-
     let enemy_animation = Animation::default()
-        .add_state(
+        .with_state(
             AnimationState::Idling,
             Duration::from_millis(100),
             vec![75, 83],
         )
-        .add_state(
+        .with_state(
             AnimationState::Walking,
             Duration::from_millis(100),
             vec![75, 83],
@@ -50,9 +73,9 @@ fn on_enemy_added(
     commands.entity(add_enemy.event().entity).insert((
         Name::new("Enemy"),
         Sprite {
-            image: asset_server.load(ENEMY_SPRITE_FILE),
+            image: enemy_assets.image.clone(),
             texture_atlas: Some(TextureAtlas {
-                layout: texture_atlas_layout,
+                layout: enemy_assets.layout.clone(),
                 index: 75,
             }),
             ..Default::default()
@@ -60,22 +83,9 @@ fn on_enemy_added(
         HideOnMinimap,
         Anchor::from(Vec2::new(0., -0.1)),
         enemy_animation,
+        // Enemies can not be pushed around by the player
         Mass(1_000_000.),
-        CharacterControllerBundle::new(Collider::capsule(40., 30.)).with_movement(
-            2000.,
-            0.9,
-            800.,
-            PI * 0.45,
-        ),
-        children![(
-            Name::new("Enemy Minimap Marker"),
-            Sprite {
-                custom_size: Some(Vec2::new(32., 96.)),
-                color: Color::Srgba(RED),
-                ..default()
-            },
-            Transform::from_xyz(0., 0., 100.0),
-            RenderLayers::layer(MINIMAP_RENDER_LAYER) // Render on minimap, inherit position from parent
-        )],
+        character_controller(Collider::capsule(40., 30.)),
+        children![minimap_marker(RED)],
     ));
 }

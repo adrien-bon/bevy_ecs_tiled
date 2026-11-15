@@ -12,23 +12,6 @@
   },
   {
     "id": 3,
-    "name": "demo_platformer::patrol::PatrolProgress",
-    "type": "class",
-    "useAs": [
-      "property"
-    ],
-    "color": "#000000",
-    "drawFill": true,
-    "members": [
-      {
-        "name": "0",
-        "type": "int",
-        "value": 0
-      }
-    ]
-  },
-  {
-    "id": 4,
     "name": "demo_platformer::patrol::PatrolRoute",
     "type": "class",
     "useAs": [
@@ -45,8 +28,31 @@
     ]
   },
   {
+    "id": 4,
+    "name": "demo_platformer::platform::OneWayPlatform",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": []
+  },
+  {
     "id": 5,
-    "name": "demo_platformer::patrol::RequestedDestination",
+    "name": "demo_platformer::platform::PassThroughOneWayPlatform:::Variant",
+    "type": "enum",
+    "storageType": "string",
+    "values": [
+      "ByNormal",
+      "Always",
+      "Never"
+    ],
+    "valuesAsFlags": false
+  },
+  {
+    "id": 6,
+    "name": "demo_platformer::platform::PassThroughOneWayPlatform",
     "type": "class",
     "useAs": [
       "property"
@@ -55,14 +61,15 @@
     "drawFill": true,
     "members": [
       {
-        "name": "0",
-        "type": "float",
-        "value": null
+        "name": ":variant",
+        "propertyType": "demo_platformer::platform::PassThroughOneWayPlatform:::Variant",
+        "type": "string",
+        "value": "ByNormal"
       }
     ]
   },
   {
-    "id": 6,
+    "id": 7,
     "name": "demo_platformer::player::Player",
     "type": "class",
     "useAs": [
@@ -73,7 +80,7 @@
     "members": []
   },
   {
-    "id": 7,
+    "id": 8,
     "name": "demo_platformer::player::PlayerSpawnPoint",
     "type": "class",
     "useAs": [
@@ -84,7 +91,7 @@
     "members": []
   },
   {
-    "id": 8,
+    "id": 9,
     "name": "demo_platformer::trigger::TriggerActor",
     "type": "class",
     "useAs": [
@@ -95,34 +102,15 @@
     "members": []
   },
   {
-    "id": 9,
+    "id": 10,
     "name": "demo_platformer::trigger::TriggerZone:::Variant",
     "type": "enum",
     "storageType": "string",
     "values": [
-      "Unknown",
       "Kill",
-      "Damage",
       "Teleport"
     ],
     "valuesAsFlags": false
-  },
-  {
-    "id": 10,
-    "name": "demo_platformer::trigger::TriggerZone::Damage",
-    "type": "class",
-    "useAs": [
-      "property"
-    ],
-    "color": "#000000",
-    "drawFill": true,
-    "members": [
-      {
-        "name": "0",
-        "type": "float",
-        "value": null
-      }
-    ]
   },
   {
     "id": 11,
@@ -155,13 +143,7 @@
         "name": ":variant",
         "propertyType": "demo_platformer::trigger::TriggerZone:::Variant",
         "type": "string",
-        "value": "Unknown"
-      },
-      {
-        "name": "Damage",
-        "propertyType": "demo_platformer::trigger::TriggerZone::Damage",
-        "type": "class",
-        "value": null
+        "value": "Kill"
       },
       {
         "name": "Teleport",

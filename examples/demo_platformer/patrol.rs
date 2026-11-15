@@ -1,65 +1,56 @@
+//! Make an entity walk back and forth along the vertices of a Tiled object.
+
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 
-use crate::{
-    UpdateSystems,
-    controller::{MovementAction, MovementEvent},
-};
+use crate::{UpdateSystems, controller::MovementIntent};
+
+/// How close to a waypoint, in pixels, we need to be to consider it reached.
+const WAYPOINT_REACHED_DISTANCE: f32 = 10.;
 
 pub(super) fn plugin(app: &mut App) {
-    app.register_type::<RequestedDestination>();
     app.register_type::<PatrolRoute>();
-    app.register_type::<PatrolProgress>();
     app.add_systems(
         Update,
-        (move_along_patrol_route, move_to_destination)
+        (select_next_waypoint, move_to_waypoint)
             .chain()
             .in_set(UpdateSystems::RecordInput),
     );
 }
 
-#[derive(Component, Debug, Clone, Copy, PartialEq, Reflect)]
-#[reflect(Component)]
-pub struct RequestedDestination(pub f32);
-
+/// The Tiled object to patrol along: we walk from one of its vertices to the next one.
+///
+/// It is added from Tiled, where it references a polyline object.
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Reflect)]
 #[require(PatrolProgress)]
 #[reflect(Component)]
 pub struct PatrolRoute(pub Entity);
 
-#[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq, Reflect)]
-#[reflect(Component, Default)]
-pub struct PatrolProgress(pub usize);
-
-fn move_to_destination(
-    mut commands: Commands,
-    mut movement_message_writer: MessageWriter<MovementEvent>,
-    mut patrolling_actor_query: Query<(Entity, &GlobalTransform, &RequestedDestination)>,
-) {
-    for (enemy, transform, target) in patrolling_actor_query.iter_mut() {
-        let distance = target.0 - transform.translation().x;
-        if distance.abs() < 10. {
-            commands.entity(enemy).remove::<RequestedDestination>();
-        } else {
-            movement_message_writer.write(MovementEvent {
-                entity: enemy,
-                action: MovementAction::Move(if distance > 0. { 1. } else { -1. }),
-            });
-        }
-    }
+/// Where we are along our [`PatrolRoute`].
+///
+/// This is a runtime state, not something to set from Tiled: it does not derive
+/// `Reflect`, so it is not part of the types we export to Tiled.
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
+pub struct PatrolProgress {
+    /// Index of the next vertex of the route to select.
+    pub next_waypoint: usize,
+    /// Horizontal position we are currently walking to, if any.
+    pub destination: Option<f32>,
 }
 
-fn move_along_patrol_route(
-    mut commands: Commands,
+/// Once the current waypoint has been reached, select the next one.
+fn select_next_waypoint(
     maps_assets: Res<Assets<TiledMapAsset>>,
     map_query: Query<&TiledMap>,
-    mut patrolling_actor_query: Query<
-        (Entity, &PatrolRoute, &mut PatrolProgress),
-        Without<RequestedDestination>,
-    >,
+    mut patrolling_actor_query: Query<(&PatrolRoute, &mut PatrolProgress)>,
     patrol_route_query: Query<(&TiledObject, &TiledMapReference, &GlobalTransform)>,
 ) {
-    for (enemy, route, mut progress) in patrolling_actor_query.iter_mut() {
+    for (route, mut progress) in patrolling_actor_query.iter_mut() {
+        if progress.destination.is_some() {
+            continue;
+        }
+
+        // Retrieve the vertices of the Tiled object, in world space
         let Some(vertices) = patrol_route_query.get(route.0).ok().and_then(
             |(route, map_reference, route_transform)| {
                 map_query
@@ -72,14 +63,31 @@ fn move_along_patrol_route(
             continue;
         };
 
-        if progress.0 >= vertices.len() {
-            progress.0 = 0;
-        }
+        let index = progress.next_waypoint % vertices.len().max(1);
+        let Some(target) = vertices.get(index) else {
+            continue;
+        };
+        progress.destination = Some(target.x);
+        progress.next_waypoint = index + 1;
+    }
+}
 
-        let target = vertices.get(progress.0).unwrap();
-        commands
-            .entity(enemy)
-            .insert(RequestedDestination(target.x));
-        progress.0 += 1;
+/// Walk toward the current waypoint.
+fn move_to_waypoint(
+    mut patrolling_actor_query: Query<(&GlobalTransform, &mut PatrolProgress, &mut MovementIntent)>,
+) {
+    for (transform, mut progress, mut intent) in patrolling_actor_query.iter_mut() {
+        let Some(destination) = progress.destination else {
+            intent.direction = 0.;
+            continue;
+        };
+
+        let distance = destination - transform.translation().x;
+        if distance.abs() < WAYPOINT_REACHED_DISTANCE {
+            progress.destination = None;
+            intent.direction = 0.;
+        } else {
+            intent.direction = distance.signum();
+        }
     }
 }

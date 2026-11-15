@@ -1,175 +1,143 @@
-use avian2d::{math::*, prelude::*};
+//! A basic dynamic character controller, shared by the player and the enemies.
+//!
+//! This character controller is adapted from Avian examples:
+//! <https://github.com/avianphysics/avian/tree/main/crates/avian2d/examples/dynamic_character_2d>
+//!
+//! Inputs (keyboard for the player, patrol logic for the enemies) are recorded in the
+//! [`MovementIntent`] component during `Update`, then applied in `FixedUpdate`, just before
+//! the physics step: this way, movement does not depend upon the framerate.
+
+use avian2d::{
+    math::{Real as Scalar, *},
+    prelude::*,
+};
 use bevy::{ecs::query::Has, prelude::*};
 use std::f32::consts::PI;
 
-use crate::UpdateSystems;
-
-use avian2d::math::Real as Scalar;
-
-// Disclaimer
-// This character controller was stolen from Avian examples:
-// https://github.com/avianphysics/avian/tree/main/crates/avian2d/examples/dynamic_character_2d
-
-pub struct CharacterControllerPlugin;
-
-impl Plugin for CharacterControllerPlugin {
-    fn build(&self, app: &mut App) {
-        app.register_type::<MovementAcceleration>();
-        app.register_type::<MovementDampingFactor>();
-        app.register_type::<JumpImpulse>();
-        app.register_type::<MaxSlopeAngle>();
-        app.add_message::<MovementEvent>().add_systems(
-            Update,
-            (update_grounded, movement, apply_movement_damping)
-                .chain()
-                .in_set(UpdateSystems::ApplyMovement),
-        );
-        app.insert_resource(Gravity(Vec2::NEG_Y * 1000.));
-    }
-}
-
-/// An event sent for a movement input action.
-#[derive(Message)]
-pub struct MovementEvent {
-    pub entity: Entity,
-    pub action: MovementAction,
-}
-
-pub enum MovementAction {
-    Move(Scalar),
-    Jump,
+pub(super) fn plugin(app: &mut App) {
+    app.register_type::<MovementAcceleration>();
+    app.register_type::<MovementDampingFactor>();
+    app.register_type::<JumpImpulse>();
+    app.register_type::<MaxSlopeAngle>();
+    app.add_systems(
+        FixedUpdate,
+        (update_grounded, movement, apply_movement_damping).chain(),
+    );
+    app.insert_resource(Gravity(RVector::NEG_Y * 1000.));
 }
 
 /// A marker component indicating that an entity is using a character controller.
-#[derive(Component)]
+///
+/// Movement parameters can be tuned by overriding the required components.
+#[derive(Component, Default)]
+#[require(
+    RigidBody::Dynamic,
+    LockedAxes::ROTATION_LOCKED,
+    MovementIntent,
+    MovementAcceleration,
+    MovementDampingFactor,
+    JumpImpulse,
+    MaxSlopeAngle
+)]
 pub struct CharacterController;
+
+/// What the character is trying to do.
+///
+/// This is the only thing the player input or the enemies logic have to update.
+#[derive(Component, Default)]
+pub struct MovementIntent {
+    /// Horizontal direction: negative to go left, positive to go right, zero to stand still.
+    pub direction: Scalar,
+    /// Whether the character wants to jump: it is reset once taken into account.
+    pub jump: bool,
+}
 
 /// A marker component indicating that an entity is on the ground.
 #[derive(Component)]
 #[component(storage = "SparseSet")]
 pub struct Grounded;
+
 /// The acceleration used for character movement.
 #[derive(Component, Reflect)]
-pub struct MovementAcceleration(Scalar);
+pub struct MovementAcceleration(pub Scalar);
+
+impl Default for MovementAcceleration {
+    fn default() -> Self {
+        Self(2000.)
+    }
+}
 
 /// The damping factor used for slowing down movement.
 #[derive(Component, Reflect)]
-pub struct MovementDampingFactor(Scalar);
+pub struct MovementDampingFactor(pub Scalar);
+
+impl Default for MovementDampingFactor {
+    fn default() -> Self {
+        Self(0.9)
+    }
+}
 
 /// The strength of a jump.
 #[derive(Component, Reflect)]
-pub struct JumpImpulse(Scalar);
+pub struct JumpImpulse(pub Scalar);
+
+impl Default for JumpImpulse {
+    fn default() -> Self {
+        Self(800.)
+    }
+}
 
 /// The maximum angle a slope can have for a character controller
 /// to be able to climb and jump. If the slope is steeper than this angle,
 /// the character will slide down.
 #[derive(Component, Reflect)]
-pub struct MaxSlopeAngle(Scalar);
+pub struct MaxSlopeAngle(pub Scalar);
 
-/// A bundle that contains the components needed for a basic
-/// kinematic character controller.
-#[derive(Bundle)]
-pub struct CharacterControllerBundle {
-    character_controller: CharacterController,
-    body: RigidBody,
-    collider: Collider,
-    ground_caster: ShapeCaster,
-    locked_axes: LockedAxes,
-    movement: MovementBundle,
-}
-
-/// A bundle that contains components for character movement.
-#[derive(Bundle)]
-pub struct MovementBundle {
-    acceleration: MovementAcceleration,
-    damping: MovementDampingFactor,
-    jump_impulse: JumpImpulse,
-    max_slope_angle: MaxSlopeAngle,
-}
-
-impl MovementBundle {
-    pub const fn new(
-        acceleration: Scalar,
-        damping: Scalar,
-        jump_impulse: Scalar,
-        max_slope_angle: Scalar,
-    ) -> Self {
-        Self {
-            acceleration: MovementAcceleration(acceleration),
-            damping: MovementDampingFactor(damping),
-            jump_impulse: JumpImpulse(jump_impulse),
-            max_slope_angle: MaxSlopeAngle(max_slope_angle),
-        }
-    }
-}
-
-impl Default for MovementBundle {
+impl Default for MaxSlopeAngle {
     fn default() -> Self {
-        Self::new(30.0_f32, 0.9_f32, 7.0_f32, PI * 0.45_f32)
+        Self(PI * 0.45)
     }
 }
 
-impl CharacterControllerBundle {
-    pub fn new(collider: Collider) -> Self {
-        // Create shape caster as a slightly smaller version of collider
-        let mut caster_shape = collider.clone();
-        caster_shape.set_scale(RVector::ONE * 0.99, 10);
+/// Returns the components of a character controller using the provided collider.
+pub fn character_controller(collider: Collider) -> impl Bundle {
+    // Detect the ground using a slightly smaller version of the collider
+    let mut caster_shape = collider.clone();
+    caster_shape.set_scale(RVector::ONE * 0.99, 10);
 
-        Self {
-            character_controller: CharacterController,
-            body: RigidBody::Dynamic,
-            collider,
-            ground_caster: ShapeCaster::new(caster_shape, RVector::ZERO, 0.0, Dir2::NEG_Y)
-                .with_max_distance(10.0),
-            locked_axes: LockedAxes::ROTATION_LOCKED,
-            movement: MovementBundle::default(),
-        }
-    }
-
-    pub fn with_movement(
-        mut self,
-        acceleration: Scalar,
-        damping: Scalar,
-        jump_impulse: Scalar,
-        max_slope_angle: Scalar,
-    ) -> Self {
-        self.movement = MovementBundle::new(acceleration, damping, jump_impulse, max_slope_angle);
-        self
-    }
+    (
+        CharacterController,
+        ShapeCaster::new(caster_shape, RVector::ZERO, 0.0, Dir2::NEG_Y).with_max_distance(10.0),
+        collider,
+    )
 }
 
 /// Updates the [`Grounded`] status for character controllers.
 fn update_grounded(
     mut commands: Commands,
-    mut query: Query<
-        (Entity, &ShapeHits, &Rotation, Option<&MaxSlopeAngle>),
-        With<CharacterController>,
-    >,
+    query: Query<(Entity, &ShapeHits, &Rotation, &MaxSlopeAngle, Has<Grounded>)>,
 ) {
-    for (entity, hits, rotation, max_slope_angle) in &mut query {
+    for (entity, hits, rotation, max_slope_angle, was_grounded) in &query {
         // The character is grounded if the shape caster has a hit with a normal
         // that isn't too steep.
-        let is_grounded = hits.iter().any(|hit| {
-            if let Some(angle) = max_slope_angle {
-                (rotation * -hit.normal2).angle_to(RVector::Y).abs() <= angle.0
-            } else {
-                true
-            }
-        });
+        let is_grounded = hits
+            .iter()
+            .any(|hit| (rotation * -hit.normal2).angle_to(RVector::Y).abs() <= max_slope_angle.0);
 
-        if is_grounded {
+        // Only update the component when the status actually changes
+        if is_grounded && !was_grounded {
             commands.entity(entity).insert(Grounded);
-        } else {
+        } else if !is_grounded && was_grounded {
             commands.entity(entity).remove::<Grounded>();
         }
     }
 }
 
-/// Responds to [`MovementAction`] events and moves character controllers accordingly.
+/// Moves character controllers according to their [`MovementIntent`].
 fn movement(
     time: Res<Time>,
-    mut movement_message_reader: MessageReader<MovementEvent>,
     mut controllers: Query<(
+        &mut MovementIntent,
         &MovementAcceleration,
         &JumpImpulse,
         &mut LinearVelocity,
@@ -180,20 +148,14 @@ fn movement(
     // both the `f32` and `f64` features. Otherwise you don't need this.
     let delta_time = time.delta_secs_f64().real();
 
-    for event in movement_message_reader.read() {
-        if let Ok((movement_acceleration, jump_impulse, mut linear_velocity, is_grounded)) =
-            controllers.get_mut(event.entity)
-        {
-            match event.action {
-                MovementAction::Move(direction) => {
-                    linear_velocity.x += direction * movement_acceleration.0 * delta_time;
-                }
-                MovementAction::Jump => {
-                    if is_grounded {
-                        linear_velocity.y = jump_impulse.0;
-                    }
-                }
-            }
+    for (mut intent, movement_acceleration, jump_impulse, mut linear_velocity, is_grounded) in
+        &mut controllers
+    {
+        linear_velocity.x += intent.direction * movement_acceleration.0 * delta_time;
+
+        // A jump request is dropped if the character is not on the ground
+        if std::mem::take(&mut intent.jump) && is_grounded {
+            linear_velocity.y = jump_impulse.0;
         }
     }
 }

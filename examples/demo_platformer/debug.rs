@@ -4,9 +4,11 @@ use bevy::{
 };
 
 use bevy_inspector_egui::{
-    bevy_egui::{EguiGlobalSettings, EguiPlugin},
+    bevy_egui::{EguiGlobalSettings, EguiPlugin, PrimaryEguiContext},
     quick::WorldInspectorPlugin,
 };
+
+use crate::camera::MainCamera;
 
 const TOGGLE_INSPECTOR_KEY: KeyCode = KeyCode::F1;
 
@@ -25,6 +27,13 @@ pub(super) fn plugin(app: &mut App) {
     ));
 
     app.add_systems(Startup, (setup_help_text, setup_diagnostics_overlay));
+    app.add_observer(render_egui_on_main_camera);
+}
+
+fn render_egui_on_main_camera(add_camera: On<Add<MainCamera>>, mut commands: Commands) {
+    commands
+        .entity(add_camera.event().entity)
+        .insert(PrimaryEguiContext);
 }
 
 fn setup_help_text(mut commands: Commands) {
