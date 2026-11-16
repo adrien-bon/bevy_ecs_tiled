@@ -349,6 +349,17 @@ impl DeserializedProperties {
             ("alloc::string::String" | "alloc::borrow::Cow<str>", PV::StringValue(s), _) => {
                 Ok(Box::new(s))
             }
+            // Bevy `Name` wraps an opaque pre-hashed string: build it directly so its hash is
+            // computed. It is exported either as a plain string (when used as a field) or as a
+            // class with a single "0" string member (when used as a component property).
+            ("bevy_ecs::name::Name", PV::StringValue(s), _) => Ok(Box::new(Name::new(s))),
+            ("bevy_ecs::name::Name", PV::ClassValue { mut properties, .. }, _) => {
+                match properties.remove("0") {
+                    Some(PV::StringValue(s)) => Ok(Box::new(Name::new(s))),
+                    None => Ok(Box::new(Name::default())),
+                    Some(other) => Err(format!("wrong property type for `Name`: {other:?}")),
+                }
+            }
             ("char", PV::StringValue(s), _) => s
                 .chars()
                 .next()
@@ -1044,6 +1055,72 @@ mod tests {
         assert!(deserialize_primitive::<u8>(PV::IntValue(300)).is_err());
         assert!(deserialize_primitive::<u32>(PV::IntValue(-1)).is_err());
         assert!(deserialize_primitive::<i8>(PV::IntValue(-129)).is_err());
+    }
+
+    #[test]
+    fn deserialize_name() {
+        // As a plain string (eg. a `Name` field of a user struct)
+        assert_eq!(
+            deserialize_primitive::<Name>(PV::StringValue("Foo".to_string())),
+            Ok(Name::new("Foo"))
+        );
+
+        // As a class with a single "0" member (eg. a `Name` component property)
+        let class = |properties| PV::ClassValue {
+            property_type: "bevy_ecs::name::Name".to_string(),
+            properties,
+        };
+        assert_eq!(
+            deserialize_primitive::<Name>(class(tiled::Properties::from([(
+                "0".to_string(),
+                PV::StringValue("Foo".to_string()),
+            )]))),
+            Ok(Name::new("Foo"))
+        );
+        assert_eq!(
+            deserialize_primitive::<Name>(class(tiled::Properties::default())),
+            Ok(Name::default())
+        );
+        assert!(
+            deserialize_primitive::<Name>(class(tiled::Properties::from([(
+                "0".to_string(),
+                PV::IntValue(1),
+            )])))
+            .is_err()
+        );
+    }
+
+    #[derive(Reflect, Default, Debug, PartialEq)]
+    #[reflect(Default)]
+    struct WithName {
+        name: Name,
+    }
+
+    #[test]
+    fn deserialize_struct_with_name_field() {
+        let mut registry = TypeRegistry::new();
+        registry.register::<WithName>();
+        let res = DeserializedProperties::deserialize_property(
+            PV::ClassValue {
+                property_type: WithName::type_path().to_string(),
+                properties: tiled::Properties::from([(
+                    "name".to_string(),
+                    PV::StringValue("Foo".to_string()),
+                )]),
+            },
+            registry.get_with_type_path(WithName::type_path()).unwrap(),
+            &registry,
+            &mut None,
+            None,
+        )
+        .unwrap();
+        let v: Option<WithName> = FromReflect::from_reflect(res.as_ref());
+        assert_eq!(
+            v,
+            Some(WithName {
+                name: Name::new("Foo")
+            })
+        );
     }
 
     #[test]

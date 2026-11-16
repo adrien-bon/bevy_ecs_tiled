@@ -79,6 +79,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Tilesets and templates cache is actually cleared when a map is hot-reloaded
 - Infinite maps whose tiles layers do not have any chunk no longer get an invalid size
 - `TiledAnimation` no longer drifts: time left when a frame ends is carried over to the next frame
+- User properties: a Bevy `Name` property (as a component, or as a field of a custom type) is correctly deserialized and inserted, instead of being dropped with an error
 
 ## v0.15.1
 
