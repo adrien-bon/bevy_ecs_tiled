@@ -80,6 +80,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Infinite maps whose tiles layers do not have any chunk no longer get an invalid size
 - `TiledAnimation` no longer drifts: time left when a frame ends is carried over to the next frame
 - User properties: a Bevy `Name` property (as a component, or as a field of a custom type) is correctly deserialized and inserted, instead of being dropped with an error
+- User properties: a `Handle<T>` property (eg. the `image` of a `Sprite`) is loaded as an asset of type `T`, from a path relative to the map or tileset it is defined in, instead of giving a handle to an unrelated asset (#59)
 
 ## v0.15.1
 

@@ -2029,6 +2029,40 @@ mod properties {
         app
     }
 
+    /// Custom property holding an asset handle, set on an object of the image property test map
+    #[derive(Component, Reflect, Default, Debug)]
+    #[reflect(Component, Default)]
+    pub struct TestImageProperty {
+        image: Handle<Image>,
+    }
+
+    #[test]
+    fn handle_properties_are_loaded_with_their_asset_type() {
+        let mut app = properties_test_app();
+        app.register_type::<TestImageProperty>();
+        spawn_map(&mut app, "tests/properties/image_property.tmx");
+
+        let object = object_by_name(&mut app, "image_object");
+        let image = app
+            .world()
+            .get::<TestImageProperty>(object)
+            .expect("missing TestImageProperty")
+            .image
+            .clone();
+
+        // The handle must point to the image loaded from a path relative to the map, not to
+        // a `LoadedUntypedAsset` (which used to be reinterpreted as an unrelated image)
+        let path = app
+            .world()
+            .resource::<AssetServer>()
+            .get_path(image.id())
+            .unwrap_or_else(|| panic!("image handle has no path: {image:?}"));
+        assert!(
+            path.path().ends_with("bevy_icon.png"),
+            "unexpected path {path}"
+        );
+    }
+
     #[test]
     fn tile_properties_are_inserted_before_map_created() {
         let mut app = properties_test_app();

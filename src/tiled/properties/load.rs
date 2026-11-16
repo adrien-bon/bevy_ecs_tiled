@@ -1,7 +1,7 @@
 use crate::prelude::tiled::PropertyValue as PV;
 use crate::prelude::*;
 use bevy::{
-    asset::LoadContext,
+    asset::{AssetPath, LoadContext, ReflectHandle},
     ecs::reflect::ReflectBundle,
     platform::collections::HashMap,
     prelude::*,
@@ -38,7 +38,15 @@ impl DeserializedMapProperties<false> {
         registry: &TypeRegistry,
         load_context: &mut LoadContext<'_>,
     ) -> Self {
-        let map_props = DeserializedProperties::load(&map.properties, registry, load_context, true);
+        // `file` properties are relative to the file they are defined in:
+        // the map itself, except for tiles properties which are relative to their tileset
+        let map_path = load_context.path().clone_owned();
+        let map_props = DeserializedProperties::load(
+            &map.properties,
+            registry,
+            &mut FileLoader::new(load_context, map_path.clone()),
+            true,
+        );
 
         let mut objects = HashMap::default();
         let mut layers = HashMap::default();
@@ -46,7 +54,12 @@ impl DeserializedMapProperties<false> {
         while let Some(layer) = to_process.pop() {
             layers.insert(
                 LayerId(layer.id()),
-                DeserializedProperties::load(&layer.properties, registry, load_context, false),
+                DeserializedProperties::load(
+                    &layer.properties,
+                    registry,
+                    &mut FileLoader::new(load_context, map_path.clone()),
+                    false,
+                ),
             );
             match layer.layer_type() {
                 tiled::LayerType::Objects(object) => {
@@ -56,7 +69,7 @@ impl DeserializedMapProperties<false> {
                             DeserializedProperties::load(
                                 &object.properties,
                                 registry,
-                                load_context,
+                                &mut FileLoader::new(load_context, map_path.clone()),
                                 false,
                             ),
                         );
@@ -71,6 +84,7 @@ impl DeserializedMapProperties<false> {
 
         let tiles = tilesets
             .map(|(tileset_id, tileset)| {
+                let tileset_path = AssetPath::from(tileset.source.clone());
                 (
                     tileset_id,
                     tileset
@@ -81,7 +95,7 @@ impl DeserializedMapProperties<false> {
                                 DeserializedProperties::load(
                                     &t.properties,
                                     registry,
-                                    load_context,
+                                    &mut FileLoader::new(load_context, tileset_path.clone()),
                                     false,
                                 ),
                             )
@@ -140,6 +154,30 @@ impl DeserializedMapProperties<false> {
     }
 }
 
+/// Loads assets referenced by `file` properties
+pub(crate) struct FileLoader<'a, 'b> {
+    load_context: &'a mut LoadContext<'b>,
+    /// Path of the file (map or tileset) the properties are defined in
+    base_path: AssetPath<'static>,
+}
+
+impl<'a, 'b> FileLoader<'a, 'b> {
+    fn new(load_context: &'a mut LoadContext<'b>, base_path: AssetPath<'static>) -> Self {
+        Self {
+            load_context,
+            base_path,
+        }
+    }
+
+    /// Asset path of a `file` property value, which Tiled stores relative to the file
+    /// the property is defined in
+    fn asset_path(&self, file: &str) -> AssetPath<'static> {
+        self.base_path
+            .resolve_embed_str(file)
+            .unwrap_or_else(|_| AssetPath::from(file.to_owned()))
+    }
+}
+
 /// Properties for an entity deserialized from a [`tiled::Properties`]
 #[derive(Debug)]
 pub(crate) struct DeserializedProperties {
@@ -162,7 +200,7 @@ impl DeserializedProperties {
     fn load(
         properties: &tiled::Properties,
         registry: &TypeRegistry,
-        load_cx: &mut LoadContext<'_>,
+        load_cx: &mut FileLoader<'_, '_>,
         resources_allowed: bool,
     ) -> Self {
         let mut props: Vec<Box<dyn PartialReflect>> = Vec::new();
@@ -174,7 +212,10 @@ impl DeserializedProperties {
                     properties: _,
                 } => (property_type, registry.get_with_type_path(property_type)),
                 PV::FileValue(file) => {
-                    props.push(Box::new(load_cx.load_builder().load_untyped(file)));
+                    let path = load_cx.asset_path(file);
+                    props.push(Box::new(
+                        load_cx.load_context.load_builder().load_untyped(path),
+                    ));
                     continue;
                 }
                 _ => {
@@ -226,7 +267,7 @@ impl DeserializedProperties {
         properties: &mut tiled::Properties,
         registration: &TypeRegistration,
         registry: &TypeRegistry,
-        load_cx: &mut Option<&mut LoadContext<'_>>,
+        load_cx: &mut Option<&mut FileLoader<'_, '_>>,
         parent_default_value: Option<&dyn Reflect>,
     ) -> Result<Box<dyn PartialReflect>, String> {
         let mut default_value = None;
@@ -267,7 +308,7 @@ impl DeserializedProperties {
         properties: &mut tiled::Properties,
         registration: &TypeRegistration,
         registry: &TypeRegistry,
-        load_cx: &mut Option<&mut LoadContext<'_>>,
+        load_cx: &mut Option<&mut FileLoader<'_, '_>>,
         parent_default_value: Option<&dyn Reflect>,
     ) -> Result<Box<dyn PartialReflect>, String> {
         let mut default_value = None;
@@ -312,7 +353,7 @@ impl DeserializedProperties {
         property: PV,
         registration: &TypeRegistration,
         registry: &TypeRegistry,
-        load_cx: &mut Option<&mut LoadContext<'_>>,
+        load_cx: &mut Option<&mut FileLoader<'_, '_>>,
         default_value: Option<&dyn Reflect>,
     ) -> Result<Box<dyn PartialReflect>, String> {
         // I wonder if it's possible to call FromStr for String?
@@ -367,11 +408,21 @@ impl DeserializedProperties {
                 .ok_or_else(|| "empty string cannot be converted to `char`".to_string()),
             ("std::path::PathBuf", PV::FileValue(s), _) => Ok(Box::new(PathBuf::from(s))),
             (a, PV::FileValue(s), _) if a.starts_with("bevy_asset::handle::Handle") => {
-                if let Some(cx) = load_cx.as_mut() {
-                    Ok(Box::new(cx.load_builder().load_untyped(s)))
-                } else {
-                    Err("No LoadContext provided: cannot load Handle<T>".to_string())
-                }
+                let Some(cx) = load_cx.as_mut() else {
+                    return Err("No LoadContext provided: cannot load Handle<T>".to_string());
+                };
+                // Load the asset with its actual type: an untyped load would give a
+                // `Handle<LoadedUntypedAsset>`, which reflection happily applies to any `Handle<T>`
+                // field, making it point to an unrelated asset
+                let Some(reflect_handle) = registration.data::<ReflectHandle>() else {
+                    return Err(format!("cannot determine asset type of `{a}`"));
+                };
+                let path = cx.asset_path(&s);
+                let handle = cx
+                    .load_context
+                    .load_builder()
+                    .load_erased(reflect_handle.asset_type_id(), path);
+                Ok(reflect_handle.typed(handle).into_partial_reflect())
             }
             ("bevy_ecs::entity::Entity", PV::ObjectValue(o), _) => {
                 if o == 0 {
