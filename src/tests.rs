@@ -1265,6 +1265,111 @@ fn moving_tiles_on_hexagonal_map() {
     check_tile_move("tests/dynamic/hexagonal_map.tmx");
 }
 
+/// Load the given map asset and run the app until it is loaded
+fn load_map_asset(app: &mut App, path: &str) -> Handle<TiledMapAsset> {
+    let handle = app
+        .world()
+        .resource::<AssetServer>()
+        .load::<TiledMapAsset>(path.to_owned());
+    let deadline = Instant::now() + Duration::from_secs(10);
+    loop {
+        assert!(
+            Instant::now() < deadline,
+            "{path}: map did not load in time"
+        );
+        match app.world().resource::<AssetServer>().load_state(&handle) {
+            LoadState::Loaded => return handle,
+            LoadState::Failed(error) => panic!("{path}: map failed to load: {error}"),
+            _ => {}
+        }
+        app.update();
+        std::thread::sleep(Duration::from_millis(1));
+    }
+}
+
+/// On hexagonal maps, each tile is rendered where Tiled puts it, whatever the map
+/// stagger settings, its size parity and its hexagon side length.
+#[test]
+fn hexagonal_tiles_match_tiled_positions() {
+    let maps = [
+        "maps/hexagonal/finite_flat_top_even.tmx",
+        "maps/hexagonal/finite_flat_top_odd.tmx",
+        "maps/hexagonal/finite_pointy_top_even.tmx",
+        "maps/hexagonal/finite_pointy_top_odd.tmx",
+        "tests/hexagonal/pointy_top_odd_height_odd.tmx",
+        "tests/hexagonal/pointy_top_odd_height_even.tmx",
+        "tests/hexagonal/pointy_top_custom_side.tmx",
+        "tests/hexagonal/flat_top_custom_side.tmx",
+    ];
+    let anchors = [
+        TilemapAnchor::None,
+        TilemapAnchor::Center,
+        TilemapAnchor::TopLeft,
+    ];
+    let mut app = test_app();
+    let mut errors = vec![];
+    for path in maps {
+        let handle = load_map_asset(&mut app, path);
+        let assets = app.world().resource::<Assets<TiledMapAsset>>();
+        let map_asset = assets.get(&handle).unwrap();
+        let map = &map_asset.map;
+        let (tw, th) = (map.tile_width as f32, map.tile_height as f32);
+        let side = map.hex_side_length.unwrap_or(0) as f32;
+        let (w, h) = (map.width, map.height);
+        let staggered = |i: u32| (i % 2 == 1) == (map.stagger_index == tiled::StaggerIndex::Odd);
+        let shift = |i: u32| if staggered(i) { 0.5 } else { 0. };
+
+        // Map size, as Tiled sees it
+        let expected_size = match map.stagger_axis {
+            tiled::StaggerAxis::Y => Vec2::new(
+                w as f32 * tw + if h > 1 { tw / 2. } else { 0. },
+                h as f32 * (th + side) / 2. + (th - side) / 2.,
+            ),
+            tiled::StaggerAxis::X => Vec2::new(
+                w as f32 * (tw + side) / 2. + (tw - side) / 2.,
+                h as f32 * th + if w > 1 { th / 2. } else { 0. },
+            ),
+        };
+        if !map_asset.rect.size().abs_diff_eq(expected_size, 0.01) {
+            errors.push(format!(
+                "{path}: map size is {}, expected {expected_size}",
+                map_asset.rect.size()
+            ));
+        }
+
+        let tile_size = TilemapTileSize::new(tw, th);
+        for anchor in anchors {
+            for x in 0..w {
+                for r in 0..h {
+                    // Tile center, in Tiled pixel coordinates
+                    let tiled_center = match map.stagger_axis {
+                        tiled::StaggerAxis::Y => Vec2::new(
+                            (x as f32 + 0.5 + shift(r)) * tw,
+                            r as f32 * (th + side) / 2. + th / 2.,
+                        ),
+                        tiled::StaggerAxis::X => Vec2::new(
+                            x as f32 * (tw + side) / 2. + tw / 2.,
+                            (r as f32 + 0.5 + shift(x)) * th,
+                        ),
+                    };
+                    let expected = map_asset.world_space_from_tiled_position(&anchor, tiled_center);
+                    let actual = map_asset.tile_relative_position(
+                        &TilePos::new(x, h - 1 - r),
+                        &tile_size,
+                        &anchor,
+                    );
+                    if !actual.abs_diff_eq(expected, 0.01) {
+                        errors.push(format!(
+                            "{path} ({anchor:?}): Tiled tile ({x}, {r}) is at {actual}, expected {expected}"
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    assert!(errors.is_empty(), "\n{}", errors.join("\n"));
+}
+
 #[cfg(feature = "physics")]
 mod physics {
     use super::*;

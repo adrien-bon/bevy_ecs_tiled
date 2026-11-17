@@ -78,22 +78,66 @@ pub(crate) fn object_from_map(map: &tiled::Map, object_id: ObjectId) -> Option<t
 
 /// Converts a [`tiled::Map`]'s [`tiled::Orientation`] to a [`TilemapType`].
 ///
+/// For hexagonal maps staggered along the Y axis, the [`HexCoordSystem`] also depends on
+/// the parity of the map height (`tilemap_size.y`): since `bevy_ecs_tilemap` Y axis is flipped
+/// compared to Tiled, Tiled row `r` becomes row `tilemap_size.y - 1 - r`, which changes
+/// which rows are staggered when the map height is odd.
+///
 /// Returns [`None`] if the orientation is not supported by this plugin, ie.
 /// [`tiled::Orientation::Staggered`] or [`tiled::Orientation::Oblique`]:
 /// such maps are rejected by the map loader.
-pub(crate) fn tilemap_type_from_map(map: &tiled::Map) -> Option<TilemapType> {
+pub(crate) fn tilemap_type_from_map(
+    map: &tiled::Map,
+    tilemap_size: &TilemapSize,
+) -> Option<TilemapType> {
     match map.orientation {
         tiled::Orientation::Orthogonal => Some(TilemapType::Square),
-        tiled::Orientation::Hexagonal => Some(TilemapType::Hexagon(
-            match (map.stagger_axis, map.stagger_index) {
-                (tiled::StaggerAxis::X, tiled::StaggerIndex::Even) => HexCoordSystem::ColumnOdd,
-                (tiled::StaggerAxis::X, tiled::StaggerIndex::Odd) => HexCoordSystem::ColumnEven,
-                (tiled::StaggerAxis::Y, tiled::StaggerIndex::Even) => HexCoordSystem::RowOdd,
-                (tiled::StaggerAxis::Y, tiled::StaggerIndex::Odd) => HexCoordSystem::RowEven,
-            },
-        )),
+        tiled::Orientation::Hexagonal => {
+            let odd_height = tilemap_size.y % 2 == 1;
+            Some(TilemapType::Hexagon(
+                match (map.stagger_axis, map.stagger_index, odd_height) {
+                    (tiled::StaggerAxis::X, tiled::StaggerIndex::Even, _) => {
+                        HexCoordSystem::ColumnOdd
+                    }
+                    (tiled::StaggerAxis::X, tiled::StaggerIndex::Odd, _) => {
+                        HexCoordSystem::ColumnEven
+                    }
+                    (tiled::StaggerAxis::Y, tiled::StaggerIndex::Even, false)
+                    | (tiled::StaggerAxis::Y, tiled::StaggerIndex::Odd, true) => {
+                        HexCoordSystem::RowOdd
+                    }
+                    (tiled::StaggerAxis::Y, tiled::StaggerIndex::Odd, false)
+                    | (tiled::StaggerAxis::Y, tiled::StaggerIndex::Even, true) => {
+                        HexCoordSystem::RowEven
+                    }
+                },
+            ))
+        }
         tiled::Orientation::Isometric => Some(TilemapType::Isometric(IsoCoordSystem::Diamond)),
         tiled::Orientation::Staggered | tiled::Orientation::Oblique => None,
+    }
+}
+
+/// Length of the hexagon side of a [`tiled::Map`], in pixels (`0` if not set).
+pub(crate) fn hex_side_length(map: &tiled::Map) -> f32 {
+    map.hex_side_length.unwrap_or(0).max(0) as f32
+}
+
+/// Computes the `bevy_ecs_tilemap` [`TilemapGridSize`] of a [`tiled::Map`].
+///
+/// It is the map tile size, except for hexagonal maps: `bevy_ecs_tilemap` assumes regular
+/// hexagons and spaces staggered rows (or columns) by `0.75 * grid_size`, whereas Tiled spaces
+/// them by `(tile_size + hexsidelength) / 2`. The grid size is adjusted along the stagger axis
+/// so both match. It is unchanged when `hexsidelength` is half the tile size.
+pub(crate) fn grid_size_from_map(map: &tiled::Map) -> TilemapGridSize {
+    let (tile_width, tile_height) = (map.tile_width as f32, map.tile_height as f32);
+    if map.orientation != tiled::Orientation::Hexagonal {
+        return TilemapGridSize::new(tile_width, tile_height);
+    }
+    let side = hex_side_length(map);
+    match map.stagger_axis {
+        tiled::StaggerAxis::X => TilemapGridSize::new(2. * (tile_width + side) / 3., tile_height),
+        tiled::StaggerAxis::Y => TilemapGridSize::new(tile_width, 2. * (tile_height + side) / 3.),
     }
 }
 

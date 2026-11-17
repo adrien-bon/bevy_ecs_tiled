@@ -122,6 +122,8 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_15
 - User properties: invalid values coming from Tiled (out of range integers, empty `char`, reference to a missing object, ...) no longer panic, an error is logged and the property is skipped
 - User properties: fixed-size array properties (`[T; N]`) were always deserialized as empty arrays
 - Hexagonal maps: `TiledMapAsset::rect` now accounts for the last half column (or row) and for the half tile shift of staggered columns (or rows), so it matches the actual map size
+- Hexagonal maps: maps staggered along the Y axis ("pointy-top") with an odd height had their staggered rows inverted, every other row being shifted by half a tile compared to Tiled and to objects
+- Hexagonal maps: the `hexsidelength` map attribute is now taken into account. Tiles used to be laid out as if it was half the tile size, so maps with a different value (or without this attribute, which Tiled treats as `0`) had their rows (or columns) misplaced. `TiledMapAsset::grid_size` is adjusted along the stagger axis accordingly
 - Isometric maps: tiles bigger than the map grid are now aligned on their cell bottom-left corner like in Tiled (they used to be centered on their cell), and objects are no longer shifted down by one tile height. Tiles colliders follow the same alignment
 - Isometric maps: image layers are now positioned like in Tiled for infinite and non-square maps (their origin was computed from the tiles chunks extent instead of the map size declared in Tiled)
 - Isometric maps: non-square maps (eg. infinite maps with a different number of chunks along each axis) now have a correct `TiledMapAsset::rect` and their objects are no longer vertically shifted

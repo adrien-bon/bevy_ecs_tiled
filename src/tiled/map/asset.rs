@@ -39,7 +39,13 @@ pub struct TiledMapAsset {
     ///
     /// Maps with an unsupported orientation are rejected by the map loader.
     pub map_type: TilemapType,
-    /// Size of a cell of the map grid, in pixels
+    /// Size of a cell of the map grid, in pixels, as used by `bevy_ecs_tilemap`.
+    ///
+    /// It is the map tile size, except for hexagonal maps whose `hexsidelength` is not half the
+    /// tile size: `bevy_ecs_tilemap` spaces staggered rows (or columns) by `0.75 * grid_size`, so
+    /// the grid size is adjusted along the stagger axis to match Tiled spacing, which is
+    /// `(tile_size + hexsidelength) / 2`.
+    /// Use this value with `bevy_ecs_tilemap` helpers, such as [`TilePos::center_in_world`].
     pub grid_size: TilemapGridSize,
     /// Map size in tiles
     pub tilemap_size: TilemapSize,
@@ -159,8 +165,11 @@ impl TiledMapAsset {
         let grid_size = self.grid_size;
         let map_type = self.map_type;
         let mut offset = anchor.as_offset(&map_size, &grid_size, &tile_size, &map_type);
-        offset.x -= grid_size.x / 2.0;
-        offset.y -= grid_size.y / 2.0;
+        // Move from `bevy_ecs_tilemap` tile (0, 0) center to its bottom-left corner.
+        // Use Tiled cell size: for hexagonal maps, `grid_size` can differ from it along
+        // the stagger axis (see `TiledMapAsset::grid_size`)
+        offset.x -= self.map.tile_width as f32 / 2.0;
+        offset.y -= self.map.tile_height as f32 / 2.0;
         offset
             + match map_type {
                 TilemapType::Isometric(_) => {

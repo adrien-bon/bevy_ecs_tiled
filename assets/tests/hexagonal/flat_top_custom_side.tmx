@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.0" orientation="hexagonal" renderorder="right-down" width="4" height="4" tilewidth="32" tileheight="28" infinite="0" hexsidelength="10" staggeraxis="x" staggerindex="even" nextlayerid="2" nextobjectid="1">
+ <layer id="1" name="ground" width="4" height="4">
+  <data encoding="csv">
+0,0,0,0,
+0,0,0,0,
+0,0,0,0,
+0,0,0,0
+</data>
+ </layer>
+</map>

@@ -112,14 +112,31 @@ Image layers are positioned relative to Tiled "screen origin", which, for isomet
 Hexagonal maps use the same Y flip as orthogonal maps.
 However, flipping the Y axis changes which rows (or columns) are "staggered", so the Tiled stagger settings map to the `bevy_ecs_tilemap` [`HexCoordSystem`](https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/map/enum.HexCoordSystem.html) as follows:
 
-| Tiled stagger axis | Tiled stagger index | `HexCoordSystem` |
-|---|---|---|
-| X | Even | `ColumnOdd` |
-| X | Odd | `ColumnEven` |
-| Y | Even | `RowOdd` |
-| Y | Odd | `RowEven` |
+| Tiled stagger axis | Tiled stagger index | `HexCoordSystem` (even map height) | `HexCoordSystem` (odd map height) |
+|---|---|---|---|
+| X | Even | `ColumnOdd` | `ColumnOdd` |
+| X | Odd | `ColumnEven` | `ColumnEven` |
+| Y | Even | `RowOdd` | `RowEven` |
+| Y | Odd | `RowEven` | `RowOdd` |
+
+When the stagger axis is Y, Tiled row `r` becomes row `height - 1 - r` in Bevy: if the map height is odd, flipping the Y axis does not change the rows parity, hence the different coordinate system.
+Infinite maps always have an even height (a multiple of the chunk size).
 
 The resulting `TilemapType` of a map is available in [`TiledMapAsset::map_type`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html#structfield.map_type).
+
+### Hexagon side length
+
+In Tiled, staggered rows (or columns) are `(tile_size + hexsidelength) / 2` pixels apart.
+`bevy_ecs_tilemap` assumes regular hexagons and spaces them by `0.75 * grid_size`.
+To render the map like Tiled, the grid size is adjusted along the stagger axis:
+
+| Tiled stagger axis | Grid size |
+|---|---|
+| X | `(2 * (tile_width + hexsidelength) / 3, tile_height)` |
+| Y | `(tile_width, 2 * (tile_height + hexsidelength) / 3)` |
+
+When `hexsidelength` is half the tile size, the grid size is the tile size.
+Always use [`TiledMapAsset::grid_size`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html#structfield.grid_size), and not the Tiled tile size, with `bevy_ecs_tilemap` helpers such as `TilePos::center_in_world()` or `TilePos::from_world_pos()`.
 
 ---
 

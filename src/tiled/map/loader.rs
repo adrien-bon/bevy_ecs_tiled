@@ -8,7 +8,10 @@ use std::sync::Arc;
 
 use crate::{
     prelude::*,
-    tiled::{cache::TiledResourceCache, map::asset::TiledMapTileset, reader::BytesResourceReader},
+    tiled::{
+        cache::TiledResourceCache, helpers::hex_side_length, map::asset::TiledMapTileset,
+        reader::BytesResourceReader,
+    },
 };
 #[cfg(feature = "render")]
 use bevy::asset::AssetPath;
@@ -209,13 +212,7 @@ impl AssetLoader for TiledMapLoader {
             loader.load_tmx_map(map_path)?
         };
 
-        let Some(map_type) = crate::tiled::helpers::tilemap_type_from_map(&map) else {
-            return Err(TiledMapLoaderError::UnsupportedOrientation(map.orientation));
-        };
-        let grid_size = TilemapGridSize {
-            x: map.tile_width as f32,
-            y: map.tile_height as f32,
-        };
+        let grid_size = crate::tiled::helpers::grid_size_from_map(&map);
         let mut tilesets = HashMap::default();
         let mut tilesets_id_by_label = HashMap::default();
 
@@ -239,7 +236,8 @@ impl AssetLoader for TiledMapLoader {
             tilesets.insert(TilesetId(tileset_index as u32), tiled_map_tileset);
         }
 
-        let mut largest_tile_size = TilemapTileSize::new(grid_size.x, grid_size.y);
+        let mut largest_tile_size =
+            TilemapTileSize::new(map.tile_width as f32, map.tile_height as f32);
 
         // Start processing from root layers
         process_layers(
@@ -260,7 +258,7 @@ impl AssetLoader for TiledMapLoader {
         // Determine top left and bottom right chunk indexes of all infinite layers for this map
         let chunks_bounds = infinite_layers_chunks_bounds(map.layers());
 
-        let (tilemap_size, tiled_offset, topleft, bottomright) =
+        let (tilemap_size, topleft, bottomright) =
             if let Some((topleft, bottomright)) = chunks_bounds {
                 debug!(
                     "(infinite map) topleft = {:?}, bottomright = {:?}",
@@ -271,30 +269,6 @@ impl AssetLoader for TiledMapLoader {
                         x: (bottomright.0 - topleft.0 + 1) as u32 * tiled::ChunkData::WIDTH,
                         y: (bottomright.1 - topleft.1 + 1) as u32 * tiled::ChunkData::HEIGHT,
                     },
-                    match map_type {
-                        TilemapType::Square => Vec2 {
-                            x: -topleft.0 as f32 * tiled::ChunkData::WIDTH as f32 * grid_size.x,
-                            y: topleft.1 as f32 * tiled::ChunkData::HEIGHT as f32 * grid_size.y,
-                        },
-                        TilemapType::Hexagon(coord_system) if is_column_hex(coord_system) => Vec2 {
-                            x: -topleft.0 as f32
-                                * tiled::ChunkData::WIDTH as f32
-                                * grid_size.x
-                                * 0.75,
-                            y: topleft.1 as f32 * tiled::ChunkData::HEIGHT as f32 * grid_size.y,
-                        },
-                        TilemapType::Hexagon(_) => Vec2 {
-                            x: -topleft.0 as f32 * tiled::ChunkData::WIDTH as f32 * grid_size.x,
-                            y: topleft.1 as f32
-                                * tiled::ChunkData::HEIGHT as f32
-                                * grid_size.y
-                                * 0.75,
-                        },
-                        TilemapType::Isometric(_) => Vec2 {
-                            x: -topleft.0 as f32 * tiled::ChunkData::WIDTH as f32 * grid_size.y,
-                            y: -topleft.1 as f32 * tiled::ChunkData::HEIGHT as f32 * grid_size.y,
-                        },
-                    },
                     topleft,
                     bottomright,
                 )
@@ -304,11 +278,39 @@ impl AssetLoader for TiledMapLoader {
                         x: map.width,
                         y: map.height,
                     },
-                    Vec2::ZERO,
                     (0, 0),
                     (0, 0),
                 )
             };
+
+        // Hexagonal maps coordinate system depends on the map size parity
+        let Some(map_type) = crate::tiled::helpers::tilemap_type_from_map(&map, &tilemap_size)
+        else {
+            return Err(TiledMapLoaderError::UnsupportedOrientation(map.orientation));
+        };
+
+        let tiled_offset = if chunks_bounds.is_some() {
+            match map_type {
+                TilemapType::Square => Vec2 {
+                    x: -topleft.0 as f32 * tiled::ChunkData::WIDTH as f32 * grid_size.x,
+                    y: topleft.1 as f32 * tiled::ChunkData::HEIGHT as f32 * grid_size.y,
+                },
+                TilemapType::Hexagon(coord_system) if is_column_hex(coord_system) => Vec2 {
+                    x: -topleft.0 as f32 * tiled::ChunkData::WIDTH as f32 * grid_size.x * 0.75,
+                    y: topleft.1 as f32 * tiled::ChunkData::HEIGHT as f32 * grid_size.y,
+                },
+                TilemapType::Hexagon(_) => Vec2 {
+                    x: -topleft.0 as f32 * tiled::ChunkData::WIDTH as f32 * grid_size.x,
+                    y: topleft.1 as f32 * tiled::ChunkData::HEIGHT as f32 * grid_size.y * 0.75,
+                },
+                TilemapType::Isometric(_) => Vec2 {
+                    x: -topleft.0 as f32 * tiled::ChunkData::WIDTH as f32 * grid_size.y,
+                    y: -topleft.1 as f32 * tiled::ChunkData::HEIGHT as f32 * grid_size.y,
+                },
+            }
+        } else {
+            Vec2::ZERO
+        };
 
         let rect = Rect {
             min: Vec2::ZERO,
@@ -317,10 +319,12 @@ impl AssetLoader for TiledMapLoader {
                     x: tilemap_size.x as f32 * grid_size.x,
                     y: tilemap_size.y as f32 * grid_size.y,
                 },
-                // For hexagonal maps, account for the last half column (or row) side
-                // and for the half tile shift of staggered columns (or rows)
+                // For hexagonal maps, account for the last column (or row) hexagon tip
+                // and for the half tile shift of staggered columns (or rows).
+                // Staggered columns (or rows) are `0.75 * grid_size` apart (see `grid_size_from_map()`)
                 TilemapType::Hexagon(coord_system) if is_column_hex(coord_system) => Vec2 {
-                    x: tilemap_size.x as f32 * grid_size.x * 0.75 + grid_size.x * 0.25,
+                    x: tilemap_size.x as f32 * grid_size.x * 0.75
+                        + (map.tile_width as f32 - hex_side_length(&map)) / 2.,
                     y: tilemap_size.y as f32 * grid_size.y
                         + if tilemap_size.x > 1 {
                             grid_size.y / 2.
@@ -335,7 +339,8 @@ impl AssetLoader for TiledMapLoader {
                         } else {
                             0.
                         },
-                    y: tilemap_size.y as f32 * grid_size.y * 0.75 + grid_size.y * 0.25,
+                    y: tilemap_size.y as f32 * grid_size.y * 0.75
+                        + (map.tile_height as f32 - hex_side_length(&map)) / 2.,
                 },
                 // Diamond bounding box: each tile along X or Y axis adds half a tile
                 // to both the map width and height
