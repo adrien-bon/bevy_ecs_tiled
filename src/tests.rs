@@ -1616,7 +1616,7 @@ mod physics {
             |ev: On<TiledEvent<ColliderCreated>>, mut created: ResMut<CollidersCreated>| {
                 let ev = ev.event();
                 // Events are propagated to parent entities: only count the original one
-                if ev.entity == ev.event.collider_of.0 {
+                if ev.is_original() {
                     *created.0.entry(ev.entity).or_default() += 1;
                 }
             },

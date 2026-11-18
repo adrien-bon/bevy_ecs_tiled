@@ -66,14 +66,22 @@ pub enum PassThroughOneWayPlatform {
 /// Tag the colliders created for a [`OneWayPlatform`] layer.
 ///
 /// Depending on the physics settings, a collider is either added to the layer entity itself
-/// or to one of its descendants: `collider_of` always references the layer.
+/// or to one of its descendants: the event always references the layer.
 fn on_collider_created(
     collider_created: On<TiledEvent<ColliderCreated>>,
     mut commands: Commands,
     platform_query: Query<(), With<OneWayPlatform>>,
 ) {
     let event = collider_created.event();
-    if platform_query.contains(*event.event.collider_of) {
+    // Global observer: skip the copies of the event received while it bubbles up the hierarchy
+    if !event.is_original() {
+        return;
+    }
+    if event.event.source == TiledColliderSource::TilesLayer
+        && event
+            .layer_entity()
+            .is_some_and(|layer| platform_query.contains(layer))
+    {
         // As of Avian 0.8, `ActiveCollisionHooks::MODIFY_CONTACTS` is only taken into account
         // when a collider is attached to its rigid body, not when it is inserted afterward.
         // Since the collider already exists at this point, insert the rigid body

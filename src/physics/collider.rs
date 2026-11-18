@@ -133,25 +133,16 @@ pub struct TiledColliderPolygons(pub Vec<geo::MultiPolygon<f32>>);
 
 /// Event emitted when a collider is created from a Tiled map or world.
 ///
-/// You can determine collider origin using the inner [`TiledColliderSource`] or [`TiledColliderOf`] components.
+/// The [`TiledEvent::origin`] of this event is the entity holding the collider. The event is triggered
+/// for the Tiled object or [`TiledLayer::Tiles`] the collider is created for, which you can retrieve
+/// using [`TiledEvent::object_entity`] or [`TiledEvent::layer_entity`], depending on [`ColliderCreated::source`].
+///
 /// See also [`TiledEvent`]
 #[derive(Clone, Copy, PartialEq, Debug, Reflect)]
 #[reflect(Clone, PartialEq)]
 pub struct ColliderCreated {
-    /// Origin of the collider
+    /// Kind of Tiled item the collider is created for
     pub source: TiledColliderSource,
-    /// Parent entity of the collider
-    pub collider_of: TiledColliderOf,
-}
-
-impl ColliderCreated {
-    /// Create a new [`ColliderCreated`] event
-    pub fn new(source: TiledColliderSource, parent: Entity) -> Self {
-        Self {
-            source,
-            collider_of: TiledColliderOf(parent),
-        }
-    }
 }
 
 pub(crate) fn plugin(app: &mut App) {
@@ -370,6 +361,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
     target: ColliderTarget,
     commands: &mut Commands,
     polygons: Vec<geo::Polygon<f32>>,
+    source_entity: Entity,
     collider_created: TiledEvent<ColliderCreated>,
     message_writer: &mut MessageWriter<TiledEvent<ColliderCreated>>,
     disable_geometry_simplification: bool,
@@ -395,7 +387,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
         };
 
     let source = collider_created.event.source;
-    let collider_of = collider_created.event.collider_of;
+    let collider_of = TiledColliderOf(source_entity);
     // Entity holding the first collider, parent of the next ones
     let mut first = None;
     let mut entities = Vec::new();

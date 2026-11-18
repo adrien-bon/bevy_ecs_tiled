@@ -18,6 +18,8 @@ fn main() {
         // Add our systems and run the app!
         .add_systems(Startup, startup)
         .add_systems(Update, (evt_map_created, evt_object_created))
+        // A global observer, which receives the events of all maps
+        .add_observer(obs_global_tile_created)
         .run();
 }
 
@@ -99,6 +101,20 @@ fn obs_layer_created(
 
     // Moreover, we can retrieve the TiledMapCreated event data from here
     let _map = layer_created.event().map(&assets);
+}
+
+// Callback for our global observer, triggered for all maps.
+// Events bubble up the entity hierarchy and a global observer runs once for each entity
+// the event bubbles through: use `is_original()` to only handle each event once.
+fn obs_global_tile_created(tile_created: On<TiledEvent<TileCreated>>) {
+    if !tile_created.is_original() {
+        return;
+    }
+    info!(
+        "=> Global observer TiledTileCreated was triggered for tile {:?} at {:?}",
+        tile_created.origin,
+        tile_created.tile_pos()
+    );
 }
 
 // A typical usecase for regular events is to update components associated with tiles, objects or layers.

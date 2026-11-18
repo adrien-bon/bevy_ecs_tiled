@@ -6,7 +6,8 @@
 //! It also defines specific events such as `WorldCreated` or [`MapCreated`] that are used
 //! to signal the creation of a Tiled world or map.
 //!
-//! The events in this module can be received using either Bevy's buffered events or entity observers.
+//! Each event is both triggered for observers and written as a [`Message`]: see [`TiledEvent`]
+//! to choose between them.
 
 use std::{
     fmt::{self, Debug},
@@ -28,12 +29,28 @@ use crate::tiled::{
 
 /// Wrapper around Tiled events
 ///
-/// Contains generic informations about origin of a particular Tiled event.
+/// Contains generic informations about origin of a particular Tiled event: the entities and assets
+/// of the world, map, layer, tile or object it relates to.
 ///
-/// These events bubble up the entity hierarchy: an observer on a map entity also receives the
-/// events of its layers, objects, etc. Use [`TiledEvent::origin`] to get the entity the event
-/// was sent for (eg. the created layer), and [`TiledEvent::entity`] for the entity currently
-/// observing it (eg. the map entity), which changes while the event bubbles.
+/// # Receiving events
+///
+/// Each event is sent twice, and you can receive it either way:
+/// - as an [`EntityEvent`], using an observer: this is the most convenient way to react to the
+///   events of a given map or world, by attaching an observer to its entity with
+///   [`EntityCommands::observe`],
+/// - as a [`Message`], using a [`MessageReader`] in a regular system: each event is read exactly
+///   once, whatever the entity it relates to.
+///
+/// # Propagation
+///
+/// Observed events bubble up the entity hierarchy (following [`ChildOf`]), starting from
+/// [`TiledEvent::entity`]: an observer attached to a world entity also receives the events of its maps.
+/// - [`TiledEvent::origin`] is the entity the event was sent for (eg. the created layer),
+/// - [`TiledEvent::entity`] is the entity currently observing it, which changes while the event bubbles up.
+///
+/// **A global observer (ie. added with [`App::add_observer`]) runs once for each entity the event bubbles
+/// through**, so it usually receives the same event several times. Use [`TiledEvent::is_original`] to only
+/// handle it once, or use a [`MessageReader`] instead.
 ///
 /// Example:
 /// ```rust,no_run
@@ -43,23 +60,43 @@ use crate::tiled::{
 /// fn spawn_map(mut commands: Commands, asset_server: Res<AssetServer>) {
 ///     commands
 ///         .spawn(TiledMap(asset_server.load("map.tmx")))
+///         // Observer attached to the map entity: runs once per layer of this map
 ///         .observe(|layer_created: On<TiledEvent<LayerCreated>>| {
-///             // `origin` is the layer entity, `entity` is the map entity
-///             info!("Layer {} created in map {}", layer_created.origin, layer_created.entity);
+///             info!("Layer {} created", layer_created.origin);
 ///         });
+/// }
+///
+/// // Global observer, to be added using `App::add_observer`: runs for all the maps
+/// fn on_layer_created(layer_created: On<TiledEvent<LayerCreated>>) {
+///     // Skip the copies of this event received while it bubbles up the hierarchy
+///     if !layer_created.is_original() {
+///         return;
+///     }
+///     info!("Layer {} created", layer_created.origin);
+/// }
+///
+/// // Regular system: each event is read once
+/// fn read_layer_created(mut layer_created: MessageReader<TiledEvent<LayerCreated>>) {
+///     for event in layer_created.read() {
+///         info!("Layer {} created", event.origin);
+///     }
 /// }
 /// ```
 #[derive(Message, EntityEvent, Clone, Copy, PartialEq, Debug, Reflect)]
 #[entity_event(auto_propagate, propagate = &'static ChildOf)]
 #[reflect(Debug, Clone)]
 pub struct TiledEvent<E: Debug + Clone + Copy + Reflect> {
-    /// The entity this event happened for
+    /// The entity currently observing this event: it changes while the event bubbles up the hierarchy.
+    ///
+    /// Do not modify it: use [`TiledEvent::origin`] to get the entity this event was sent for.
     pub entity: Entity,
-    /// The original target of this event, before bubbling
+    /// The entity this event was sent for, eg. the created map, layer, object or collider.
     pub origin: Entity,
     /// The specific event that was triggered
     pub event: E,
 
+    /// Entity the event was initially triggered for, before bubbling up
+    target: Entity,
     /// [`AssetId`] of the [`TiledWorldAsset`]
     #[cfg(feature = "world")]
     world: Option<(Entity, AssetId<TiledWorldAsset>)>,
@@ -76,11 +113,12 @@ where
     E: Debug + Clone + Copy + Reflect,
 {
     /// Creates a new [`TiledEvent`]
-    pub fn new(origin: Entity, event: E) -> Self {
+    pub(crate) fn new(origin: Entity, event: E) -> Self {
         Self {
             entity: origin,
             origin,
             event,
+            target: origin,
             #[cfg(feature = "world")]
             world: None,
             map: None,
@@ -94,7 +132,7 @@ where
     /// Creates a [`TiledEvent`] of another kind, keeping the context of this one (world, map, layer, ...).
     ///
     /// If `origin` is [`None`], the new event keeps the origin of this one.
-    pub fn with_event<O>(&self, origin: Option<Entity>, event: O) -> TiledEvent<O>
+    pub(crate) fn with_event<O>(&self, origin: Option<Entity>, event: O) -> TiledEvent<O>
     where
         O: Debug + Clone + Copy + Reflect,
     {
@@ -102,6 +140,7 @@ where
             entity: self.entity,
             origin: origin.unwrap_or(self.origin),
             event,
+            target: self.target,
             #[cfg(feature = "world")]
             world: self.world,
             map: self.map,
@@ -114,37 +153,38 @@ where
 
     /// Update the world information for this [`TiledEvent`]
     #[cfg(feature = "world")]
-    pub fn with_world(mut self, entity: Entity, asset_id: AssetId<TiledWorldAsset>) -> Self {
+    pub(crate) fn with_world(mut self, entity: Entity, asset_id: AssetId<TiledWorldAsset>) -> Self {
         self.world = Some((entity, asset_id));
         self
     }
 
     /// Update the map information for this [`TiledEvent`]
-    pub fn with_map(mut self, entity: Entity, asset_id: AssetId<TiledMapAsset>) -> Self {
+    pub(crate) fn with_map(mut self, entity: Entity, asset_id: AssetId<TiledMapAsset>) -> Self {
         self.map = Some((entity, asset_id));
         self
     }
 
     /// Update the layer information for this [`TiledEvent`]
-    pub fn with_layer(mut self, entity: Entity) -> Self {
+    pub(crate) fn with_layer(mut self, entity: Entity) -> Self {
         self.layer = Some(entity);
         self
     }
 
     /// Update the object information for this [`TiledEvent`]
-    pub fn with_object(mut self, entity: Entity) -> Self {
+    pub(crate) fn with_object(mut self, entity: Entity) -> Self {
         self.object = Some(entity);
         self
     }
 
     /// Update the tilemap information for this [`TiledEvent`]
-    pub fn with_tilemap(mut self, entity: Entity, tileset_id: TilesetId) -> Self {
+    #[cfg(feature = "render")]
+    pub(crate) fn with_tilemap(mut self, entity: Entity, tileset_id: TilesetId) -> Self {
         self.tilemap = Some((entity, tileset_id));
         self
     }
 
     /// Update the tile information for this [`TiledEvent`]
-    pub fn with_tile(
+    pub(crate) fn with_tile(
         mut self,
         entity: Entity,
         position: TilePos,
@@ -156,7 +196,11 @@ where
     }
 
     /// Trigger observer and write event for this [`TiledEvent`]
-    pub fn send(&self, commands: &mut Commands, message_writer: &mut MessageWriter<TiledEvent<E>>) {
+    pub(crate) fn send(
+        &self,
+        commands: &mut Commands,
+        message_writer: &mut MessageWriter<TiledEvent<E>>,
+    ) {
         commands.trigger(*self);
         message_writer.write(*self);
     }
@@ -182,6 +226,15 @@ where
     #[cfg(feature = "world")]
     pub fn world(&self, assets: &'a Assets<TiledWorldAsset>) -> Option<&'a tiled::World> {
         self.world_asset(assets).map(|w| &w.world)
+    }
+
+    /// Returns `true` if this event is observed by the entity it was initially triggered for,
+    /// ie. it has not bubbled up the hierarchy yet.
+    ///
+    /// Use it in global observers, which run once for each entity the event bubbles through,
+    /// to handle each event only once. It is always `true` for events read using a [`MessageReader`].
+    pub fn is_original(&self) -> bool {
+        self.entity == self.target
     }
 
     /// Retrieve the [`TiledMap`] [`Entity`] associated with this [`TiledEvent`]

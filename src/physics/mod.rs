@@ -398,7 +398,9 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
 
             let event = TiledEvent::new(
                 layer_entity,
-                ColliderCreated::new(TiledColliderSource::TilesLayer, layer_entity),
+                ColliderCreated {
+                    source: TiledColliderSource::TilesLayer,
+                },
             )
             .with_map(map_ref.0, tiled_map.0.id())
             .with_layer(layer_entity);
@@ -411,6 +413,7 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
                 },
                 &mut commands,
                 polygons,
+                layer_entity,
                 event,
                 &mut message_writer,
                 disable_geometry_simplification,
@@ -510,7 +513,9 @@ fn update_objects_colliders<T: TiledPhysicsBackend>(
 
         let event = TiledEvent::new(
             object_entity,
-            ColliderCreated::new(TiledColliderSource::Object, object_entity),
+            ColliderCreated {
+                source: TiledColliderSource::Object,
+            },
         )
         .with_map(map_ref.0, tiled_map.0.id())
         .with_layer(layer_entity)
@@ -525,6 +530,7 @@ fn update_objects_colliders<T: TiledPhysicsBackend>(
             collider::ColliderTarget::Source,
             &mut commands,
             polygons,
+            object_entity,
             event,
             &mut message_writer,
             disable_geometry_simplification,

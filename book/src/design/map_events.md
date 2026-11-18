@@ -112,6 +112,33 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 ```
 
+### Events Bubble Up: Beware of Global Observers
+
+Observed events bubble up the entity hierarchy: an observer attached to a world entity also receives the events of all its maps.
+While an event bubbles up, `TiledEvent::entity` is the entity currently observing it, whereas `TiledEvent::origin` always is the entity the event was sent for (eg. the created layer).
+
+A **global observer** (ie. added with `App::add_observer`) runs once **for each entity the event bubbles through**: it usually receives the same event several times.
+Use `TiledEvent::is_original()` to only handle it once:
+
+```rust,no_run
+use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn main() {
+    App::new().add_observer(on_object_created);
+}
+
+fn on_object_created(object_created: On<TiledEvent<ObjectCreated>>) {
+    // Skip the copies of this event received while it bubbles up the hierarchy
+    if !object_created.is_original() {
+        return;
+    }
+    info!("Object {} created", object_created.origin);
+}
+```
+
+If you want to handle all the events of a given kind, whatever the map, a `MessageReader` is usually simpler: each event is read exactly once.
+
 ---
 
 ## When Are Events Sent?
