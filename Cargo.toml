@@ -175,7 +175,7 @@ name = "world_basic"
 required-features = ["world"]
 
 [[example]]
-name = "world_chunking"
+name = "world_streaming"
 required-features = ["world"]
 
 [[example]]

@@ -44,7 +44,7 @@ Or add them individually as needed:
 - [`TiledDebugObjectsPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/objects/index.html): outline and position of each Tiled object;
 - [`TiledDebugTilesPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/tiles/index.html): `bevy_ecs_tilemap` index (`TilePos`) of each tile;
 - [`TiledDebugMapAabbPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/map_aabb/index.html): axis-aligned bounding box (AABB) of each map;
-- [`TiledDebugWorldChunkPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/world_chunk/index.html): maps boundaries and chunking area of each world (requires the `world` feature);
+- [`TiledDebugWorldStreamingPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/world_streaming/index.html): maps boundaries and streaming area of each world (requires the `world` feature);
 - [`TiledDebugColliderChunksPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/collider_chunks/index.html): bounding box of each physics collider chunk of tiles layers (requires the `physics` feature, see the [physics guide](physics.md#colliders-chunks));
 - [`TiledDebugAxisPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/axis/index.html): axes at the world origin;
 - [`TiledDebugTogglePlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/struct.TiledDebugTogglePlugin.html): toggle all debug gizmos using a keyboard key.
@@ -131,15 +131,15 @@ fn main() {
 }
 ```
 
-### World chunks
+### World streaming
 
-The `TiledDebugWorldChunkPlugin` draws, for each world:
+The `TiledDebugWorldStreamingPlugin` draws, for each world:
 
 - a rectangle around each map of the world, colors being cycled from a list;
-- if `TiledWorldChunking` is set, a red rectangle centered on the camera: maps overlapping this area are spawned, the others are despawned.
+- if `TiledWorldStreaming` is set, a red rectangle centered on the camera: maps overlapping this area are spawned, the others are despawned.
 
-It helps tuning chunking size and checking maps alignment within a world.
-Set `world_chunk_color` to `None` or `maps_colors_list` to an empty list in `TiledDebugWorldChunkConfig` to hide one or the other.
+It helps tuning the streaming area and checking maps alignment within a world.
+Set `streaming_area_color` to `None` or `maps_colors_list` to an empty list in `TiledDebugWorldStreamingConfig` to hide one or the other.
 
 ### Axis
 

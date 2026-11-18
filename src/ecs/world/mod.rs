@@ -1,11 +1,11 @@
 //! Tiled world management and logic.
 //!
-//! This module contains the core logic for handling Tiled worlds, including loading, chunking, and managing
+//! This module contains the core logic for handling Tiled worlds, including loading, streaming, and managing
 //! multiple maps within a world. It organizes submodules and systems related to world storage, chunk visibility,
 //! and world-level events, providing the main entry point for Tiled world support
 
-pub mod chunking;
 pub mod storage;
+pub mod streaming;
 
 #[cfg(test)]
 mod tests;
@@ -19,7 +19,7 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 /// which references the loaded [`TiledWorldAsset`]. This entity acts as the root for all maps, layers, and objects spawned from the world.
 ///
 /// Required components (automatically added with default value if missing):
-/// - [`TiledWorldChunking`]: Controls chunking and streaming of maps within the world.
+/// - [`TiledWorldStreaming`]: Controls which maps of the world are spawned, around cameras.
 /// - the settings components of a [`TiledMap`] (see its documentation): they apply to the whole world
 ///   and are passed on to its maps, except [`TilemapAnchor`] which applies to the world itself.
 ///
@@ -36,7 +36,7 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 #[reflect(Component, Debug)]
 #[require(
     TiledWorldStorage,
-    TiledWorldChunking,
+    TiledWorldStreaming,
     crate::ecs::map::TiledMapSettings
 )]
 pub struct TiledWorld(pub Handle<TiledWorldAsset>);
@@ -101,7 +101,7 @@ pub(crate) fn plugin(app: &mut bevy::prelude::App) {
         handle_world_events.in_set(TiledPostUpdateSystems::HandleWorldAssetEvents),
     );
 
-    app.add_plugins((storage::plugin, chunking::plugin));
+    app.add_plugins((storage::plugin, streaming::plugin));
 }
 
 /// System to spawn a world once it has been fully loaded.
@@ -116,8 +116,8 @@ fn process_loaded_worlds(
             // If a world settings change, force a respawn so they can be taken into account
             TiledWorldSettingsChanged,
             With<RespawnTiledWorld>,
-            // Not needed to react to changes on TiledWorldChunking:
-            // it's read each frame by world_chunking() system
+            // Not needed to react to changes on TiledWorldStreaming:
+            // it's read each frame by world_streaming() system
         )>,
     >,
     mut message_writers: TiledMessageWriters,
@@ -162,7 +162,7 @@ fn process_loaded_worlds(
             world_storage.clear(&mut commands);
 
             // Remove the 'Respawn' marker and insert additional components
-            // Actual map spawn is handled by world_chunking() system
+            // Actual map spawn is handled by world_streaming() system
             commands
                 .entity(world_entity)
                 .insert(Name::new(format!(

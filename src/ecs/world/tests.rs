@@ -84,7 +84,7 @@ pub(super) fn load_world(app: &mut App, path: &str) -> Handle<TiledWorldAsset> {
     handle
 }
 
-/// Run the app until all maps of the given world are spawned (no chunking)
+/// Run the app until all maps of the given world are spawned (no streaming)
 fn spawn_world(app: &mut App, path: &str, anchor: TilemapAnchor) -> Entity {
     let handle = load_world(app, path);
     let maps_count = app
@@ -194,7 +194,7 @@ fn next_tile_center(center: impl Fn(u32) -> Vec2, n: u32) -> Vec2 {
     center(n - 2) + center(n - 1) - center(n - 3)
 }
 
-/// Without chunking, all maps of the world are spawned as children of the world entity
+/// Without streaming, all maps of the world are spawned as children of the world entity
 /// and all the corresponding events are sent.
 #[test]
 fn world_spawns_all_maps() {
@@ -274,9 +274,9 @@ fn maps_match_world_layout() {
     assert!(errors.is_empty(), "\n{}", errors.join("\n"));
 }
 
-/// With chunking, only the maps around the camera are spawned
+/// With streaming, only the maps around the camera are spawned
 #[test]
-fn chunking_spawns_visible_maps() {
+fn streaming_spawns_visible_maps() {
     for path in WORLDS {
         let mut app = world_app();
         let handle = load_world(&mut app, path);
@@ -300,7 +300,7 @@ fn chunking_spawns_visible_maps() {
             .spawn((
                 TiledWorld(handle),
                 TilemapAnchor::TopLeft,
-                TiledWorldChunking::new(1., 1.),
+                TiledWorldStreaming::new(1., 1.),
             ))
             .id();
 

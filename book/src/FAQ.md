@@ -50,7 +50,7 @@ fn startup(
 }
 ```
 
-You can customize world loading with the same components and events / observers as for maps, and use the [`TiledWorldChunking`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/chunking/enum.TiledWorldChunking.html) component to control map chunking.
+You can customize world loading with the same components and events / observers as for maps, and use the [`TiledWorldStreaming`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/streaming/enum.TiledWorldStreaming.html) component to only spawn the maps around the camera.
 
 ---
 

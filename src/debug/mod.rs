@@ -2,7 +2,7 @@
 //!
 //! This module provides plugins and utilities to help visualize and debug Tiled maps and worlds
 //! in your Bevy application. Enable the `debug` feature to use these plugins, which include
-//! gizmo overlays for objects, tiles, world chunks, maps bounding boxes, and axes.
+//! gizmo overlays for objects, tiles, world streaming areas, maps bounding boxes, and axes.
 
 pub mod axis;
 #[cfg(feature = "physics")]
@@ -11,7 +11,7 @@ pub mod map_aabb;
 pub mod objects;
 pub mod tiles;
 #[cfg(feature = "world")]
-pub mod world_chunk;
+pub mod world_streaming;
 
 use bevy::{
     app::{PluginGroup, PluginGroupBuilder},
@@ -113,7 +113,7 @@ impl PluginGroup for TiledDebugPluginGroup {
             .add(objects::TiledDebugObjectsPlugin::default())
             .add(tiles::TiledDebugTilesPlugin::default());
         #[cfg(feature = "world")]
-        let group = group.add(world_chunk::TiledDebugWorldChunkPlugin::default());
+        let group = group.add(world_streaming::TiledDebugWorldStreamingPlugin::default());
         #[cfg(feature = "physics")]
         let group = group.add(collider_chunks::TiledDebugColliderChunksPlugin::default());
         group

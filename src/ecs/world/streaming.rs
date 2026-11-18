@@ -1,7 +1,7 @@
 //! Chunk management for Tiled worlds.
 //!
 //! This module implements logic spawning and despawning Tiled maps based on camera position
-//! and chunking configuration. It allows for efficient rendering and memory management by only
+//! and streaming configuration. It allows for efficient rendering and memory management by only
 //! keeping visible maps in memory, while removing those that are not currently in view.
 
 use crate::prelude::*;
@@ -11,15 +11,15 @@ use bevy::{
     shape::{Aabb2d, IntersectsVolume},
 };
 
-/// [`Component`] holding Tiled world chunking configuration.
+/// [`Component`] holding Tiled world streaming configuration.
 ///
-/// World chunking only spawns the maps of a world which are close to a [`Camera`], and despawns the others.
+/// World streaming only spawns the maps of a world which are close to a [`Camera`], and despawns the others.
 ///
 /// Must be added to the [`Entity`] holding the world.
 #[derive(Component, Default, Reflect, Copy, Clone, PartialEq, Debug)]
 #[reflect(Component, Default, Debug, PartialEq)]
-pub enum TiledWorldChunking {
-    /// No chunking: all the maps of the world are spawned.
+pub enum TiledWorldStreaming {
+    /// No streaming: all the maps of the world are spawned.
     #[default]
     Disabled,
     /// Only spawn the maps overlapping an area centered on each [`Camera`].
@@ -29,13 +29,13 @@ pub enum TiledWorldChunking {
     Area(Vec2),
 }
 
-impl TiledWorldChunking {
+impl TiledWorldStreaming {
     /// Only spawn the maps within `half_width` and `half_height` pixels around each [`Camera`].
     pub fn new(half_width: f32, half_height: f32) -> Self {
         Self::Area(Vec2::new(half_width, half_height))
     }
 
-    /// Half size of the area around each [`Camera`] where maps are spawned, or [`None`] if chunking is disabled.
+    /// Half size of the area around each [`Camera`] where maps are spawned, or [`None`] if streaming is disabled.
     pub fn area(&self) -> Option<Vec2> {
         match self {
             Self::Disabled => None,
@@ -45,14 +45,14 @@ impl TiledWorldChunking {
 }
 
 pub(crate) fn plugin(app: &mut App) {
-    app.register_type::<TiledWorldChunking>();
+    app.register_type::<TiledWorldStreaming>();
     app.add_systems(
         PostUpdate,
-        handle_world_chunking.in_set(TiledPostUpdateSystems::HandleWorldChunking),
+        handle_world_streaming.in_set(TiledPostUpdateSystems::HandleWorldStreaming),
     );
 }
 
-fn handle_world_chunking(
+fn handle_world_streaming(
     // Do not filter on `Changed<Transform>`: we need all cameras every frame, otherwise
     // a frame where no camera moved would be seen as "no map visible" and despawn every map.
     camera_query: Query<&Transform, With<Camera>>,
@@ -64,7 +64,7 @@ fn handle_world_chunking(
         Entity,
         &TiledWorld,
         &GlobalTransform,
-        &TiledWorldChunking,
+        &TiledWorldStreaming,
         &TilemapAnchor,
         super::TiledWorldInheritedSettings,
         &mut TiledWorldStorage,
@@ -74,7 +74,7 @@ fn handle_world_chunking(
         world_entity,
         world_handle,
         world_transform,
-        world_chunking,
+        world_streaming,
         anchor,
         inherited_settings,
         mut storage,
@@ -96,7 +96,7 @@ fn handle_world_chunking(
         let mut to_remove = Vec::new();
         let mut to_spawn = Vec::new();
 
-        if let Some(chunking) = world_chunking.area() {
+        if let Some(area) = world_streaming.area() {
             // A map can be visible from several cameras: only consider it once
             let mut visible_maps = HashSet::new();
             let cameras: Vec<Aabb2d> = camera_query
@@ -104,7 +104,7 @@ fn handle_world_chunking(
                 .map(|transform| {
                     Aabb2d::new(
                         Vec2::new(transform.translation.x, transform.translation.y),
-                        chunking,
+                        area,
                     )
                 })
                 .collect();
@@ -130,7 +130,7 @@ fn handle_world_chunking(
                 }
             }
         } else if storage.maps.is_empty() {
-            // No chunking and we don't have spawned any map yet: just spawn all maps
+            // No streaming and we don't have spawned any map yet: just spawn all maps
             for idx in 0..tiled_world.maps.len() {
                 to_spawn.push(WorldMapId(idx as u32));
             }
@@ -185,7 +185,7 @@ mod tests {
     use super::*;
     use crate::ecs::world::tests::load_world;
 
-    fn chunking_app() -> App {
+    fn streaming_app() -> App {
         let mut app = App::new();
         app.add_plugins((MinimalPlugins, AssetPlugin::default()));
         app.add_plugins((
@@ -193,13 +193,13 @@ mod tests {
             crate::asset::map::plugin,
             crate::asset::world::plugin,
         ));
-        app.add_systems(PostUpdate, handle_world_chunking);
+        app.add_systems(PostUpdate, handle_world_streaming);
         app
     }
 
     #[test]
     fn static_camera_keeps_visible_maps_spawned() {
-        let mut app = chunking_app();
+        let mut app = streaming_app();
         let handle = load_world(&mut app, "tests/chunking/two_maps.world");
 
         // Camera at origin only overlaps the first map (second one is 1000px away)
@@ -207,7 +207,7 @@ mod tests {
             .spawn((Camera::default(), Transform::default()));
         let world_entity = app
             .world_mut()
-            .spawn((TiledWorld(handle), TiledWorldChunking::new(100., 100.)))
+            .spawn((TiledWorld(handle), TiledWorldStreaming::new(100., 100.)))
             .id();
 
         // The camera never moves: maps must stay spawned over several frames

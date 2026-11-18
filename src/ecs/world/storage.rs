@@ -1,8 +1,8 @@
 //! Storage structures for Tiled world data.
 //!
 //! This module provides data structures and utilities for storing and managing Tiled world information,
-//! including references to maps, world chunks, and world-level metadata. It enables efficient access and
-//! organization of world data for chunking, streaming, and world management systems.
+//! including references to maps and world-level metadata. It enables efficient access and
+//! organization of world data for streaming and world management systems.
 
 #[allow(unused_imports)]
 use crate::prelude::*;

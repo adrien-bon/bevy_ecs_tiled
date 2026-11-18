@@ -43,7 +43,9 @@ pub mod prelude {
         TiledDebugColliderChunksConfig, TiledDebugColliderChunksPlugin,
     };
     #[cfg(all(feature = "debug", feature = "world"))]
-    pub use super::debug::world_chunk::{TiledDebugWorldChunkConfig, TiledDebugWorldChunkPlugin};
+    pub use super::debug::world_streaming::{
+        TiledDebugWorldStreamingConfig, TiledDebugWorldStreamingPlugin,
+    };
     #[cfg(feature = "debug")]
     pub use super::debug::{
         TiledDebugGizmos, TiledDebugPluginGroup, TiledDebugTogglePlugin,
@@ -104,8 +106,8 @@ pub mod prelude {
         ecs::{
             event::WorldCreated,
             world::{
-                RespawnTiledWorld, TiledWorld, chunking::TiledWorldChunking,
-                storage::TiledWorldStorage,
+                RespawnTiledWorld, TiledWorld, storage::TiledWorldStorage,
+                streaming::TiledWorldStreaming,
             },
         },
     };

@@ -53,8 +53,8 @@ pub enum TiledPostUpdateSystems {
     HandlePhysicsSettingsUpdate,
     /// Handles asset events for Tiled worlds.
     HandleWorldAssetEvents,
-    /// Handles chunking of Tiled worlds by spawning or despawning maps based on their visibility.
-    HandleWorldChunking,
+    /// Handles streaming of Tiled worlds by spawning or despawning maps based on their visibility.
+    HandleWorldStreaming,
     /// Handles asset events for Tiled maps.
     HandleMapAssetEvents,
     /// Keeps [`TiledMapStorage`](crate::prelude::TiledMapStorage) in sync with added or modified tiles.
@@ -96,7 +96,7 @@ pub(crate) fn plugin(app: &mut App) {
             TiledPostUpdateSystems::First,
             TiledPostUpdateSystems::HandlePhysicsSettingsUpdate,
             TiledPostUpdateSystems::HandleWorldAssetEvents,
-            TiledPostUpdateSystems::HandleWorldChunking,
+            TiledPostUpdateSystems::HandleWorldStreaming,
             TiledPostUpdateSystems::HandleMapAssetEvents,
             TiledPostUpdateSystems::SyncMapStorage,
             TiledPostUpdateSystems::SyncRender,

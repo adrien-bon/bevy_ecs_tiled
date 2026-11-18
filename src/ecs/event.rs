@@ -20,12 +20,7 @@ use bevy::{ecs::system::SystemParam, prelude::*};
 #[cfg(feature = "world")]
 use crate::asset::world::TiledWorldAsset;
 #[allow(unused_imports)]
-use crate::ecs::{
-    layer::TiledLayer,
-    map::TiledMap,
-    object::TiledObject,
-    tile::TiledTile,
-};
+use crate::ecs::{layer::TiledLayer, map::TiledMap, object::TiledObject, tile::TiledTile};
 
 /// Wrapper around Tiled events
 ///

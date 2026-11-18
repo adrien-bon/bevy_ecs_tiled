@@ -24,7 +24,7 @@ pub struct TiledWorldAsset {
     ///
     /// Contains both the [`TiledMapAsset`] handle and its associated [`Rect`] boundary
     /// as defined by the `.world` file.
-    /// Note that the actual map boundaries are not taken into account for world chunking.
+    /// Note that the actual map boundaries are not taken into account for world streaming.
     pub maps: Vec<(Rect, Handle<TiledMapAsset>)>,
 }
 

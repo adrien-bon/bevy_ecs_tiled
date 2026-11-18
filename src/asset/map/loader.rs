@@ -449,10 +449,7 @@ mod tests {
     fn unsupported_orientation_is_a_load_error() {
         let mut app = App::new();
         app.add_plugins((MinimalPlugins, AssetPlugin::default()));
-        app.add_plugins((
-            crate::asset::cache::plugin,
-            crate::asset::map::plugin,
-        ));
+        app.add_plugins((crate::asset::cache::plugin, crate::asset::map::plugin));
 
         let handle: Handle<TiledMapAsset> = app
             .world()

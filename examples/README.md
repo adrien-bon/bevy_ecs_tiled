@@ -57,5 +57,5 @@ Most examples support the following controls:
 | `physics_rapier_settings` | `rapier_debug` | This example shows how to use Rapier physics backend. |
 | `properties_basic` | `user_properties` | This example shows how to map custom tiles and objects properties from Tiled to Bevy Components. |
 | `world_basic` | `world` | This example shows the basic usage of the plugin to load a Tiled world. |
-| `world_chunking` | `world` | This example shows how to load Tiled World files and demonstrates chunking the loaded maps. |
+| `world_streaming` | `world` | This example shows how to load Tiled World files and demonstrates streaming its maps around the camera. |
 | `world_orientation` | `world` | This example cycles through Tiled worlds made of maps with different orientations. |

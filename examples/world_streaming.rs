@@ -1,4 +1,4 @@
-// This example shows how to load Tiled World files and demonstrates chunking the loaded maps.
+// This example shows how to load Tiled World files and demonstrates streaming its maps around the camera.
 
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
@@ -34,13 +34,13 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         TiledWorld(asset_server.load("worlds/orthogonal.world")),
         TilemapAnchor::Center,
-        TiledWorldChunking::new(200., 200.),
+        TiledWorldStreaming::new(200., 200.),
     ));
 
-    // Add a helper text to display current chunking values
+    // Add a helper text to display current streaming area
     commands
         .spawn((
-            Text::new("[+/-] Chunking: "),
+            Text::new("[+/-] Streaming area: "),
             TextFont {
                 font_size: FontSize::Px(24.),
                 ..default()
@@ -56,39 +56,39 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ));
 }
 
-fn input(mut chunking: Query<&mut TiledWorldChunking>, keys: Res<ButtonInput<KeyCode>>) {
-    let Ok(mut chunking) = chunking.single_mut() else {
+fn input(mut streaming: Query<&mut TiledWorldStreaming>, keys: Res<ButtonInput<KeyCode>>) {
+    let Ok(mut streaming) = streaming.single_mut() else {
         return;
     };
 
-    // Decrease the chunking size
+    // Decrease the streaming area
     if keys.pressed(KeyCode::Minus)
-        && let Some(c) = chunking.area()
+        && let Some(c) = streaming.area()
         && (c.x - STEP_SIZE as f32) > 0.
     {
-        *chunking = TiledWorldChunking::new(c.x - STEP_SIZE as f32, c.y - STEP_SIZE as f32);
+        *streaming = TiledWorldStreaming::new(c.x - STEP_SIZE as f32, c.y - STEP_SIZE as f32);
     }
 
-    // Increase the chunking size
+    // Increase the streaming area
     if keys.pressed(KeyCode::Equal)
-        && let Some(c) = chunking.area()
+        && let Some(c) = streaming.area()
         && c.x < f32::MAX - STEP_SIZE as f32
     {
-        *chunking = TiledWorldChunking::new(c.x + STEP_SIZE as f32, c.y + STEP_SIZE as f32);
+        *streaming = TiledWorldStreaming::new(c.x + STEP_SIZE as f32, c.y + STEP_SIZE as f32);
     }
 }
 
 fn text_update_system(
-    chunking: Query<&TiledWorldChunking>,
+    streaming: Query<&TiledWorldStreaming>,
     mut query: Query<&mut TextSpan, With<HelperText>>,
 ) {
-    let Ok(chunking) = chunking.single() else {
+    let Ok(streaming) = streaming.single() else {
         return;
     };
 
     for mut span in &mut query {
-        span.0 = chunking.area().map_or(String::from("None"), |chunking| {
-            format!("{}x{}", chunking.x, chunking.y)
+        span.0 = streaming.area().map_or(String::from("None"), |streaming| {
+            format!("{}x{}", streaming.x, streaming.y)
         });
     }
 }

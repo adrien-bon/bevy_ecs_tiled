@@ -44,7 +44,7 @@ This plugin aims to provide a simple and ergonomic workflow for integrating Tile
 
 **Use several maps to build a huge world:**
 
-![screenshot](./res/showcase_world_chunking.gif)
+![screenshot](./res/showcase_world_streaming.gif)
 
 ---
 
