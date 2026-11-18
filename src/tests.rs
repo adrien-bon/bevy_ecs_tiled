@@ -1391,7 +1391,9 @@ mod physics {
         ) -> Vec<Self::Collider> {
             // Like built-in backends, the line strip strategy produces a collider for each ring
             let count = match strategy {
-                TiledColliderStrategy::LineStrip => multi_polygon_as_line_strings(geometry).count(),
+                TiledColliderStrategy::LineStrip => {
+                    crate::physics::geometry::multi_polygon_as_line_strings(geometry).count()
+                }
                 _ => 1,
             };
             vec![TestCollider(strategy); count]

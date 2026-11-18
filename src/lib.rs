@@ -40,7 +40,6 @@ pub mod prelude {
         axis::TiledDebugAxisPlugin,
         map_aabb::{TiledDebugMapAabbConfig, TiledDebugMapAabbPlugin},
         objects::{TiledDebugObjectsConfig, TiledDebugObjectsPlugin},
-        tiled_debug_gizmos_enabled,
         tiles::{TiledDebugTilesConfig, TiledDebugTilesPlugin},
     };
     #[cfg(feature = "avian")]
@@ -54,10 +53,6 @@ pub mod prelude {
         collider::{
             ColliderCreated, TiledColliderChunk, TiledColliderChunkSize, TiledColliderOf,
             TiledColliderPolygons, TiledColliderSource, TiledColliderStrategy, TiledColliders,
-        },
-        geometry::{
-            TiledColliderShape, collider_shapes, multi_polygon_as_line_strings,
-            multi_polygon_as_triangles,
         },
         settings::TiledPhysicsSettings,
     };
@@ -105,14 +100,10 @@ pub mod prelude {
     pub mod tiled {
         pub use tiled::*;
     }
-
-    /// Re-exports from ['geo'](https://crates.io/crates/geo)
-    pub mod geo {
-        pub use geo::*;
-    }
-
-    /// Re-exports from ['regex'](https://crates.io/crates/regex)
-    pub mod regex {
-        pub use regex::*;
-    }
 }
+
+/// Re-export of the [`geo`](https://crates.io/crates/geo) crate, used to describe physics colliders geometry.
+pub use geo;
+
+/// Re-export of the [`regex`](https://crates.io/crates/regex) crate, used to build [`TiledFilter`](prelude::TiledFilter)s.
+pub use regex;

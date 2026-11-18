@@ -21,12 +21,15 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 /// Attach this component to an entity to load a Tiled map from a `.tmx` file. The inner value is a [`Handle<TiledMapAsset>`],
 /// which references the loaded [`TiledMapAsset`]. This entity acts as the root for all layers, tiles, and objects spawned from the map.
 ///
-/// Required components (automatically added with default value if missing):
+/// Required components (automatically added with default value if missing), which can be inserted
+/// along with the [`TiledMap`] to customize how the map is spawned:
 /// - [`TiledMapLayerZOffset`]: Controls Z stacking order between layers.
 /// - [`TiledMapImageRepeatMargin`]: Controls image tiling margin for repeated images.
 /// - [`TilemapRenderSettings`]: Controls custom parameters for the render pipeline.
 /// - [`TilemapAnchor`]: Controls the anchor point of the map.
 /// - [`Visibility`] and [`Transform`]: Standard Bevy components.
+///
+/// The same components are required by a `TiledWorld`, which passes them on to its maps.
 ///
 /// Note that modifying the [`TiledMap`], [`TiledMapLayerZOffset`], [`TilemapRenderSettings`] or [`TilemapAnchor`]
 /// components of a map entity respawns the whole map from its asset: all the modifications made to its layers,
@@ -43,8 +46,14 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 /// ```
 #[derive(Component, Reflect, Clone, Debug, Deref, FromTemplate)]
 #[reflect(Component, Debug)]
+#[require(TiledMapStorage, TiledMapSettings)]
+pub struct TiledMap(pub Handle<TiledMapAsset>);
+
+/// Marker [`Component`] requiring the settings components shared by [`TiledMap`] and `TiledWorld` entities.
+///
+/// Keep the list of these components in the documentation of [`TiledMap`] up to date.
+#[derive(Component, Default)]
 #[require(
-    TiledMapStorage,
     TiledMapLayerZOffset,
     TiledMapImageRepeatMargin,
     TilemapRenderSettings,
@@ -52,7 +61,7 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
     Visibility,
     Transform
 )]
-pub struct TiledMap(pub Handle<TiledMapAsset>);
+pub(crate) struct TiledMapSettings;
 
 /// Controls the Z stacking order between Tiled map layers for correct rendering.
 ///

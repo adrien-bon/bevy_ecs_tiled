@@ -14,7 +14,10 @@
 //! ```
 //!
 
-use crate::prelude::*;
+use crate::{
+    physics::geometry::{TiledColliderShape, collider_shapes},
+    prelude::*,
+};
 use avian2d::{
     parry::{math::Pose, shape::SharedShape},
     prelude::*,

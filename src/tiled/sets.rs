@@ -13,6 +13,7 @@ use bevy::prelude::*;
 
 /// System sets for the PreUpdate schedule.
 #[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
+#[non_exhaustive]
 pub enum TiledPreUpdateSystems {
     /// Marker for the first system in the pre-update phase.
     First,
@@ -28,6 +29,7 @@ pub enum TiledPreUpdateSystems {
 
 /// System sets for the Update schedule.
 #[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
+#[non_exhaustive]
 pub enum TiledUpdateSystems {
     /// Marker for the first system in the update phase.
     First,
@@ -43,6 +45,7 @@ pub enum TiledUpdateSystems {
 
 /// System sets for the PostUpdate schedule.
 #[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
+#[non_exhaustive]
 pub enum TiledPostUpdateSystems {
     /// Marker for the first system in the post-update phase.
     First,

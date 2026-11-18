@@ -22,7 +22,8 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 ///
 /// Required components (automatically added with default value if missing):
 /// - [`TiledWorldChunking`]: Controls chunking and streaming of maps within the world.
-/// - [`TiledMapLayerZOffset`], [`TiledMapImageRepeatMargin`], [`TilemapAnchor`], [`TilemapRenderSettings`], [`Visibility`], [`Transform`]: Required components for the underlying [`TiledMap`]s.
+/// - the settings components of a [`TiledMap`] (see its documentation): they apply to the whole world
+///   and are passed on to its maps, except [`TilemapAnchor`] which applies to the world itself.
 ///
 /// Example:
 /// ```rust,no_run
@@ -38,14 +39,35 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 #[require(
     TiledWorldStorage,
     TiledWorldChunking,
-    TiledMapLayerZOffset,
-    TiledMapImageRepeatMargin,
-    TilemapAnchor,
-    TilemapRenderSettings,
-    Visibility,
-    Transform
+    crate::tiled::map::TiledMapSettings
 )]
 pub struct TiledWorld(pub Handle<TiledWorldAsset>);
+
+/// Settings components of a [`TiledWorld`] which are passed on to each of its maps.
+pub(crate) type TiledWorldInheritedSettings = (
+    &'static TiledMapLayerZOffset,
+    &'static TiledMapImageRepeatMargin,
+    &'static TilemapRenderSettings,
+);
+
+/// Filter matching worlds whose [`TiledWorldInheritedSettings`] or [`TilemapAnchor`] changed.
+type TiledWorldSettingsChanged = Or<(
+    Changed<TilemapAnchor>,
+    Changed<TiledMapLayerZOffset>,
+    Changed<TiledMapImageRepeatMargin>,
+    Changed<TilemapRenderSettings>,
+)>;
+
+/// Components to insert on a map of a world so it inherits the world settings.
+pub(crate) fn inherited_settings(
+    (layer_offset, image_repeat_margin, render_settings): (
+        &TiledMapLayerZOffset,
+        &TiledMapImageRepeatMargin,
+        &TilemapRenderSettings,
+    ),
+) -> impl Bundle {
+    (*layer_offset, *image_repeat_margin, *render_settings)
+}
 
 /// Marker component to trigger a Tiled world respawn.
 ///
@@ -99,10 +121,7 @@ fn process_loaded_worlds(
         Or<(
             Changed<TiledWorld>,
             // If a world settings change, force a respawn so they can be taken into account
-            Changed<TilemapAnchor>,
-            Changed<TiledMapLayerZOffset>,
-            Changed<TiledMapImageRepeatMargin>,
-            Changed<TilemapRenderSettings>,
+            TiledWorldSettingsChanged,
             With<RespawnTiledWorld>,
             // Not needed to react to changes on TiledWorldChunking:
             // it's read each frame by world_chunking() system

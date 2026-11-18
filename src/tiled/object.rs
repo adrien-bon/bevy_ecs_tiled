@@ -2,8 +2,9 @@
 //!
 //! This module defines Bevy components used to represent Tiled objects within the ECS world.
 
-use crate::prelude::{geo::Centroid, *};
+use crate::prelude::*;
 use crate::tiled::{helpers::iso_projection, map::loader::tileset_label};
+use ::geo::Centroid;
 use ::tiled::{HorizontalAlignment, VerticalAlignment};
 use bevy::prelude::*;
 #[cfg(feature = "render")]
@@ -52,6 +53,7 @@ pub struct TiledObjectText;
 #[derive(Component, Default, Reflect, Clone, Debug, PartialEq)]
 #[reflect(Component, Default, Debug, PartialEq)]
 #[require(Visibility, Transform, TiledName)]
+#[non_exhaustive]
 pub enum TiledObject {
     /// A point shape.
     #[default]

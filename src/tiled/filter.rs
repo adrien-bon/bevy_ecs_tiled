@@ -3,7 +3,6 @@
 //! This module provides types and helpers for filtering and matching names of Tiled objects, layers, tiles or types.
 //! It is used throughout the plugin to allow selective processing of Tiled entities based on their names.
 
-use crate::prelude::*;
 use bevy::prelude::*;
 
 /// Component holding the name of a Tiled item as it appears in the Tiled editor.
@@ -13,20 +12,13 @@ use bevy::prelude::*;
 #[reflect(Component, Debug, Default, PartialEq, Hash)]
 pub struct TiledName(pub String);
 
-impl TiledName {
-    /// Convenient method to determine if this [`TiledName`] matches the given [`TiledFilter`].
-    pub fn matches(&self, filter: &TiledFilter) -> bool {
-        filter.matches(&self.0)
-    }
-}
-
 /// A filter for efficiently checking if a given name matches a filter specification.
 ///
 /// # Example
 /// ```rust,no_run
-/// use bevy_ecs_tiled::prelude::*;
+/// use bevy_ecs_tiled::{prelude::*, regex};
 ///
-/// let names_filter = TiledFilter::from(vec!["some", "name"]);
+/// let names_filter = TiledFilter::from(["some", "name"]);
 /// let regex_filter = TiledFilter::from(
 ///     regex::RegexSet::new([
 ///         r"^some",
@@ -62,9 +54,17 @@ impl From<regex::RegexSet> for TiledFilter {
     }
 }
 
-impl From<Vec<&str>> for TiledFilter {
-    fn from(names: Vec<&str>) -> Self {
-        Self::Names(names.iter().map(|s| s.to_string()).collect())
+impl<S: Into<String>> From<Vec<S>> for TiledFilter {
+    /// Builds a [`TiledFilter::Names`] from a list of names.
+    fn from(names: Vec<S>) -> Self {
+        names.into_iter().collect()
+    }
+}
+
+impl<S: Into<String>, const N: usize> From<[S; N]> for TiledFilter {
+    /// Builds a [`TiledFilter::Names`] from an array of names.
+    fn from(names: [S; N]) -> Self {
+        names.into_iter().collect()
     }
 }
 
@@ -113,7 +113,7 @@ mod tests {
 
     #[test]
     fn names_filter_is_case_insensitive() {
-        let filter = TiledFilter::from(vec!["Player", "  Enemy "]);
+        let filter = TiledFilter::from(["Player", "  Enemy "]);
         assert!(filter.matches("player"));
         assert!(filter.matches("PLAYER"));
         assert!(filter.matches(" Player "));
@@ -125,7 +125,7 @@ mod tests {
     fn names_filter_can_be_collected() {
         let filter = ["Player", "enemy"].into_iter().collect::<TiledFilter>();
         assert!(filter.matches("player"));
-        let filter = TiledFilter::from_iter(vec![String::from("npc")]);
+        let filter = TiledFilter::from(vec![String::from("npc")]);
         assert!(filter.matches("NPC"));
     }
 

@@ -5,15 +5,14 @@
 //! and the requirements of physics backends (Rapier, Avian, etc.).
 use bevy::prelude::*;
 
-use crate::prelude::{
-    geo::{Centroid, TriangulateDelaunay},
-    *,
-};
+use crate::prelude::*;
+use ::geo::{Centroid, TriangulateDelaunay};
 
 /// Description of a collider shape, independent of any physics engine.
 ///
 /// See [`collider_shapes`].
 #[derive(Clone, Debug, PartialEq)]
+#[non_exhaustive]
 pub enum TiledColliderShape {
     /// A set of segments.
     Polyline {

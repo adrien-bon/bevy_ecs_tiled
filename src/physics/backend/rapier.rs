@@ -13,7 +13,10 @@
 //!     .add_plugins(TiledPhysicsPlugin::<TiledPhysicsRapierBackend>::default());
 //! ```
 
-use crate::prelude::*;
+use crate::{
+    physics::geometry::{TiledColliderShape, collider_shapes},
+    prelude::*,
+};
 use bevy::prelude::*;
 use bevy_rapier2d::{
     prelude::*,

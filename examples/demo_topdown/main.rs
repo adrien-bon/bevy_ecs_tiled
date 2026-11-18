@@ -93,8 +93,9 @@ fn main() {
         config.types_export_file = Some(path);
 
         // Custom filter to chose which properties should be exported
-        config.types_filter =
-            TiledFilter::from(regex::RegexSet::new([r"^demo_topdown::.*"]).unwrap());
+        config.types_filter = TiledFilter::from(
+            bevy_ecs_tiled::regex::RegexSet::new([r"^demo_topdown::.*"]).unwrap(),
+        );
     }
 
     // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will

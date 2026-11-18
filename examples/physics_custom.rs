@@ -6,7 +6,7 @@ use bevy::{
     ecs::{lifecycle::HookContext, world::DeferredWorld},
     prelude::*,
 };
-use bevy_ecs_tiled::prelude::*;
+use bevy_ecs_tiled::{geo, physics::geometry::multi_polygon_as_line_strings, prelude::*};
 
 mod helper;
 

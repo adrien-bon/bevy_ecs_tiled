@@ -98,8 +98,9 @@ fn main() {
         config.types_export_file = Some(path);
 
         // Custom filter to chose which properties should be exported
-        config.types_filter =
-            TiledFilter::from(regex::RegexSet::new([r"^demo_platformer::.*"]).unwrap());
+        config.types_filter = TiledFilter::from(
+            bevy_ecs_tiled::regex::RegexSet::new([r"^demo_platformer::.*"]).unwrap(),
+        );
     }
 
     app.add_plugins((

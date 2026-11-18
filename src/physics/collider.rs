@@ -55,6 +55,7 @@ pub enum TiledColliderSource {
 /// [`TiledPhysicsBackend`] is free to interpret them differently.
 #[derive(Component, Reflect, Default, Copy, Clone, PartialEq, Eq, Hash, Debug)]
 #[reflect(Component, Default, Debug, PartialEq, Hash)]
+#[non_exhaustive]
 pub enum TiledColliderStrategy {
     /// Aggregate all the line strings of the geometry in a single polyline collider.
     #[default]

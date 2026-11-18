@@ -25,7 +25,7 @@ use crate::prelude::*;
 /// Example:
 /// ```rust,no_run
 /// use bevy::prelude::*;
-/// use bevy_ecs_tiled::prelude::*;
+/// use bevy_ecs_tiled::{geo, prelude::*};
 ///
 /// /// A "collider" which only holds the number of polygons of its geometry
 /// #[derive(Component)]
@@ -83,7 +83,7 @@ pub trait TiledPhysicsBackend:
     /// The colliders to spawn for this geometry: usually a single one, but there can be several
     /// (see [`TiledColliderStrategy::LineStrip`]) or none if the geometry is not supported.
     ///
-    /// See [`collider_shapes`] for an helper converting the geometry to shapes
+    /// See [`collider_shapes`](crate::physics::geometry::collider_shapes) for an helper converting the geometry to shapes
     /// which are easy to map to physics engines primitives.
     fn colliders(
         &self,

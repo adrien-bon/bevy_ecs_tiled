@@ -51,9 +51,7 @@ fn handle_world_chunking(
         &GlobalTransform,
         &TiledWorldChunking,
         &TilemapAnchor,
-        &TiledMapLayerZOffset,
-        &TiledMapImageRepeatMargin,
-        &TilemapRenderSettings,
+        super::TiledWorldInheritedSettings,
         &mut TiledWorldStorage,
     )>,
 ) {
@@ -63,9 +61,7 @@ fn handle_world_chunking(
         world_transform,
         world_chunking,
         anchor,
-        layer_offset,
-        image_repeat_margin,
-        render_settings,
+        inherited_settings,
         mut storage,
     ) in world_query.iter_mut()
     {
@@ -157,9 +153,7 @@ fn handle_world_chunking(
                         (offset + Vec2::new(rect.min.x, rect.max.y) - map_origin).extend(0.0),
                     ),
                     anchor,
-                    *layer_offset,
-                    *image_repeat_margin,
-                    *render_settings,
+                    super::inherited_settings(inherited_settings),
                 ))
                 .id();
             debug!(

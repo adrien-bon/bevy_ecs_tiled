@@ -26,7 +26,7 @@ fn main() {
 
         // Custom filter to chose which properties should be exported
         config.types_filter = TiledFilter::from(
-            regex::RegexSet::new([
+            bevy_ecs_tiled::regex::RegexSet::new([
                 r"^properties_basic::.*",
                 r"^bevy_sprite::text2d::Text2d$",
                 r"^bevy_text::text::TextColor$",
