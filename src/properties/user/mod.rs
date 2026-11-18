@@ -1,16 +1,11 @@
-//! Handles all logic related to Tiled custom properties.
-//!
-//! This module is only available when the `user_properties` feature is enabled.
-//! It provides mechanisms for exporting, loading, and managing user-defined properties
-//! that can be attached to Tiled maps, objects, and tiles. See the [associated example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/properties_basic.rs)
-//! or the [dedicated book section](https://adrien-bon.github.io/bevy_ecs_tiled/guides/properties.html) for more information.
+//! Deserialization of Tiled custom properties as user types, and export of these types to Tiled.
 
 pub(crate) mod command;
 pub(crate) mod export;
 pub(crate) mod load;
 pub(crate) mod types_json;
 
-use crate::{prelude::*, tiled::properties::command::PropertiesCommandExt};
+use crate::{prelude::*, properties::user::command::PropertiesCommandExt};
 use bevy::prelude::*;
 use std::{
     fs::File,
@@ -76,14 +71,14 @@ fn insert_tile_properties(
         (Entity, &TiledTile, &TiledMapReference),
         (
             Added<TiledTile>,
-            Without<crate::tiled::map::spawn::TiledTilePropertiesInserted>,
+            Without<crate::ecs::map::spawn::TiledTilePropertiesInserted>,
         ),
     >,
     objects_query: Query<
         (Entity, &TiledObject, &TiledMapReference),
         (
             Added<TiledObject>,
-            Without<crate::tiled::map::spawn::TiledTilePropertiesInserted>,
+            Without<crate::ecs::map::spawn::TiledTilePropertiesInserted>,
         ),
     >,
     maps_query: Query<&TiledMap>,

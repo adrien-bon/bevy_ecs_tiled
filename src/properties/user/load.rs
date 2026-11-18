@@ -1,4 +1,3 @@
-use crate::prelude::tiled::PropertyValue as PV;
 use crate::prelude::*;
 use bevy::{
     asset::{AssetPath, LoadContext, ReflectHandle},
@@ -19,6 +18,7 @@ use bevy::{
     },
 };
 use std::path::PathBuf;
+use tiled::PropertyValue as PV;
 
 #[derive(Debug, Clone)]
 pub(crate) struct DeserializedMapProperties<const HYDRATED: bool = false> {

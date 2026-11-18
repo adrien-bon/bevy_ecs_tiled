@@ -1,4 +1,4 @@
-use crate::{prelude::*, tiled::properties::types_json::*};
+use crate::{prelude::*, properties::user::types_json::*};
 use bevy::{
     ecs::reflect::ReflectBundle,
     platform::collections::{HashMap, HashSet},

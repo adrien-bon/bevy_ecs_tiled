@@ -7,30 +7,6 @@ use crate::prelude::*;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::{HexCoordSystem, IsoCoordSystem};
 
-/// Implements conversions from and to [`u32`] and [`std::fmt::Display`] for an ID newtype.
-macro_rules! impl_id {
-    ($id:ident) => {
-        impl From<u32> for $id {
-            fn from(id: u32) -> Self {
-                Self(id)
-            }
-        }
-
-        impl From<$id> for u32 {
-            fn from(id: $id) -> Self {
-                id.0
-            }
-        }
-
-        impl std::fmt::Display for $id {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                self.0.fmt(f)
-            }
-        }
-    };
-}
-pub(crate) use impl_id;
-
 /// Retrieves a [`tiled::Layer`] from a [`tiled::Map`] given a [`LayerId`], including group layers and their children.
 pub(crate) fn layer_from_map(map: &tiled::Map, layer_id: LayerId) -> Option<tiled::Layer<'_>> {
     fn find_layer_by_id<'a, T: 'a + ExactSizeIterator<Item = tiled::Layer<'a>>>(

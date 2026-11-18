@@ -15,7 +15,13 @@
 #![deny(missing_debug_implementations)]
 #![allow(clippy::type_complexity)]
 
-pub mod tiled;
+pub mod asset;
+pub mod ecs;
+pub mod properties;
+pub mod sets;
+
+#[cfg(feature = "render")]
+pub mod render;
 
 #[cfg(feature = "debug")]
 pub mod debug;
@@ -23,8 +29,12 @@ pub mod debug;
 #[cfg(feature = "physics")]
 pub mod physics;
 
+mod plugin;
+
 #[cfg(test)]
 mod tests;
+
+pub use plugin::TiledPlugin;
 
 /// `bevy_ecs_tiled` public exports.
 pub mod prelude {
@@ -57,49 +67,55 @@ pub mod prelude {
         settings::TiledPhysicsSettings,
     };
     #[cfg(feature = "render")]
-    pub use super::tiled::animation::TiledAnimation;
-    pub use super::tiled::{
+    pub use super::render::animation::TiledAnimation;
+    pub use super::{
         TiledPlugin,
-        event::{LayerCreated, MapCreated, ObjectCreated, TileCreated, TiledEvent, TilemapCreated},
-        filter::{TiledFilter, TiledName},
-        image::TiledImage,
-        layer::{
-            LayerId, TiledLayer, TiledLayerParallax, TiledParallaxCamera, TiledTileLayerStorage,
+        asset::{
+            LayerId, ObjectId, TilesetId,
+            map::{TiledMapAsset, TiledMapLoaderError},
         },
-        map::{
-            RespawnTiledMap, TiledMap, TiledMapHelper, TiledMapImageRepeatMargin,
-            TiledMapLayerZOffset, TiledMapReference, asset::TiledMapAsset,
-            loader::TiledMapLoaderError, storage::TiledMapStorage,
+        ecs::{
+            event::{
+                LayerCreated, MapCreated, ObjectCreated, TileCreated, TiledEvent, TilemapCreated,
+            },
+            filter::{TiledFilter, TiledName},
+            image::TiledImage,
+            layer::{TiledLayer, TiledLayerParallax, TiledParallaxCamera, TiledTileLayerStorage},
+            map::{
+                RespawnTiledMap, TiledMap, TiledMapHelper, TiledMapImageRepeatMargin,
+                TiledMapLayerZOffset, TiledMapReference, storage::TiledMapStorage,
+            },
+            object::{
+                TiledObject, TiledObjectText, TiledObjectTextBox, TiledObjectVisualOf,
+                TiledObjectVisuals,
+            },
+            tile::{TiledTile, TiledTilemap, TiledTilemapOf, TiledTilemaps},
         },
-        object::{
-            ObjectId, TiledObject, TiledObjectText, TiledObjectTextBox, TiledObjectVisualOf,
-            TiledObjectVisuals,
-        },
-        properties_raw::TiledProperties,
+        properties::TiledProperties,
         sets::{TiledPostUpdateSystems, TiledPreUpdateSystems, TiledUpdateSystems},
-        tile::{TiledTile, TiledTilemap, TiledTilemapOf, TiledTilemaps, TilesetId},
     };
     #[cfg(feature = "world")]
-    pub use super::tiled::{
-        event::WorldCreated,
-        world::{
-            RespawnTiledWorld, TiledWorld,
-            asset::TiledWorldAsset,
-            chunking::TiledWorldChunking,
-            loader::TiledWorldLoaderError,
-            storage::{TiledWorldStorage, WorldMapId},
+    pub use super::{
+        asset::{
+            WorldMapId,
+            world::{TiledWorldAsset, TiledWorldLoaderError},
+        },
+        ecs::{
+            event::WorldCreated,
+            world::{
+                RespawnTiledWorld, TiledWorld, chunking::TiledWorldChunking,
+                storage::TiledWorldStorage,
+            },
         },
     };
 
     // Re-exports from `bevy_ecs_tilemap`:
     // just take everything since we are tigthly coupled
     pub use bevy_ecs_tilemap::prelude::*;
-
-    /// Re-exports from [`tiled`](https://crates.io/crates/tiled)
-    pub mod tiled {
-        pub use tiled::*;
-    }
 }
+
+/// Re-export of the [`tiled`](https://crates.io/crates/tiled) crate, giving access to the raw Tiled data.
+pub use tiled;
 
 /// Re-export of the [`geo`](https://crates.io/crates/geo) crate, used to describe physics colliders geometry.
 pub use geo;

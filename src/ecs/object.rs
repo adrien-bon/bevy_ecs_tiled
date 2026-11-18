@@ -2,22 +2,13 @@
 //!
 //! This module defines Bevy components used to represent Tiled objects within the ECS world.
 
+use crate::asset::{helpers::iso_projection, map::tileset_label};
 use crate::prelude::*;
-use crate::tiled::{helpers::iso_projection, map::loader::tileset_label};
 use ::geo::Centroid;
 use ::tiled::{HorizontalAlignment, VerticalAlignment};
 use bevy::prelude::*;
 #[cfg(feature = "render")]
 use bevy::sprite::Anchor;
-
-/// ID of an object, as defined in Tiled.
-///
-/// This ID is unique within a map.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord, Reflect)]
-#[reflect(Clone, Debug, Default, PartialEq, Hash)]
-pub struct ObjectId(pub u32);
-
-crate::tiled::helpers::impl_id!(ObjectId);
 
 /// Relationship and Marker [`Component`] for the visual representation of a [`TiledObject`].
 ///
@@ -520,7 +511,6 @@ impl TiledObject {
 }
 
 pub(crate) fn plugin(app: &mut App) {
-    app.register_type::<ObjectId>();
     app.register_type::<TiledObject>();
     app.register_type::<TiledObjectVisualOf>();
     app.register_type::<TiledObjectVisuals>();

@@ -7,11 +7,11 @@ use std::ops::Deref;
 use std::sync::Arc;
 
 use crate::{
-    prelude::*,
-    tiled::{
-        cache::TiledResourceCache, helpers::hex_side_length, map::asset::TiledMapTileset,
+    asset::{
+        cache::TiledResourceCache, helpers::hex_side_length, map::TiledMapTileset,
         reader::BytesResourceReader,
     },
+    prelude::*,
 };
 #[cfg(feature = "render")]
 use bevy::asset::AssetPath;
@@ -80,7 +80,7 @@ fn process_layers<'a>(
                                 else {
                                     continue;
                                 };
-                                let tile_size_val = crate::tiled::helpers::tile_size(&tile);
+                                let tile_size_val = crate::asset::helpers::tile_size(&tile);
                                 if tile_size_val > *largest_tile_size {
                                     debug!("Update tile_size: {tile_size_val:?}");
                                     *largest_tile_size = tile_size_val;
@@ -97,7 +97,7 @@ fn process_layers<'a>(
                                     else {
                                         continue;
                                     };
-                                    let tile_size_val = crate::tiled::helpers::tile_size(&tile);
+                                    let tile_size_val = crate::asset::helpers::tile_size(&tile);
                                     if tile_size_val > *largest_tile_size {
                                         debug!("Update tile_size: {tile_size_val:?}");
                                         *largest_tile_size = tile_size_val;
@@ -199,7 +199,7 @@ impl AssetLoader for TiledMapLoader {
         // Pre-load all external tilesets/templates for WASM compatibility.
         // This is necessary because we cannot block on async operations in WASM.
         let external_cache =
-            crate::tiled::reader::preload_external_resources(&bytes, load_context).await;
+            crate::asset::reader::preload_external_resources(&bytes, load_context).await;
 
         let map_path = load_context.path().path().to_path_buf();
         let map = {
@@ -212,7 +212,7 @@ impl AssetLoader for TiledMapLoader {
             loader.load_tmx_map(map_path)?
         };
 
-        let grid_size = crate::tiled::helpers::grid_size_from_map(&map);
+        let grid_size = crate::asset::helpers::grid_size_from_map(&map);
         let mut tilesets = HashMap::default();
         let mut tilesets_id_by_label = HashMap::default();
 
@@ -284,7 +284,7 @@ impl AssetLoader for TiledMapLoader {
             };
 
         // Hexagonal maps coordinate system depends on the map size parity
-        let Some(map_type) = crate::tiled::helpers::tilemap_type_from_map(&map, &tilemap_size)
+        let Some(map_type) = crate::asset::helpers::tilemap_type_from_map(&map, &tilemap_size)
         else {
             return Err(TiledMapLoaderError::UnsupportedOrientation(map.orientation));
         };
@@ -352,7 +352,7 @@ impl AssetLoader for TiledMapLoader {
         };
 
         #[cfg(feature = "user_properties")]
-        let properties = crate::tiled::properties::load::DeserializedMapProperties::load(
+        let properties = crate::properties::user::load::DeserializedMapProperties::load(
             &map,
             // Map tilesets, then tilesets only referenced by templates
             map.tilesets()
@@ -567,9 +567,8 @@ mod tests {
         let mut app = App::new();
         app.add_plugins((MinimalPlugins, AssetPlugin::default()));
         app.add_plugins((
-            crate::tiled::cache::plugin,
-            crate::tiled::map::asset::plugin,
-            plugin,
+            crate::asset::cache::plugin,
+            crate::asset::map::plugin,
         ));
 
         let handle: Handle<TiledMapAsset> = app

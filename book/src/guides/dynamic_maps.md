@@ -18,12 +18,12 @@ The entities spawned when loading a map fall into two categories:
 - **Derived entities and components**: tilemaps, objects visuals (sprites and texts), images sprites and physics colliders.
   They are computed from Tiled data and you should not modify them yourself, since your changes would be overwritten.
 
-Tiled data are the source of truth: when they change, derived entities are updated during `PostUpdate`, in the following [`TiledPostUpdateSystems`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/sets/enum.TiledPostUpdateSystems.html) sets:
+Tiled data are the source of truth: when they change, derived entities are updated during `PostUpdate`, in the following [`TiledPostUpdateSystems`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/sets/enum.TiledPostUpdateSystems.html) sets:
 
 | System set | What is updated |
 | --- | --- |
-| `First` | A [`TiledMapReference`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMapReference.html) is inserted on new tiles and objects which do not have one. |
-| `SyncMapStorage` | Tiles are registered in the map [`TiledMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/storage/struct.TiledMapStorage.html), and a tile moved onto another one replaces it. |
+| `First` | A [`TiledMapReference`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapReference.html) is inserted on new tiles and objects which do not have one. |
+| `SyncMapStorage` | Tiles are registered in the map [`TiledMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/storage/struct.TiledMapStorage.html), and a tile moved onto another one replaces it. |
 | `SyncRender` | Tilemaps, objects visuals and images sprites are spawned, updated or despawned. |
 | `SyncPhysics` | Physics colliders are spawned again. |
 
@@ -35,12 +35,12 @@ See the [entities hierarchy page](../design/entities_hierarchy.md) for a descrip
 
 ## Tiles
 
-Each tile is an entity with a [`TiledTile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTile.html) component, child of its [`TiledLayer::Tiles`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html#variant.Tiles) entity.
+Each tile is an entity with a [`TiledTile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTile.html) component, child of its [`TiledLayer::Tiles`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/enum.TiledLayer.html#variant.Tiles) entity.
 Its Tiled data are held by the following components, which you can freely modify:
 
 | Component | Description |
 | --- | --- |
-| [`TiledTile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTile.html) | Tileset of the tile (`tileset_id`, a `TilesetId`) and tile in this tileset (`tile_id`) |
+| [`TiledTile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTile.html) | Tileset of the tile (`tileset_id`, a `TilesetId`) and tile in this tileset (`tile_id`) |
 | `TilePos` | Position of the tile in the layer (origin is the bottom-left corner of the map) |
 | `TileFlip` | Horizontal, vertical and diagonal flips |
 | `TileVisible`, `TileColor` | Visibility and color of the tile |
@@ -111,7 +111,7 @@ If the tile has [custom properties](properties.md) in its tileset, they are also
 ### Rules and Limitations
 
 - **A position holds a single tile**, as in Tiled: spawning a tile, or moving a tile, onto a position already used by another tile of the same layer despawns this other tile, whatever its tileset.
-- **Layers cannot grow**: tiles outside of the map bounds (see [`TiledMapAsset::tilemap_size`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html#structfield.tilemap_size)) are neither rendered nor used to compute physics colliders, and a warning is logged.
+- **Layers cannot grow**: tiles outside of the map bounds (see [`TiledMapAsset::tilemap_size`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html#structfield.tilemap_size)) are neither rendered nor used to compute physics colliders, and a warning is logged.
 - **Tiles cannot change of layer**: changing the `ChildOf` of a tile is not supported. Despawn it and spawn a new one in the other layer instead.
 - **Custom properties are not updated** when you modify the `TiledTile` component of an existing tile.
 - A tileset which cannot be used in a tiles layer (for instance an images collection with images of different sizes) cannot be used for spawned tiles either.
@@ -120,7 +120,7 @@ If the tile has [custom properties](properties.md) in its tileset, they are also
 
 ## Objects
 
-Each object is an entity with a [`TiledObject`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html) component, describing its shape, child of its [`TiledLayer::Objects`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html#variant.Objects) entity.
+Each object is an entity with a [`TiledObject`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html) component, describing its shape, child of its [`TiledLayer::Objects`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/enum.TiledLayer.html#variant.Objects) entity.
 Its position is given by its `Transform`, relative to its layer.
 
 When the `TiledObject` component changes, the object visual (for tile and text objects) and its physics colliders are spawned again.
@@ -156,8 +156,8 @@ fn spawn_object(mut commands: Commands) {
 
 When spawning an object:
 
-- give it a [`TiledName`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/filter/struct.TiledName.html) if you use [physics settings](physics.md) filtering objects by name,
-- as for tiles, its `TiledMapReference` is inserted from the parent layer, and a [`TiledObject::Tile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html#variant.Tile) gets the custom properties of its tile.
+- give it a [`TiledName`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/filter/struct.TiledName.html) if you use [physics settings](physics.md) filtering objects by name,
+- as for tiles, its `TiledMapReference` is inserted from the parent layer, and a [`TiledObject::Tile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html#variant.Tile) gets the custom properties of its tile.
 
 Moving an object (ie. modifying its `Transform`) does not need any update: its visual and colliders are its children and move along with it.
 
@@ -165,7 +165,7 @@ Moving an object (ie. modifying its `Transform`) does not need any update: its v
 
 ## Images
 
-An image layer has a single child holding a [`TiledImage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/image/struct.TiledImage.html) component: the image handle, its position, size and repeat settings.
+An image layer has a single child holding a [`TiledImage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/image/struct.TiledImage.html) component: the image handle, its position, size and repeat settings.
 Its `Sprite` is derived from it: to change the image, modify the `TiledImage` component instead of the `Sprite`.
 
 Without the `render` feature, the image is not loaded: `TiledImage` has no image handle and there is no `Sprite`.
@@ -182,8 +182,8 @@ Two events are however sent when derived entities are spawned:
 
 For instance, if you add a `RigidBody` to colliders when receiving `ColliderCreated` (see the [physics guide](physics.md)), new colliders will get it as well.
 
-The map [`TiledMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/storage/struct.TiledMapStorage.html) is also kept up to date, so you can keep using it to list the layers and objects of the map, or to find the entities of a given tile (`tile_entities()`).
-To find the tile at a given position of a layer, use the [`TiledTileLayerStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/struct.TiledTileLayerStorage.html) component of this layer.
+The map [`TiledMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/storage/struct.TiledMapStorage.html) is also kept up to date, so you can keep using it to list the layers and objects of the map, or to find the entities of a given tile (`tile_entities()`).
+To find the tile at a given position of a layer, use the [`TiledTileLayerStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/struct.TiledTileLayerStorage.html) component of this layer.
 Layers and objects spawned at runtime are listed after the ones spawned along with the map.
 
 ---
@@ -192,7 +192,7 @@ Layers and objects spawned at runtime are listed after the ones spawned along wi
 
 All the modifications you made are lost when the map is respawned from its asset, which happens when:
 
-- you insert the [`RespawnTiledMap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.RespawnTiledMap.html) component,
+- you insert the [`RespawnTiledMap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.RespawnTiledMap.html) component,
 - the map is hot-reloaded,
 - you modify the `TiledMap`, `TilemapAnchor`, `TiledMapLayerZOffset`, `TilemapRenderSettings` or `TiledPhysicsSettings` components of the map entity.
 

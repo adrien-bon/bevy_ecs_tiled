@@ -5,15 +5,10 @@
 //! The types and functions defined here enable loading, managing, and interacting with Tiled maps
 //! in a Bevy application.
 
-pub mod asset;
-pub mod loader;
 pub(crate) mod spawn;
 pub mod storage;
 
-use crate::{
-    prelude::*,
-    tiled::{cache::TiledResourceCache, event::TiledMessageWriters},
-};
+use crate::{asset::cache::TiledResourceCache, ecs::event::TiledMessageWriters, prelude::*};
 use bevy::{asset::RecursiveDependencyLoadState, ecs::system::SystemParam, prelude::*};
 
 /// Main component for loading and managing a Tiled map in the ECS world.
@@ -234,7 +229,7 @@ pub(crate) fn plugin(app: &mut bevy::prelude::App) {
         insert_missing_map_references.in_set(TiledPostUpdateSystems::First),
     );
 
-    app.add_plugins((asset::plugin, loader::plugin, storage::plugin));
+    app.add_plugins(storage::plugin);
 }
 
 /// Retrieve the map of a tile or an object: either its own [`TiledMapReference`] or the one of its parent layer.

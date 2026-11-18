@@ -7,15 +7,6 @@
 use crate::prelude::*;
 use bevy::{platform::collections::HashMap, prelude::*};
 
-/// ID of a layer, as defined in Tiled.
-///
-/// This ID is unique within a map, whatever the layer type.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord, Reflect)]
-#[reflect(Clone, Debug, Default, PartialEq, Hash)]
-pub struct LayerId(pub u32);
-
-crate::tiled::helpers::impl_id!(LayerId);
-
 /// Marker [`Component`] for a Tiled map layer.
 ///
 /// This enum is attached to entities representing Tiled layers in the ECS world.
@@ -239,7 +230,6 @@ pub struct TiledLayerParallax {
 pub struct TiledParallaxCamera;
 
 pub(crate) fn plugin(app: &mut App) {
-    app.register_type::<LayerId>();
     app.register_type::<TiledLayer>();
     app.register_type::<TiledTileLayerStorage>();
     app.register_type::<TiledLayerParallax>();

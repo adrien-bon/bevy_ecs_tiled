@@ -7,7 +7,6 @@
 //!
 //! The cache supports concurrent access and can be cleared at runtime if needed.
 
-use crate::prelude::*;
 use bevy::prelude::*;
 use std::sync::{Arc, PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard};
 

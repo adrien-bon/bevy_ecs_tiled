@@ -73,7 +73,7 @@ bevy_ecs_tiled = "0.15"
 ### Basic Usage
 
 To get started, add the plugin to your app and spawn a map entity.
-All you need to do is spawn a [`TiledMap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMap.html) component with the map asset you want to load (e.g., your `map.tmx` file).
+All you need to do is spawn a [`TiledMap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMap.html) component with the map asset you want to load (e.g., your `map.tmx` file).
 Make sure this map asset, along with any required dependencies (such as images or tilesets), is present in your local assets folder (by default, `./assets/`).
 
 ```rust,no_run
@@ -111,11 +111,11 @@ This simple example will load a map using the default settings.
 
 ### Customizing Map Loading
 
-You can customize how the map is loaded by listening to specific [`TiledEvent`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TiledEvent.html) or adding various components to the map entity, such as:
+You can customize how the map is loaded by listening to specific [`TiledEvent`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TiledEvent.html) or adding various components to the map entity, such as:
 
 - [`TilemapAnchor`](https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/anchor/enum.TilemapAnchor.html) — Controls the anchor point of the tilemap.
-- [`TiledMapLayerZOffset`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMapLayerZOffset.html) — Adjusts the Z offset between map layers.
-- [`TiledMapImageRepeatMargin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMapImageRepeatMargin.html) — Control the margin for repeated images.
+- [`TiledMapLayerZOffset`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapLayerZOffset.html) — Adjusts the Z offset between map layers.
+- [`TiledMapImageRepeatMargin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapImageRepeatMargin.html) — Control the margin for repeated images.
 - [`TilemapRenderSettings`](https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/map/struct.TilemapRenderSettings.html) — Configures rendering options.
 - [`Transform`](https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html) — Sets the position, rotation, and scale of the map.
 - [`Visibility`](https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html) — Controls the visibility of the map entity.

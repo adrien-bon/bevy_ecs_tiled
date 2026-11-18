@@ -5,7 +5,7 @@
 //!
 //! Colliders are computed from tiles and objects entities, and spawned again when these entities change.
 
-use crate::{prelude::*, tiled::helpers::tilemap_offset};
+use crate::{asset::helpers::tilemap_offset, prelude::*};
 use ::geo::{MapCoords, Orient};
 use bevy::{platform::collections::HashMap, prelude::*};
 
@@ -204,7 +204,7 @@ pub(crate) fn object_polygons(
                 return vec![];
             };
             let (width, height) = (*width, *height);
-            let tile_size = crate::tiled::helpers::tile_size(&tile);
+            let tile_size = crate::asset::helpers::tile_size(&tile);
             let mut scale = Vec2::new(width, height) / Vec2::new(tile_size.x, tile_size.y);
             let mut offset = Vec2::new(
                 tile.tileset().offset_x as f32,
@@ -293,7 +293,7 @@ impl CachedTilePolygons {
     ) -> Option<Self> {
         let tile = map_asset.tile(tileset_id, tile_id)?;
         let collision = tile.collision.as_ref()?;
-        let tile_size = crate::tiled::helpers::tile_size(&tile);
+        let tile_size = crate::asset::helpers::tile_size(&tile);
         let size = Vec2::new(tile_size.x, tile_size.y);
         let flipped = flip.x || flip.y || flip.d;
         // Compute polygons relative to the tile bottom-left corner, then apply tile flips

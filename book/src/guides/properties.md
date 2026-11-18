@@ -18,8 +18,8 @@ For example, you could:
 - ...or anything else your game needs!
 
 > **Note:**
-> Even without the `user_properties` feature, the class and custom properties of the map, layers and objects are available as raw Tiled data in their [`TiledProperties`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/properties_raw/struct.TiledProperties.html) component.
-> Tiles properties can be retrieved from their tileset, using [`TiledMapAsset::tile()`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html#method.tile).
+> Even without the `user_properties` feature, the class and custom properties of the map, layers and objects are available as raw Tiled data in their [`TiledProperties`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/properties/struct.TiledProperties.html) component.
+> Tiles properties can be retrieved from their tileset, using [`TiledMapAsset::tile()`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html#method.tile).
 
 ---
 
@@ -107,7 +107,7 @@ Deriving `Default` is useful: you don't have to fill all fields in Tiled; missin
 Before you can add custom properties in Tiled, you need to export them from your app and import them into Tiled.
 
 With the `user_properties` feature, your app can produce, at startup, a `.json` export of all the types registered with Bevy.
-Export is disabled by default: set the path of the export file on the [`TiledPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/struct.TiledPlugin.html):
+Export is disabled by default: set the path of the export file on the [`TiledPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/struct.TiledPlugin.html):
 
 ```rust,no_run
 use bevy::prelude::*;
@@ -152,7 +152,7 @@ Properties added to a tile in a tileset are inserted on every entity referencing
 - the tiles using it in tiles layers,
 - the tile objects using it. If the object also has its own properties, they take precedence over the tile ones.
 
-This also applies to tiles and tile objects you spawn after the map has been loaded: tile properties are inserted during [`TiledPostUpdateSystems::SyncMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/sets/enum.TiledPostUpdateSystems.html).
+This also applies to tiles and tile objects you spawn after the map has been loaded: tile properties are inserted during [`TiledPostUpdateSystems::SyncMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/sets/enum.TiledPostUpdateSystems.html).
 Note that modifying the `TiledTile` component (tileset ID or tile ID) of an existing tile does not update its properties.
 Since Tiled object IDs are not known anymore once the map has been loaded, object references in these properties cannot be resolved: they are set to `Entity::PLACEHOLDER`.
 

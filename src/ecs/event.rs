@@ -18,11 +18,11 @@ use crate::prelude::*;
 use bevy::{ecs::system::SystemParam, prelude::*};
 
 #[cfg(feature = "world")]
-use crate::tiled::world::asset::TiledWorldAsset;
+use crate::asset::world::TiledWorldAsset;
 #[allow(unused_imports)]
-use crate::tiled::{
+use crate::ecs::{
     layer::TiledLayer,
-    map::{TiledMap, asset::TiledMapAsset},
+    map::TiledMap,
     object::TiledObject,
     tile::{TiledTile, TiledTilemap},
 };
@@ -406,11 +406,7 @@ mod tests {
     fn accessors_can_be_used_with_assets_from_world() {
         let mut app = App::new();
         app.add_plugins((MinimalPlugins, AssetPlugin::default()));
-        app.add_plugins((
-            crate::tiled::cache::plugin,
-            crate::tiled::map::asset::plugin,
-            crate::tiled::map::loader::plugin,
-        ));
+        app.add_plugins((crate::asset::cache::plugin, crate::asset::map::plugin));
 
         let handle: Handle<TiledMapAsset> = app
             .world()

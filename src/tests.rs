@@ -33,20 +33,12 @@ pub(crate) fn test_app() -> App {
         ));
     }
     app.add_plugins((
-        crate::tiled::cache::plugin,
-        crate::tiled::map::plugin,
+        crate::asset::plugin,
+        crate::ecs::plugin,
+        crate::properties::plugin,
         #[cfg(feature = "render")]
-        crate::tiled::animation::plugin,
-        crate::tiled::event::plugin,
-        crate::tiled::image::plugin,
-        crate::tiled::layer::plugin,
-        crate::tiled::object::plugin,
-        crate::tiled::tile::plugin,
-        crate::tiled::sets::plugin,
-        crate::tiled::filter::plugin,
-        crate::tiled::properties_raw::plugin,
-        #[cfg(feature = "world")]
-        crate::tiled::world::plugin,
+        crate::render::plugin,
+        crate::sets::plugin,
     ));
     app.init_resource::<Received>();
     app.add_observer(
@@ -571,7 +563,7 @@ fn layer_index_follows_tiles() {
 #[test]
 #[cfg(feature = "render")]
 fn tiles_outside_of_map_are_not_rendered() {
-    use crate::tiled::tile::render::TiledTileRenderState;
+    use crate::ecs::tile::render::TiledTileRenderState;
 
     let mut app = test_app();
     spawn_test_map(&mut app);
@@ -731,7 +723,7 @@ fn id_types_are_registered() {
 /// Check that the tile count of each tilemap matches the content of its storage
 #[cfg(feature = "render")]
 fn assert_tilemaps_count_match_storage(app: &mut App) {
-    use crate::tiled::tile::render::TiledTilemapTileCount;
+    use crate::ecs::tile::render::TiledTilemapTileCount;
 
     for (entity, storage, count) in app
         .world_mut()
@@ -748,7 +740,7 @@ fn assert_tilemaps_count_match_storage(app: &mut App) {
 
 /// Check that the map storage matches the actual tiles, and that each tile knows its index in it
 fn assert_storage_matches_tiles(app: &mut App, map: Entity) {
-    use crate::tiled::map::storage::TiledTileStorageIndex;
+    use crate::ecs::map::storage::TiledTileStorageIndex;
 
     let tiles = app
         .world_mut()
@@ -2105,7 +2097,6 @@ mod properties {
     fn properties_test_app() -> App {
         let mut app = test_app();
         app.register_type::<TestTileProperty>();
-        app.add_plugins(crate::tiled::properties::plugin);
         app.init_resource::<PropertiesOnMapCreated>();
         app.add_observer(
             |_: On<TiledEvent<MapCreated>>,

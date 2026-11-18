@@ -11,16 +11,6 @@
 use crate::prelude::*;
 use bevy::{prelude::*, render::sync_world::SyncToRenderWorld};
 
-/// ID of a tileset in a [`TiledMapAsset`].
-///
-/// For tilesets referenced by the map, it is the index of the tileset in the Tiled map tilesets.
-/// Tilesets only referenced by object templates get an ID after the map tilesets.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord, Reflect)]
-#[reflect(Clone, Debug, Default, PartialEq, Hash)]
-pub struct TilesetId(pub u32);
-
-crate::tiled::helpers::impl_id!(TilesetId);
-
 /// [`Component`] for a Tiled map tile, giving which tile of which tileset it displays.
 ///
 /// This component is attached to entities representing individual tiles in a Tiled map.
@@ -66,7 +56,7 @@ crate::tiled::helpers::impl_id!(TilesetId);
     TileColor,
     SyncToRenderWorld,
     TiledTileIndexedPosition,
-    crate::tiled::map::storage::TiledTileStorageIndex
+    crate::ecs::map::storage::TiledTileStorageIndex
 )]
 pub struct TiledTile {
     /// [`TilesetId`] of the tile.
@@ -140,7 +130,6 @@ pub struct TiledTilemapOf(pub Entity);
 pub struct TiledTilemaps(Vec<Entity>);
 
 pub(crate) fn plugin(app: &mut App) {
-    app.register_type::<TilesetId>();
     app.register_type::<TiledTile>();
     app.register_type::<TiledTilemap>();
     app.register_type::<TiledTilemapOf>();
@@ -236,8 +225,9 @@ fn unindex_tile(
 #[cfg(feature = "render")]
 pub(crate) mod render {
     use super::*;
-    use crate::tiled::{
-        event::TilemapCreated, helpers::tilemap_offset, map::asset::TiledMapTileset,
+    use crate::{
+        asset::{helpers::tilemap_offset, map::TiledMapTileset},
+        ecs::event::TilemapCreated,
     };
     use bevy::platform::collections::HashMap;
     use bevy_ecs_tilemap::prelude::{TilemapBundle, TilemapSpacing};

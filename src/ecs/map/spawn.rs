@@ -9,11 +9,11 @@
 //! when these data are modified after the map has been spawned.
 
 use crate::{
-    prelude::*,
-    tiled::{
+    ecs::{
         event::TiledMessageWriters, map::storage::TiledTileStorageIndex,
         tile::TiledTileIndexedPosition,
     },
+    prelude::*,
 };
 use bevy::prelude::*;
 
@@ -21,7 +21,7 @@ use bevy::prelude::*;
 use bevy::platform::collections::HashMap;
 
 #[cfg(feature = "user_properties")]
-use crate::tiled::properties::command::PropertiesCommandExt;
+use crate::properties::user::command::PropertiesCommandExt;
 
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn spawn_map(
@@ -153,7 +153,7 @@ fn tile_render_placeholder(tile_pos: &TilePos) -> impl Bundle {
     (
         TilemapId(Entity::PLACEHOLDER),
         TileTextureIndex::default(),
-        crate::tiled::tile::render::TiledTileRenderState {
+        crate::ecs::tile::render::TiledTileRenderState {
             tilemap: None,
             position: *tile_pos,
         },

@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::tiled::properties::load::DeserializedProperties;
+use crate::properties::user::load::DeserializedProperties;
 use bevy::{
     ecs::{reflect::ReflectBundle, system::EntityCommands},
     prelude::*,

@@ -8,13 +8,6 @@
 use crate::prelude::*;
 use bevy::{platform::collections::HashMap, prelude::*};
 
-/// ID of a map in a [`TiledWorldAsset`], as its index in the `.world` file.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord, Reflect)]
-#[reflect(Clone, Debug, Default, PartialEq, Hash)]
-pub struct WorldMapId(pub u32);
-
-crate::tiled::helpers::impl_id!(WorldMapId);
-
 /// [`Component`] storing all the Tiled maps that are composing this world.
 /// Makes the association between the [`WorldMapId`] of a map and corresponding Bevy [`Entity`].
 ///
@@ -57,6 +50,5 @@ impl TiledWorldStorage {
 }
 
 pub(crate) fn plugin(app: &mut App) {
-    app.register_type::<WorldMapId>();
     app.register_type::<TiledWorldStorage>();
 }

@@ -4,15 +4,13 @@
 //! multiple maps within a world. It organizes submodules and systems related to world storage, chunk visibility,
 //! and world-level events, providing the main entry point for Tiled world support
 
-pub mod asset;
 pub mod chunking;
-pub mod loader;
 pub mod storage;
 
 #[cfg(test)]
 mod tests;
 
-use crate::{prelude::*, tiled::event::TiledMessageWriters};
+use crate::{ecs::event::TiledMessageWriters, prelude::*};
 use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 
 /// Main component for loading and managing a Tiled world in the ECS world.
@@ -39,7 +37,7 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 #[require(
     TiledWorldStorage,
     TiledWorldChunking,
-    crate::tiled::map::TiledMapSettings
+    crate::ecs::map::TiledMapSettings
 )]
 pub struct TiledWorld(pub Handle<TiledWorldAsset>);
 
@@ -103,12 +101,7 @@ pub(crate) fn plugin(app: &mut bevy::prelude::App) {
         handle_world_events.in_set(TiledPostUpdateSystems::HandleWorldAssetEvents),
     );
 
-    app.add_plugins((
-        asset::plugin,
-        loader::plugin,
-        storage::plugin,
-        chunking::plugin,
-    ));
+    app.add_plugins((storage::plugin, chunking::plugin));
 }
 
 /// System to spawn a world once it has been fully loaded.

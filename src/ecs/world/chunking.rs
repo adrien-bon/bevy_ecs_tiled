@@ -183,17 +183,15 @@ fn handle_world_chunking(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tiled::world::tests::load_world;
+    use crate::ecs::world::tests::load_world;
 
     fn chunking_app() -> App {
         let mut app = App::new();
         app.add_plugins((MinimalPlugins, AssetPlugin::default()));
         app.add_plugins((
-            crate::tiled::cache::plugin,
-            crate::tiled::map::asset::plugin,
-            crate::tiled::map::loader::plugin,
-            crate::tiled::world::asset::plugin,
-            crate::tiled::world::loader::plugin,
+            crate::asset::cache::plugin,
+            crate::asset::map::plugin,
+            crate::asset::world::plugin,
         ));
         app.add_systems(PostUpdate, handle_world_chunking);
         app

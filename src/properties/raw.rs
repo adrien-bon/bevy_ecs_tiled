@@ -1,8 +1,6 @@
 //! Raw Tiled custom properties.
-//!
-//! This module defines the [`TiledProperties`] component, which gives access to the class and custom properties
-//! of a Tiled map, layer or object as they are defined in Tiled, whether the `user_properties` feature is enabled or not.
 
+#[allow(unused_imports)]
 use crate::prelude::*;
 use bevy::prelude::*;
 

@@ -20,7 +20,7 @@ If we call this offset `OFFSET`:
 - And so on...
 
 By default, `OFFSET` is set to `+100`.  
-You can adjust this value by adding or modifying the [`TiledMapLayerZOffset`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMapLayerZOffset.html) component on your map entity.
+You can adjust this value by adding or modifying the [`TiledMapLayerZOffset`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapLayerZOffset.html) component on your map entity.
 
 > **Tip:**  
 > `bevy_ecs_tilemap` also applies a small Z offset to each chunk for correct rendering.  

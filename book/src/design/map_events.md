@@ -12,7 +12,7 @@ These events are extremely useful for:
 
 ## `TiledEvent<E>`
 
-All `bevy_ecs_tiled` events are encapsulated in the [`TiledEvent<E>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TiledEvent.html) structure.
+All `bevy_ecs_tiled` events are encapsulated in the [`TiledEvent<E>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TiledEvent.html) structure.
 This provides more context for each event, including the origin of each particular event `E` and helper methods to access Tiled data.
 
 For example, an event related to an object will contain not only information to identify the object itself, but also the layer and the map containing it.
@@ -43,19 +43,19 @@ fn handle_event(
 There are six main events:
 
 - **For maps and worlds:**
-  - [`TiledEvent<MapCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.MapCreated.html):  
+  - [`TiledEvent<MapCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.MapCreated.html):  
     Emitted once a map has finished loading. Contains information about the map entity.  
     (If loading a world, this is called after the world event.)
-  - [`TiledEvent<LayerCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.LayerCreated.html):  
+  - [`TiledEvent<LayerCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.LayerCreated.html):  
     Emitted for each layer after the map is loaded. Contains information about the layer entity.
-  - [`TiledEvent<TilemapCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TilemapCreated.html):  
+  - [`TiledEvent<TilemapCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TilemapCreated.html):  
     Emitted each time a tilemap is spawned, see [below](#tilemapcreated-is-a-rendering-event). Contains information about the tilemap entity.
-  - [`TiledEvent<TileCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TileCreated.html):  
+  - [`TiledEvent<TileCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TileCreated.html):  
     Emitted for each tile after the map is loaded. Contains information about the tile entity. Note this event is only fired for tiles using custom properties.
-  - [`TiledEvent<ObjectCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.ObjectCreated.html):  
+  - [`TiledEvent<ObjectCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.ObjectCreated.html):  
     Emitted for each object after the map is loaded. Contains information about the object entity.
 - **For worlds only:**
-  - [`TiledEvent<WorldCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.WorldCreated.html):  
+  - [`TiledEvent<WorldCreated>`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.WorldCreated.html):  
     Emitted once the world has finished loading. Contains information about the world entity.
 
 Except for `TilemapCreated`, all these events are sent **after** the map or world is fully loaded and all components (including those from user properties) have been inserted.
@@ -148,7 +148,7 @@ This means you can safely query for components and child entities in your event 
 
 Events are sent in the following order: `MapCreated`, then `LayerCreated`, `TileCreated` and finally `ObjectCreated`.
 
-Note that rendering components and physics colliders are derived from Tiled data later in the frame, during [`TiledPostUpdateSystems`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/sets/enum.TiledPostUpdateSystems.html): they do not exist yet when these events are sent.
+Note that rendering components and physics colliders are derived from Tiled data later in the frame, during [`TiledPostUpdateSystems`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/sets/enum.TiledPostUpdateSystems.html): they do not exist yet when these events are sent.
 If you need them, use the [`ColliderCreated`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.ColliderCreated.html) and `TilemapCreated` events instead.
 
 ### `TilemapCreated` Is a Rendering Event

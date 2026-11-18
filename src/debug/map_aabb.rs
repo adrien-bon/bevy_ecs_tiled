@@ -221,11 +221,7 @@ mod tests {
         app.add_plugins((MinimalPlugins, AssetPlugin::default()));
         app.init_asset::<Image>();
         app.init_asset::<TextureAtlasLayout>();
-        app.add_plugins((
-            crate::tiled::cache::plugin,
-            crate::tiled::map::asset::plugin,
-            crate::tiled::map::loader::plugin,
-        ));
+        app.add_plugins((crate::asset::cache::plugin, crate::asset::map::plugin));
 
         let mut maps = vec![];
         for dir in dirs {

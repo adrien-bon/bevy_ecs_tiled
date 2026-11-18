@@ -5,7 +5,7 @@ Tiled and Bevy do not describe positions the same way.
 
 - find which tile is under the cursor,
 - place a gameplay entity where an object was drawn in Tiled,
-- read raw data from [`tiled::Map`](https://docs.rs/tiled/latest/tiled/struct.Map.html) (the `map` field of [`TiledMapAsset`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html)) and use it in Bevy.
+- read raw data from [`tiled::Map`](https://docs.rs/tiled/latest/tiled/struct.Map.html) (the `map` field of [`TiledMapAsset`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html)) and use it in Bevy.
 
 This page explains the two coordinate systems and how `bevy_ecs_tiled` converts from one to the other.
 
@@ -44,7 +44,7 @@ Almost every conversion therefore comes down to **flipping the Y axis** and **mo
 
 ## Converting a Tiled position
 
-Every Tiled pixel position (objects, image layers, map corners, ...) is converted by [`TiledMapAsset::world_space_from_tiled_position`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html#method.world_space_from_tiled_position).
+Every Tiled pixel position (objects, image layers, map corners, ...) is converted by [`TiledMapAsset::world_space_from_tiled_position`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html#method.world_space_from_tiled_position).
 It returns a position **relative to the map entity**.
 
 ---
@@ -65,7 +65,7 @@ In an infinite map, Tiled stores tiles in chunks of 16x16 tiles, and chunk index
                                        (0,0) ▲ bottom-left tile
 ```
 
-The map size used by Bevy ([`TiledMapAsset::tilemap_size`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html#structfield.tilemap_size)) is the bounding box of all the chunks, not the `width` / `height` stored in the `.tmx` file.
+The map size used by Bevy ([`TiledMapAsset::tilemap_size`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html#structfield.tilemap_size)) is the bounding box of all the chunks, not the `width` / `height` stored in the `.tmx` file.
 Tiled pixel positions are shifted by the same amount, so objects stay aligned with tiles.
 
 ---
@@ -122,7 +122,7 @@ However, flipping the Y axis changes which rows (or columns) are "staggered", so
 When the stagger axis is Y, Tiled row `r` becomes row `height - 1 - r` in Bevy: if the map height is odd, flipping the Y axis does not change the rows parity, hence the different coordinate system.
 Infinite maps always have an even height (a multiple of the chunk size).
 
-The resulting `TilemapType` of a map is available in [`TiledMapAsset::map_type`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html#structfield.map_type).
+The resulting `TilemapType` of a map is available in [`TiledMapAsset::map_type`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html#structfield.map_type).
 
 ### Hexagon side length
 
@@ -136,13 +136,13 @@ To render the map like Tiled, the grid size is adjusted along the stagger axis:
 | Y | `(tile_width, 2 * (tile_height + hexsidelength) / 3)` |
 
 When `hexsidelength` is half the tile size, the grid size is the tile size.
-Always use [`TiledMapAsset::grid_size`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html#structfield.grid_size), and not the Tiled tile size, with `bevy_ecs_tilemap` helpers such as `TilePos::center_in_world()` or `TilePos::from_world_pos()`.
+Always use [`TiledMapAsset::grid_size`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html#structfield.grid_size), and not the Tiled tile size, with `bevy_ecs_tilemap` helpers such as `TilePos::center_in_world()` or `TilePos::from_world_pos()`.
 
 ---
 
 ## Worlds
 
 In a `.world` file, each map position is the Tiled pixel position of its **top-left** corner, with Y pointing down.
-`bevy_ecs_tiled` flips it so that the world bounding box ([`TiledWorldAsset::rect`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/asset/struct.TiledWorldAsset.html#structfield.rect)) starts at `(0, 0)` and grows towards positive X and Y.
+`bevy_ecs_tiled` flips it so that the world bounding box ([`TiledWorldAsset::rect`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/world/struct.TiledWorldAsset.html#structfield.rect)) starts at `(0, 0)` and grows towards positive X and Y.
 
-The `TilemapAnchor` of a [`TiledWorld`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/struct.TiledWorld.html) applies to the whole world bounding box, not to each map individually.
+The `TilemapAnchor` of a [`TiledWorld`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/struct.TiledWorld.html) applies to the whole world bounding box, not to each map individually.

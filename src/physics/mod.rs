@@ -9,7 +9,7 @@ pub mod collider;
 pub mod geometry;
 pub mod settings;
 
-use crate::{prelude::*, tiled::tile::TiledTilePositionVacated};
+use crate::{ecs::tile::TiledTilePositionVacated, prelude::*};
 use bevy::{
     platform::collections::{HashMap, HashSet},
     prelude::*,

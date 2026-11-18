@@ -1,4 +1,8 @@
-//! This module contains all world [`Asset`]s definition.
+//! The Tiled world [`Asset`] and its loader.
+
+mod loader;
+
+pub use loader::TiledWorldLoaderError;
 
 use crate::prelude::*;
 use bevy::{prelude::*, shape::Aabb2d};
@@ -95,4 +99,5 @@ impl fmt::Debug for TiledWorldAsset {
 
 pub(crate) fn plugin(app: &mut App) {
     app.init_asset::<TiledWorldAsset>();
+    app.add_plugins(loader::plugin);
 }

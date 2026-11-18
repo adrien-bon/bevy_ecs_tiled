@@ -1,9 +1,11 @@
-//! Asset types and asset loader for Tiled maps.
-//!
-//! This module defines asset structures, asset events, and the asset loader implementation for importing Tiled maps
-//! into Bevy's asset system.
+//! The Tiled map [`Asset`] and its loader.
 
-use crate::{prelude::*, tiled::helpers::iso_projection};
+mod loader;
+
+pub use loader::TiledMapLoaderError;
+pub(crate) use loader::tileset_label;
+
+use crate::{asset::helpers::iso_projection, prelude::*};
 use bevy::{platform::collections::HashMap, prelude::*};
 use std::{fmt, sync::Arc};
 
@@ -82,7 +84,7 @@ pub struct TiledMapAsset {
     /// HashMap of the tilesets ID by label
     ///
     /// Key is a unique label to identify the Tiled tileset within the map.
-    /// See [`tileset_label`](crate::tiled::map::loader::tileset_label) function.
+    /// See [`tileset_label`](crate::asset::map::tileset_label) function.
     pub(crate) tilesets_id_by_label: HashMap<String, TilesetId>,
     /// HashMap of the images used in the map
     ///
@@ -91,7 +93,7 @@ pub struct TiledMapAsset {
     pub(crate) images: HashMap<LayerId, Handle<Image>>,
     /// Map properties
     #[cfg(feature = "user_properties")]
-    pub(crate) properties: crate::tiled::properties::load::DeserializedMapProperties,
+    pub(crate) properties: crate::properties::user::load::DeserializedMapProperties,
 }
 
 impl TiledMapAsset {
@@ -113,14 +115,14 @@ impl TiledMapAsset {
     ///
     /// Layers nested in group layers are found as well.
     pub fn layer(&self, layer_id: LayerId) -> Option<tiled::Layer<'_>> {
-        crate::tiled::helpers::layer_from_map(&self.map, layer_id)
+        crate::asset::helpers::layer_from_map(&self.map, layer_id)
     }
 
     /// Retrieve the [`tiled::Object`] associated with this [`ObjectId`].
     ///
     /// All objects layers are searched, including the ones nested in group layers.
     pub fn object(&self, object_id: ObjectId) -> Option<tiled::Object<'_>> {
-        crate::tiled::helpers::object_from_map(&self.map, object_id)
+        crate::asset::helpers::object_from_map(&self.map, object_id)
     }
 
     /// Position of Tiled "screen" origin, relative to the map entity.
@@ -416,7 +418,7 @@ impl TiledMapAsset {
     /// Returns [`None`] if the tile does not exist in this map.
     pub fn tile_size(&self, tile: &TiledTile) -> Option<TilemapTileSize> {
         self.tile(tile.tileset_id, tile.tile_id)
-            .map(|tile| crate::tiled::helpers::tile_size(&tile))
+            .map(|tile| crate::asset::helpers::tile_size(&tile))
     }
 
     /// Returns the position of the center of a tile, relative to its [`TiledTilemap`] [`Entity`].
@@ -491,4 +493,5 @@ impl fmt::Debug for TiledMapAsset {
 
 pub(crate) fn plugin(app: &mut App) {
     app.init_asset::<TiledMapAsset>();
+    app.add_plugins(loader::plugin);
 }

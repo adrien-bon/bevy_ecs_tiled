@@ -1,28 +1,4 @@
-//! Core Tiled integration for `bevy_ecs_tiled`.
-//!
-//! This module contains the main logic for loading, processing, and managing Tiled maps and worlds within Bevy.
-//! It organizes submodules for assets, components, systems, events and utilities related to Tiled support.
-
-#[cfg(feature = "render")]
-pub mod animation;
-pub mod event;
-pub mod filter;
-pub mod helpers;
-pub mod image;
-pub mod layer;
-pub mod map;
-pub mod object;
-pub mod properties_raw;
-pub mod sets;
-pub mod tile;
-#[cfg(feature = "world")]
-pub mod world;
-
-pub(crate) mod cache;
-pub(crate) mod reader;
-
-#[cfg(feature = "user_properties")]
-pub mod properties;
+//! The main `bevy_ecs_tiled` [`Plugin`].
 
 #[cfg(feature = "user_properties")]
 use crate::prelude::*;
@@ -80,30 +56,19 @@ impl Plugin for TiledPlugin {
 
         #[cfg(feature = "user_properties")]
         if let Some(path) = &self.types_export_file {
-            app.insert_resource(properties::TiledTypesExport {
+            app.insert_resource(crate::properties::user::TiledTypesExport {
                 path: path.clone(),
                 filter: self.types_filter.clone(),
             });
         }
 
         app.add_plugins((
-            // Must come first: asset loaders use the resource cache
-            cache::plugin,
-            map::plugin,
-            #[cfg(feature = "world")]
-            world::plugin,
+            crate::asset::plugin,
+            crate::ecs::plugin,
+            crate::properties::plugin,
             #[cfg(feature = "render")]
-            animation::plugin,
-            event::plugin,
-            image::plugin,
-            layer::plugin,
-            object::plugin,
-            tile::plugin,
-            sets::plugin,
-            filter::plugin,
-            properties_raw::plugin,
-            #[cfg(feature = "user_properties")]
-            properties::plugin,
+            crate::render::plugin,
+            crate::sets::plugin,
         ));
     }
 }

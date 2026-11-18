@@ -3,8 +3,8 @@
 //! This module defines the asset loader implementation for importing Tiled worlds into Bevy's asset system.
 
 use crate::{
+    asset::{cache::TiledResourceCache, reader::BytesResourceReader},
     prelude::*,
-    tiled::{cache::TiledResourceCache, reader::BytesResourceReader},
 };
 use bevy::{
     asset::{AssetLoader, AssetPath, LoadContext, io::Reader},
@@ -60,7 +60,7 @@ impl AssetLoader for TiledWorldLoader {
 
         // Pre-load all external tilesets/templates for WASM compatibility.
         let external_cache =
-            crate::tiled::reader::preload_external_resources(&bytes, load_context).await;
+            crate::asset::reader::preload_external_resources(&bytes, load_context).await;
 
         let world_path = load_context.path().path().to_path_buf();
 
