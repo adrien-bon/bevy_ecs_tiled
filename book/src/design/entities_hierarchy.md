@@ -50,7 +50,7 @@ Entities spawned by `bevy_ecs_tiled` fall into two categories:
 
 - **Tiled data**: the map, layers, tiles, objects and images entities.
   They hold what was defined in Tiled, such as a tile [`TiledTile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTile.html) (tileset ID and tile ID) and `TilePos`, or a [`TiledObject`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html) shape.
-- **Derived entities and components**: [`TiledTilemap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTilemap.html)s, tile objects and text objects visuals, image `Sprite`s and physics colliders.
+- **Derived entities and components**: [`TiledTilemap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/tilemap/struct.TiledTilemap.html)s, tile objects and text objects visuals, image `Sprite`s and physics colliders.
   They are computed from the Tiled data during [`TiledPostUpdateSystems::SyncRender`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/sets/enum.TiledPostUpdateSystems.html) and [`TiledPostUpdateSystems::SyncPhysics`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/sets/enum.TiledPostUpdateSystems.html).
 
 Tiled data are the source of truth: you can spawn, despawn or modify them after the map has been loaded and derived entities will automatically follow.
@@ -89,7 +89,7 @@ Its value tells you the kind of layer, and what you will find below it:
 
 | Variant | Children |
 | --- | --- |
-| [`TiledLayer::Tiles`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/enum.TiledLayer.html#variant.Tiles) | one [`TiledTile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTile.html) per tile and one [`TiledTilemap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTilemap.html) per tileset |
+| [`TiledLayer::Tiles`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/enum.TiledLayer.html#variant.Tiles) | one [`TiledTile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTile.html) per tile and one [`TiledTilemap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/tilemap/struct.TiledTilemap.html) per tileset |
 | [`TiledLayer::Objects`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/enum.TiledLayer.html#variant.Objects) | one [`TiledObject`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html) per object |
 | [`TiledLayer::Image`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/enum.TiledLayer.html#variant.Image) | a single [`TiledImage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/image/struct.TiledImage.html) |
 | [`TiledLayer::Group`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/enum.TiledLayer.html#variant.Group) | other layers, nested as in Tiled |
@@ -100,9 +100,9 @@ Below each `TiledLayer::Tiles`, you find two kinds of sibling entities:
 
 - the actual [`TiledTile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTile.html) entities, one for each tile of the layer.
   Their `TiledTile` component gives their tileset ID and tile ID, and they are positioned with a `TilePos`.
-- one [`TiledTilemap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTilemap.html) entity per tileset used by the layer, rendering the tiles using this tileset (given by its `tileset_id` field).
+- one [`TiledTilemap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/tilemap/struct.TiledTilemap.html) entity per tileset used by the layer, rendering the tiles using this tileset (given by its `tileset_id` field).
   It holds the `TilemapBundle` from `bevy_ecs_tilemap`, so this is where the tilemap size, grid size or texture live.
-  You can reach the tilemaps of a layer through the [`TiledTilemaps`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTilemaps.html) relationship, and the tilemap of a tile through its `TilemapId`.
+  You can reach the tilemaps of a layer through the [`TiledTilemaps`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/tilemap/struct.TiledTilemaps.html) relationship, and the tilemap of a tile through its `TilemapId`.
 
 Tilemaps are derived from tiles: a tilemap is spawned when a tile using a new tileset is added to a layer, and despawned once it does not contain any tile anymore.
 
@@ -121,9 +121,9 @@ Most objects are a single entity, but two kinds of objects have children holding
 
 ### Tile objects
 
-A [`TiledObject::Tile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html#variant.Tile) has a child entity with a [`TiledObjectVisualOf`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/struct.TiledObjectVisualOf.html) component, spawned again whenever the `TiledObject` changes.  
+A [`TiledObject::Tile`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html#variant.Tile) has a child entity with a [`TiledObjectVisualOf`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/object/struct.TiledObjectVisualOf.html) component, spawned again whenever the `TiledObject` changes.  
 This child holds the `Sprite` of the tile and, if the tile is animated, a [`TiledAnimation`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/animation/struct.TiledAnimation.html).  
-From the object entity, you can reach it through the [`TiledObjectVisuals`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/struct.TiledObjectVisuals.html) relationship.
+From the object entity, you can reach it through the [`TiledObjectVisuals`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/object/struct.TiledObjectVisuals.html) relationship.
 
 Visual entities and `TiledAnimation` only exist with the `render` feature.
 
@@ -131,9 +131,9 @@ Visual entities and `TiledAnimation` only exist with the `render` feature.
 
 A [`TiledObject::Text`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html#variant.Text) is rendered using two nested entities, if the `text` feature is enabled (it is by default):
 
-- a [`TiledObjectTextBox`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/struct.TiledObjectTextBox.html) child, which represents the text box drawn in Tiled: its `Aabb` has the size of the box.
-  It also has a [`TiledObjectVisualOf`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/struct.TiledObjectVisualOf.html) component: it is spawned again whenever the `TiledObject` changes.
-- below it, a [`TiledObjectText`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/struct.TiledObjectText.html) entity holding the actual `Text2d` and `TextFont`.
+- a [`TiledObjectTextBox`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/object/struct.TiledObjectTextBox.html) child, which represents the text box drawn in Tiled: its `Aabb` has the size of the box.
+  It also has a [`TiledObjectVisualOf`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/object/struct.TiledObjectVisualOf.html) component: it is spawned again whenever the `TiledObject` changes.
+- below it, a [`TiledObjectText`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/object/struct.TiledObjectText.html) entity holding the actual `Text2d` and `TextFont`.
   Its `Anchor` and position inside the box follow the horizontal and vertical alignment set in Tiled.
 
 To change the text content or style at runtime, query the `TiledObjectText` entity:
@@ -185,7 +185,7 @@ If you change one of these components for a top-level entity (e.g., a layer), it
 **Special case for tiles:**  
 Tiles are not rendered as individual entities, but as part of a "chunk" of several tiles for performance reasons.  
 Each individual tile entity does **not** have its own [`Transform`](https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html) or [`Visibility`](https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html) component.  
-Instead, these components are propagated down to the [`TiledTilemap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTilemap.html), and `bevy_ecs_tilemap` handles updating the corresponding tile chunks.
+Instead, these components are propagated down to the [`TiledTilemap`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/tilemap/struct.TiledTilemap.html), and `bevy_ecs_tilemap` handles updating the corresponding tile chunks.
 
 > **Important:**  
 > Even though you technically could, you should **not** add [`Transform`](https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html) or [`Visibility`](https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html) components to individual tile entities:

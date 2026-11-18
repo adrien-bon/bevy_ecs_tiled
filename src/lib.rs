@@ -67,7 +67,11 @@ pub mod prelude {
         settings::TiledPhysicsSettings,
     };
     #[cfg(feature = "render")]
-    pub use super::render::animation::TiledAnimation;
+    pub use super::render::{
+        animation::TiledAnimation,
+        object::{TiledObjectText, TiledObjectTextBox, TiledObjectVisualOf, TiledObjectVisuals},
+        tilemap::{TiledTilemap, TiledTilemapOf, TiledTilemaps},
+    };
     pub use super::{
         TiledPlugin,
         asset::{
@@ -85,11 +89,8 @@ pub mod prelude {
                 RespawnTiledMap, TiledMap, TiledMapHelper, TiledMapImageRepeatMargin,
                 TiledMapLayerZOffset, TiledMapReference, storage::TiledMapStorage,
             },
-            object::{
-                TiledObject, TiledObjectText, TiledObjectTextBox, TiledObjectVisualOf,
-                TiledObjectVisuals,
-            },
-            tile::{TiledTile, TiledTilemap, TiledTilemapOf, TiledTilemaps},
+            object::TiledObject,
+            tile::TiledTile,
         },
         properties::TiledProperties,
         sets::{TiledPostUpdateSystems, TiledPreUpdateSystems, TiledUpdateSystems},

@@ -563,7 +563,7 @@ fn layer_index_follows_tiles() {
 #[test]
 #[cfg(feature = "render")]
 fn tiles_outside_of_map_are_not_rendered() {
-    use crate::ecs::tile::render::TiledTileRenderState;
+    use crate::render::tilemap::TiledTileRenderState;
 
     let mut app = test_app();
     spawn_test_map(&mut app);
@@ -723,7 +723,7 @@ fn id_types_are_registered() {
 /// Check that the tile count of each tilemap matches the content of its storage
 #[cfg(feature = "render")]
 fn assert_tilemaps_count_match_storage(app: &mut App) {
-    use crate::ecs::tile::render::TiledTilemapTileCount;
+    use crate::render::tilemap::TiledTilemapTileCount;
 
     for (entity, storage, count) in app
         .world_mut()

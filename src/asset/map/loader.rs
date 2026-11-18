@@ -13,8 +13,6 @@ use crate::{
     },
     prelude::*,
 };
-#[cfg(feature = "render")]
-use bevy::asset::AssetPath;
 use bevy::{
     asset::{AssetLoader, LoadContext, io::Reader},
     platform::collections::HashMap,
@@ -153,33 +151,6 @@ fn process_layers<'a>(
     }
 }
 
-/// Load image assets used in image layers
-#[cfg(feature = "render")]
-fn load_image_layers<'a>(
-    layers: impl Iterator<Item = tiled::Layer<'a>>,
-    images: &mut HashMap<LayerId, Handle<Image>>,
-    load_context: &mut LoadContext,
-) {
-    for layer in layers {
-        match layer.layer_type() {
-            tiled::LayerType::Image(image_layer) => {
-                let Some(image) = &image_layer.image else {
-                    continue;
-                };
-
-                let asset_path = AssetPath::from(image.source.clone());
-                let handle: Handle<Image> = load_context.load(asset_path);
-
-                images.insert(LayerId(layer.id()), handle);
-            }
-            tiled::LayerType::Group(group_layer) => {
-                load_image_layers(group_layer.layers(), images, load_context);
-            }
-            _ => {}
-        }
-    }
-}
-
 impl AssetLoader for TiledMapLoader {
     type Asset = TiledMapAsset;
     type Settings = ();
@@ -251,7 +222,7 @@ impl AssetLoader for TiledMapLoader {
         #[cfg(feature = "render")]
         let images = {
             let mut images = HashMap::default();
-            load_image_layers(map.layers(), &mut images, load_context);
+            crate::render::tileset::load_image_layers(map.layers(), &mut images, load_context);
             images
         };
 
@@ -419,105 +390,13 @@ fn tileset_to_tiled_map_tileset(
         return None;
     }
 
-    #[cfg(feature = "render")]
-    return load_tileset_textures(tileset, load_context, path);
-
-    #[cfg(not(feature = "render"))]
-    Some(TiledMapTileset { tileset })
-}
-
-#[cfg(feature = "render")]
-fn load_tileset_textures(
-    tileset: Arc<tiled::Tileset>,
-    load_context: &mut LoadContext<'_>,
-    path: &str,
-) -> Option<TiledMapTileset> {
-    #[cfg(not(feature = "atlas"))]
-    let tileset_path = tileset.source.to_str()?;
-
-    let mut texture_atlas_layout_handle = None;
-    #[cfg(not(feature = "atlas"))]
-    let mut tile_image_offsets = HashMap::default();
-    let (usable_for_tiles_layer, tilemap_texture) = match &tileset.image {
-        None => {
-            // Already skipped by `tileset_to_tiled_map_tileset()`
-            #[cfg(feature = "atlas")]
-            {
-                return None;
-            }
-
-            #[cfg(not(feature = "atlas"))]
-            {
-                let mut usable_for_tiles_layer = true;
-                let mut image_size: Option<(i32, i32)> = None;
-                let mut tile_images: Vec<Handle<Image>> = Vec::new();
-                for (tile_id, tile) in tileset.tiles() {
-                    if let Some(img) = &tile.image {
-                        let asset_path = AssetPath::from(img.source.clone());
-                        trace!(
-                            "Loading tile image from {asset_path:?} as image ({tileset_path}, {tile_id})"
-                        );
-                        let texture: Handle<Image> = load_context.load(asset_path.clone());
-                        tile_image_offsets.insert(tile_id, tile_images.len() as u32);
-                        tile_images.push(texture.clone());
-                        if usable_for_tiles_layer {
-                            if let Some(image_size) = image_size {
-                                if img.width != image_size.0 || img.height != image_size.1 {
-                                    usable_for_tiles_layer = false;
-                                }
-                            } else {
-                                image_size = Some((img.width, img.height));
-                            }
-                        }
-                    }
-                }
-                if !usable_for_tiles_layer {
-                    debug!(
-                        "Tileset (path={:?}) have non constant image size and cannot be used for tiles layer",
-                        tileset_path
-                    );
-                }
-                (usable_for_tiles_layer, TilemapTexture::Vector(tile_images))
-            }
-        }
-        Some(img) => {
-            let asset_path = AssetPath::from(img.source.clone());
-            let texture: Handle<Image> = load_context.load(asset_path);
-
-            let columns = (img.width as u32 - tileset.margin + tileset.spacing)
-                / (tileset.tile_width + tileset.spacing);
-            if columns > 0 {
-                texture_atlas_layout_handle = load_context
-                    .labeled_asset_scope(path.to_owned(), |_| {
-                        Ok::<_, ()>(TextureAtlasLayout::from_grid(
-                            UVec2::new(tileset.tile_width, tileset.tile_height),
-                            columns,
-                            tileset.tilecount / columns,
-                            Some(UVec2::splat(tileset.spacing)),
-                            Some(UVec2::splat(tileset.margin)),
-                        ))
-                    })
-                    .ok();
-            }
-
-            (true, TilemapTexture::Single(texture.clone()))
-        }
-    };
-
     Some(TiledMapTileset {
+        #[cfg(feature = "render")]
+        textures: crate::render::tileset::load_tileset_textures(&tileset, load_context, path)?,
         tileset,
-        usable_for_tiles_layer,
-        tilemap_texture,
-        texture_atlas_layout_handle,
-        #[cfg(not(feature = "atlas"))]
-        tile_image_offsets,
     })
 }
 
-/// Returns the first tileset ID which is not used yet.
-///
-/// Map tilesets are inserted first using their index, so this ID never
-/// conflicts with a map tileset, even if some of them failed to load.
 /// Whether hexagons of this coordinate system are laid out in columns (ie. "flat-top" hexagons)
 fn is_column_hex(coord_system: HexCoordSystem) -> bool {
     matches!(
@@ -548,6 +427,10 @@ fn infinite_layers_chunks_bounds<'a>(
     bounds
 }
 
+/// Returns the first tileset ID which is not used yet.
+///
+/// Map tilesets are inserted first using their index, so this ID never
+/// conflicts with a map tileset, even if some of them failed to load.
 fn next_tileset_id(tilesets: &HashMap<TilesetId, TiledMapTileset>) -> TilesetId {
     TilesetId(tilesets.keys().max().map(|id| id.0 + 1).unwrap_or(0))
 }

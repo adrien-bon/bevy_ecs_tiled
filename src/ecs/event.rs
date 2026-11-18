@@ -24,7 +24,7 @@ use crate::ecs::{
     layer::TiledLayer,
     map::TiledMap,
     object::TiledObject,
-    tile::{TiledTile, TiledTilemap},
+    tile::TiledTile,
 };
 
 /// Wrapper around Tiled events

@@ -153,7 +153,7 @@ fn tile_render_placeholder(tile_pos: &TilePos) -> impl Bundle {
     (
         TilemapId(Entity::PLACEHOLDER),
         TileTextureIndex::default(),
-        crate::ecs::tile::render::TiledTileRenderState {
+        crate::render::tilemap::TiledTileRenderState {
             tilemap: None,
             position: *tile_pos,
         },

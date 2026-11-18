@@ -13,21 +13,9 @@ use std::{fmt, sync::Arc};
 pub(crate) struct TiledMapTileset {
     /// The raw Tiled tileset data
     pub(crate) tileset: Arc<tiled::Tileset>,
-    /// Does this tileset can be used for tiles layer ?
-    ///
-    /// A tileset can be used for tiles layer only if all the images it contains have the
-    /// same dimensions (restriction from bevy_ecs_tilemap).
+    /// Textures of the tileset
     #[cfg(feature = "render")]
-    pub(crate) usable_for_tiles_layer: bool,
-    /// Tileset texture (ie. a single image or an images collection)
-    #[cfg(feature = "render")]
-    pub(crate) tilemap_texture: TilemapTexture,
-    /// The [`TextureAtlasLayout`] handle associated to each tileset, if any.
-    #[cfg(feature = "render")]
-    pub(crate) texture_atlas_layout_handle: Option<Handle<TextureAtlasLayout>>,
-    /// The offset into the tileset_images for each tile id within each tileset.
-    #[cfg(all(feature = "render", not(feature = "atlas")))]
-    pub(crate) tile_image_offsets: HashMap<tiled::TileId, u32>,
+    pub(crate) textures: crate::render::tileset::TiledTilesetTextures,
 }
 
 /// Tiled map [`Asset`].

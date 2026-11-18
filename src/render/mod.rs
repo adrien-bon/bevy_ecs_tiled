@@ -7,9 +7,18 @@
 //! This module is only available with the `render` feature.
 
 pub mod animation;
+mod image;
+pub mod object;
+pub mod tilemap;
+pub(crate) mod tileset;
 
 use bevy::prelude::*;
 
 pub(crate) fn plugin(app: &mut App) {
-    app.add_plugins(animation::plugin);
+    app.add_plugins((
+        animation::plugin,
+        image::plugin,
+        object::plugin,
+        tilemap::plugin,
+    ));
 }
