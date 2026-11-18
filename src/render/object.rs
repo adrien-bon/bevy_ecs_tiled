@@ -229,7 +229,7 @@ fn tile_object_visual(
             .iter()
             .map(|f| (f.tile_id as usize, f.duration as f32 / 1000.0))
             .collect();
-        let first_duration = frame_vec.first().map(|(_, d)| *d).unwrap_or(0.1);
+        let first_duration = frame_vec.first().map_or(0.1, |(_, d)| *d);
         TiledAnimation {
             frames: frame_vec,
             current_frame: 0,

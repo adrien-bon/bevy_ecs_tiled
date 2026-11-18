@@ -1,4 +1,4 @@
-//! Internal helper functions and utilities for the bevy_ecs_tiled plugin.
+//! Internal helper functions and utilities for the `bevy_ecs_tiled` plugin.
 //!
 //! This module provides a collection of utility functions used throughout the crate for tasks such as
 //! coordinate conversions, data extraction, and other operations related to Tiled maps and worlds.

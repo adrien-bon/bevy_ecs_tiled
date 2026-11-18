@@ -454,7 +454,7 @@ fn tile_texture_index(tileset: &TiledMapTileset, tile_id: tiled::TileId) -> Tile
     })
 }
 
-/// Tile-layer animations go through bevy_ecs_tilemap's `AnimatedTile`, which requires
+/// Tile-layer animations go through `bevy_ecs_tilemap`'s `AnimatedTile`, which requires
 /// consecutive frame IDs and a uniform duration. Object-layer animations use `TiledAnimation`
 /// instead, which stores per-frame (index, duration) pairs and has no such constraints.
 fn animated_tile(tile: &tiled::Tile) -> Option<AnimatedTile> {

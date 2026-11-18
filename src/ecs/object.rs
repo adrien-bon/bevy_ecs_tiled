@@ -222,18 +222,18 @@ impl TiledObject {
                     ..
                 } => {
                     let offset = match (valign, halign) {
-                        (VerticalAlignment::Top, HorizontalAlignment::Left)
-                        | (VerticalAlignment::Top, HorizontalAlignment::Justify) => {
-                            Vec2::new(-0.5, 0.5)
-                        }
-                        (VerticalAlignment::Bottom, HorizontalAlignment::Left)
-                        | (VerticalAlignment::Bottom, HorizontalAlignment::Justify) => {
-                            Vec2::new(-0.5, -0.5)
-                        }
-                        (VerticalAlignment::Center, HorizontalAlignment::Left)
-                        | (VerticalAlignment::Center, HorizontalAlignment::Justify) => {
-                            Vec2::new(-0.5, 0.0)
-                        }
+                        (
+                            VerticalAlignment::Top,
+                            HorizontalAlignment::Left | HorizontalAlignment::Justify,
+                        ) => Vec2::new(-0.5, 0.5),
+                        (
+                            VerticalAlignment::Bottom,
+                            HorizontalAlignment::Left | HorizontalAlignment::Justify,
+                        ) => Vec2::new(-0.5, -0.5),
+                        (
+                            VerticalAlignment::Center,
+                            HorizontalAlignment::Left | HorizontalAlignment::Justify,
+                        ) => Vec2::new(-0.5, 0.0),
                         (VerticalAlignment::Top, HorizontalAlignment::Right) => Vec2::new(0.5, 0.5),
                         (VerticalAlignment::Bottom, HorizontalAlignment::Right) => {
                             Vec2::new(0.5, -0.5)

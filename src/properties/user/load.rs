@@ -133,13 +133,13 @@ impl DeserializedMapProperties<false> {
         entity_map: &HashMap<ObjectId, Entity>,
     ) -> DeserializedMapProperties<true> {
         self.map.hydrate(entity_map);
-        for (_, layer) in self.layers.iter_mut() {
+        for (_, layer) in &mut self.layers {
             layer.hydrate(entity_map);
         }
-        for (_, obj) in self.objects.iter_mut() {
+        for (_, obj) in &mut self.objects {
             obj.hydrate(entity_map);
         }
-        for (_, tiles) in self.tiles.iter_mut() {
+        for (_, tiles) in &mut self.tiles {
             for (_, tile) in tiles.iter_mut() {
                 tile.hydrate(entity_map);
             }
@@ -544,7 +544,7 @@ impl DeserializedProperties {
 
                 for i in 0..info.capacity() {
                     let Some(pv) = properties.remove(&format!("[{i}]")) else {
-                        return Err(format!("missing property on `{}`: `{i}`", info.type_path(),));
+                        return Err(format!("missing property on `{}`: `{i}`", info.type_path()));
                     };
 
                     let value =
@@ -633,7 +633,7 @@ impl DeserializedProperties {
                     );
 
                     return Ok(Box::new(out));
-                };
+                }
 
                 if let Some(default_value) = default_value
                     && let ReflectRef::Enum(e) = default_value.reflect_ref()
@@ -674,7 +674,7 @@ impl DeserializedProperties {
                 for item in items {
                     let value =
                         Self::deserialize_property(item, reg, registry, load_cx, default_value)?;
-                    list.push(value)
+                    list.push(value);
                 }
 
                 let mut out = DynamicList::from_iter(list);
@@ -693,7 +693,7 @@ impl DeserializedProperties {
                 };
 
                 let Some(pv) = properties.remove("set") else {
-                    return Err(format!("missing property on `{}`: `set`", info.type_path(),));
+                    return Err(format!("missing property on `{}`: `set`", info.type_path()));
                 };
 
                 let PV::ListValue(items) = pv else {
@@ -732,7 +732,7 @@ impl DeserializedProperties {
                 };
 
                 let Some(pv) = properties.remove("map") else {
-                    return Err(format!("missing property on `{}`: `map`", info.type_path(),));
+                    return Err(format!("missing property on `{}`: `map`", info.type_path()));
                 };
 
                 let PV::ListValue(items) = pv else {
@@ -760,7 +760,7 @@ impl DeserializedProperties {
                     } else if let Some(def) =
                         default_value_from_type_path(registry, info.key_ty().path())
                     {
-                        key = def.into_partial_reflect()
+                        key = def.into_partial_reflect();
                     } else {
                         return Err(format!(
                             "missing key for map item on type  {}",
@@ -781,7 +781,7 @@ impl DeserializedProperties {
                     } else if let Some(def) =
                         default_value_from_type_path(registry, info.value_ty().path())
                     {
-                        value = def.into_partial_reflect()
+                        value = def.into_partial_reflect();
                     } else {
                         return Err(format!(
                             "missing value for map item on type  {}",
@@ -805,7 +805,7 @@ impl DeserializedProperties {
     }
 
     pub(crate) fn hydrate(&mut self, obj_entity_map: &HashMap<ObjectId, Entity>) {
-        for resource in self.properties.iter_mut() {
+        for resource in &mut self.properties {
             hydrate(resource.as_mut(), obj_entity_map);
         }
     }
@@ -912,10 +912,10 @@ fn hydrate(object: &mut dyn PartialReflect, obj_entity_map: &HashMap<ObjectId, E
                     hydrate(s.field_mut(&name).unwrap(), obj_entity_map);
                 }
             }
-            _ => {}
+            VariantType::Unit => {}
         },
         ReflectMut::Map(s) => {
-            for (k, v) in s.drain().iter_mut() {
+            for (k, v) in &mut s.drain() {
                 let k = k.as_partial_reflect();
                 let v = v.as_partial_reflect_mut();
                 if k.represents::<Entity>() || k.represents::<Option<Entity>>() {

@@ -1,4 +1,4 @@
-//! Rapier physics backend for bevy_ecs_tiled.
+//! Rapier physics backend for `bevy_ecs_tiled`.
 //!
 //! This module provides an implementation of the [`TiledPhysicsBackend`] trait using the Rapier 2D physics engine.
 //! This backend is only available when the `rapier` feature is enabled.

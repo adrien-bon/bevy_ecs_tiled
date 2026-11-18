@@ -180,25 +180,25 @@ impl SpawnContext<'_, '_, '_> {
 
         // Tile objects inherit the properties of their tile: insert them before
         // the object own properties, so the latter take precedence
-        for &(entity, tileset_id, tile_id) in self.tile_objects.iter() {
+        for &(entity, tileset_id, tile_id) in &self.tile_objects {
             if let Some(p) = props.tiles.get(&tileset_id).and_then(|t| t.get(&tile_id)) {
                 commands.entity(entity).insert_properties(p.clone());
             }
         }
 
-        for (id, &entity) in self.object_entities.iter() {
+        for (id, &entity) in &self.object_entities {
             if let Some(p) = props.objects.remove(id) {
                 commands.entity(entity).insert_properties(p);
             }
         }
 
-        for (id, &entity) in self.layer_entities.iter() {
+        for (id, &entity) in &self.layer_entities {
             if let Some(p) = props.layers.remove(id) {
                 commands.entity(entity).insert_properties(p);
             }
         }
 
-        for (id, entities) in map_storage.tiles.iter() {
+        for (id, entities) in &map_storage.tiles {
             let Some(p) = props.tiles.get(&id.0).and_then(|e| e.get(&id.1)) else {
                 continue;
             };
@@ -287,7 +287,7 @@ impl SpawnContext<'_, '_, '_> {
                     ));
                     self.spawn_image_layer(&layer_event, layer_id, image_layer);
                 }
-            };
+            }
 
             #[cfg(feature = "user_properties")]
             self.layer_entities.insert(layer_id, layer_entity);

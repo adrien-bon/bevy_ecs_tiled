@@ -11,7 +11,7 @@ use bevy::prelude::*;
 /// Component for configuring physics collider generation for Tiled maps and worlds.
 ///
 /// Allows filtering which objects and tiles receive colliders.
-/// Attach this component to TiledWorld or TiledMap entities to control their physics behavior.
+/// Attach this component to [`TiledWorld`] or [`TiledMap`] entities to control their physics behavior.
 ///
 /// Modifying this component spawns again all the colliders of the map, without respawning the map itself.
 /// Maps of a world inherit the settings of the world, including when they are modified.

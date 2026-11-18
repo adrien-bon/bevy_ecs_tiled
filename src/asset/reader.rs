@@ -1,4 +1,4 @@
-//! Implementation of a custom [tiled::ResourceReader] for asset loading in Bevy.
+//! Implementation of a custom [`tiled::ResourceReader`] for asset loading in Bevy.
 //!
 //! This module provides an implementation of the [`tiled::ResourceReader`] trait,
 //! allowing Tiled assets (such as maps and tilesets) to be loaded from Bevy's asset system. This enables
@@ -79,7 +79,10 @@ pub(crate) fn extract_external_paths(xml_content: &[u8]) -> Vec<PathBuf> {
                 let rest = &line[start + marker.len()..];
                 if let Some(end) = rest.find('"') {
                     let path = &rest[..end];
-                    if path.ends_with(".tsx") || path.ends_with(".tx") {
+                    let is_external_resource = Path::new(path).extension().is_some_and(|ext| {
+                        ext.eq_ignore_ascii_case("tsx") || ext.eq_ignore_ascii_case("tx")
+                    });
+                    if is_external_resource {
                         paths.push(PathBuf::from(path));
                     }
                 }

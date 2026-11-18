@@ -111,8 +111,7 @@ fn layer_by_name(app: &mut App, name: &str) -> Entity {
         .query_filtered::<(Entity, &TiledName), With<TiledLayer>>()
         .iter(app.world())
         .find(|(_, n)| n.0 == name)
-        .map(|(e, _)| e)
-        .unwrap_or_else(|| panic!("missing layer {name}"))
+        .map_or_else(|| panic!("missing layer {name}"), |(e, _)| e)
 }
 
 fn tile_at(app: &mut App, layer: Entity, pos: TilePos) -> Entity {
@@ -120,8 +119,7 @@ fn tile_at(app: &mut App, layer: Entity, pos: TilePos) -> Entity {
         .query_filtered::<(Entity, &TilePos, &ChildOf), With<TiledTile>>()
         .iter(app.world())
         .find(|(_, p, c)| **p == pos && c.parent() == layer)
-        .map(|(e, _, _)| e)
-        .unwrap_or_else(|| panic!("missing tile at {pos:?}"))
+        .map_or_else(|| panic!("missing tile at {pos:?}"), |(e, _, _)| e)
 }
 
 /// Returns the tileset ID + tile ID under which a tile is registered in the map storage
@@ -146,8 +144,7 @@ fn tilemap_of(app: &App, layer: Entity, tileset_id: TilesetId) -> Option<Entity>
 fn tilemaps_count(app: &App, layer: Entity) -> usize {
     app.world()
         .get::<TiledTilemaps>(layer)
-        .map(|t| t.len())
-        .unwrap_or(0)
+        .map_or(0, |t| t.len())
 }
 
 #[cfg(feature = "render")]
@@ -162,8 +159,7 @@ fn object_by_name(app: &mut App, name: &str) -> Entity {
         .query_filtered::<(Entity, &TiledName), With<TiledObject>>()
         .iter(app.world())
         .find(|(_, n)| n.0 == name)
-        .map(|(e, _)| e)
-        .unwrap_or_else(|| panic!("missing object {name}"))
+        .map_or_else(|| panic!("missing object {name}"), |(e, _)| e)
 }
 
 #[test]
@@ -2332,7 +2328,7 @@ mod perf {
             }
         }
         measure.total /= frames;
-        for step in measure.steps.iter_mut() {
+        for step in &mut measure.steps {
             *step /= frames;
         }
         measure

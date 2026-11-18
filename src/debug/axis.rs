@@ -1,4 +1,4 @@
-//! Axis debug visualization for bevy_ecs_tiled.
+//! Axis debug visualization for `bevy_ecs_tiled`.
 //!
 //! This module provides a simple plugin to display the world origin and axes in 2D using Bevy's gizmo system.
 //! It is useful for debugging map alignment, orientation, and coordinate systems in Tiled maps.

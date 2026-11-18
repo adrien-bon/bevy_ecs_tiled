@@ -43,7 +43,7 @@ impl TiledMapStorage {
     ///
     /// To respawn a map, insert the [`RespawnTiledMap`] component on the map entity instead.
     pub(crate) fn clear(&mut self, commands: &mut Commands) {
-        for layer_entity in self.layers.iter() {
+        for layer_entity in &self.layers {
             commands.entity(*layer_entity).try_despawn();
         }
         self.layers.clear();

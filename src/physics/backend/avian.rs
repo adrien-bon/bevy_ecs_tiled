@@ -1,4 +1,4 @@
-//! Avian physics backend for bevy_ecs_tiled.
+//! Avian physics backend for `bevy_ecs_tiled`.
 //!
 //! This module provides an implementation of the [`TiledPhysicsBackend`] trait using the Avian 2D physics engine.
 //! This backend is only available when the `avian` feature is enabled.

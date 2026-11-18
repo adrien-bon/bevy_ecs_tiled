@@ -12,7 +12,7 @@ use bevy::prelude::*;
 #[reflect(Component, Default, Debug)]
 #[require(Visibility, Transform, Sprite)]
 pub struct TiledAnimation {
-    /// All animation frames as (atlas_index, duration_secs) pairs.
+    /// All animation frames as `(atlas_index, duration_secs)` pairs.
     pub frames: Vec<(usize, f32)>,
     /// Index into `frames` currently being displayed.
     pub current_frame: usize,
@@ -68,7 +68,7 @@ mod tests {
     use std::time::Duration;
 
     fn make_anim(frames: Vec<(usize, f32)>) -> TiledAnimation {
-        let first_duration = frames.first().map(|(_, d)| *d).unwrap_or(0.1);
+        let first_duration = frames.first().map_or(0.1, |(_, d)| *d);
         TiledAnimation {
             frames,
             current_frame: 0,

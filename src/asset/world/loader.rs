@@ -78,7 +78,7 @@ impl AssetLoader for TiledWorldLoader {
 
         // Calculate the full rect of the world
         let mut world_rect = Rect::new(0.0, 0.0, 0.0, 0.0);
-        for map in world.maps.iter() {
+        for map in &world.maps {
             let (Some(map_width), Some(map_height)) = (map.width, map.height) else {
                 // Assume that we cannot get map width / map height because it's an infinite map
                 return Err(TiledWorldLoaderError::WorldWithInfiniteMap);
@@ -95,7 +95,7 @@ impl AssetLoader for TiledWorldLoader {
 
         // Load all maps
         let mut maps = Vec::new();
-        for map in world.maps.iter() {
+        for map in &world.maps {
             // Maps paths are relative to the world file directory
             let map_path = world_path
                 .parent()

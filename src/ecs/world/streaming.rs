@@ -117,14 +117,14 @@ fn handle_world_streaming(
             });
 
             // All the maps that are visible but not already spawned should be spawned
-            for idx in visible_maps.iter() {
+            for idx in &visible_maps {
                 if !storage.maps.contains_key(idx) {
                     to_spawn.push(*idx);
                 }
             }
 
             // All the maps that are spawned but not visible should be removed
-            for (idx, _) in storage.maps.iter() {
+            for (idx, _) in &storage.maps {
                 if !visible_maps.contains(idx) {
                     to_remove.push(*idx);
                 }

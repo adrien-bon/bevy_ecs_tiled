@@ -14,6 +14,7 @@
 #![deny(rustdoc::broken_intra_doc_links)]
 #![deny(unsafe_code)]
 #![deny(missing_debug_implementations)]
+// Bevy queries with filters easily trigger this lint, without being hard to read
 #![allow(clippy::type_complexity)]
 
 pub mod asset;

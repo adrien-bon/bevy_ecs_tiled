@@ -90,10 +90,10 @@ impl TiledWorldAsset {
 
 impl fmt::Debug for TiledWorldAsset {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("TiledWorld")
+        f.debug_struct("TiledWorldAsset")
             .field("world.source", &self.world.source)
             .field("rect", &self.rect)
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 

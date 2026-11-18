@@ -432,7 +432,7 @@ fn infinite_layers_chunks_bounds<'a>(
 /// Map tilesets are inserted first using their index, so this ID never
 /// conflicts with a map tileset, even if some of them failed to load.
 fn next_tileset_id(tilesets: &HashMap<TilesetId, TiledMapTileset>) -> TilesetId {
-    TilesetId(tilesets.keys().max().map(|id| id.0 + 1).unwrap_or(0))
+    TilesetId(tilesets.keys().max().map_or(0, |id| id.0 + 1))
 }
 
 pub(crate) fn plugin(app: &mut App) {

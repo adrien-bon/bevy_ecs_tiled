@@ -47,7 +47,7 @@ pub struct TiledPhysicsPlugin<T: TiledPhysicsBackend>(std::marker::PhantomData<T
 /// it does not spawn colliders again by itself. Insert it when the entity is spawned, for instance in an
 /// observer of [`LayerCreated`] or [`ObjectCreated`] events.
 ///
-/// See also [TiledPhysicsSettings::simplify_geometry].
+/// See also [`TiledPhysicsSettings::simplify_geometry`].
 #[derive(Component, Reflect, Copy, PartialEq, Clone, Debug)]
 pub struct TiledPhysicsDisableGeometrySimplification;
 
@@ -259,16 +259,16 @@ fn despawn_colliders<T: TiledPhysicsBackend>(
     colliders: impl IntoIterator<Item = Entity>,
 ) {
     for collider in colliders {
-        if collider != source {
-            // Colliders are also descendants of their source: they may already be despawned
-            commands.entity(collider).try_despawn();
-        } else {
+        if collider == source {
             commands.entity(source).try_remove::<(
                 T::Collider,
                 TiledColliderSource,
                 TiledColliderPolygons,
                 TiledColliderOf,
             )>();
+        } else {
+            // Colliders are also descendants of their source: they may already be despawned
+            commands.entity(collider).try_despawn();
         }
     }
 }

@@ -143,7 +143,7 @@ fn on_add_spawn(
             // _commands.entity(spawn_entity).insert( ... );
         }
         _ => {}
-    };
+    }
 }
 
 // This observer will be triggered after our map is loaded and all custom properties have been inserted

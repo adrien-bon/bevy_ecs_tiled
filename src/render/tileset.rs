@@ -15,7 +15,7 @@ pub(crate) struct TiledTilesetTextures {
     /// Whether this tileset can be used for tiles layers.
     ///
     /// A tileset can be used for tiles layers only if all the images it contains have the
-    /// same dimensions (restriction from bevy_ecs_tilemap).
+    /// same dimensions (restriction from `bevy_ecs_tilemap`).
     pub(crate) usable_for_tiles_layer: bool,
     /// Tileset texture (ie. a single image or an images collection)
     pub(crate) tilemap_texture: TilemapTexture,

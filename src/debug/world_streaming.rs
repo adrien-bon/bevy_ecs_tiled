@@ -1,4 +1,4 @@
-//! Debug plugin for world streaming in bevy_ecs_tiled.
+//! Debug plugin for world streaming in `bevy_ecs_tiled`.
 //!
 //! This module provides a plugin and configuration for visualizing world render chunks and map boundaries
 //! using Bevy [`Gizmos`]. It is useful for debugging how your Tiled worlds are chunked and rendered, and for

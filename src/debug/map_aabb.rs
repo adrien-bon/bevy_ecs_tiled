@@ -156,7 +156,7 @@ fn tiled_corners(map_asset: &TiledMapAsset, anchor: &TilemapAnchor) -> [Vec2; 4]
             Vec2::new(grid_size.x, grid_size.y * 0.75),
             map_asset.rect.size(),
         ),
-        _ => (Vec2::new(grid_size.x, grid_size.y), map_asset.rect.size()),
+        TilemapType::Square => (Vec2::new(grid_size.x, grid_size.y), map_asset.rect.size()),
     };
 
     // For finite maps, top-left chunk is always (0, 0)

@@ -20,7 +20,7 @@ impl TiledWorldStorage {
     ///
     /// To respawn a world, insert the [`RespawnTiledWorld`] component on the world entity instead.
     pub(crate) fn clear(&mut self, commands: &mut Commands) {
-        for (_, map_entity) in self.maps.iter() {
+        for (_, map_entity) in &self.maps {
             commands.entity(*map_entity).despawn();
         }
         self.maps.clear();

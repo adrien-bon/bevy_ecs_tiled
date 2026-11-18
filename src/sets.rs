@@ -1,6 +1,6 @@
-//! System sets for the bevy_ecs_tiled plugin.
+//! System sets for the `bevy_ecs_tiled` plugin.
 //!
-//! This module defines enums grouping related systems for the PreUpdate, Update, and PostUpdate
+//! This module defines enums grouping related systems for the `PreUpdate`, `Update`, and `PostUpdate`
 //! schedules. These sets help organize and order the execution of systems related to Tiled map and
 //! world processing, including asset loading, physics initialization, animation, debugging, and
 //! chunk management.
@@ -11,7 +11,7 @@
 
 use bevy::prelude::*;
 
-/// System sets for the PreUpdate schedule.
+/// System sets for the [`PreUpdate`] schedule.
 #[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
 #[non_exhaustive]
 pub enum TiledPreUpdateSystems {
@@ -43,7 +43,7 @@ pub enum TiledUpdateSystems {
     Last,
 }
 
-/// System sets for the PostUpdate schedule.
+/// System sets for the [`PostUpdate`] schedule.
 #[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
 #[non_exhaustive]
 pub enum TiledPostUpdateSystems {

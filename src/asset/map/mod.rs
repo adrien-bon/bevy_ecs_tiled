@@ -65,16 +65,16 @@ pub struct TiledMapAsset {
     ///
     /// For finite maps, always (0, 0)
     pub(crate) bottomright_chunk: (i32, i32),
-    /// HashMap of the map tilesets
+    /// Map of the map tilesets
     ///
     /// Key is the [`TilesetId`].
     pub(crate) tilesets: HashMap<TilesetId, TiledMapTileset>,
-    /// HashMap of the tilesets ID by label
+    /// Map of the tilesets ID by label
     ///
     /// Key is a unique label to identify the Tiled tileset within the map.
     /// See [`tileset_label`](crate::asset::map::tileset_label) function.
     pub(crate) tilesets_id_by_label: HashMap<String, TilesetId>,
-    /// HashMap of the images used in the map
+    /// Map of the images used in the map
     ///
     /// Key is the [`LayerId`] of the image layer using this image
     #[cfg(feature = "render")]
@@ -428,7 +428,7 @@ impl fmt::Debug for TiledMapAsset {
             .field("tiled_offset", &self.tiled_offset)
             .field("topleft_chunk", &self.topleft_chunk)
             .field("bottomright_chunk", &self.bottomright_chunk)
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 
