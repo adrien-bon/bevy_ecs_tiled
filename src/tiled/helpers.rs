@@ -142,7 +142,7 @@ pub(crate) fn grid_size_from_map(map: &tiled::Map) -> TilemapGridSize {
 }
 
 /// Get the [`TilemapTileSize`] from given [`tiled::Tile`]
-pub fn tile_size(tile: &tiled::Tile) -> TilemapTileSize {
+pub(crate) fn tile_size(tile: &tiled::Tile) -> TilemapTileSize {
     match &tile.image {
         // tile is in image collection
         Some(image) => TilemapTileSize::new(image.width as f32, image.height as f32),

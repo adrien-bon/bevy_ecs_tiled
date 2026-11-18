@@ -59,18 +59,17 @@ pub mod prelude {
     #[cfg(feature = "render")]
     pub use super::tiled::animation::TiledAnimation;
     pub use super::tiled::{
-        TiledPlugin, TiledPluginConfig,
+        TiledPlugin,
         event::{LayerCreated, MapCreated, ObjectCreated, TileCreated, TiledEvent, TilemapCreated},
         filter::{TiledFilter, TiledName},
-        helpers::tile_size,
         image::TiledImage,
         layer::{
             LayerId, TiledLayer, TiledLayerParallax, TiledParallaxCamera, TiledTileLayerStorage,
         },
         map::{
-            RespawnTiledMap, TiledMap, TiledMapImageRepeatMargin, TiledMapLayerZOffset,
-            TiledMapReference, asset::TiledMapAsset, loader::TiledMapLoaderError,
-            storage::TiledMapStorage,
+            RespawnTiledMap, TiledMap, TiledMapHelper, TiledMapImageRepeatMargin,
+            TiledMapLayerZOffset, TiledMapReference, asset::TiledMapAsset,
+            loader::TiledMapLoaderError, storage::TiledMapStorage,
         },
         object::{
             ObjectId, TiledObject, TiledObjectText, TiledObjectTextBox, TiledObjectVisualOf,

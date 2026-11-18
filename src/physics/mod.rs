@@ -334,8 +334,9 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
 
         // Layer own chunk size, then the one of the map
         let chunk_size = chunk_size
-            .map_or(settings.tiles_chunk_size, |size| size.0)
-            .filter(|size| size.x > 0 && size.y > 0);
+            .copied()
+            .unwrap_or(settings.tiles_chunk_size)
+            .size();
         let chunk_of = |position: &TilePos| {
             chunk_size.map_or(UVec2::ZERO, |size| {
                 UVec2::new(position.x, position.y) / size

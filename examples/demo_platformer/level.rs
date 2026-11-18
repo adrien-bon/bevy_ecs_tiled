@@ -19,7 +19,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 objects_filter: TiledFilter::from(["KillZone", "TeleportZone"]),
                 // Split tiles colliders in chunks, so only a small part of them
                 // would have to be computed again if we were to update some tiles.
-                tiles_chunk_size: Some(UVec2::splat(16)),
+                tiles_chunk_size: TiledColliderChunkSize::Size(UVec2::splat(16)),
                 ..default()
             },
         ))

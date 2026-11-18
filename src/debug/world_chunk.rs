@@ -86,7 +86,7 @@ fn draw_camera_rect(
         return;
     };
     for world_chunking in world_query.iter() {
-        let Some(chunking) = world_chunking.0 else {
+        let Some(chunking) = world_chunking.area() else {
             continue;
         };
         for camera_transform in camera_query.iter() {

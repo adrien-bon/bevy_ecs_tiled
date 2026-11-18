@@ -24,50 +24,11 @@ pub(crate) mod reader;
 #[cfg(feature = "user_properties")]
 pub mod properties;
 
+#[cfg(feature = "user_properties")]
 use crate::prelude::*;
 use bevy::prelude::*;
-use std::{env, path::PathBuf};
-
-/// [`TiledPlugin`] global configuration.
-///
-/// Example:
-/// ```rust,no_run
-/// use std::env;
-/// use bevy::prelude::*;
-/// use bevy_ecs_tiled::prelude::*;
-///
-/// let mut path = env::current_dir().unwrap_or_default();
-/// path.push("my_tiled_export_file.json");
-///
-/// App::new()
-///     .add_plugins(TiledPlugin(TiledPluginConfig {
-///         types_export_file: Some(path),
-///         types_filter: TiledFilter::All,
-///     }));
-/// ```
-#[derive(Resource, Reflect, Clone, Debug)]
-#[reflect(Resource, Debug)]
-pub struct TiledPluginConfig {
-    /// Path to the Tiled types export file.
-    ///
-    /// If [`None`], will not export Tiled types at startup.
-    pub types_export_file: Option<PathBuf>,
-    /// Tiled types filter
-    ///
-    /// Only types matching this filter will be exported at startup.
-    pub types_filter: TiledFilter,
-}
-
-impl Default for TiledPluginConfig {
-    fn default() -> Self {
-        let mut path = env::current_dir().unwrap_or_default();
-        path.push("tiled_types_export.json");
-        Self {
-            types_export_file: Some(path),
-            types_filter: TiledFilter::All,
-        }
-    }
-}
+#[cfg(feature = "user_properties")]
+use std::path::PathBuf;
 
 /// `bevy_ecs_tiled` main [`Plugin`].
 ///
@@ -81,8 +42,35 @@ impl Default for TiledPluginConfig {
 /// App::new()
 ///     .add_plugins(TiledPlugin::default());
 /// ```
+///
+/// With the `user_properties` feature, the plugin can export the types registered in your application
+/// to a file, at startup, so you can import them in Tiled (see the
+/// [dedicated book section](https://adrien-bon.github.io/bevy_ecs_tiled/guides/properties.html)):
+/// ```rust,no_run
+/// # #[cfg(feature = "user_properties")]
+/// # {
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
+/// App::new().add_plugins(TiledPlugin {
+///     types_export_file: Some("tiled_types_export.json".into()),
+///     types_filter: TiledFilter::from(["my_game::Player", "my_game::Enemy"]),
+/// });
+/// # }
+/// ```
 #[derive(Default, Clone, Debug)]
-pub struct TiledPlugin(pub TiledPluginConfig);
+pub struct TiledPlugin {
+    /// Path of the file Tiled types are exported to, at startup.
+    ///
+    /// Defaults to [`None`]: types are not exported.
+    #[cfg(feature = "user_properties")]
+    pub types_export_file: Option<PathBuf>,
+    /// Only types whose path matches this filter are exported.
+    ///
+    /// Defaults to [`TiledFilter::All`].
+    #[cfg(feature = "user_properties")]
+    pub types_filter: TiledFilter,
+}
 
 impl Plugin for TiledPlugin {
     fn build(&self, mut app: &mut App) {
@@ -90,8 +78,13 @@ impl Plugin for TiledPlugin {
             app = app.add_plugins(bevy_ecs_tilemap::TilemapPlugin);
         }
 
-        app.insert_resource(self.0.clone());
-        app.register_type::<TiledPluginConfig>();
+        #[cfg(feature = "user_properties")]
+        if let Some(path) = &self.types_export_file {
+            app.insert_resource(properties::TiledTypesExport {
+                path: path.clone(),
+                filter: self.types_filter.clone(),
+            });
+        }
 
         app.add_plugins((
             // Must come first: asset loaders use the resource cache

@@ -127,7 +127,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 // This size can be overridden for a given layer by inserting
                 // a `TiledColliderChunkSize` component on it.
                 TiledPhysicsSettings::<TiledPhysicsRapierBackend> {
-                    tiles_chunk_size: Some(UVec2::splat(4)),
+                    tiles_chunk_size: TiledColliderChunkSize::Size(UVec2::splat(4)),
                     ..default()
                 },
             ));

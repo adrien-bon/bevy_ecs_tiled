@@ -16,8 +16,17 @@ use std::{
     fs::File,
     io::{BufWriter, Write},
     ops::Deref,
-    path::Path,
+    path::{Path, PathBuf},
 };
+
+/// Where and which types to export at startup, as configured in the [`TiledPlugin`].
+#[derive(Resource, Clone, Debug)]
+pub(crate) struct TiledTypesExport {
+    /// Path of the export file
+    pub(crate) path: PathBuf,
+    /// Only types matching this filter are exported
+    pub(crate) filter: TiledFilter,
+}
 
 /// Export Tiled types to the given path.
 ///
@@ -45,11 +54,11 @@ pub(crate) fn plugin(app: &mut App) {
     );
     app.add_systems(
         Startup,
-        |reg: Res<AppTypeRegistry>, config: Res<TiledPluginConfig>| {
-            if let Some(path) = &config.types_export_file {
-                info!("Export Tiled types to '{:?}'", &path);
-                if let Err(e) = export_types(&reg, path, &config.types_filter) {
-                    error!("Failed to export Tiled types to '{:?}': {e}", &path);
+        |reg: Res<AppTypeRegistry>, export: Option<Res<TiledTypesExport>>| {
+            if let Some(export) = export {
+                info!("Export Tiled types to '{:?}'", &export.path);
+                if let Err(e) = export_types(&reg, &export.path, &export.filter) {
+                    error!("Failed to export Tiled types to '{:?}': {e}", &export.path);
                 }
             }
         },

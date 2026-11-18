@@ -53,7 +53,7 @@ pub struct TiledMapAsset {
     ///
     /// You should only rely on this value for "map-level" concerns.
     /// If you want to get the actual size of a given tile, you should instead
-    /// use the [`tile_size`] function.
+    /// use [`TiledMapAsset::tile_size`].
     pub largest_tile_size: TilemapTileSize,
     /// Map bounding box, unanchored, in pixels.
     ///
@@ -410,24 +410,23 @@ impl TiledMapAsset {
         )
     }
 
-    /// Returns the world position (center) of a tile relative to its [`TiledTilemap`] [`Entity`].
+    /// Size, in pixels, of the image of the given tile.
     ///
-    /// This function computes the world-space position of a tile, given its [`TilePos`], tile size, and map anchor.
-    /// It is especially useful because tiles do not have their own [`Transform`] component, so their world position must be calculated manually.
+    /// It is the tileset tile size, except for tiles of images collection tilesets, which have their own image size.
+    /// Returns [`None`] if the tile does not exist in this map.
+    pub fn tile_size(&self, tile: &TiledTile) -> Option<TilemapTileSize> {
+        self.tile(tile.tileset_id, tile.tile_id)
+            .map(|tile| crate::tiled::helpers::tile_size(&tile))
+    }
+
+    /// Returns the position of the center of a tile, relative to its [`TiledTilemap`] [`Entity`].
     ///
-    /// The returned position is the center of the tile in world coordinates, taking into account the map's size,
-    /// grid size, tile size, map type (orthogonal, isometric, hex), and anchor. This ensures correct placement
-    /// regardless of map orientation or coordinate system.
+    /// Tiles do not have a [`Transform`]: use this method to know where a tile is rendered.
+    /// It takes into account the map size, grid size, orientation and anchor, and the size of the tile image.
     ///
-    /// # Arguments
-    /// * `tile_pos` - The tile's position in Bevy tile coordinates (origin at bottom-left).
-    /// * `tile_size` - The size of the tile in pixels.
-    /// * `anchor` - The [`TilemapAnchor`] used for the map.
+    /// Returns [`None`] if the tile does not exist in this map.
     ///
-    /// # Returns
-    /// * `Vec2` - The world-space position of the tile's center, relative to its tilemap entity (see [`TilemapId`]).
-    ///
-    /// # Example
+    /// Example:
     /// ```rust,no_run
     /// use bevy::prelude::*;
     /// use bevy_ecs_tiled::prelude::*;
@@ -438,27 +437,27 @@ impl TiledMapAsset {
     ///     tile_query: Query<(&TilePos, &TiledTile, &TilemapId, &TiledMapReference)>,
     ///     tilemap_query: Query<&GlobalTransform, With<TiledTilemap>>,
     /// ) {
-    ///     for (tile_pos, tiled_tile, tilemap_id, map_ref) in tile_query.iter() {
+    ///     for (tile_pos, tile, tilemap_id, map_ref) in tile_query.iter() {
     ///         let Ok((tiled_map, anchor)) = map_query.get(map_ref.0) else { continue; };
     ///         let Some(map_asset) = assets.get(&tiled_map.0) else { continue; };
-    ///         let Some(tile) = map_asset.tile(tiled_tile.tileset_id, tiled_tile.tile_id) else { continue; };
-    ///         // Compute the tile's world position (center) relative to its tilemap
-    ///         let tile_rel_pos = map_asset.tile_relative_position(
-    ///             tile_pos,
-    ///             &tile_size(&tile),
-    ///             anchor
-    ///         );
-    ///         // To get the tile's global transform, combine with the tilemap's transform
+    ///         let Some(position) = map_asset.tile_relative_position(tile_pos, tile, anchor) else { continue; };
+    ///         // Combine with the tilemap transform to get the tile global position
     ///         let Ok(tilemap_transform) = tilemap_query.get(tilemap_id.0) else { continue; };
-    ///         let tile_transform = *tilemap_transform * Transform::from_translation(tile_rel_pos.extend(0.));
+    ///         let tile_position = tilemap_transform.transform_point(position.extend(0.));
     ///     }
     /// }
     /// ```
-    ///
-    /// # Notes
-    /// - The returned position is relative to the tile tilemap entity, not global coordinates.
-    /// - For global/world coordinates, combine with the tilemap's [`GlobalTransform`].
     pub fn tile_relative_position(
+        &self,
+        tile_pos: &TilePos,
+        tile: &TiledTile,
+        anchor: &TilemapAnchor,
+    ) -> Option<Vec2> {
+        Some(self.tile_center(tile_pos, &self.tile_size(tile)?, anchor))
+    }
+
+    /// Same as [`TiledMapAsset::tile_relative_position`], for a tile whose image size is already known.
+    pub(crate) fn tile_center(
         &self,
         tile_pos: &TilePos,
         tile_size: &TilemapTileSize,

@@ -225,10 +225,10 @@ impl TiledTileLayerStorage {
 #[derive(Component, Reflect, Clone, Debug, Copy)]
 #[reflect(Component, Debug)]
 pub struct TiledLayerParallax {
-    /// The horizontal parallax multiplier.
-    pub parallax_x: f32,
-    /// The vertical parallax multiplier.
-    pub parallax_y: f32,
+    /// The horizontal (`x`) and vertical (`y`) parallax factors, as defined in Tiled.
+    ///
+    /// `0.0` keeps the layer fixed relative to the camera, `1.0` moves it at the same speed than the map.
+    pub parallax: Vec2,
     /// The base position of the layer before parallax is applied.
     pub base_position: Vec2,
 }
@@ -263,12 +263,12 @@ fn update_layer_parallax(
             camera_transform.translation.x,
             camera_transform.translation.y,
         );
-        if parallax.parallax_x != 1.0 {
-            let offset_x = camera_position.x * (1.0 - parallax.parallax_x);
+        if parallax.parallax.x != 1.0 {
+            let offset_x = camera_position.x * (1.0 - parallax.parallax.x);
             transform.translation.x = parallax.base_position.x + offset_x;
         }
-        if parallax.parallax_y != 1.0 {
-            let offset_y = camera_position.y * (1.0 - parallax.parallax_y);
+        if parallax.parallax.y != 1.0 {
+            let offset_y = camera_position.y * (1.0 - parallax.parallax.y);
             transform.translation.y = parallax.base_position.y + offset_y;
         }
     }

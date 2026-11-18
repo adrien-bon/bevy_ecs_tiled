@@ -74,14 +74,10 @@ fn main() {
         ));
     }
 
-    let mut config = TiledPluginConfig::default();
-
-    // If WASM is enabled, do not export user properties
-    // Note: properties will still be loaded from the map
-    #[cfg(feature = "wasm")]
-    {
-        config.types_export_file = None;
-    }
+    // By default, the plugin does not export user properties.
+    // Note: properties are loaded from the map whether they are exported or not
+    #[allow(unused_mut)]
+    let mut tiled_plugin = TiledPlugin::default();
 
     // Only export properties when WASM is disabled
     #[cfg(not(feature = "wasm"))]
@@ -90,17 +86,17 @@ fn main() {
         let mut path = std::env::current_dir().unwrap();
         path.push("exports");
         path.push("demo_topdown_types.json");
-        config.types_export_file = Some(path);
+        tiled_plugin.types_export_file = Some(path);
 
         // Custom filter to chose which properties should be exported
-        config.types_filter = TiledFilter::from(
+        tiled_plugin.types_filter = TiledFilter::from(
             bevy_ecs_tiled::regex::RegexSet::new([r"^demo_topdown::.*"]).unwrap(),
         );
     }
 
     // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
     // be automatically added as well if it's not already done.
-    app.add_plugins(TiledPlugin(config));
+    app.add_plugins(tiled_plugin);
 
     // Add our own plugins: our custom tilemap material requires
     // the tilemap rendering to be already there.

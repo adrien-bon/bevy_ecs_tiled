@@ -50,7 +50,7 @@ fn startup(
 }
 ```
 
-You can customize world loading with the same components and events / observers as for maps, and use the [`TiledWorldChunking`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/chunking/struct.TiledWorldChunking.html) component to control map chunking.
+You can customize world loading with the same components and events / observers as for maps, and use the [`TiledWorldChunking`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/chunking/enum.TiledWorldChunking.html) component to control map chunking.
 
 ---
 

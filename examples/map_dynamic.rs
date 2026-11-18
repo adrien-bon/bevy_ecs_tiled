@@ -169,7 +169,7 @@ fn modify_map(
             TiledObject::Rectangle { width, height } => TiledObject::Ellipse { width, height },
             ref other => other.clone(),
         };
-        info!("Change object {entity} to {}", object.kind());
+        info!("Change object {entity} to {}", *object);
     }
 
     // Respawn the map from its asset: all modifications are lost

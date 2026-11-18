@@ -13,19 +13,34 @@ use bevy::{
 
 /// [`Component`] holding Tiled world chunking configuration.
 ///
-/// If this value is None, we won't perform chunking: all maps from this world will just be loaded
-/// If this value is set, defines the area (in pixel) around each [`Camera`] where we should spawn a
-/// map if it overlaps with its associated [`Rect`].
+/// World chunking only spawns the maps of a world which are close to a [`Camera`], and despawns the others.
 ///
 /// Must be added to the [`Entity`] holding the world.
-#[derive(Component, Default, Reflect, Copy, Clone, Debug, Deref)]
-#[reflect(Component, Default, Debug)]
-pub struct TiledWorldChunking(pub Option<Vec2>);
+#[derive(Component, Default, Reflect, Copy, Clone, PartialEq, Debug)]
+#[reflect(Component, Default, Debug, PartialEq)]
+pub enum TiledWorldChunking {
+    /// No chunking: all the maps of the world are spawned.
+    #[default]
+    Disabled,
+    /// Only spawn the maps overlapping an area centered on each [`Camera`].
+    ///
+    /// The value is the half size of this area, in pixels: a map is spawned if its rectangle overlaps
+    /// the `[camera - area, camera + area]` rectangle.
+    Area(Vec2),
+}
 
 impl TiledWorldChunking {
-    /// Initialize world chunking with provided size
-    pub fn new(width: f32, height: f32) -> Self {
-        Self(Some(Vec2::new(width, height)))
+    /// Only spawn the maps within `half_width` and `half_height` pixels around each [`Camera`].
+    pub fn new(half_width: f32, half_height: f32) -> Self {
+        Self::Area(Vec2::new(half_width, half_height))
+    }
+
+    /// Half size of the area around each [`Camera`] where maps are spawned, or [`None`] if chunking is disabled.
+    pub fn area(&self) -> Option<Vec2> {
+        match self {
+            Self::Disabled => None,
+            Self::Area(area) => Some(*area),
+        }
     }
 }
 
@@ -81,7 +96,7 @@ fn handle_world_chunking(
         let mut to_remove = Vec::new();
         let mut to_spawn = Vec::new();
 
-        if let Some(chunking) = world_chunking.0 {
+        if let Some(chunking) = world_chunking.area() {
             // A map can be visible from several cameras: only consider it once
             let mut visible_maps = HashSet::new();
             let cameras: Vec<Aabb2d> = camera_query

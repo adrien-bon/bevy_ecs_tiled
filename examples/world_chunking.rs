@@ -63,7 +63,7 @@ fn input(mut chunking: Query<&mut TiledWorldChunking>, keys: Res<ButtonInput<Key
 
     // Decrease the chunking size
     if keys.pressed(KeyCode::Minus)
-        && let Some(c) = chunking.0
+        && let Some(c) = chunking.area()
         && (c.x - STEP_SIZE as f32) > 0.
     {
         *chunking = TiledWorldChunking::new(c.x - STEP_SIZE as f32, c.y - STEP_SIZE as f32);
@@ -71,7 +71,7 @@ fn input(mut chunking: Query<&mut TiledWorldChunking>, keys: Res<ButtonInput<Key
 
     // Increase the chunking size
     if keys.pressed(KeyCode::Equal)
-        && let Some(c) = chunking.0
+        && let Some(c) = chunking.area()
         && c.x < f32::MAX - STEP_SIZE as f32
     {
         *chunking = TiledWorldChunking::new(c.x + STEP_SIZE as f32, c.y + STEP_SIZE as f32);
@@ -87,7 +87,7 @@ fn text_update_system(
     };
 
     for mut span in &mut query {
-        span.0 = chunking.0.map_or(String::from("None"), |chunking| {
+        span.0 = chunking.area().map_or(String::from("None"), |chunking| {
             format!("{}x{}", chunking.x, chunking.y)
         });
     }

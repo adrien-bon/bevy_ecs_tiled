@@ -106,9 +106,19 @@ Deriving `Default` is useful: you don't have to fill all fields in Tiled; missin
 
 Before you can add custom properties in Tiled, you need to export them from your app and import them into Tiled.
 
-When running with the `user_properties` feature, your app will automatically produce a `.json` export of all types registered with Bevy.
-By default, this file is named `tiled_types_export.json` and is created in your workspace root.
-You can change the filename or disable export via [`TiledPluginConfig`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/struct.TiledPluginConfig.html).
+With the `user_properties` feature, your app can produce, at startup, a `.json` export of all the types registered with Bevy.
+Export is disabled by default: set the path of the export file on the [`TiledPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/struct.TiledPlugin.html):
+
+```rust,no_run
+use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+App::new().add_plugins(TiledPlugin {
+    types_export_file: Some("tiled_types_export.json".into()),
+    // Only export the types of your game
+    types_filter: TiledFilter::from(bevy_ecs_tiled::regex::RegexSet::new([r"^my_game::.*"]).unwrap()),
+});
+```
 
 To import this file in Tiled:
 
@@ -150,7 +160,7 @@ When loading a map, all custom properties are inserted before the map events (`M
 
 > **Note:**
 > Only add properties imported from Bevy. Properties created only in Tiled (ie. not exported from your app) will not be loaded in Bevy.
-> You can also control which properties are exported from your application via [`TiledPluginConfig`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/struct.TiledPluginConfig.html)
+> You can also control which properties are exported from your application using `TiledPlugin::types_filter`.
 
 ---
 

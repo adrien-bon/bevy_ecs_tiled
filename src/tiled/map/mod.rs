@@ -14,7 +14,7 @@ use crate::{
     prelude::*,
     tiled::{cache::TiledResourceCache, event::TiledMessageWriters},
 };
-use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
+use bevy::{asset::RecursiveDependencyLoadState, ecs::system::SystemParam, prelude::*};
 
 /// Main component for loading and managing a Tiled map in the ECS world.
 ///
@@ -150,6 +150,68 @@ pub struct TiledMapReference(pub Entity);
 #[derive(Component, Default, Reflect, Copy, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
 pub struct RespawnTiledMap;
+
+/// [`SystemParam`] giving access to the map of any Tiled entity (map, layer, tile, object, ...).
+///
+/// It saves you from querying the [`TiledMap`] referenced by the [`TiledMapReference`] of an entity,
+/// then retrieving the corresponding [`TiledMapAsset`].
+///
+/// Example:
+/// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
+/// fn log_tiles_positions(tiles: Query<Entity, Added<TiledTile>>, maps: TiledMapHelper) {
+///     for tile in tiles.iter() {
+///         // Position of the tile center, relative to its tilemap
+///         if let Some(position) = maps.tile_relative_position(tile) {
+///             info!("Tile {tile} is at {position}");
+///         }
+///     }
+/// }
+/// ```
+#[derive(SystemParam)]
+pub struct TiledMapHelper<'w, 's> {
+    maps: Query<'w, 's, (&'static TiledMap, &'static TilemapAnchor)>,
+    references: Query<'w, 's, &'static TiledMapReference>,
+    tiles: Query<'w, 's, (&'static TilePos, &'static TiledTile)>,
+    assets: Res<'w, Assets<TiledMapAsset>>,
+}
+
+impl TiledMapHelper<'_, '_> {
+    /// Returns the map entity of the given Tiled entity, which can be the map entity itself.
+    ///
+    /// Returns [`None`] if the entity is neither a map nor has a [`TiledMapReference`].
+    pub fn map_entity(&self, entity: Entity) -> Option<Entity> {
+        if self.maps.contains(entity) {
+            return Some(entity);
+        }
+        self.references.get(entity).ok().map(|map_ref| map_ref.0)
+    }
+
+    /// Returns the [`TiledMapAsset`] and [`TilemapAnchor`] of the map of the given Tiled entity.
+    ///
+    /// Returns [`None`] if the entity does not belong to a map, or if the map asset is not loaded.
+    pub fn map(&self, entity: Entity) -> Option<(&TiledMapAsset, &TilemapAnchor)> {
+        let (tiled_map, anchor) = self.maps.get(self.map_entity(entity)?).ok()?;
+        Some((self.assets.get(&tiled_map.0)?, anchor))
+    }
+
+    /// Returns the position of the center of the given [`TiledTile`] entity, relative to its tilemap.
+    ///
+    /// See [`TiledMapAsset::tile_relative_position`].
+    pub fn tile_relative_position(&self, tile: Entity) -> Option<Vec2> {
+        let (tile_pos, tiled_tile) = self.tiles.get(tile).ok()?;
+        let (map_asset, anchor) = self.map(tile)?;
+        map_asset.tile_relative_position(tile_pos, tiled_tile, anchor)
+    }
+}
+
+impl std::fmt::Debug for TiledMapHelper<'_, '_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TiledMapHelper").finish_non_exhaustive()
+    }
+}
 
 pub(crate) fn plugin(app: &mut bevy::prelude::App) {
     app.register_type::<TiledMap>();

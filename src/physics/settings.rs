@@ -54,7 +54,7 @@ pub struct TiledPhysicsSettings<T: TiledPhysicsBackend> {
     pub collider_strategy: TiledColliderStrategy,
     /// Size, in tiles, of the chunks used to split the colliders of tiles layers.
     ///
-    /// By default (ie. [`None`]), all the tiles of a layer are aggregated in a single set of colliders, which
+    /// By default (ie. [`TiledColliderChunkSize::Disabled`]), all the tiles of a layer are aggregated in a single set of colliders, which
     /// is computed again whenever a tile of the layer is added, modified or removed.
     ///
     /// When a chunk size is set, each tiles layer is divided into chunks of this number of tiles and each
@@ -64,7 +64,7 @@ pub struct TiledPhysicsSettings<T: TiledPhysicsBackend> {
     ///
     /// This size applies to all the tiles layers of the map, but can be overridden for a given layer
     /// by inserting a [`TiledColliderChunkSize`] component on its entity.
-    pub tiles_chunk_size: Option<UVec2>,
+    pub tiles_chunk_size: TiledColliderChunkSize,
     /// Physics backend to use for adding colliders.
     pub backend: T,
 }
@@ -78,7 +78,7 @@ impl<T: TiledPhysicsBackend> Default for TiledPhysicsSettings<T> {
             tiles_objects_filter: TiledFilter::default(),
             simplify_geometry: true,
             collider_strategy: TiledColliderStrategy::default(),
-            tiles_chunk_size: None,
+            tiles_chunk_size: TiledColliderChunkSize::Disabled,
             backend: T::default(),
         }
     }

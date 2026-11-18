@@ -60,26 +60,16 @@ impl Plugin for TiledDebugTilesPlugin {
 
 fn draw_tile_infos(
     config: Res<TiledDebugTilesConfig>,
-    assets: Res<Assets<TiledMapAsset>>,
-    map_query: Query<(&TiledMap, &TilemapAnchor)>,
+    maps: TiledMapHelper,
     tilemap_query: Query<&GlobalTransform, With<TiledTilemap>>,
-    tile_query: Query<(&TilePos, &TiledTile, &TilemapId, &TiledMapReference)>,
+    tile_query: Query<(Entity, &TilePos, &TilemapId), With<TiledTile>>,
     mut gizmos: Gizmos<TiledDebugGizmos>,
 ) {
-    for (tile_pos, tiled_tile, tilemap_id, map_ref) in tile_query.iter() {
-        let Some((map_asset, anchor)) = map_query
-            .get(map_ref.0)
-            .ok()
-            .and_then(|(tiled_map, anchor)| assets.get(&tiled_map.0).map(|a| (a, anchor)))
-        else {
-            continue;
-        };
-        let Some(tile) = map_asset.tile(tiled_tile.tileset_id, tiled_tile.tile_id) else {
-            continue;
-        };
-
+    for (tile, tile_pos, tilemap_id) in tile_query.iter() {
         // Compute the tile's world position (center) relative to its tilemap
-        let tile_rel_pos = map_asset.tile_relative_position(tile_pos, &tile_size(&tile), anchor);
+        let Some(tile_rel_pos) = maps.tile_relative_position(tile) else {
+            continue;
+        };
 
         // To get the tile's global transform, combine with the tilemap's transform
         let Ok(tilemap_transform) = tilemap_query.get(tilemap_id.0) else {

@@ -249,8 +249,7 @@ impl SpawnContext<'_, '_, '_> {
             // Add parallax component if the layer has parallax values
             if layer.parallax_x != 1.0 || layer.parallax_y != 1.0 {
                 commands.entity(layer_entity).insert(TiledLayerParallax {
-                    parallax_x: layer.parallax_x,
-                    parallax_y: layer.parallax_y,
+                    parallax: Vec2::new(layer.parallax_x, layer.parallax_y),
                     base_position: layer_position,
                 });
             }
@@ -400,7 +399,7 @@ impl SpawnContext<'_, '_, '_> {
             // from the TiledObject component in `TiledPostUpdateSystems::SyncRender`
             let object_entity = commands
                 .spawn((
-                    Name::new(format!("{}({})", tiled_object.kind(), object_data.name)),
+                    Name::new(format!("{tiled_object}({})", object_data.name)),
                     ChildOf(layer_event.origin),
                     TiledMapReference(self.map_entity),
                     tiled_object,

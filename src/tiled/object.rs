@@ -130,6 +130,22 @@ pub enum TiledObject {
     },
 }
 
+/// Displays the kind of the object, eg. `Rectangle` or `Tile`.
+impl std::fmt::Display for TiledObject {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            TiledObject::Point => "Point",
+            TiledObject::Tile { .. } => "Tile",
+            TiledObject::Text { .. } => "Text",
+            TiledObject::Rectangle { .. } => "Rectangle",
+            TiledObject::Ellipse { .. } => "Ellipse",
+            TiledObject::Polygon { .. } => "Polygon",
+            TiledObject::Polyline { .. } => "Polyline",
+            TiledObject::Capsule { .. } => "Capsule",
+        })
+    }
+}
+
 impl TiledObject {
     const ELLIPSE_NUM_POINTS: u32 = 20;
 
@@ -183,20 +199,6 @@ impl TiledObject {
             }
 
             points
-        }
-    }
-
-    /// Returns the kind of this [`TiledObject`] as a string.
-    pub fn kind(&self) -> &'static str {
-        match self {
-            TiledObject::Point => "Point",
-            TiledObject::Tile { .. } => "Tile",
-            TiledObject::Text { .. } => "Text",
-            TiledObject::Rectangle { .. } => "Rectangle",
-            TiledObject::Ellipse { .. } => "Ellipse",
-            TiledObject::Polygon { .. } => "Polygon",
-            TiledObject::Polyline { .. } => "Polyline",
-            TiledObject::Capsule { .. } => "Capsule",
         }
     }
 

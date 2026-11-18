@@ -6,14 +6,10 @@ use bevy_ecs_tiled::prelude::*;
 mod helper;
 
 fn main() {
-    let mut config = TiledPluginConfig::default();
-
-    // If WASM is enabled, do not export user properties
-    // Note: properties will still be loaded from the map
-    #[cfg(feature = "wasm")]
-    {
-        config.types_export_file = None;
-    }
+    // By default, the plugin does not export user properties.
+    // Note: properties are loaded from the map whether they are exported or not
+    #[allow(unused_mut)]
+    let mut tiled_plugin = TiledPlugin::default();
 
     // Only export properties when the `wasm` feature is disabled
     #[cfg(not(feature = "wasm"))]
@@ -22,10 +18,10 @@ fn main() {
         let mut path = std::env::current_dir().unwrap();
         path.push("exports");
         path.push("properties_basic_types.json");
-        config.types_export_file = Some(path);
+        tiled_plugin.types_export_file = Some(path);
 
         // Custom filter to chose which properties should be exported
-        config.types_filter = TiledFilter::from(
+        tiled_plugin.types_filter = TiledFilter::from(
             bevy_ecs_tiled::regex::RegexSet::new([
                 r"^properties_basic::.*",
                 r"^bevy_sprite::text2d::Text2d$",
@@ -42,7 +38,7 @@ fn main() {
         // Add bevy_ecs_tiled plugin: bevy_ecs_tilemap::TilemapPlugin will
         // be automatically added as well if it's not already done
         // For demonstration purpose, provide a custom path where to export registered types
-        .add_plugins(TiledPlugin(config))
+        .add_plugins(tiled_plugin)
         // Examples helper plugins, such as the logic to pan and zoom the camera
         // This should not be used directly in your game (but you can always have a look)
         .add_plugins(helper::HelperPlugin)

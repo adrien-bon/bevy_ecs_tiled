@@ -32,10 +32,6 @@ pub(crate) fn test_app() -> App {
             bevy::image::CompressedImageFormats::empty(),
         ));
     }
-    app.insert_resource(TiledPluginConfig {
-        types_export_file: None,
-        types_filter: TiledFilter::None,
-    });
     app.add_plugins((
         crate::tiled::cache::plugin,
         crate::tiled::map::plugin,
@@ -1023,10 +1019,7 @@ fn tiled_plugin_only_requires_asset_plugin() {
     app.add_plugins((
         MinimalPlugins,
         AssetPlugin::default(),
-        TiledPlugin(TiledPluginConfig {
-            types_export_file: None,
-            types_filter: TiledFilter::None,
-        }),
+        TiledPlugin::default(),
     ));
     let handle = app
         .world()
@@ -1237,10 +1230,14 @@ fn check_tile_move(path: &str) {
             let handle = &app.world().get::<TiledMap>(_map).unwrap().0;
             let assets = app.world().resource::<Assets<TiledMapAsset>>();
             let map_asset = assets.get(handle).unwrap();
-            let tile_size = tile_size(&map_asset.tile(TilesetId(0), 0).unwrap());
+            let tile = TiledTile::new(TilesetId(0), 0);
             let anchor = TilemapAnchor::default();
-            map_asset.tile_relative_position(&to, &tile_size, &anchor)
-                - map_asset.tile_relative_position(&from, &tile_size, &anchor)
+            map_asset
+                .tile_relative_position(&to, &tile, &anchor)
+                .unwrap()
+                - map_asset
+                    .tile_relative_position(&from, &tile, &anchor)
+                    .unwrap()
         };
         let after = physics::colliders_bounds(&app, ground, Vec2::ZERO);
         assert_eq!(after.0, before.0, "collider size changed");
@@ -1353,11 +1350,8 @@ fn hexagonal_tiles_match_tiled_positions() {
                         ),
                     };
                     let expected = map_asset.world_space_from_tiled_position(&anchor, tiled_center);
-                    let actual = map_asset.tile_relative_position(
-                        &TilePos::new(x, h - 1 - r),
-                        &tile_size,
-                        &anchor,
-                    );
+                    let actual =
+                        map_asset.tile_center(&TilePos::new(x, h - 1 - r), &tile_size, &anchor);
                     if !actual.abs_diff_eq(expected, 0.01) {
                         errors.push(format!(
                             "{path} ({anchor:?}): Tiled tile ({x}, {r}) is at {actual}, expected {expected}"
@@ -1478,7 +1472,7 @@ mod physics {
         let tile_center = {
             let handle = &app.world().get::<TiledMap>(map).unwrap().0;
             let assets = app.world().resource::<Assets<TiledMapAsset>>();
-            assets.get(handle).unwrap().tile_relative_position(
+            assets.get(handle).unwrap().tile_center(
                 &tile_pos,
                 &TilemapTileSize::new(16., 16.),
                 &TilemapAnchor::default(),
@@ -1773,7 +1767,7 @@ mod physics {
             &mut app,
             DYNAMIC_MAP,
             TiledPhysicsSettings::<TestBackend> {
-                tiles_chunk_size: Some(UVec2::ONE),
+                tiles_chunk_size: TiledColliderChunkSize::Size(UVec2::ONE),
                 ..default()
             },
         );
@@ -1844,7 +1838,7 @@ mod physics {
             &mut app,
             DYNAMIC_MAP,
             TiledPhysicsSettings::<TestBackend> {
-                tiles_chunk_size: Some(UVec2::ONE),
+                tiles_chunk_size: TiledColliderChunkSize::Size(UVec2::ONE),
                 ..default()
             },
         );
@@ -1854,7 +1848,7 @@ mod physics {
         // Disable chunking for this layer: a single collider, held by the layer itself
         app.world_mut()
             .entity_mut(ground)
-            .insert(TiledColliderChunkSize(None));
+            .insert(TiledColliderChunkSize::Disabled);
         app.update();
         assert!(collider_chunks(&mut app, ground).is_empty());
         assert_eq!(colliders_area(&app, ground), vec![512.]);
@@ -1863,7 +1857,7 @@ mod physics {
         // Use larger chunks for this layer: both tiles are in the same chunk
         app.world_mut()
             .entity_mut(ground)
-            .insert(TiledColliderChunkSize(Some(UVec2::splat(2))));
+            .insert(TiledColliderChunkSize::Size(UVec2::splat(2)));
         app.update();
         let chunks = collider_chunks(&mut app, ground);
         assert_eq!(
@@ -1882,7 +1876,7 @@ mod physics {
         // A null chunk size disables chunking
         app.world_mut()
             .entity_mut(ground)
-            .insert(TiledColliderChunkSize(Some(UVec2::new(4, 0))));
+            .insert(TiledColliderChunkSize::Size(UVec2::new(4, 0)));
         app.update();
         assert!(collider_chunks(&mut app, ground).is_empty());
         assert_eq!(colliders_area(&app, ground), vec![512.]);
@@ -1907,7 +1901,7 @@ mod physics {
             .get_mut::<TiledPhysicsSettings<TestBackend>>(map)
             .unwrap();
         settings.collider_strategy = TiledColliderStrategy::Triangulation;
-        settings.tiles_chunk_size = Some(UVec2::ONE);
+        settings.tiles_chunk_size = TiledColliderChunkSize::Size(UVec2::ONE);
         app.update();
 
         // Colliders follow the new settings, layers and objects are the same entities
@@ -1949,7 +1943,7 @@ mod physics {
         // But chunking can be enabled for a single layer
         app.world_mut()
             .entity_mut(ground)
-            .insert(TiledColliderChunkSize(Some(UVec2::ONE)));
+            .insert(TiledColliderChunkSize::Size(UVec2::ONE));
         app.update();
         assert_eq!(collider_chunks(&mut app, ground).len(), 2);
     }
@@ -2394,7 +2388,7 @@ mod perf {
             app.world_mut()
                 .entity_mut(map)
                 .insert(TiledPhysicsSettings::<physics::TestBackend> {
-                    tiles_chunk_size: Some(UVec2::splat(chunk_size)),
+                    tiles_chunk_size: TiledColliderChunkSize::Size(UVec2::splat(chunk_size)),
                     ..default()
                 });
         }

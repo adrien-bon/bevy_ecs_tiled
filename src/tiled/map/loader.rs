@@ -80,7 +80,7 @@ fn process_layers<'a>(
                                 else {
                                     continue;
                                 };
-                                let tile_size_val = tile_size(&tile);
+                                let tile_size_val = crate::tiled::helpers::tile_size(&tile);
                                 if tile_size_val > *largest_tile_size {
                                     debug!("Update tile_size: {tile_size_val:?}");
                                     *largest_tile_size = tile_size_val;
@@ -97,7 +97,7 @@ fn process_layers<'a>(
                                     else {
                                         continue;
                                     };
-                                    let tile_size_val = tile_size(&tile);
+                                    let tile_size_val = crate::tiled::helpers::tile_size(&tile);
                                     if tile_size_val > *largest_tile_size {
                                         debug!("Update tile_size: {tile_size_val:?}");
                                         *largest_tile_size = tile_size_val;

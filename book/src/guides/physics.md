@@ -207,14 +207,14 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         TiledMap(asset_server.load("map.tmx")),
         TiledPhysicsSettings::<TiledPhysicsAvianBackend> {
             // Split tiles layers colliders in chunks of 32x32 tiles
-            tiles_chunk_size: Some(UVec2::splat(32)),
+            tiles_chunk_size: TiledColliderChunkSize::Size(UVec2::splat(32)),
             ..default()
         },
     ));
 }
 ```
 
-It can be overridden for a given tiles layer by inserting a [`TiledColliderChunkSize`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliderChunkSize.html) component on the layer entity, either to use another size or to disable chunking for this layer (`TiledColliderChunkSize(None)`).
+It can be overridden for a given tiles layer by inserting a [`TiledColliderChunkSize`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderChunkSize.html) component on the layer entity, either to use another size or to disable chunking for this layer (`TiledColliderChunkSize::Disabled`).
 You can also only use this component, to enable chunking for a single layer of the map:
 
 ```rust,no_run
@@ -230,7 +230,7 @@ fn on_layer_created(
     if layers_query.get(layer).is_ok_and(|name| name.0 == "destructible") {
         commands
             .entity(layer)
-            .insert(TiledColliderChunkSize(Some(UVec2::splat(16))));
+            .insert(TiledColliderChunkSize::Size(UVec2::splat(16)));
     }
 }
 ```

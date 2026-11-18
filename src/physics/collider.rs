@@ -82,7 +82,8 @@ pub struct TiledColliders(Vec<Entity>);
 ///
 /// The chunk size used for all the tiles layers of a map is given by [`TiledPhysicsSettings::tiles_chunk_size`].
 /// Insert this [`Component`] on a [`TiledLayer::Tiles`] entity to override it for this layer only:
-/// `TiledColliderChunkSize(None)` disables chunking for this layer, whatever the map setting.
+/// [`TiledColliderChunkSize::Disabled`] disables chunking for this layer, whatever the map setting.
+/// A size with a zero dimension also disables chunking.
 /// Colliders of the layer are spawned again when this component is inserted, modified or removed.
 ///
 /// Since it is a regular component, it can also be set from Tiled using a custom property
@@ -103,13 +104,34 @@ pub struct TiledColliders(Vec<Entity>);
 ///     if layers_query.get(layer).is_ok_and(|name| name.0 == "ground") {
 ///         commands
 ///             .entity(layer)
-///             .insert(TiledColliderChunkSize(Some(UVec2::splat(16))));
+///             .insert(TiledColliderChunkSize::new(16, 16));
 ///     }
 /// }
 /// ```
 #[derive(Component, Reflect, Default, Copy, Clone, PartialEq, Eq, Hash, Debug)]
 #[reflect(Component, Default, Debug, PartialEq, Hash)]
-pub struct TiledColliderChunkSize(pub Option<UVec2>);
+pub enum TiledColliderChunkSize {
+    /// Colliders are not split in chunks: all the tiles of a layer are aggregated in a single set of colliders.
+    #[default]
+    Disabled,
+    /// Colliders are split in chunks of this number of tiles.
+    Size(UVec2),
+}
+
+impl TiledColliderChunkSize {
+    /// Split colliders in chunks of `width` x `height` tiles.
+    pub fn new(width: u32, height: u32) -> Self {
+        Self::Size(UVec2::new(width, height))
+    }
+
+    /// Size of the chunks, or [`None`] if chunking is disabled (including for a size with a zero dimension).
+    pub fn size(&self) -> Option<UVec2> {
+        match self {
+            Self::Disabled => None,
+            Self::Size(size) => Some(*size).filter(|size| size.x > 0 && size.y > 0),
+        }
+    }
+}
 
 /// Marker [`Component`] for the entity holding the colliders of a chunk of a [`TiledLayer::Tiles`].
 ///
@@ -182,7 +204,7 @@ pub(crate) fn object_polygons(
                 return vec![];
             };
             let (width, height) = (*width, *height);
-            let tile_size = tile_size(&tile);
+            let tile_size = crate::tiled::helpers::tile_size(&tile);
             let mut scale = Vec2::new(width, height) / Vec2::new(tile_size.x, tile_size.y);
             let mut offset = Vec2::new(
                 tile.tileset().offset_x as f32,
@@ -271,7 +293,7 @@ impl CachedTilePolygons {
     ) -> Option<Self> {
         let tile = map_asset.tile(tileset_id, tile_id)?;
         let collision = tile.collision.as_ref()?;
-        let tile_size = tile_size(&tile);
+        let tile_size = crate::tiled::helpers::tile_size(&tile);
         let size = Vec2::new(tile_size.x, tile_size.y);
         let flipped = flip.x || flip.y || flip.d;
         // Compute polygons relative to the tile bottom-left corner, then apply tile flips
@@ -331,7 +353,7 @@ pub(crate) fn tiles_polygons(
         };
         // Move polygons to the actual tile position
         let tile_position =
-            map_asset.tile_relative_position(&tile_pos, &cached.tile_size, anchor) + cached.offset;
+            map_asset.tile_center(&tile_pos, &cached.tile_size, anchor) + cached.offset;
         let bottom_left = tile_position - Vec2::new(cached.tile_size.x, cached.tile_size.y) / 2.;
         acc.extend(cached.polygons.iter().map(|polygon| {
             polygon.map_coords(|coord| geo::Coord {
