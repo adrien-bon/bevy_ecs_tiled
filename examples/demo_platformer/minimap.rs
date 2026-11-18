@@ -17,7 +17,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_observer(
         |map_created: On<TiledEvent<MapCreated>>, mut commands: Commands| {
             commands
-                .entity(map_created.event().origin)
+                .entity(map_created.origin)
                 .insert(Propagate(RenderLayers::from_layers(&[
                     DEFAULT_RENDER_LAYER,
                     MINIMAP_RENDER_LAYER,

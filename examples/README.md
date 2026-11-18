@@ -39,6 +39,7 @@ Most examples support the following controls:
 | `map_bsn` | None | This example shows the basic usage of the plugin with the Bevy bsn! macro. |
 | `map_dynamic` | None | This example shows how to modify a map (tiles, objects) after it has been spawned. |
 | `map_events` | None | This example shows how to use map loading events. |
+| `map_group_layers` | None | This example shows how Tiled group layers are spawned. |
 | `map_parallax` | None | This example demonstrates parallax scrolling with Tiled map layers. |
 | `map_reload` | None | This example demonstrates how to load and unload maps. |
 | `map_settings` | None | This example cycles through different map settings that can be applied. |

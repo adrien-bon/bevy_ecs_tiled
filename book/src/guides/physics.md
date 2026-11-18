@@ -177,7 +177,7 @@ fn on_layer_created(
     layers_query: Query<&TiledName, With<TiledLayer>>,
     mut commands: Commands,
 ) {
-    let layer = layer_created.event().origin;
+    let layer = layer_created.origin;
     if layers_query.get(layer).is_ok_and(|name| name.0 == "walls") {
         commands.entity(layer).insert(TiledColliderStrategy::LineStrip);
     }
@@ -226,7 +226,7 @@ fn on_layer_created(
     layers_query: Query<&TiledName, With<TiledLayer>>,
     mut commands: Commands,
 ) {
-    let layer = layer_created.event().origin;
+    let layer = layer_created.origin;
     if layers_query.get(layer).is_ok_and(|name| name.0 == "destructible") {
         commands
             .entity(layer)
@@ -281,7 +281,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             if collider_created.event().event.source == TiledColliderSource::Object {
                 // Add a RigidBody::Static to the collider entity
                 commands
-                    .entity(collider_created.event().origin)
+                    .entity(collider_created.origin)
                     .insert(RigidBody::Static);
             }
         });

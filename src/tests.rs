@@ -66,7 +66,7 @@ pub(crate) fn test_app() -> App {
         |ev: On<TiledEvent<MapCreated>>,
          mut received: ResMut<Received>,
          storage_query: Query<&TiledMapStorage>| {
-            let storage = storage_query.get(ev.event().origin).unwrap();
+            let storage = storage_query.get(ev.origin).unwrap();
             received.storage_on_map_created = Some((
                 storage.layers().count(),
                 storage.tiles().map(|(_, e)| e.len()).sum(),

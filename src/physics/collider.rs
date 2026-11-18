@@ -44,7 +44,7 @@ pub enum TiledColliderSource {
 ///     layers_query: Query<&TiledName, With<TiledLayer>>,
 ///     mut commands: Commands,
 /// ) {
-///     let layer = layer_created.event().origin;
+///     let layer = layer_created.origin;
 ///     if layers_query.get(layer).is_ok_and(|name| name.0 == "water") {
 ///         commands.entity(layer).insert(TiledColliderStrategy::Triangulation);
 ///     }
@@ -98,7 +98,7 @@ pub struct TiledColliders(Vec<Entity>);
 ///     layers_query: Query<&TiledName, With<TiledLayer>>,
 ///     mut commands: Commands,
 /// ) {
-///     let layer = layer_created.event().origin;
+///     let layer = layer_created.origin;
 ///     if layers_query.get(layer).is_ok_and(|name| name.0 == "ground") {
 ///         commands
 ///             .entity(layer)

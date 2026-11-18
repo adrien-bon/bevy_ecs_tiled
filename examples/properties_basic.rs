@@ -158,7 +158,7 @@ fn on_map_created(
     tiles_query: Query<(&TilePos, Option<&Biome>, Option<&Resource>)>,
 ) {
     // Get the map entity and storage component
-    let map_entity = map_created.event().origin;
+    let map_entity = map_created.origin;
     let Ok(map_storage) = map_query.get(map_entity) else {
         return;
     };

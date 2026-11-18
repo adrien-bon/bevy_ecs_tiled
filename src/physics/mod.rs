@@ -375,22 +375,19 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
                 despawn_colliders::<T>(&mut commands, layer_entity, entities);
             }
 
-            let chunk_tiles: Box<dyn Iterator<Item = (TilePos, Entity)>> = match chunk_size {
-                Some(size) => {
-                    let min = chunk.saturating_mul(size);
-                    let max = min.saturating_add(size - UVec2::ONE);
-                    Box::new(
-                        storage.iter_in(TilePos::new(min.x, min.y), TilePos::new(max.x, max.y)),
-                    )
-                }
-                None => Box::new(storage.iter()),
-            };
-            let tiles = chunk_tiles.filter_map(|(position, entity)| {
-                tiles_query
-                    .get(entity)
-                    .ok()
-                    .map(|(tile, flip)| (position, tile.tileset_id, tile.tile_id, *flip))
+            // Without chunking, the single chunk covers the whole layer
+            let (min, max) = chunk_size.map_or((UVec2::ZERO, UVec2::MAX), |size| {
+                let min = chunk.saturating_mul(size);
+                (min, min.saturating_add(size - UVec2::ONE))
             });
+            let tiles = storage
+                .iter_in(TilePos::new(min.x, min.y), TilePos::new(max.x, max.y))
+                .filter_map(|(position, entity)| {
+                    tiles_query
+                        .get(entity)
+                        .ok()
+                        .map(|(tile, flip)| (position, tile.tileset_id, tile.tile_id, *flip))
+                });
             let polygons = collider::tiles_polygons(
                 map_asset,
                 anchor,

@@ -20,8 +20,6 @@ use bevy::sprite::Anchor;
 #[reflect(Component, Default, Debug)]
 #[cfg_attr(feature = "render", require(Visibility, Transform, Sprite))]
 #[cfg_attr(not(feature = "render"), require(Visibility, Transform))]
-// Not `Copy` with the `render` feature: code should not stop compiling when enabling it
-#[cfg_attr(not(feature = "render"), allow(missing_copy_implementations))]
 pub struct TiledImage {
     /// Image handle
     ///

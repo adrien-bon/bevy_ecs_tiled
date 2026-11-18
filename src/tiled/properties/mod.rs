@@ -2,7 +2,7 @@
 //!
 //! This module is only available when the `user_properties` feature is enabled.
 //! It provides mechanisms for exporting, loading, and managing user-defined properties
-//! that can be attached to Tiled maps, objects, and tiles. See the [associated example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/user_properties.rs)
+//! that can be attached to Tiled maps, objects, and tiles. See the [associated example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/properties_basic.rs)
 //! or the [dedicated book section](https://adrien-bon.github.io/bevy_ecs_tiled/guides/properties.html) for more information.
 
 pub(crate) mod command;

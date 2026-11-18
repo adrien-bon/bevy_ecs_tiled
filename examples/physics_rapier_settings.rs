@@ -105,7 +105,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 |layer_created: On<TiledEvent<LayerCreated>>,
                  layers_query: Query<&TiledLayer>,
                  mut commands: Commands| {
-                    let layer = layer_created.event().origin;
+                    let layer = layer_created.origin;
                     if let Ok(TiledLayer::Objects) = layers_query.get(layer) {
                         commands
                             .entity(layer)

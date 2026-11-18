@@ -109,6 +109,12 @@ required-features = ["text"]
 name = "map_dynamic"
 
 [[example]]
+name = "map_group_layers"
+
+[[example]]
+name = "map_parallax"
+
+[[example]]
 name = "map_events"
 
 [[example]]

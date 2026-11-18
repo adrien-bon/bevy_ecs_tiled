@@ -9,7 +9,7 @@
 
 use crate::prelude::*;
 use bevy::prelude::*;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 /// Thread-safe resource cache for Tiled assets, stored as a Bevy resource.
 ///
@@ -19,12 +19,22 @@ use std::sync::{Arc, RwLock};
 pub(crate) struct TiledResourceCache(pub(crate) Arc<RwLock<tiled::DefaultResourceCache>>);
 
 impl TiledResourceCache {
+    // A panic while holding the lock cannot leave the cache in an inconsistent state:
+    // ignore lock poisoning instead of propagating the panic to every asset loader
+    fn read(&self) -> RwLockReadGuard<'_, tiled::DefaultResourceCache> {
+        self.0.read().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    fn write(&self) -> RwLockWriteGuard<'_, tiled::DefaultResourceCache> {
+        self.0.write().unwrap_or_else(PoisonError::into_inner)
+    }
+
     /// Clears all cached tilesets and templates.
     ///
     /// This can be useful to force reloading of Tiled assets at runtime.
     pub fn clear(&mut self) {
         debug!("Clearing cache");
-        *self.0.write().unwrap() = tiled::DefaultResourceCache::new();
+        *self.write() = tiled::DefaultResourceCache::new();
     }
 }
 
@@ -33,14 +43,14 @@ impl tiled::ResourceCache for TiledResourceCache {
         &self,
         path: impl AsRef<tiled::ResourcePath>,
     ) -> Option<std::sync::Arc<tiled::Tileset>> {
-        self.0.read().unwrap().get_tileset(path)
+        self.read().get_tileset(path)
     }
 
     fn get_template(
         &self,
         path: impl AsRef<tiled::ResourcePath>,
     ) -> Option<std::sync::Arc<tiled::Template>> {
-        self.0.read().unwrap().get_template(path)
+        self.read().get_template(path)
     }
 
     fn insert_tileset(
@@ -48,7 +58,7 @@ impl tiled::ResourceCache for TiledResourceCache {
         path: impl AsRef<tiled::ResourcePath>,
         tileset: Arc<tiled::Tileset>,
     ) {
-        self.0.write().unwrap().insert_tileset(path, tileset);
+        self.write().insert_tileset(path, tileset);
     }
 
     fn insert_template(
@@ -56,7 +66,7 @@ impl tiled::ResourceCache for TiledResourceCache {
         path: impl AsRef<tiled::ResourcePath>,
         template: Arc<tiled::Template>,
     ) {
-        self.0.write().unwrap().insert_template(path, template);
+        self.write().insert_template(path, template);
     }
 }
 

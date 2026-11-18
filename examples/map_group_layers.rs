@@ -1,4 +1,7 @@
-//! This example shows the basic usage of the plugin.
+//! This example shows how Tiled group layers are spawned.
+//!
+//! Group layers are spawned as `TiledLayer::Group` entities, parents of the layers they contain:
+//! since offset and visibility are applied through `Transform` and `Visibility`, they propagate to children layers.
 
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;

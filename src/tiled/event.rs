@@ -28,7 +28,27 @@ use crate::tiled::{
 
 /// Wrapper around Tiled events
 ///
-/// Contains generic informations about origin of a particular Tiled event
+/// Contains generic informations about origin of a particular Tiled event.
+///
+/// These events bubble up the entity hierarchy: an observer on a map entity also receives the
+/// events of its layers, objects, etc. Use [`TiledEvent::origin`] to get the entity the event
+/// was sent for (eg. the created layer), and [`TiledEvent::entity`] for the entity currently
+/// observing it (eg. the map entity), which changes while the event bubbles.
+///
+/// Example:
+/// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_ecs_tiled::prelude::*;
+///
+/// fn spawn_map(mut commands: Commands, asset_server: Res<AssetServer>) {
+///     commands
+///         .spawn(TiledMap(asset_server.load("map.tmx")))
+///         .observe(|layer_created: On<TiledEvent<LayerCreated>>| {
+///             // `origin` is the layer entity, `entity` is the map entity
+///             info!("Layer {} created in map {}", layer_created.origin, layer_created.entity);
+///         });
+/// }
+/// ```
 #[derive(Message, EntityEvent, Clone, Copy, PartialEq, Debug, Reflect)]
 #[entity_event(auto_propagate, propagate = &'static ChildOf)]
 #[reflect(Debug, Clone)]

@@ -79,7 +79,7 @@ fn spawn_map(
              assets: Res<Assets<TiledMapAsset>>,
              query: Query<(&Name, &TiledMapStorage), With<TiledMap>>| {
                 // We can access the map components via a regular query
-                let Ok((name, storage)) = query.get(map_created.event().origin) else {
+                let Ok((name, storage)) = query.get(map_created.origin) else {
                     return;
                 };
                 info!("=> Observer TiledMapCreated was triggered for map '{name}'");

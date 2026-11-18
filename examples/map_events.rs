@@ -30,7 +30,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         // Add an "in-line" observer to detect when the map has finished loading
         .observe(
             |map_created: On<TiledEvent<MapCreated>>, map_query: Query<&Name, With<TiledMap>>| {
-                let Ok(name) = map_query.get(map_created.event().origin) else {
+                let Ok(name) = map_query.get(map_created.origin) else {
                     return;
                 };
                 info!(
@@ -84,7 +84,7 @@ fn obs_layer_created(
 ) {
     // We can access the layer components via a regular query, including
     // its Tiled class and custom properties
-    let Ok((name, layer, properties)) = layer_query.get(layer_created.event().origin) else {
+    let Ok((name, layer, properties)) = layer_query.get(layer_created.origin) else {
         return;
     };
 
