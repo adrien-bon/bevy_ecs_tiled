@@ -1,9 +1,10 @@
-//! Core logic and types for Tiled map support.
+//! Tiled maps: spawn a [`TiledMap`] to load and display a `.tmx` map.
 //!
-//! This module provides the main structures, systems, and utilities for handling Tiled maps within the plugin.
-//! It includes submodules for map storage, entity spawning, and other map-related functionality.
-//! The types and functions defined here enable loading, managing, and interacting with Tiled maps
-//! in a Bevy application.
+//! Settings of the map ([`TiledMapLayerZOffset`], [`TiledMapImageRepeatMargin`], `TilemapAnchor`,
+//! `TilemapRenderSettings`) are components of the map entity, and [`TiledMapStorage`] gives access to its
+//! layers, tiles and objects entities.
+//!
+//! See the [spawn / despawn / reload guide](https://adrien-bon.github.io/bevy_ecs_tiled/guides/spawn_reload.html).
 
 pub(crate) mod spawn;
 pub mod storage;

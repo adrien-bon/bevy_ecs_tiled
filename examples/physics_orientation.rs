@@ -1,10 +1,14 @@
-// This example shows Avian2D physics backend with various map orientation.
+// This example shows physics colliders on maps of various orientations, with the Avian or Rapier backend.
+//
+// Run it with `--features avian_debug` or `--features rapier_debug`.
 
-use avian2d::prelude::*;
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 
 mod helper;
+
+#[cfg(not(any(feature = "avian_debug", feature = "rapier_debug")))]
+compile_error!("This example requires the `avian_debug` or `rapier_debug` feature");
 
 fn main() {
     App::new()
@@ -16,12 +20,9 @@ fn main() {
         // Examples helper plugins, such as the logic to pan and zoom the camera
         // This should not be used directly in your game (but you can always have a look)
         .add_plugins(helper::HelperPlugin)
-        // bevy_ecs_tiled physics plugin: this is where we select which physics backend to use
-        // Here we use the provided Avian backend to automatically spawn colliders
-        .add_plugins(TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default())
-        // Avian physics plugins
-        .add_plugins(PhysicsPlugins::default().with_length_unit(100.0))
-        .add_plugins(PhysicsDebugPlugin)
+        // bevy_ecs_tiled physics plugin, along with the physics engine:
+        // see helper/physics.rs to know how a physics backend is selected
+        .add_plugins(helper::physics::plugin)
         // Add our systems and run the app!
         .add_systems(Startup, startup)
         .add_systems(Update, switch_map)

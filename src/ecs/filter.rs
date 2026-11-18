@@ -1,7 +1,4 @@
-//! Utilities for filtering Tiled names.
-//!
-//! This module provides types and helpers for filtering and matching names of Tiled objects, layers, tiles or types.
-//! It is used throughout the plugin to allow selective processing of Tiled entities based on their names.
+//! Filtering of Tiled names, used to select which layers, objects or types are processed.
 
 use bevy::prelude::*;
 
@@ -15,7 +12,7 @@ pub struct TiledName(pub String);
 /// A filter for efficiently checking if a given name matches a filter specification.
 ///
 /// # Example
-/// ```rust,no_run
+/// ```rust
 /// use bevy_ecs_tiled::{prelude::*, regex};
 ///
 /// let names_filter = TiledFilter::from(["some", "name"]);

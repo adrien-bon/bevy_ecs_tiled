@@ -1,8 +1,4 @@
-//! Storage structures for Tiled map data.
-//!
-//! This module defines data structures and utilities for storing and managing the contents of a Tiled map,
-//! including layers, tiles, and associated metadata. It provides efficient access and organization of map data
-//! for use by systems and plugins within the bevy_ecs_tiled framework.
+//! [`TiledMapStorage`]: the layers, tiles and objects entities of a map, by Tiled ID.
 
 use crate::prelude::*;
 use bevy::{platform::collections::HashMap, prelude::*};

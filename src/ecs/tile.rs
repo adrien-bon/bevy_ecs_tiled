@@ -1,12 +1,9 @@
-//! ECS components for Tiled tiles.
-//!
-//! This module defines Bevy components used to represent Tiled tiles and tilemaps within the ECS world.
-//! The [`TiledTile`] component marks individual tile entities, while the [`TiledTilemap`] component
-//! is used to group and render collections of tiles as a single texture.
+//! Tiled tiles: one [`TiledTile`] entity per tile, child of its [`TiledLayer::Tiles`].
 //!
 //! Tile entities only hold Tiled data: which tile (tileset ID and [`tiled::TileId`]) is displayed at which
-//! [`TilePos`]. Tilemaps are rendering entities derived from these data: they are automatically created,
-//! updated and removed when tiles are added, modified or removed.
+//! [`TilePos`]. You can spawn, modify or despawn them: tilemaps rendering them and physics colliders follow.
+//!
+//! See the [dynamic maps guide](https://adrien-bon.github.io/bevy_ecs_tiled/guides/dynamic_maps.html).
 
 use crate::prelude::*;
 use bevy::prelude::*;

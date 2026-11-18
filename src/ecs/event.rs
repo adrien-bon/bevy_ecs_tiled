@@ -1,13 +1,9 @@
-//! Events related to Tiled maps and worlds.
+//! Events sent when Tiled worlds, maps, layers, tiles and objects are spawned.
 //!
-//! This module defines a generic [`TiledEvent`] type that can be used to represent various
-//! events related to Tiled maps and worlds.
+//! All events are wrapped in a [`TiledEvent`], which gives access to the related entities and assets.
+//! They can be received with observers or as [`Message`]s: see [`TiledEvent`].
 //!
-//! It also defines specific events such as `WorldCreated` or [`MapCreated`] that are used
-//! to signal the creation of a Tiled world or map.
-//!
-//! Each event is both triggered for observers and written as a [`Message`]: see [`TiledEvent`]
-//! to choose between them.
+//! See the [map events guide](https://adrien-bon.github.io/bevy_ecs_tiled/design/map_events.html).
 
 use std::{
     fmt::{self, Debug},

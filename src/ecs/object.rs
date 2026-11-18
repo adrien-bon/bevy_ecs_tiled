@@ -1,6 +1,9 @@
-//! ECS components for Tiled objects.
+//! Tiled objects: one [`TiledObject`] entity per object, child of its [`TiledLayer::Objects`].
 //!
-//! This module defines Bevy components used to represent Tiled objects within the ECS world.
+//! The [`TiledObject`] component holds the object shape: you can modify it, its visual and its
+//! physics collider follow.
+//!
+//! See the [entities hierarchy](https://adrien-bon.github.io/bevy_ecs_tiled/design/entities_hierarchy.html).
 
 use crate::asset::{helpers::iso_projection, map::tileset_label};
 use crate::prelude::*;
@@ -273,16 +276,6 @@ impl TiledObject {
     /// Returns the center position of the object in world space.
     ///
     /// The center is computed from the object's vertices, taking into account its shape and transformation.
-    ///
-    /// # Arguments
-    /// * `transform` - The global transform to apply to the object.
-    /// * `isometric_projection` - Wheter or not to perform an isometric projection.
-    /// * `tilemap_size` - Size of the tilemap in tiles.
-    /// * `grid_size` - Size of each tile on the grid in pixels.
-    /// * `offset` - Global map offset to apply.
-    ///
-    /// # Returns
-    /// * `Option<geo::Coord<f32>>` - The computed center, or `None` if not applicable.
     pub(crate) fn center(
         &self,
         transform: &GlobalTransform,
@@ -306,16 +299,6 @@ impl TiledObject {
     ///
     /// Vertices are calculated based on the object's shape and its transformation (translation, rotation, scale).
     /// For isometric maps, the vertices are projected through the isometric transformation.
-    ///
-    /// # Arguments
-    /// * `transform` - The global transform to apply to the object.
-    /// * `isometric_projection` - Wheter or not to perform an isometric projection.
-    /// * `tilemap_size` - Size of the tilemap in tiles.
-    /// * `grid_size` - Size of each tile on the grid in pixels.
-    /// * `offset` - Global map offset to apply.
-    ///
-    /// # Returns
-    /// * `Vec<geo::Coord<f32>>` - The transformed vertices.
     pub(crate) fn vertices(
         &self,
         transform: &GlobalTransform,
@@ -401,16 +384,6 @@ impl TiledObject {
     /// Returns `None` for point and text objects.
     /// For ellipses, rectangles, tiles, and polygons, returns a closed line string.
     /// For polylines, returns an open line string.
-    ///
-    /// # Arguments
-    /// * `transform` - The global transform to apply to the object.
-    /// * `isometric_projection` - Wheter or not to perform an isometric projection.
-    /// * `tilemap_size` - Size of the tilemap in tiles.
-    /// * `grid_size` - Size of each tile on the grid in pixels.
-    /// * `offset` - Global map offset to apply.
-    ///
-    /// # Returns
-    /// * `Option<geo::LineString<f32>>` - The resulting line string, or `None` if not applicable.
     pub(crate) fn line_string(
         &self,
         transform: &GlobalTransform,
@@ -446,16 +419,6 @@ impl TiledObject {
     ///
     /// Returns `None` for polyline, point, and text objects.
     /// For closed shapes, returns the corresponding polygon.
-    ///
-    /// # Arguments
-    /// * `transform` - The global transform to apply to the object.
-    /// * `isometric_projection` - Wheter or not to perform an isometric projection.
-    /// * `tilemap_size` - Size of the tilemap in tiles.
-    /// * `grid_size` - Size of each tile on the grid in pixels.
-    /// * `offset` - Global map offset to apply.
-    ///
-    /// # Returns
-    /// * `Option<geo::Polygon<f32>>` - The resulting polygon, or `None` if not applicable.
     pub(crate) fn polygon(
         &self,
         transform: &GlobalTransform,

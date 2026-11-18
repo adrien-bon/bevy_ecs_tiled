@@ -1,8 +1,4 @@
-//! Storage structures for Tiled world data.
-//!
-//! This module provides data structures and utilities for storing and managing Tiled world information,
-//! including references to maps and world-level metadata. It enables efficient access and
-//! organization of world data for streaming and world management systems.
+//! [`TiledWorldStorage`]: the map entities of a world, by [`WorldMapId`].
 
 #[allow(unused_imports)]
 use crate::prelude::*;

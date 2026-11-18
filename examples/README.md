@@ -49,12 +49,10 @@ Most examples support the following controls:
 | `orientation_isometric` | None | This example cycles through different kinds of isometric maps. |
 | `orientation_orthogonal` | None | This example cycles through different kinds of orthogonal maps. |
 | `physics_avian_controller` | `avian_debug` | This example shows a simple player-controlled object using Avian2D physics. You can move the object using arrow keys. |
-| `physics_avian_orientation` | `avian_debug` | This example shows Avian2D physics backend with various map orientation. |
-| `physics_avian_settings` | `avian_debug` | This example shows how to use Avian2D physics backend. |
 | `physics_custom` | `physics` | This example shows how to use a custom physics backend. |
+| `physics_orientation` | `avian_debug` or `rapier_debug` | This example shows physics colliders on maps of various orientations, with the Avian or Rapier backend. |
 | `physics_rapier_controller` | `rapier_debug` | This example shows a simple player-controlled object using Rapier physics. You can move the object using arrow keys. |
-| `physics_rapier_orientation` | `rapier_debug` | This example shows Rapier physics backend with various map orientation. |
-| `physics_rapier_settings` | `rapier_debug` | This example shows how to use Rapier physics backend. |
+| `physics_settings` | `avian_debug` or `rapier_debug` | This example shows how to tune physics colliders generation, with the Avian or Rapier backend. |
 | `properties_basic` | `user_properties` | This example shows how to map custom tiles and objects properties from Tiled to Bevy Components. |
 | `world_basic` | `world` | This example shows the basic usage of the plugin to load a Tiled world. |
 | `world_streaming` | `world` | This example shows how to load Tiled World files and demonstrates streaming its maps around the camera. |

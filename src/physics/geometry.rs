@@ -89,11 +89,6 @@ pub fn collider_shapes(
 /// and its centroid as a [`Vec2`].
 /// This is useful for physics backends that require triangulated shapes.
 ///
-/// # Arguments
-/// * `multi_polygon` - The input geometry to triangulate.
-///
-/// # Returns
-/// A vector of tuples: ([triangle_vertices; 3], centroid).
 /// If the geometry cannot be triangulated, a warning is logged and an empty vector is returned.
 pub fn multi_polygon_as_triangles(
     multi_polygon: &geo::MultiPolygon<f32>,
@@ -121,12 +116,6 @@ pub fn multi_polygon_as_triangles(
 ///
 /// This function yields all interior and exterior rings from the input geometry.
 /// Useful for physics backends that operate on polylines or linestrips.
-///
-/// # Arguments
-/// * `multi_polygon` - The input geometry to extract line strings from.
-///
-/// # Returns
-/// An iterator over the [`geo::LineString<f32>`] representing all rings in the geometry.
 pub fn multi_polygon_as_line_strings(
     multi_polygon: &geo::MultiPolygon<f32>,
 ) -> impl Iterator<Item = &geo::LineString<f32>> {

@@ -1,8 +1,8 @@
-//! ECS components for Tiled layers.
+//! Tiled layers: [`TiledLayer`] entities are children of their map, or of their group layer.
 //!
-//! This module defines Bevy components used to represent Tiled layers within the ECS world.
-//! The [`TiledLayer`] enum allows systems to identify and differentiate between various types of Tiled layers,
-//! such as tile layers, object layers, image layers, and group layers.
+//! Tiles of a [`TiledLayer::Tiles`] can be found by position using its [`TiledTileLayerStorage`].
+//!
+//! See the [entities hierarchy](https://adrien-bon.github.io/bevy_ecs_tiled/design/entities_hierarchy.html) for what each layer contains.
 
 use crate::prelude::*;
 use bevy::{platform::collections::HashMap, prelude::*};

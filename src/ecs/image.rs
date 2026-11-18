@@ -1,6 +1,4 @@
-//! ECS components for Tiled images.
-//!
-//! This module defines Bevy components used to represent Tiled images within the ECS world.
+//! Tiled images: the [`TiledImage`] child entity of a [`TiledLayer::Image`].
 
 use crate::prelude::*;
 use bevy::prelude::*;

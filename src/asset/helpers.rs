@@ -151,14 +151,6 @@ pub(crate) fn tilemap_offset(map_asset: &TiledMapAsset, tileset: &tiled::Tileset
 /// Projects Tiled isometric coordinates into scalar coordinates for Bevy.
 ///
 /// Used to convert isometric tile coordinates into world-space positions for rendering.
-///
-/// # Arguments
-/// - `coords`: The isometric coordinates to project.
-/// - `tilemap_size`: The size of the tilemap.
-/// - `grid_size`: The size of each tile on the grid in pixels.
-///
-/// # Returns
-/// The projected 2D coordinates as a [`Vec2`].
 pub(crate) fn iso_projection(
     coords: Vec2,
     tilemap_size: &TilemapSize,

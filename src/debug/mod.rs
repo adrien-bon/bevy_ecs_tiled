@@ -1,8 +1,8 @@
-//! Debugging tools for bevy_ecs_tiled.
+//! Debug gizmos for Tiled maps and worlds.
 //!
-//! This module provides plugins and utilities to help visualize and debug Tiled maps and worlds
-//! in your Bevy application. Enable the `debug` feature to use these plugins, which include
-//! gizmo overlays for objects, tiles, world streaming areas, maps bounding boxes, and axes.
+//! Add the [`TiledDebugPluginGroup`] to draw all of them, or only some of its plugins.
+//!
+//! Only available with the `debug` feature. See the [debug guide](https://adrien-bon.github.io/bevy_ecs_tiled/guides/debug.html).
 
 pub mod axis;
 #[cfg(feature = "physics")]

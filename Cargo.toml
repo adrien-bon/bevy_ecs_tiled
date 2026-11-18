@@ -79,6 +79,8 @@ bevy-inspector-egui = "0.38"
 # docs.rs-specific configuration
 [package.metadata.docs.rs]
 features = ["debug", "user_properties", "physics", "avian", "rapier"]
+# Show which features enable each item
+rustdoc-args = ["--cfg", "docsrs"]
 
 # cargo-all-features configuration
 [package.metadata.cargo-all-features]
@@ -143,27 +145,21 @@ name = "physics_avian_controller"
 required-features = ["avian_debug"]
 
 [[example]]
-name = "physics_avian_settings"
-required-features = ["avian_debug"]
-
-[[example]]
-name = "physics_avian_orientation"
-required-features = ["avian_debug"]
+name = "physics_orientation"
+# Also requires either the `avian_debug` or the `rapier_debug` feature
+required-features = ["physics", "debug"]
 
 [[example]]
 name = "physics_custom"
 required-features = ["physics"]
 
 [[example]]
+name = "physics_settings"
+# Also requires either the `avian_debug` or the `rapier_debug` feature
+required-features = ["physics", "debug"]
+
+[[example]]
 name = "physics_rapier_controller"
-required-features = ["rapier_debug"]
-
-[[example]]
-name = "physics_rapier_orientation"
-required-features = ["rapier_debug"]
-
-[[example]]
-name = "physics_rapier_settings"
 required-features = ["rapier_debug"]
 
 [[example]]

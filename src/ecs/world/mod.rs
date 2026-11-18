@@ -1,8 +1,8 @@
-//! Tiled world management and logic.
+//! Tiled worlds: spawn a [`TiledWorld`] to load all the maps of a `.world` file.
 //!
-//! This module contains the core logic for handling Tiled worlds, including loading, streaming, and managing
-//! multiple maps within a world. It organizes submodules and systems related to world storage, chunk visibility,
-//! and world-level events, providing the main entry point for Tiled world support
+//! Use [`TiledWorldStreaming`] to only spawn the maps around the camera.
+//!
+//! Only available with the `world` feature. See the [FAQ](https://adrien-bon.github.io/bevy_ecs_tiled/FAQ.html).
 
 pub mod storage;
 pub mod streaming;

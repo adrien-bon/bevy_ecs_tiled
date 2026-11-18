@@ -70,18 +70,14 @@ pub trait TiledPhysicsBackend:
     /// follow the collider (eg. a mesh to display it), use component hooks or observers.
     type Collider: Bundle;
 
-    /// Creates physics colliders for the given geometry.
+    /// Creates physics colliders for the given geometry, of the given `source` kind.
     ///
-    /// # Arguments
-    /// * `strategy` - How colliders should be created from the geometry. A backend which does not support
-    ///   all strategies is free to fall back to another one.
-    /// * `source` - The kind of Tiled item the colliders are created for.
-    /// * `geometry` - The [`geo::MultiPolygon<f32>`] representing the colliders shape, relative to
-    ///   the Tiled object or tiles layer entity.
+    /// The `geometry` is relative to the Tiled object or tiles layer entity.
+    /// The `strategy` tells how colliders should be created from it: a backend which does not support
+    /// all strategies is free to fall back to another one.
     ///
-    /// # Returns
-    /// The colliders to spawn for this geometry: usually a single one, but there can be several
-    /// (see [`TiledColliderStrategy::LineStrip`]) or none if the geometry is not supported.
+    /// Usually returns a single collider, but there can be several (see [`TiledColliderStrategy::LineStrip`])
+    /// or none if the geometry is not supported.
     ///
     /// See [`collider_shapes`](crate::physics::geometry::collider_shapes) for an helper converting the geometry to shapes
     /// which are easy to map to physics engines primitives.

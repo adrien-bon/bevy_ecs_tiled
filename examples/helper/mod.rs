@@ -12,6 +12,9 @@ pub mod assets;
 
 mod camera;
 mod map;
+#[cfg(any(feature = "avian_debug", feature = "rapier_debug"))]
+#[allow(dead_code)]
+pub mod physics;
 
 #[derive(Default)]
 pub struct HelperPlugin;

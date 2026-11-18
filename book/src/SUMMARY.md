@@ -6,6 +6,7 @@
 # Design & Explanation
 
 - [Why use Tiled ?](design/why_tiled.md)
+- [API overview](design/api_overview.md)
 - [Entities hierarchy and marker components](design/entities_hierarchy.md)
 - [Z-ordering](design/z_order.md)
 - [Map loading events](design/map_events.md)
