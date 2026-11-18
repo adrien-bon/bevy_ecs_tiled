@@ -105,7 +105,7 @@ struct SpawnContext<'a, 'w, 's> {
     /// Events sent once the whole map has been spawned
     layer_events: Vec<TiledEvent<LayerCreated>>,
     object_events: Vec<TiledEvent<ObjectCreated>>,
-    tile_events: Vec<TiledEvent<TileCreated>>,
+    tile_events: Vec<TiledEvent<TileWithPropertiesCreated>>,
     /// Tile objects, along with their tileset ID and tile ID
     #[cfg(feature = "user_properties")]
     tile_objects: Vec<(Entity, TilesetId, tiled::TileId)>,
@@ -340,7 +340,7 @@ impl SpawnContext<'_, '_, '_> {
                 .is_some_and(|tile| !tile.properties.is_empty())
             {
                 let tile_event = layer_event
-                    .with_event(Some(tile_entity), TileCreated)
+                    .with_event(Some(tile_entity), TileWithPropertiesCreated)
                     .with_tile(tile_entity, tile_pos, tileset_id, tile_id);
                 tile_events.push(tile_event);
             }

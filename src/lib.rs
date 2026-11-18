@@ -82,7 +82,8 @@ pub mod prelude {
         },
         ecs::{
             event::{
-                LayerCreated, MapCreated, ObjectCreated, TileCreated, TiledEvent, TilemapCreated,
+                LayerCreated, MapCreated, ObjectCreated, TileWithPropertiesCreated, TiledEvent,
+                TilemapCreated,
             },
             filter::{TiledFilter, TiledName},
             image::TiledImage,

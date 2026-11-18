@@ -345,7 +345,7 @@ pub struct TilemapCreated;
 /// See also [`TiledEvent`]
 #[derive(Clone, Copy, PartialEq, Debug, Reflect)]
 #[reflect(Clone, PartialEq)]
-pub struct TileCreated;
+pub struct TileWithPropertiesCreated;
 
 /// A [`TiledObject`] was created
 ///
@@ -365,7 +365,7 @@ pub(crate) struct TiledMessageWriters<'w> {
     /// Layer events writer
     pub layer_created: MessageWriter<'w, TiledEvent<LayerCreated>>,
     /// Tile events writer
-    pub tile_created: MessageWriter<'w, TiledEvent<TileCreated>>,
+    pub tile_created: MessageWriter<'w, TiledEvent<TileWithPropertiesCreated>>,
     /// Object events writer
     pub object_created: MessageWriter<'w, TiledEvent<ObjectCreated>>,
 }
@@ -386,8 +386,8 @@ pub(crate) fn plugin(app: &mut App) {
         .register_type::<TiledEvent<LayerCreated>>();
     app.add_message::<TiledEvent<TilemapCreated>>()
         .register_type::<TiledEvent<TilemapCreated>>();
-    app.add_message::<TiledEvent<TileCreated>>()
-        .register_type::<TiledEvent<TileCreated>>();
+    app.add_message::<TiledEvent<TileWithPropertiesCreated>>()
+        .register_type::<TiledEvent<TileWithPropertiesCreated>>();
     app.add_message::<TiledEvent<ObjectCreated>>()
         .register_type::<TiledEvent<ObjectCreated>>();
 }

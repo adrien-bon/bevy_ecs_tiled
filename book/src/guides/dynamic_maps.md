@@ -174,7 +174,7 @@ Without the `render` feature, the image is not loaded: `TiledImage` has no image
 
 ## Reacting to Changes
 
-[Map loading events](../design/map_events.md) (`MapCreated`, `LayerCreated`, `TileCreated`, `ObjectCreated`) are only sent when a map is loaded, not when you modify it afterwards.
+[Map loading events](../design/map_events.md) (`MapCreated`, `LayerCreated`, `TileWithPropertiesCreated`, `ObjectCreated`) are only sent when a map is loaded, not when you modify it afterwards.
 Two events are however sent when derived entities are spawned:
 
 - `TiledEvent<TilemapCreated>`, each time a tilemap is spawned: when the map is loaded, but also when a tile using a new tileset is added to a layer.

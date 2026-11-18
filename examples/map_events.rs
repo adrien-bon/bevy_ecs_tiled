@@ -106,12 +106,12 @@ fn obs_layer_created(
 // Callback for our global observer, triggered for all maps.
 // Events bubble up the entity hierarchy and a global observer runs once for each entity
 // the event bubbles through: use `is_original()` to only handle each event once.
-fn obs_global_tile_created(tile_created: On<TiledEvent<TileCreated>>) {
+fn obs_global_tile_created(tile_created: On<TiledEvent<TileWithPropertiesCreated>>) {
     if !tile_created.is_original() {
         return;
     }
     info!(
-        "=> Global observer TiledTileCreated was triggered for tile {:?} at {:?}",
+        "=> Global observer TileWithPropertiesCreated was triggered for tile {:?} at {:?}",
         tile_created.origin,
         tile_created.tile_pos()
     );
