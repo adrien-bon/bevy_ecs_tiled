@@ -18,6 +18,38 @@ use crate::asset::world::TiledWorldAsset;
 #[allow(unused_imports)]
 use crate::ecs::{layer::TiledLayer, map::TiledMap, object::TiledObject, tile::TiledTile};
 
+/// Kind of a [`TiledEvent`], such as [`MapCreated`] or [`LayerCreated`].
+///
+/// This trait is sealed: it is only implemented by the event kinds of this crate.
+pub trait TiledEventKind: sealed::Sealed + Debug + Clone + Copy + Reflect {}
+
+pub(crate) mod sealed {
+    /// Prevents [`TiledEventKind`](super::TiledEventKind) from being implemented outside of this crate.
+    pub trait Sealed {}
+}
+
+/// Implements [`TiledEventKind`] for the given types.
+macro_rules! impl_event_kind {
+    ($($kind:ty),* $(,)?) => {
+        $(
+            impl $crate::ecs::event::sealed::Sealed for $kind {}
+            impl $crate::ecs::event::TiledEventKind for $kind {}
+        )*
+    };
+}
+#[cfg(feature = "physics")]
+pub(crate) use impl_event_kind;
+
+impl_event_kind!(
+    MapCreated,
+    LayerCreated,
+    TilemapCreated,
+    TileWithPropertiesCreated,
+    ObjectCreated
+);
+#[cfg(feature = "world")]
+impl_event_kind!(WorldCreated);
+
 /// Wrapper around Tiled events
 ///
 /// Contains generic informations about origin of a particular Tiled event: the entities and assets
@@ -76,7 +108,7 @@ use crate::ecs::{layer::TiledLayer, map::TiledMap, object::TiledObject, tile::Ti
 #[derive(Message, EntityEvent, Clone, Copy, PartialEq, Debug, Reflect)]
 #[entity_event(auto_propagate, propagate = &'static ChildOf)]
 #[reflect(Debug, Clone)]
-pub struct TiledEvent<E: Debug + Clone + Copy + Reflect> {
+pub struct TiledEvent<E: TiledEventKind> {
     /// The entity currently observing this event: it changes while the event bubbles up the hierarchy.
     ///
     /// Do not modify it: use [`TiledEvent::origin`] to get the entity this event was sent for.
@@ -101,7 +133,7 @@ pub struct TiledEvent<E: Debug + Clone + Copy + Reflect> {
 
 impl<E> TiledEvent<E>
 where
-    E: Debug + Clone + Copy + Reflect,
+    E: TiledEventKind,
 {
     /// Creates a new [`TiledEvent`]
     pub(crate) fn new(origin: Entity, event: E) -> Self {
@@ -125,7 +157,7 @@ where
     /// If `origin` is [`None`], the new event keeps the origin of this one.
     pub(crate) fn with_event<O>(&self, origin: Option<Entity>, event: O) -> TiledEvent<O>
     where
-        O: Debug + Clone + Copy + Reflect,
+        O: TiledEventKind,
     {
         TiledEvent::<O> {
             entity: self.entity,
@@ -199,7 +231,7 @@ where
 
 impl<'a, E> TiledEvent<E>
 where
-    E: Debug + Clone + Copy + Reflect,
+    E: TiledEventKind,
 {
     /// Retrieve the [`TiledWorld`] [`Entity`] associated with this [`TiledEvent`]
     #[cfg(feature = "world")]

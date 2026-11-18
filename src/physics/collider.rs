@@ -168,6 +168,8 @@ pub struct ColliderCreated {
     pub source: TiledColliderSource,
 }
 
+crate::ecs::event::impl_event_kind!(ColliderCreated);
+
 pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledColliderSource>();
     app.register_type::<TiledColliderStrategy>();
