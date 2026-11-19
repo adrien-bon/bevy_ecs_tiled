@@ -71,7 +71,7 @@ Whatever their level in the hierarchy, entities spawned by `bevy_ecs_tiled` shar
 A world is the optional top of the tree.  
 Loading a `.world` asset gives you a [`TiledWorld`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/struct.TiledWorld.html) entity, which holds a handle to the corresponding [`TiledWorldAsset`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/world/struct.TiledWorldAsset.html).
 
-Each map of the world is spawned as a child of this entity.  
+Each map of the world is spawned as a child of this entity, with a [`TiledWorldReference`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/query/struct.TiledWorldReference.html) component giving its world and its `WorldMapId`: use the [`TiledWorldMaps`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/query/struct.TiledWorldMaps.html) system parameter to retrieve the spawned maps of a world.  
 All map-level settings can be added to the world entity: they are propagated down to every underlying map.
 
 ## Map

@@ -28,6 +28,7 @@ Everything listed here is in the prelude (`use bevy_ecs_tiled::prelude::*;`), un
 | Load a map | Add the [`TiledPlugin`][TiledPlugin], spawn a [`TiledMap`][TiledMap] |
 | Load a world | Spawn a [`TiledWorld`][TiledWorld] (`world` feature) |
 | Only spawn the maps of a world around the camera | [`TiledWorldStreaming`][TiledWorldStreaming] |
+| Find the spawned maps of a world | [`TiledWorldMaps`][TiledWorldMaps] system parameter, [`TiledWorldReference`][TiledWorldReference] on the map entity |
 | Reload a map | Insert [`RespawnTiledMap`][RespawnTiledMap], or a new `TiledMap` |
 | Place the map | `TilemapAnchor` and `Transform` on the map entity |
 | Change the Z offset between layers | [`TiledMapLayerZOffset`][TiledMapLayerZOffset] |
@@ -53,6 +54,8 @@ Everything listed here is in the prelude (`use bevy_ecs_tiled::prelude::*;`), un
 [TiledMap]: https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMap.html
 [TiledWorld]: https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/struct.TiledWorld.html
 [TiledWorldStreaming]: https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/streaming/enum.TiledWorldStreaming.html
+[TiledWorldMaps]: https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/query/struct.TiledWorldMaps.html
+[TiledWorldReference]: https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/query/struct.TiledWorldReference.html
 [RespawnTiledMap]: https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.RespawnTiledMap.html
 [TiledMapLayerZOffset]: https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapLayerZOffset.html
 [TiledEvent]: https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TiledEvent.html

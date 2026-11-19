@@ -6,7 +6,7 @@
 
 use crate::prelude::*;
 use bevy::{
-    platform::collections::HashSet,
+    platform::collections::{HashMap, HashSet},
     prelude::*,
     shape::{Aabb2d, IntersectsVolume},
 };
@@ -60,15 +60,15 @@ fn handle_world_streaming(
     maps: Res<Assets<TiledMapAsset>>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    mut world_query: Query<(
+    world_query: Query<(
         Entity,
         &TiledWorld,
         &GlobalTransform,
         &TiledWorldStreaming,
         &TilemapAnchor,
         super::TiledWorldInheritedSettings,
-        &mut TiledWorldStorage,
     )>,
+    maps_query: Query<(Entity, &TiledWorldReference)>,
 ) {
     for (
         world_entity,
@@ -77,8 +77,7 @@ fn handle_world_streaming(
         world_streaming,
         anchor,
         inherited_settings,
-        mut storage,
-    ) in world_query.iter_mut()
+    ) in world_query.iter()
     {
         // Make sure we have a valid reference on a fully loaded world asset
         let Some(tiled_world) = asset_server
@@ -92,6 +91,13 @@ fn handle_world_streaming(
         else {
             continue;
         };
+
+        // Maps of this world which are currently spawned
+        let spawned: HashMap<WorldMapId, Entity> = maps_query
+            .iter()
+            .filter(|(_, world_map)| world_map.world == world_entity)
+            .map(|(entity, world_map)| (world_map.map_id, entity))
+            .collect();
 
         let mut to_remove = Vec::new();
         let mut to_spawn = Vec::new();
@@ -118,30 +124,31 @@ fn handle_world_streaming(
 
             // All the maps that are visible but not already spawned should be spawned
             for idx in &visible_maps {
-                if !storage.maps.contains_key(idx) {
+                if !spawned.contains_key(idx) {
                     to_spawn.push(*idx);
                 }
             }
 
             // All the maps that are spawned but not visible should be removed
-            for (idx, _) in &storage.maps {
+            for (idx, map_entity) in &spawned {
                 if !visible_maps.contains(idx) {
-                    to_remove.push(*idx);
+                    to_remove.push((*idx, *map_entity));
                 }
             }
-        } else if storage.maps.is_empty() {
-            // No streaming and we don't have spawned any map yet: just spawn all maps
+        } else {
+            // No streaming: spawn all the maps which are not spawned yet
             for idx in 0..tiled_world.maps.len() {
-                to_spawn.push(WorldMapId(idx as u32));
+                let idx = WorldMapId(idx as u32);
+                if !spawned.contains_key(&idx) {
+                    to_spawn.push(idx);
+                }
             }
         }
 
         // Despawn maps
-        for idx in to_remove {
-            if let Some(map_entity) = storage.maps.remove(&idx) {
-                debug!("Despawn map (index = {}, entity = {:?})", idx, map_entity);
-                commands.entity(map_entity).despawn();
-            }
+        for (idx, map_entity) in to_remove {
+            debug!("Despawn map (index = {}, entity = {:?})", idx, map_entity);
+            commands.entity(map_entity).despawn();
         }
 
         // Spawn maps
@@ -163,6 +170,10 @@ fn handle_world_streaming(
             let map_entity = commands
                 .spawn((
                     ChildOf(world_entity),
+                    TiledWorldReference {
+                        world: world_entity,
+                        map_id: idx,
+                    },
                     TiledMap(handle.clone()),
                     Transform::from_translation(
                         (offset + Vec2::new(rect.min.x, rect.max.y) - map_origin).extend(0.0),
@@ -175,7 +186,6 @@ fn handle_world_streaming(
                 "Spawn map (index = {}, handle = {:?},  entity = {:?})",
                 idx, handle, map_entity
             );
-            storage.maps.insert(idx, map_entity);
         }
     }
 }
@@ -183,7 +193,7 @@ fn handle_world_streaming(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ecs::world::tests::load_world;
+    use crate::ecs::world::tests::{load_world, spawned_maps};
 
     fn streaming_app() -> App {
         let mut app = App::new();
@@ -211,17 +221,27 @@ mod tests {
             .id();
 
         // The camera never moves: maps must stay spawned over several frames
+        let mut first_map = None;
         for frame in 0..5 {
             app.update();
-            let storage = app
-                .world()
-                .get::<TiledWorldStorage>(world_entity)
-                .expect("world entity should have a storage");
+            let maps = spawned_maps(&mut app, world_entity);
             assert_eq!(
-                storage.maps.keys().copied().collect::<Vec<_>>(),
+                maps.iter().map(|(id, _)| *id).collect::<Vec<_>>(),
                 vec![WorldMapId(0)],
                 "unexpected spawned maps at frame {frame}"
             );
+            // The same map entity is kept
+            assert_eq!(*first_map.get_or_insert(maps[0].1), maps[0].1);
         }
+
+        // A map despawned outside of streaming is spawned again if visible
+        app.world_mut().entity_mut(first_map.unwrap()).despawn();
+        app.update();
+        let maps = spawned_maps(&mut app, world_entity);
+        assert_eq!(
+            maps.iter().map(|(id, _)| *id).collect::<Vec<_>>(),
+            vec![WorldMapId(0)]
+        );
+        assert_ne!(Some(maps[0].1), first_map);
     }
 }

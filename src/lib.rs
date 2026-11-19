@@ -110,7 +110,8 @@ pub mod prelude {
         ecs::{
             event::WorldCreated,
             world::{
-                RespawnTiledWorld, TiledWorld, storage::TiledWorldStorage,
+                RespawnTiledWorld, TiledWorld,
+                query::{TiledWorldMaps, TiledWorldReference},
                 streaming::TiledWorldStreaming,
             },
         },

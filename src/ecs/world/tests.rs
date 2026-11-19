@@ -85,6 +85,26 @@ pub(super) fn load_world(app: &mut App, path: &str) -> Handle<TiledWorldAsset> {
 }
 
 /// Run the app until all maps of the given world are spawned (no streaming)
+/// Returns the spawned maps of a world, sorted by ID
+pub(super) fn spawned_maps(app: &mut App, world_entity: Entity) -> Vec<(WorldMapId, Entity)> {
+    let mut maps = app
+        .world_mut()
+        .query::<(Entity, &TiledWorldReference)>()
+        .iter(app.world())
+        .filter(|(_, world_map)| world_map.world == world_entity)
+        .map(|(entity, world_map)| (world_map.map_id, entity))
+        .collect::<Vec<_>>();
+    maps.sort();
+    maps
+}
+
+/// Returns the entity of a spawned map of a world
+fn map_entity(app: &mut App, world_entity: Entity, map_id: WorldMapId) -> Option<Entity> {
+    spawned_maps(app, world_entity)
+        .into_iter()
+        .find_map(|(id, entity)| (id == map_id).then_some(entity))
+}
+
 fn spawn_world(app: &mut App, path: &str, anchor: TilemapAnchor) -> Entity {
     let handle = load_world(app, path);
     let maps_count = app
@@ -210,12 +230,14 @@ fn world_spawns_all_maps() {
             .unwrap()
             .maps
             .len();
-        let storage = world.get::<TiledWorldStorage>(world_entity).unwrap();
-        assert_eq!(storage.maps().count(), maps_count, "{path}");
-        for idx in 0..maps_count {
-            let map_entity = storage
-                .map_entity(WorldMapId(idx as u32))
-                .unwrap_or_else(|| panic!("{path}: map {idx} is not spawned"));
+        let maps = spawned_maps(&mut app, world_entity);
+        assert_eq!(
+            maps.iter().map(|(id, _)| id.0 as usize).collect::<Vec<_>>(),
+            (0..maps_count).collect::<Vec<_>>(),
+            "{path}"
+        );
+        let world = app.world();
+        for (idx, map_entity) in maps {
             assert_eq!(
                 world.get::<ChildOf>(map_entity).unwrap().parent(),
                 world_entity,
@@ -227,7 +249,13 @@ fn world_spawns_all_maps() {
         assert_eq!(events.worlds_created, vec![world_entity], "{path}");
         assert_eq!(events.maps_created.len(), maps_count, "{path}");
         for map_entity in &events.maps_created {
-            assert!(storage.map_id(*map_entity).is_some(), "{path}");
+            assert_eq!(
+                world
+                    .get::<TiledWorldReference>(*map_entity)
+                    .map(|m| m.world),
+                Some(world_entity),
+                "{path}"
+            );
         }
     }
 }
@@ -252,9 +280,9 @@ fn maps_match_world_layout() {
         for (anchor, top_left) in anchors(world_size) {
             let mut app = world_app();
             let world_entity = spawn_world(&mut app, path, anchor);
-            let storage = app.world().get::<TiledWorldStorage>(world_entity).unwrap();
             for (idx, tiled_rect) in tiled_rects.iter().enumerate() {
-                let map_entity = storage.map_entity(WorldMapId(idx as u32)).unwrap();
+                let map_entity =
+                    map_entity(&mut app, world_entity, WorldMapId(idx as u32)).unwrap();
                 // Tiled Y axis points down
                 let expected = Rect::from_corners(
                     top_left + Vec2::new(tiled_rect.min.x, -tiled_rect.min.y),
@@ -324,9 +352,10 @@ fn streaming_spawns_visible_maps() {
             for _ in 0..3 {
                 app.update();
             }
-            let storage = app.world().get::<TiledWorldStorage>(world_entity).unwrap();
-            let mut spawned: Vec<WorldMapId> = storage.maps().map(|(id, _)| id).collect();
-            spawned.sort();
+            let spawned: Vec<WorldMapId> = spawned_maps(&mut app, world_entity)
+                .into_iter()
+                .map(|(id, _)| id)
+                .collect();
             assert_eq!(spawned, expected, "{path}: camera centered on map {idx}");
         }
     }
@@ -348,9 +377,9 @@ fn adjacent_maps_grids_are_continuous() {
     for (path, columns) in worlds {
         let mut app = world_app();
         let world_entity = spawn_world(&mut app, path, TilemapAnchor::Center);
-        let storage = app.world().get::<TiledWorldStorage>(world_entity).unwrap();
-        let grids: Vec<MapGrid> = (0..storage.maps().count())
-            .map(|idx| MapGrid::new(&app, storage.map_entity(WorldMapId(idx as u32)).unwrap()))
+        let grids: Vec<MapGrid> = spawned_maps(&mut app, world_entity)
+            .into_iter()
+            .map(|(_, map_entity)| MapGrid::new(&app, map_entity))
             .collect();
 
         let mut check = |a: usize, b: usize, expected: Vec2, actual: Vec2, tile: (u32, u32)| {

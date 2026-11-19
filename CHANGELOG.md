@@ -18,6 +18,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Add `TiledEvent::tile_tileset_id()`, and `TiledEvent::is_original()` to tell the original event from its copies bubbling up the entity hierarchy
 - Add `TiledMapHelper` system parameter, retrieving the map asset and anchor of any Tiled entity, and the position of a tile
 - Add `TiledMapQuery` system parameter and its `TiledMapLayers`, `TiledMapTiles` and `TiledMapObjects` aliases, iterating over the layers, tiles or objects entities of a given map
+- Add `TiledWorldReference` component on the maps of a world, giving their world entity and `WorldMapId`, and `TiledWorldMaps` system parameter, iterating over the spawned maps of a given world or finding one from its `WorldMapId`
 - `TiledObject` implements `Display`, giving its kind (eg. `Rectangle`)
 - Add `SyncTiles`, `SyncRender` and `SyncPhysics` variants to `TiledPostUpdateSystems`
 - Tile objects inherit the custom properties of their tile, and tile properties are inserted on tiles and tile objects spawned after the map has been loaded
@@ -43,6 +44,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - `TiledTile` holds its tileset ID and tile ID, and `TiledTilemap` holds its tileset ID: `TiledTilesetId` and `TiledTileId` components are removed
 - `TiledLayerId` and `TiledObjectId` components are removed. `TiledEvent::layer_id()`, `layer()`, `object_id()` and `object()` are removed
 - `TiledMapStorage` component is removed: use the `TiledMapLayers`, `TiledMapTiles` and `TiledMapObjects` system parameters to iterate over the entities of a map
+- `TiledWorldStorage` component is removed: use the `TiledWorldMaps` system parameter and the `TiledWorldReference` component of maps
 - Tileset, layer and object IDs and world maps indexes use the dedicated `TilesetId`, `LayerId`, `ObjectId` and `WorldMapId` types instead of `u32`
 - `TileCreated` is renamed `TileWithPropertiesCreated`, and does not hold tilemap information anymore
 - `TiledObject::Tile` holds its tileset ID, tile ID and flip flags; `TiledObject::from_object_data()` takes the `TiledMapAsset` as first argument
@@ -87,6 +89,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Physics: a tiles layer or an object which does not produce any collider anymore (eg. all the tiles of the layer have been despawned) no longer keeps the collider previously inserted on its own entity by the Avian and Rapier backends
 - Physics: additional colliders of a tiles layer or an object (`LineStrip` strategy, or geometry simplification disabled) are despawned when colliders are spawned again, instead of piling up
 - World streaming: a map visible from several cameras is no longer spawned once per camera
+- World streaming: a map of a world despawned by the user is spawned again when it should be visible, instead of being considered as still spawned
 - Group layers can be retrieved from their ID (`TiledMapAsset::layer()`)
 - Tilesets and templates cache is actually cleared when a map is hot-reloaded, and a panic while using it no longer makes it unusable
 - Tilesets and templates with an upper case extension (eg. `.TSX`) are preloaded, so they can be used on WASM

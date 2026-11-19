@@ -145,15 +145,16 @@ fn handle_settings_update<T: TiledPhysicsBackend>(
     mut layers_query: TiledMapLayers<&mut TiledLayerColliders<T>>,
     objects_query: TiledMapObjects<Entity>,
     #[cfg(feature = "world")] worlds_query: Query<
-        (Ref<TiledPhysicsSettings<T>>, &TiledWorldStorage),
+        (Entity, Ref<TiledPhysicsSettings<T>>),
         With<TiledWorld>,
     >,
+    #[cfg(feature = "world")] world_maps: TiledWorldMaps<Entity>,
 ) {
     // Maps inherit the settings of their world: they are processed on next frame
     #[cfg(feature = "world")]
-    for (settings, storage) in worlds_query.iter() {
+    for (world, settings) in worlds_query.iter() {
         if settings.is_changed() && !settings.is_added() {
-            for (_, map) in storage.maps() {
+            for map in world_maps.iter(world) {
                 commands
                     .entity(map)
                     .try_insert(TiledPhysicsSettings::clone(&settings));

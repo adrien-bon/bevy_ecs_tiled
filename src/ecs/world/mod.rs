@@ -1,10 +1,11 @@
 //! Tiled worlds: spawn a [`TiledWorld`] to load all the maps of a `.world` file.
 //!
-//! Use [`TiledWorldStreaming`] to only spawn the maps around the camera.
+//! Use [`TiledWorldStreaming`] to only spawn the maps around the camera, and [`TiledWorldMaps`] to retrieve
+//! the spawned maps of a world.
 //!
 //! Only available with the `world` feature. See the [FAQ](https://adrien-bon.github.io/bevy_ecs_tiled/FAQ.html).
 
-pub mod storage;
+pub mod query;
 pub mod streaming;
 
 #[cfg(test)]
@@ -34,11 +35,7 @@ use bevy::{asset::RecursiveDependencyLoadState, prelude::*};
 /// ```
 #[derive(Component, Reflect, Clone, Debug, Deref, FromTemplate)]
 #[reflect(Component, Debug)]
-#[require(
-    TiledWorldStorage,
-    TiledWorldStreaming,
-    crate::ecs::map::TiledMapSettings
-)]
+#[require(TiledWorldStreaming, crate::ecs::map::TiledMapSettings)]
 pub struct TiledWorld(pub Handle<TiledWorldAsset>);
 
 /// Settings components of a [`TiledWorld`] which are passed on to each of its maps.
@@ -101,7 +98,7 @@ pub(crate) fn plugin(app: &mut bevy::prelude::App) {
         handle_world_events.in_set(TiledPostUpdateSystems::HandleWorldAssetEvents),
     );
 
-    app.add_plugins((storage::plugin, streaming::plugin));
+    app.add_plugins((query::plugin, streaming::plugin));
 }
 
 /// System to spawn a world once it has been fully loaded.
@@ -109,8 +106,8 @@ fn process_loaded_worlds(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     worlds: Res<Assets<TiledWorldAsset>>,
-    mut world_query: Query<
-        (Entity, &TiledWorld, &mut TiledWorldStorage),
+    world_query: Query<
+        (Entity, &TiledWorld),
         Or<(
             Changed<TiledWorld>,
             // If a world settings change, force a respawn so they can be taken into account
@@ -120,9 +117,10 @@ fn process_loaded_worlds(
             // it's read each frame by world_streaming() system
         )>,
     >,
+    world_maps: TiledWorldMaps<Entity>,
     mut message_writers: TiledMessageWriters,
 ) {
-    for (world_entity, world_handle, mut world_storage) in world_query.iter_mut() {
+    for (world_entity, world_handle) in world_query.iter() {
         if let Some(load_state) = asset_server.get_recursive_dependency_load_state(&world_handle.0)
         {
             if !load_state.is_loaded() {
@@ -159,7 +157,9 @@ fn process_loaded_worlds(
             );
 
             // Clean previous maps before trying to spawn the new ones
-            world_storage.clear(&mut commands);
+            for map in world_maps.iter(world_entity) {
+                commands.entity(map).despawn();
+            }
 
             // Remove the 'Respawn' marker and insert additional components
             // Actual map spawn is handled by world_streaming() system
