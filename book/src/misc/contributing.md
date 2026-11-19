@@ -73,7 +73,7 @@ It is ignored by default: run it in release mode to compare performance before a
 cargo test --release --all-features --lib perf -- --ignored --nocapture
 ```
 
-Each scenario is run several times (5 by default, or the value of the `PERF_RUNS` environment variable): the test prints the median and minimum duration of a frame, along with the time spent spawning map data and in the `SyncMapStorage`, `SyncRender` and `SyncPhysics` system sets.
+Each scenario is run several times (5 by default, or the value of the `PERF_RUNS` environment variable): the test prints the median and minimum duration of a frame, along with the time spent spawning map data and in the `SyncTiles`, `SyncRender` and `SyncPhysics` system sets.
 Measures can vary significantly from one run to another: when comparing two versions, alternate their runs rather than comparing runs made at different times.
 
 ---

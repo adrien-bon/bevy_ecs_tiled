@@ -75,20 +75,17 @@ impl Plugin for TiledDebugObjectsPlugin {
 }
 
 fn draw_debug_gizmos(
-    map_query: Query<(&TiledMap, &TiledMapStorage)>,
+    map_query: Query<(Entity, &TiledMap)>,
     assets: Res<Assets<TiledMapAsset>>,
-    object_query: Query<(&TiledObject, &GlobalTransform)>,
+    object_query: TiledMapObjects<(&TiledObject, &GlobalTransform)>,
     config: Res<TiledDebugObjectsConfig>,
     mut gizmos: Gizmos<TiledDebugGizmos>,
 ) {
-    for (tiled_map, storage) in map_query.iter() {
+    for (map_entity, tiled_map) in map_query.iter() {
         let Some(map_asset) = assets.get(&tiled_map.0) else {
             continue;
         };
-        for (idx, entity) in storage.objects().enumerate() {
-            let Ok((object, transform)) = object_query.get(entity) else {
-                continue;
-            };
+        for (idx, (object, transform)) in object_query.iter(map_entity).enumerate() {
             let color = config.objects_colors_list[idx % config.objects_colors_list.len()];
             let origin = Vec2::new(transform.translation().x, transform.translation().y);
             gizmos.arrow_2d(origin + config.arrow_length, origin, color);

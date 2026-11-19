@@ -48,12 +48,13 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 // We fire both an observer and a regular event, so you can also use an [`MessageReader`]
 fn evt_map_created(
     mut map_events: MessageReader<TiledEvent<MapCreated>>,
-    map_query: Query<(&Name, &TiledMapStorage), With<TiledMap>>,
+    map_query: Query<&Name, With<TiledMap>>,
+    objects_query: TiledMapObjects<(Entity, &TiledObject)>,
     assets: Res<Assets<TiledMapAsset>>,
 ) {
     for e in map_events.read() {
         // We can access the map components via a regular query
-        let Ok((name, storage)) = map_query.get(e.origin) else {
+        let Ok(name) = map_query.get(e.origin) else {
             return;
         };
 
@@ -65,15 +66,13 @@ fn evt_map_created(
         info!("=> Received TiledMapCreated event for map '{}'", name);
         info!("Loaded map: {:?}", map);
 
-        // Additionally, we can access Tiled items using the TiledMapStorage
-        // component from the map.
-        // Using this component, we can retrieve Tiled items entities and access
-        // their own components with another query (not shown here).
+        // Additionally, we can query the Tiled items of this map using the
+        // TiledMapLayers, TiledMapTiles and TiledMapObjects system parameters.
         // This can be useful if you want for instance to create a resource
         // based upon tiles or objects data but make it available only when
         // the map is actually spawned.
-        for entity in storage.objects() {
-            info!("(map) An object was spawned as entity {:?}", entity);
+        for (entity, object) in objects_query.iter(e.origin) {
+            info!("(map) {object} object was spawned as entity {entity:?}");
         }
     }
 }

@@ -150,36 +150,23 @@ fn on_add_spawn(
 // We can use it to do some global initialization
 fn on_map_created(
     map_created: On<TiledEvent<MapCreated>>,
-    map_query: Query<&TiledMapStorage, With<TiledMap>>,
-    tiles_query: Query<(&TilePos, Option<&Biome>, Option<&Resource>)>,
+    tiles_query: TiledMapTiles<(&TilePos, Option<&Biome>, Option<&Resource>)>,
 ) {
-    // Get the map entity and storage component
-    let map_entity = map_created.origin;
-    let Ok(map_storage) = map_query.get(map_entity) else {
-        return;
-    };
-
     // We will iterate over all tiles from our map and try to access our custom properties
-    for ((_tileset_id, _tile_id), entities_list) in map_storage.tiles() {
-        for tile_entity in entities_list {
-            let Ok((pos, biome, resource)) = tiles_query.get(*tile_entity) else {
-                continue;
-            };
+    for (pos, biome, resource) in tiles_query.iter(map_created.origin) {
+        // Here, we only print the content of our tile but we could also do some
+        // global initialization.
+        // A typical use case would be to initialize a resource so we can map a tile
+        // position to a biome and / or a resource (which could be useful for pathfinding)
 
-            // Here, we only print the content of our tile but we could also do some
-            // global initialization.
-            // A typical use case would be to initialize a resource so we can map a tile
-            // position to a biome and / or a resource (which could be useful for pathfinding)
+        if let Some(i) = biome {
+            // Only print the first tile to avoid flooding the console
+            info_once!("Found Biome [{:?} @ {:?}]", i, pos);
+        }
 
-            if let Some(i) = biome {
-                // Only print the first tile to avoid flooding the console
-                info_once!("Found Biome [{:?} @ {:?}]", i, pos);
-            }
-
-            if let Some(i) = resource {
-                // Only print the first tile to avoid flooding the console
-                info_once!("Found Resource [{:?} @ {:?}]", i, pos);
-            }
+        if let Some(i) = resource {
+            // Only print the first tile to avoid flooding the console
+            info_once!("Found Resource [{:?} @ {:?}]", i, pos);
         }
     }
 }

@@ -9,10 +9,7 @@
 //! when these data are modified after the map has been spawned.
 
 use crate::{
-    ecs::{
-        event::TiledMessageWriters, map::storage::TiledTileStorageIndex,
-        tile::TiledTileIndexedPosition,
-    },
+    ecs::{event::TiledMessageWriters, tile::TiledTileIndexedPosition},
     prelude::*,
 };
 use bevy::prelude::*;
@@ -29,7 +26,6 @@ pub(crate) fn spawn_map(
     map_entity: Entity,
     map_asset_id: AssetId<TiledMapAsset>,
     tiled_map: &TiledMapAsset,
-    map_storage: &mut TiledMapStorage,
     layer_z_offset: &TiledMapLayerZOffset,
     message_writers: &mut TiledMessageWriters,
     anchor: &TilemapAnchor,
@@ -48,7 +44,6 @@ pub(crate) fn spawn_map(
         commands,
         tiled_map,
         map_entity,
-        map_storage,
         anchor,
         layer_z_offset: layer_z_offset.0,
         // Order of the differents layers in the .TMX file is important:
@@ -59,7 +54,7 @@ pub(crate) fn spawn_map(
         object_events: Vec::new(),
         tile_events: Vec::new(),
         #[cfg(feature = "user_properties")]
-        tile_objects: Vec::new(),
+        tile_entities: Vec::new(),
         #[cfg(feature = "user_properties")]
         layer_entities: HashMap::default(),
         #[cfg(feature = "user_properties")]
@@ -96,7 +91,6 @@ struct SpawnContext<'a, 'w, 's> {
     commands: &'a mut Commands<'w, 's>,
     tiled_map: &'a TiledMapAsset,
     map_entity: Entity,
-    map_storage: &'a mut TiledMapStorage,
     anchor: &'a TilemapAnchor,
     /// Z offset between two consecutive layers
     layer_z_offset: f32,
@@ -106,9 +100,9 @@ struct SpawnContext<'a, 'w, 's> {
     layer_events: Vec<TiledEvent<LayerCreated>>,
     object_events: Vec<TiledEvent<ObjectCreated>>,
     tile_events: Vec<TiledEvent<TileWithPropertiesCreated>>,
-    /// Tile objects, along with their tileset ID and tile ID
+    /// Tile objects and tiles with properties, along with their tileset ID and tile ID
     #[cfg(feature = "user_properties")]
-    tile_objects: Vec<(Entity, TilesetId, tiled::TileId)>,
+    tile_entities: Vec<(Entity, TilesetId, tiled::TileId)>,
     /// Spawned layers, by Tiled layer ID
     #[cfg(feature = "user_properties")]
     layer_entities: HashMap<LayerId, Entity>,
@@ -120,7 +114,7 @@ struct SpawnContext<'a, 'w, 's> {
 /// Marker for the entities whose tile properties have been inserted when spawning the map.
 ///
 /// Tile properties of tiles and tile objects added after the map has been spawned are inserted
-/// in [`TiledPostUpdateSystems::SyncMapStorage`]: this marker prevents inserting them twice.
+/// in [`TiledPostUpdateSystems::SyncTiles`]: this marker prevents inserting them twice.
 ///
 /// The marker is never removed: if the [`TiledTile`] (or [`TiledObject`]) component of such an entity
 /// is removed then inserted again, tile properties are not inserted again. This is not a supported
@@ -167,7 +161,6 @@ impl SpawnContext<'_, '_, '_> {
     #[cfg(feature = "user_properties")]
     fn insert_properties(&mut self) {
         let commands = &mut *self.commands;
-        let map_storage = &*self.map_storage;
         let mut props = self
             .tiled_map
             .properties
@@ -178,9 +171,9 @@ impl SpawnContext<'_, '_, '_> {
             .entity(self.map_entity)
             .insert_properties(props.map);
 
-        // Tile objects inherit the properties of their tile: insert them before
+        // Tiles and tile objects inherit the properties of their tile: insert them before
         // the object own properties, so the latter take precedence
-        for &(entity, tileset_id, tile_id) in &self.tile_objects {
+        for &(entity, tileset_id, tile_id) in &self.tile_entities {
             if let Some(p) = props.tiles.get(&tileset_id).and_then(|t| t.get(&tile_id)) {
                 commands.entity(entity).insert_properties(p.clone());
             }
@@ -195,15 +188,6 @@ impl SpawnContext<'_, '_, '_> {
         for (id, &entity) in &self.layer_entities {
             if let Some(p) = props.layers.remove(id) {
                 commands.entity(entity).insert_properties(p);
-            }
-        }
-
-        for (id, entities) in &map_storage.tiles {
-            let Some(p) = props.tiles.get(&id.0).and_then(|e| e.get(&id.1)) else {
-                continue;
-            };
-            for &entity in entities {
-                commands.entity(entity).insert_properties(p.clone());
             }
         }
     }
@@ -303,7 +287,8 @@ impl SpawnContext<'_, '_, '_> {
         let tiled_map = self.tiled_map;
         let map_entity = self.map_entity;
         let commands = &mut *self.commands;
-        let map_storage = &mut *self.map_storage;
+        #[cfg(feature = "user_properties")]
+        let tile_entities = &mut self.tile_entities;
         let tile_events = &mut self.tile_events;
         let layer_entity = layer_event.origin;
         let mut layer_storage = TiledTileLayerStorage::default();
@@ -313,8 +298,6 @@ impl SpawnContext<'_, '_, '_> {
         tiled_map.for_each_tile(&tiles_layer, |layer_tile, layer_tile_data, tile_pos, _| {
             let tileset_id = TilesetId(layer_tile.tileset_index() as u32);
             let tile_id = layer_tile.id();
-            let key = (tileset_id, tile_id);
-            let storage_index = map_storage.next_tile_index(key);
             let tile_entity = commands
                 .spawn((
                     tile_name(&tile_pos),
@@ -328,7 +311,6 @@ impl SpawnContext<'_, '_, '_> {
                     },
                     ChildOf(layer_entity),
                     TiledMapReference(map_entity),
-                    TiledTileStorageIndex(Some((key, storage_index))),
                     TiledTileIndexedPosition(Some(tile_pos)),
                     TILE_PROPERTIES_INSERTED,
                 ))
@@ -343,12 +325,11 @@ impl SpawnContext<'_, '_, '_> {
                     .with_event(Some(tile_entity), TileWithPropertiesCreated)
                     .with_tile(tile_entity, tile_pos, tileset_id, tile_id);
                 tile_events.push(tile_event);
+                #[cfg(feature = "user_properties")]
+                tile_entities.push((tile_entity, tileset_id, tile_id));
             }
 
-            // Update map storage with tile entity
-            let index = map_storage.insert_tile(key, tile_entity);
-            debug_assert_eq!(index, storage_index);
-            // Index the tile position right away, so it does not need to be indexed in `TiledPostUpdateSystems::SyncMapStorage`
+            // Index the tile position right away, so it does not need to be indexed in `TiledPostUpdateSystems::SyncTiles`
             layer_storage.set(tile_pos, tile_entity);
         });
         commands.entity(layer_entity).insert(layer_storage);
@@ -366,7 +347,7 @@ impl SpawnContext<'_, '_, '_> {
         let object_entities = &mut self.object_entities;
         let object_events = &mut self.object_events;
         #[cfg(feature = "user_properties")]
-        let tile_objects = &mut self.tile_objects;
+        let tile_entities = &mut self.tile_entities;
         for (index, object_data) in object_layer.objects().enumerate() {
             let tiled_object = TiledObject::from_object_data(tiled_map, &object_data);
             #[cfg(feature = "user_properties")]
@@ -420,7 +401,7 @@ impl SpawnContext<'_, '_, '_> {
 
             #[cfg(feature = "user_properties")]
             if let Some((tileset_id, tile_id)) = object_tile {
-                tile_objects.push((object_entity, tileset_id, tile_id));
+                tile_entities.push((object_entity, tileset_id, tile_id));
             }
 
             #[cfg(feature = "user_properties")]

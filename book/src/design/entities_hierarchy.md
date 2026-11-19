@@ -80,7 +80,7 @@ Loading a `.tmx` asset gives you a [`TiledMap`](https://docs.rs/bevy_ecs_tiled/l
 It is the top of the tree, unless the map belongs to a world.
 
 This is where you put map-level settings, such as the [`TilemapAnchor`](https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/anchor/enum.TilemapAnchor.html) or the [`TiledMapLayerZOffset`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapLayerZOffset.html).  
-It also holds a [`TiledMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/storage/struct.TiledMapStorage.html) component, which maps Tiled IDs to the spawned entities and the other way around.
+All the entities spawned from the map have a [`TiledMapReference`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapReference.html) to the map entity: use the [`TiledMapLayers`, `TiledMapTiles` and `TiledMapObjects`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/query/struct.TiledMapQuery.html) system parameters to iterate over the entities of a given map.
 
 ## Layers
 

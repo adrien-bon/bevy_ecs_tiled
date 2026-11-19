@@ -45,7 +45,7 @@ pub fn export_types(
 pub(crate) fn plugin(app: &mut App) {
     app.add_systems(
         PostUpdate,
-        insert_tile_properties.in_set(TiledPostUpdateSystems::SyncMapStorage),
+        insert_tile_properties.in_set(TiledPostUpdateSystems::SyncTiles),
     );
     app.add_systems(
         Startup,

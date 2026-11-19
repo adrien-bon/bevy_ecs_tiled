@@ -12,7 +12,7 @@ const DYNAMIC_MAP: &str = "tests/dynamic/dynamic_map.tmx";
 struct Received {
     tilemaps_created: Vec<Entity>,
     /// Layers, tiles and objects found in map storage when receiving [`MapCreated`]
-    storage_on_map_created: Option<(usize, usize, usize)>,
+    entities_on_map_created: Option<(usize, usize, usize)>,
 }
 
 /// Build an [`App`] with all the plugin internals but without bevy_ecs_tilemap
@@ -53,12 +53,13 @@ pub(crate) fn test_app() -> App {
     app.add_observer(
         |ev: On<TiledEvent<MapCreated>>,
          mut received: ResMut<Received>,
-         storage_query: Query<&TiledMapStorage>| {
-            let storage = storage_query.get(ev.origin).unwrap();
-            received.storage_on_map_created = Some((
-                storage.layers().count(),
-                storage.tiles().map(|(_, e)| e.len()).sum(),
-                storage.objects().count(),
+         layers: TiledMapLayers<Entity>,
+         tiles: TiledMapTiles<Entity>,
+         objects: TiledMapObjects<Entity>| {
+            received.entities_on_map_created = Some((
+                layers.iter(ev.origin).count(),
+                tiles.iter(ev.origin).count(),
+                objects.iter(ev.origin).count(),
             ));
         },
     );
@@ -90,7 +91,7 @@ fn spawn_map_with(app: &mut App, path: &str, bundle: impl Bundle) -> Entity {
     while app
         .world()
         .resource::<Received>()
-        .storage_on_map_created
+        .entities_on_map_created
         .is_none()
     {
         assert!(Instant::now() < deadline, "test map did not spawn in time");
@@ -122,12 +123,28 @@ fn tile_at(app: &mut App, layer: Entity, pos: TilePos) -> Entity {
         .map_or_else(|| panic!("missing tile at {pos:?}"), |(e, _, _)| e)
 }
 
-/// Returns the tileset ID + tile ID under which a tile is registered in the map storage
-fn storage_key(storage: &TiledMapStorage, entity: Entity) -> Option<(TilesetId, tiled::TileId)> {
-    storage
-        .tiles()
-        .find(|(_, entities)| entities.contains(&entity))
-        .map(|(key, _)| key)
+/// Returns the entities of a map matching the filter, sorted
+fn map_entities<F: bevy::ecs::query::QueryFilter>(app: &mut App, map: Entity) -> Vec<Entity> {
+    let mut entities = app
+        .world_mut()
+        .query_filtered::<(Entity, &TiledMapReference), F>()
+        .iter(app.world())
+        .filter_map(|(e, map_ref)| (map_ref.0 == map).then_some(e))
+        .collect::<Vec<_>>();
+    entities.sort();
+    entities
+}
+
+/// Returns the entities of a given tile of a map, sorted
+fn map_tiles_of_kind(app: &mut App, map: Entity, tile: TiledTile) -> Vec<Entity> {
+    let mut entities = app
+        .world_mut()
+        .query::<(Entity, &TiledTile, &TiledMapReference)>()
+        .iter(app.world())
+        .filter_map(|(e, t, map_ref)| (map_ref.0 == map && *t == tile).then_some(e))
+        .collect::<Vec<_>>();
+    entities.sort();
+    entities
 }
 
 #[cfg(feature = "render")]
@@ -170,7 +187,7 @@ fn map_load_spawns_data_and_render_components() {
 
     // Created events are only sent once all the map data have been spawned
     assert_eq!(
-        app.world().resource::<Received>().storage_on_map_created,
+        app.world().resource::<Received>().entities_on_map_created,
         Some((3, 4, 3))
     );
 
@@ -221,9 +238,7 @@ fn despawning_tiles_updates_tilemaps_and_storage() {
     // Tilemap does not contain any tile anymore: it has been despawned
     assert!(app.world().get_entity(tilemap).is_err());
     assert_eq!(tilemaps_count(&app, ground), 1);
-    let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    assert!(storage.tile_entities(TilesetId(1), 1).is_empty());
-    assert_eq!(storage_key(storage, tile), None);
+    assert!(map_tiles_of_kind(&mut app, map, TiledTile::new(TilesetId(1), 1)).is_empty());
 
     // Despawn a tile which shares its tilemap with another one
     let tile = tile_at(&mut app, ground, TilePos::new(0, 3));
@@ -232,15 +247,17 @@ fn despawning_tiles_updates_tilemaps_and_storage() {
     app.update();
     assert_eq!(storage_at(&app, tilemap, TilePos::new(0, 3)), None);
     assert!(storage_at(&app, tilemap, TilePos::new(1, 3)).is_some());
-    let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    assert_eq!(storage.tile_entities(TilesetId(0), 0).len(), 1);
+    assert_eq!(
+        map_tiles_of_kind(&mut app, map, TiledTile::new(TilesetId(0), 0)).len(),
+        1
+    );
 }
 
 #[test]
 #[cfg(feature = "render")]
 fn modifying_tiles_updates_tilemaps_and_storage() {
     let mut app = test_app();
-    let map = spawn_test_map(&mut app);
+    spawn_test_map(&mut app);
     let ground = layer_by_name(&mut app, "ground");
     let tilemap_0 = tilemap_of(&app, ground, TilesetId(0)).unwrap();
     let tilemap_1 = tilemap_of(&app, ground, TilesetId(1)).unwrap();
@@ -259,8 +276,6 @@ fn modifying_tiles_updates_tilemaps_and_storage() {
         app.world().get::<TileTextureIndex>(tile),
         Some(&TileTextureIndex(3))
     );
-    let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    assert_eq!(storage_key(storage, tile), Some((TilesetId(0), 3)));
 
     // Change its tileset: it moves to the other tilemap of the layer
     app.world_mut()
@@ -274,8 +289,6 @@ fn modifying_tiles_updates_tilemaps_and_storage() {
     );
     assert_eq!(storage_at(&app, tilemap_0, TilePos::new(2, 2)), None);
     assert_eq!(storage_at(&app, tilemap_1, TilePos::new(2, 2)), Some(tile));
-    let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    assert_eq!(storage_key(storage, tile), Some((TilesetId(1), 3)));
 }
 
 #[test]
@@ -304,8 +317,10 @@ fn spawning_tiles_creates_tilemaps() {
         Some(&tilemap)
     );
     assert_eq!(app.world().get::<TiledMapReference>(tile).unwrap().0, map);
-    let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    assert_eq!(storage.tile_entities(TilesetId(1), 2), &[tile]);
+    assert_eq!(
+        map_tiles_of_kind(&mut app, map, TiledTile::new(TilesetId(1), 2)),
+        vec![tile]
+    );
 }
 
 #[test]
@@ -436,7 +451,7 @@ fn layer_tiles(app: &mut App, layer: Entity) -> Vec<(TilePos, Entity)> {
 #[test]
 fn moving_a_tile_onto_another_replaces_it() {
     let mut app = test_app();
-    let map = spawn_test_map(&mut app);
+    spawn_test_map(&mut app);
     let ground = layer_by_name(&mut app, "ground");
     let a = tile_at(&mut app, ground, TilePos::new(0, 3));
     let b = tile_at(&mut app, ground, TilePos::new(1, 3));
@@ -445,8 +460,6 @@ fn moving_a_tile_onto_another_replaces_it() {
     *app.world_mut().get_mut::<TilePos>(a).unwrap() = TilePos::new(1, 3);
     app.update();
     assert!(app.world().get_entity(b).is_err());
-    let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    assert_eq!(storage_key(storage, b), None);
     assert_eq!(layer_index(&app, ground), layer_tiles(&mut app, ground));
 
     #[cfg(feature = "render")]
@@ -619,8 +632,7 @@ fn spawned_objects_inherit_map_reference() {
     app.update();
 
     assert_eq!(app.world().get::<TiledMapReference>(object).unwrap().0, map);
-    let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    assert_eq!(storage.objects().last(), Some(object));
+    assert!(map_entities::<With<TiledObject>>(&mut app, map).contains(&object));
     #[cfg(feature = "render")]
     assert_eq!(
         app.world()
@@ -631,35 +643,28 @@ fn spawned_objects_inherit_map_reference() {
 }
 
 #[test]
-fn storage_lists_layers_and_objects_in_map_order() {
+fn map_entities_are_respawned_with_the_map() {
     let mut app = test_app();
     let map = spawn_test_map(&mut app);
-    let layers = ["ground", "decoration", "objects"].map(|n| layer_by_name(&mut app, n));
-    let objects = ["tile_object", "tile_object_with_override", "rectangle"]
+    let mut layers = ["ground", "decoration", "objects"].map(|n| layer_by_name(&mut app, n));
+    let mut objects = ["tile_object", "tile_object_with_override", "rectangle"]
         .map(|n| object_by_name(&mut app, n));
+    layers.sort();
+    objects.sort();
+    assert_eq!(map_entities::<With<TiledLayer>>(&mut app, map), layers);
+    assert_eq!(map_entities::<With<TiledObject>>(&mut app, map), objects);
 
-    let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    assert_eq!(storage.layers().collect::<Vec<_>>(), layers);
-    assert_eq!(storage.objects().collect::<Vec<_>>(), objects);
-
-    // Despawned objects are removed from the storage, keeping the order of the other ones
-    app.world_mut().entity_mut(objects[1]).despawn();
-    app.update();
-    let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    assert_eq!(
-        storage.objects().collect::<Vec<_>>(),
-        vec![objects[0], objects[2]]
-    );
-
-    // Respawning the map registers new entities only
+    // Respawning the map despawns the previous entities
     app.world_mut().entity_mut(map).insert(RespawnTiledMap);
     app.update();
     app.update();
-    let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    assert_eq!(storage.layers().count(), 3);
-    assert_eq!(storage.objects().count(), 3);
-    assert!(storage.layers().all(|e| !layers.contains(&e)));
-    assert!(storage.objects().all(|e| !objects.contains(&e)));
+    let new_layers = map_entities::<With<TiledLayer>>(&mut app, map);
+    let new_objects = map_entities::<With<TiledObject>>(&mut app, map);
+    assert_eq!(new_layers.len(), 3);
+    assert_eq!(new_objects.len(), 3);
+    assert!(new_layers.iter().all(|e| !layers.contains(e)));
+    assert!(new_objects.iter().all(|e| !objects.contains(e)));
+    assert!(layers.iter().all(|e| app.world().get_entity(*e).is_err()));
 }
 
 #[test]
@@ -734,28 +739,8 @@ fn assert_tilemaps_count_match_storage(app: &mut App) {
     }
 }
 
-/// Check that the map storage matches the actual tiles, and that each tile knows its index in it
-fn assert_storage_matches_tiles(app: &mut App, map: Entity) {
-    use crate::ecs::map::storage::TiledTileStorageIndex;
-
-    let tiles = app
-        .world_mut()
-        .query::<(Entity, &TiledTile, &TiledTileStorageIndex)>()
-        .iter(app.world())
-        .map(|(e, tile, index)| (e, (tile.tileset_id, tile.tile_id), index.0))
-        .collect::<Vec<_>>();
-    let storage = app.world().get::<TiledMapStorage>(map).unwrap();
-    assert_eq!(
-        storage.tiles().map(|(_, e)| e.len()).sum::<usize>(),
-        tiles.len()
-    );
-    for (entity, key, index) in tiles {
-        let entities = storage.tile_entities(key.0, key.1);
-        let position = entities.iter().position(|e| *e == entity);
-        assert!(position.is_some(), "tile {entity} is not in storage");
-        assert_eq!(index, Some((key, position.unwrap())));
-    }
-
+/// Check that the layers storages match the actual tiles
+fn assert_storage_matches_tiles(app: &mut App) {
     // Layers storages hold exactly the tiles of each layer, at their position
     let layers = app
         .world_mut()
@@ -773,10 +758,10 @@ fn assert_storage_matches_tiles(app: &mut App, map: Entity) {
 #[test]
 fn storage_indexes_tiles_positions() {
     let mut app = test_app();
-    let map = spawn_test_map(&mut app);
+    spawn_test_map(&mut app);
     let ground = layer_by_name(&mut app, "ground");
     let decoration = layer_by_name(&mut app, "decoration");
-    assert_storage_matches_tiles(&mut app, map);
+    assert_storage_matches_tiles(&mut app);
 
     let a = tile_at(&mut app, ground, TilePos::new(0, 3));
     let b = tile_at(&mut app, ground, TilePos::new(1, 3));
@@ -808,7 +793,7 @@ fn storage_indexes_tiles_positions() {
     let mut expected = vec![a, c];
     expected.sort();
     assert_eq!(tiles_at(&app, 0, 3), expected);
-    assert_storage_matches_tiles(&mut app, map);
+    assert_storage_matches_tiles(&mut app);
 
     // Moving B onto A replaces A, but not C which is in another layer
     *app.world_mut().get_mut::<TilePos>(b).unwrap() = TilePos::new(0, 3);
@@ -817,27 +802,27 @@ fn storage_indexes_tiles_positions() {
     expected.sort();
     assert_eq!(tiles_at(&app, 0, 3), expected);
     assert!(tiles_at(&app, 1, 3).is_empty());
-    assert_storage_matches_tiles(&mut app, map);
+    assert_storage_matches_tiles(&mut app);
 
     // Despawning a tile removes it from its position
     app.world_mut().entity_mut(c).despawn();
     app.update();
     assert_eq!(tiles_at(&app, 0, 3), vec![b]);
-    assert_storage_matches_tiles(&mut app, map);
+    assert_storage_matches_tiles(&mut app);
 
     // Removing the TiledTile component as well
     app.world_mut().entity_mut(b).remove::<TiledTile>();
     app.update();
     assert!(tiles_at(&app, 0, 3).is_empty());
-    assert_storage_matches_tiles(&mut app, map);
+    assert_storage_matches_tiles(&mut app);
 }
 
 #[test]
 fn storage_follows_tiles() {
     let mut app = test_app();
-    let map = spawn_test_map(&mut app);
+    spawn_test_map(&mut app);
     let ground = layer_by_name(&mut app, "ground");
-    assert_storage_matches_tiles(&mut app, map);
+    assert_storage_matches_tiles(&mut app);
 
     // Several tiles sharing the same tileset ID + tile ID
     let tiles = (0..6)
@@ -852,7 +837,7 @@ fn storage_follows_tiles() {
         })
         .collect::<Vec<_>>();
     app.update();
-    assert_storage_matches_tiles(&mut app, map);
+    assert_storage_matches_tiles(&mut app);
 
     // Despawn some of them and change the tile ID of others
     app.world_mut().entity_mut(tiles[0]).despawn();
@@ -866,7 +851,7 @@ fn storage_follows_tiles() {
         .unwrap()
         .tileset_id = TilesetId(1);
     app.update();
-    assert_storage_matches_tiles(&mut app, map);
+    assert_storage_matches_tiles(&mut app);
 
     app.world_mut().entity_mut(tiles[2]).despawn();
     app.world_mut()
@@ -874,7 +859,7 @@ fn storage_follows_tiles() {
         .unwrap()
         .tile_id = 0;
     app.update();
-    assert_storage_matches_tiles(&mut app, map);
+    assert_storage_matches_tiles(&mut app);
 }
 
 /// A map entity whose asset is not available yet, with a single tile
@@ -1018,8 +1003,9 @@ fn tiled_plugin_only_requires_asset_plugin() {
     let deadline = Instant::now() + Duration::from_secs(10);
     while app
         .world()
-        .get::<TiledMapStorage>(map)
-        .is_none_or(|storage| storage.layers().count() == 0)
+        .query_filtered::<&TiledMapReference, With<TiledLayer>>()
+        .iter(app.world())
+        .all(|map_ref| map_ref.0 != map)
     {
         assert!(Instant::now() < deadline, "test map did not spawn in time");
         app.update();
@@ -2290,10 +2276,10 @@ mod perf {
             (
                 start_step
                     .after(TiledPostUpdateSystems::HandleMapAssetEvents)
-                    .before(TiledPostUpdateSystems::SyncMapStorage),
+                    .before(TiledPostUpdateSystems::SyncTiles),
                 (end_step::<1>, start_step)
                     .chain()
-                    .after(TiledPostUpdateSystems::SyncMapStorage)
+                    .after(TiledPostUpdateSystems::SyncTiles)
                     .before(TiledPostUpdateSystems::SyncRender),
                 (end_step::<2>, start_step)
                     .chain()
@@ -2383,7 +2369,7 @@ mod perf {
         while app
             .world()
             .resource::<Received>()
-            .storage_on_map_created
+            .entities_on_map_created
             .is_none()
         {
             let frame = measure(&mut app, 1, |_| {});
@@ -2458,14 +2444,7 @@ mod perf {
             app.world_mut().entity_mut(objects_layer).despawn();
         });
         measures.push((format!("despawn {OBJECTS} objects layer"), despawn_objects));
-        assert_eq!(
-            app.world()
-                .get::<TiledMapStorage>(map)
-                .unwrap()
-                .objects()
-                .count(),
-            0
-        );
+        assert!(map_entities::<With<TiledObject>>(&mut app, map).is_empty());
 
         // Despawn the whole map
         let despawn_map = measure(&mut app, 1, |app| {

@@ -23,7 +23,7 @@ Tiled data are the source of truth: when they change, derived entities are updat
 | System set | What is updated |
 | --- | --- |
 | `First` | A [`TiledMapReference`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapReference.html) is inserted on new tiles and objects which do not have one. |
-| `SyncMapStorage` | Tiles are registered in the map [`TiledMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/storage/struct.TiledMapStorage.html), and a tile moved onto another one replaces it. |
+| `SyncTiles` | Tiles are registered in the [`TiledTileLayerStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/struct.TiledTileLayerStorage.html) of their layer, and a tile moved onto another one replaces it. |
 | `SyncRender` | Tilemaps, objects visuals and images sprites are spawned, updated or despawned. |
 | `SyncPhysics` | Physics colliders are spawned again. |
 
@@ -182,9 +182,8 @@ Two events are however sent when derived entities are spawned:
 
 For instance, if you add a `RigidBody` to colliders when receiving `ColliderCreated` (see the [physics guide](physics.md)), new colliders will get it as well.
 
-The map [`TiledMapStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/storage/struct.TiledMapStorage.html) is also kept up to date, so you can keep using it to list the layers and objects of the map, or to find the entities of a given tile (`tile_entities()`).
+Entities spawned at runtime get a `TiledMapReference` to their map, so the [`TiledMapLayers`, `TiledMapTiles` and `TiledMapObjects`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/query/struct.TiledMapQuery.html) system parameters list them along with the ones spawned with the map.
 To find the tile at a given position of a layer, use the [`TiledTileLayerStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/struct.TiledTileLayerStorage.html) component of this layer.
-Layers and objects spawned at runtime are listed after the ones spawned along with the map.
 
 ---
 

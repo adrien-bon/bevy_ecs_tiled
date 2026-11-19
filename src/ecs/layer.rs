@@ -42,7 +42,7 @@ pub enum TiledLayer {
 /// [`TiledLayer::Tiles`] ones: a position of a tiles layer holds at most one tile.
 ///
 /// It is kept up to date when tiles are added, moved or removed after the map has been spawned.
-/// Note that new or moved tiles are only registered during [`TiledPostUpdateSystems::SyncMapStorage`].
+/// Note that new or moved tiles are only registered during [`TiledPostUpdateSystems::SyncTiles`].
 ///
 /// Example:
 /// ```rust,no_run

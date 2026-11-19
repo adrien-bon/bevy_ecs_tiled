@@ -1,13 +1,13 @@
 //! Tiled maps: spawn a [`TiledMap`] to load and display a `.tmx` map.
 //!
 //! Settings of the map ([`TiledMapLayerZOffset`], [`TiledMapImageRepeatMargin`], `TilemapAnchor`,
-//! `TilemapRenderSettings`) are components of the map entity, and [`TiledMapStorage`] gives access to its
+//! `TilemapRenderSettings`) are components of the map entity, and [`TiledMapQuery`] gives access to its
 //! layers, tiles and objects entities.
 //!
 //! See the [spawn / despawn / reload guide](https://adrien-bon.github.io/bevy_ecs_tiled/guides/spawn_reload.html).
 
+pub mod query;
 pub(crate) mod spawn;
-pub mod storage;
 
 use crate::{asset::cache::TiledResourceCache, ecs::event::TiledMessageWriters, prelude::*};
 use bevy::{asset::RecursiveDependencyLoadState, ecs::system::SystemParam, prelude::*};
@@ -42,7 +42,7 @@ use bevy::{asset::RecursiveDependencyLoadState, ecs::system::SystemParam, prelud
 /// ```
 #[derive(Component, Reflect, Clone, Debug, Deref, FromTemplate)]
 #[reflect(Component, Debug)]
-#[require(TiledMapStorage, TiledMapSettings)]
+#[require(TiledMapSettings)]
 pub struct TiledMap(pub Handle<TiledMapAsset>);
 
 /// Marker [`Component`] requiring the settings components shared by [`TiledMap`] and `TiledWorld` entities.
@@ -229,8 +229,6 @@ pub(crate) fn plugin(app: &mut bevy::prelude::App) {
         PostUpdate,
         insert_missing_map_references.in_set(TiledPostUpdateSystems::First),
     );
-
-    app.add_plugins(storage::plugin);
 }
 
 /// Retrieve the map of a tile or an object: either its own [`TiledMapReference`] or the one of its parent layer.
@@ -282,7 +280,6 @@ fn process_loaded_maps(
         (
             Entity,
             &TiledMap,
-            &mut TiledMapStorage,
             &TilemapRenderSettings,
             &TilemapAnchor,
             &TiledMapLayerZOffset,
@@ -295,11 +292,10 @@ fn process_loaded_maps(
             With<RespawnTiledMap>,
         )>,
     >,
+    layers_query: TiledMapLayers<Entity>,
     mut message_writers: TiledMessageWriters,
 ) {
-    for (map_entity, map_handle, mut tiled_storage, _render_settings, anchor, layer_offset) in
-        map_query.iter_mut()
-    {
+    for (map_entity, map_handle, _render_settings, anchor, layer_offset) in map_query.iter_mut() {
         if let Some(load_state) = asset_server.get_recursive_dependency_load_state(&map_handle.0) {
             if !load_state.is_loaded() {
                 if let RecursiveDependencyLoadState::Failed(_) = load_state {
@@ -334,13 +330,14 @@ fn process_loaded_maps(
             );
 
             // Clean previous map layers before trying to spawn the new ones
-            tiled_storage.clear(&mut commands);
+            for layer in layers_query.iter(map_entity) {
+                commands.entity(layer).try_despawn();
+            }
             spawn::spawn_map(
                 &mut commands,
                 map_entity,
                 map_handle.0.id(),
                 tiled_map,
-                &mut tiled_storage,
                 layer_offset,
                 &mut message_writers,
                 anchor,

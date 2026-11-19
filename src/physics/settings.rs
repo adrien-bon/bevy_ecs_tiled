@@ -141,8 +141,9 @@ fn initialize_settings_for_maps<T: TiledPhysicsBackend>(
 /// Colliders are derived from tiles and objects entities: there is no need to respawn the map.
 fn handle_settings_update<T: TiledPhysicsBackend>(
     mut commands: Commands,
-    maps_query: Query<&TiledMapStorage, (With<TiledMap>, Changed<TiledPhysicsSettings<T>>)>,
-    mut layers_query: Query<&mut TiledLayerColliders<T>>,
+    maps_query: Query<Entity, (With<TiledMap>, Changed<TiledPhysicsSettings<T>>)>,
+    mut layers_query: TiledMapLayers<&mut TiledLayerColliders<T>>,
+    objects_query: TiledMapObjects<Entity>,
     #[cfg(feature = "world")] worlds_query: Query<
         (Ref<TiledPhysicsSettings<T>>, &TiledWorldStorage),
         With<TiledWorld>,
@@ -160,13 +161,11 @@ fn handle_settings_update<T: TiledPhysicsBackend>(
         }
     }
 
-    for storage in maps_query.iter() {
-        for layer in storage.layers() {
-            if let Ok(mut colliders) = layers_query.get_mut(layer) {
-                colliders.mark_all_dirty();
-            }
+    for map in maps_query.iter() {
+        for mut colliders in layers_query.iter_mut(map) {
+            colliders.mark_all_dirty();
         }
-        for object in storage.objects() {
+        for object in objects_query.iter(map) {
             commands
                 .entity(object)
                 .try_insert(TiledCollidersDirty::<T>::default());

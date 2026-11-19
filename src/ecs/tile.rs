@@ -51,8 +51,7 @@ use bevy::prelude::*;
     TileFlip,
     TileVisible,
     TileColor,
-    TiledTileIndexedPosition,
-    crate::ecs::map::storage::TiledTileStorageIndex
+    TiledTileIndexedPosition
 )]
 pub struct TiledTile {
     /// [`TilesetId`] of the tile.
@@ -96,7 +95,7 @@ pub(crate) fn plugin(app: &mut App) {
     app.add_message::<TiledTilePositionVacated>();
     app.add_systems(
         PostUpdate,
-        index_layers_tiles.in_set(TiledPostUpdateSystems::SyncMapStorage),
+        index_layers_tiles.in_set(TiledPostUpdateSystems::SyncTiles),
     );
     app.add_observer(unindex_tile);
 }

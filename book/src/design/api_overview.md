@@ -33,7 +33,7 @@ Everything listed here is in the prelude (`use bevy_ecs_tiled::prelude::*;`), un
 | Change the Z offset between layers | [`TiledMapLayerZOffset`][TiledMapLayerZOffset] |
 | React when a map, layer or object is spawned | An observer on [`TiledEvent<MapCreated>`][TiledEvent] (or `LayerCreated`, `ObjectCreated`, …) |
 | Find the map of a layer, tile or object | [`TiledMapReference`][TiledMapReference], or [`TiledMapHelper`][TiledMapHelper] |
-| Find a layer or object entity from its Tiled ID | [`TiledMapStorage`][TiledMapStorage] on the map entity |
+| Iterate over the layers, tiles or objects of a map | [`TiledMapLayers`, `TiledMapTiles`, `TiledMapObjects`][TiledMapQuery] system parameters |
 | Find the tile at a given position | [`TiledTileLayerStorage`][TiledTileLayerStorage] on the layer entity |
 | Know where a tile is displayed | [`TiledMapHelper::tile_relative_position`][TiledMapHelper] |
 | Modify the map at runtime | Spawn, modify or despawn [`TiledTile`][TiledTile] and [`TiledObject`][TiledObject] entities (see [the guide](../guides/dynamic_maps.md)) |
@@ -58,7 +58,7 @@ Everything listed here is in the prelude (`use bevy_ecs_tiled::prelude::*;`), un
 [TiledEvent]: https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TiledEvent.html
 [TiledMapReference]: https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapReference.html
 [TiledMapHelper]: https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapHelper.html
-[TiledMapStorage]: https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/storage/struct.TiledMapStorage.html
+[TiledMapQuery]: https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/query/struct.TiledMapQuery.html
 [TiledTileLayerStorage]: https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/struct.TiledTileLayerStorage.html
 [TiledTile]: https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTile.html
 [TiledObject]: https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html

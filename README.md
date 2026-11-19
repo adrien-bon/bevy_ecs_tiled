@@ -140,9 +140,10 @@ fn spawn_map(
         .observe(
             |map_created: On<TiledEvent<MapCreated>>,
              assets: Res<Assets<TiledMapAsset>>,
-             query: Query<(&Name, &TiledMapStorage), With<TiledMap>>| {
+             query: Query<&Name, With<TiledMap>>,
+             objects: TiledMapObjects<(Entity, &TiledObject)>| {
                 // We can access the map components via a regular query
-                let Ok((name, storage)) = query.get(map_created.event().origin) else {
+                let Ok(name) = query.get(map_created.event().origin) else {
                     return;
                 };
                 info!("=> Observer TiledMapCreated was triggered for map '{name}'");
@@ -153,14 +154,13 @@ fn spawn_map(
                 };
                 info!("Loaded map: {:?}", map);
 
-                // Additionally, we can access Tiled items using the TiledMapStorage
-                // component: we can retrieve Tiled items entities and access
-                // their own components with another query (not shown here).
+                // Additionally, we can query the Tiled items of this map using the
+                // TiledMapLayers, TiledMapTiles and TiledMapObjects system parameters.
                 // This can be useful if you want for instance to create a resource
                 // based upon tiles or objects data but make it available only when
                 // the map is actually spawned.
-                for entity in storage.objects() {
-                    info!("(map) An object was spawned as entity {:?}", entity);
+                for (entity, object) in objects.iter(map_created.origin) {
+                    info!("(map) {object} object was spawned as entity {entity:?}");
                 }
             }
         );

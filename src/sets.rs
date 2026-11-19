@@ -6,7 +6,7 @@
 //! chunk management.
 //!
 //! Rendering and physics components are derived from Tiled data components during the
-//! [`TiledPostUpdateSystems::SyncMapStorage`], [`TiledPostUpdateSystems::SyncRender`] and
+//! [`TiledPostUpdateSystems::SyncTiles`], [`TiledPostUpdateSystems::SyncRender`] and
 //! [`TiledPostUpdateSystems::SyncPhysics`] sets.
 
 use bevy::prelude::*;
@@ -57,8 +57,9 @@ pub enum TiledPostUpdateSystems {
     HandleWorldStreaming,
     /// Handles asset events for Tiled maps.
     HandleMapAssetEvents,
-    /// Keeps [`TiledMapStorage`](crate::prelude::TiledMapStorage) in sync with added or modified tiles.
-    SyncMapStorage,
+    /// Keeps the [`TiledTileLayerStorage`](crate::prelude::TiledTileLayerStorage) of each layer in sync with added,
+    /// moved or removed tiles, and inserts the user properties of tiles added after their map has been spawned.
+    SyncTiles,
     /// Creates or updates rendering components (tilemaps, sprites, texts) from Tiled data components.
     SyncRender,
     /// Creates or updates physics colliders from Tiled data components.
@@ -98,7 +99,7 @@ pub(crate) fn plugin(app: &mut App) {
             TiledPostUpdateSystems::HandleWorldAssetEvents,
             TiledPostUpdateSystems::HandleWorldStreaming,
             TiledPostUpdateSystems::HandleMapAssetEvents,
-            TiledPostUpdateSystems::SyncMapStorage,
+            TiledPostUpdateSystems::SyncTiles,
             TiledPostUpdateSystems::SyncRender,
             TiledPostUpdateSystems::SyncPhysics,
             TiledPostUpdateSystems::Last,

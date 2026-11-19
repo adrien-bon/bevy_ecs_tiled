@@ -17,8 +17,9 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Add `TiledMapAsset::tileset()`, `tile()`, `layer()`, `object()` and `tile_size()` methods and `map_type` and `grid_size` fields: `tileset()` and `tile()` also handle tilesets only used by templates, and `layer()` also finds group layers
 - Add `TiledEvent::tile_tileset_id()`, and `TiledEvent::is_original()` to tell the original event from its copies bubbling up the entity hierarchy
 - Add `TiledMapHelper` system parameter, retrieving the map asset and anchor of any Tiled entity, and the position of a tile
+- Add `TiledMapQuery` system parameter and its `TiledMapLayers`, `TiledMapTiles` and `TiledMapObjects` aliases, iterating over the layers, tiles or objects entities of a given map
 - `TiledObject` implements `Display`, giving its kind (eg. `Rectangle`)
-- Add `SyncMapStorage`, `SyncRender` and `SyncPhysics` variants to `TiledPostUpdateSystems`
+- Add `SyncTiles`, `SyncRender` and `SyncPhysics` variants to `TiledPostUpdateSystems`
 - Tile objects inherit the custom properties of their tile, and tile properties are inserted on tiles and tile objects spawned after the map has been loaded
 - Add `world` feature, enabled by default: without it, Tiled worlds (`.world` files) support is not compiled
 - Add isometric and hexagonal worlds, and the `world_orientation` example
@@ -40,8 +41,8 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - `TiledEvent<TilemapCreated>` is sent whenever a tilemap is spawned during `TiledPostUpdateSystems::SyncRender`, only with the `render` feature
 - Physics colliders are computed from ECS components and spawned during `TiledPostUpdateSystems::SyncPhysics`, and spawned again when their source changes; `TiledPreUpdateSystems::SpawnPhysicsColliders` is removed
 - `TiledTile` holds its tileset ID and tile ID, and `TiledTilemap` holds its tileset ID: `TiledTilesetId` and `TiledTileId` components are removed
-- `TiledLayerId` and `TiledObjectId` components are removed. `TiledEvent::layer_id()`, `layer()`, `object_id()`, `object()` and `TiledMapStorage::layer_entity()`, `layer_id()`, `layer()`, `object_entity()`, `object_id()`, `object()`, `tile_id()`, `tile()` are removed
-- `TiledMapStorage::layers()` and `objects()` yield entities only, and `TiledMapStorage` is kept up to date when layers, objects or tiles are added, modified or removed
+- `TiledLayerId` and `TiledObjectId` components are removed. `TiledEvent::layer_id()`, `layer()`, `object_id()` and `object()` are removed
+- `TiledMapStorage` component is removed: use the `TiledMapLayers`, `TiledMapTiles` and `TiledMapObjects` system parameters to iterate over the entities of a map
 - Tileset, layer and object IDs and world maps indexes use the dedicated `TilesetId`, `LayerId`, `ObjectId` and `WorldMapId` types instead of `u32`
 - `TileCreated` is renamed `TileWithPropertiesCreated`, and does not hold tilemap information anymore
 - `TiledObject::Tile` holds its tileset ID, tile ID and flip flags; `TiledObject::from_object_data()` takes the `TiledMapAsset` as first argument

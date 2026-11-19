@@ -92,7 +92,8 @@ pub mod prelude {
             layer::{TiledLayer, TiledLayerParallax, TiledParallaxCamera, TiledTileLayerStorage},
             map::{
                 RespawnTiledMap, TiledMap, TiledMapHelper, TiledMapImageRepeatMargin,
-                TiledMapLayerZOffset, TiledMapReference, storage::TiledMapStorage,
+                TiledMapLayerZOffset, TiledMapReference,
+                query::{TiledMapLayers, TiledMapObjects, TiledMapQuery, TiledMapTiles},
             },
             object::TiledObject,
             tile::TiledTile,
