@@ -63,6 +63,13 @@ pub enum TiledLayer {
 pub struct TiledTileLayerStorage {
     /// Tiles are stored by square blocks of positions: only blocks holding at least one tile are allocated,
     /// so the storage does not depend on the map size and handles any [`TilePos`].
+    ///
+    /// This is a two levels structure: the map is keyed by block coordinates (`position / BLOCK_SIZE`),
+    /// and each block is a dense array with one slot per position of the block.
+    /// It is preferred over a plain `HashMap<TilePos, Entity>` because:
+    /// - [`Self::iter_in`], used to rebuild physics colliders by chunk, reads a few contiguous arrays
+    ///   instead of hashing every position of the rectangle (6 to 30 times faster);
+    /// - a dense layer only takes 8 bytes per position, instead of ~34 bytes per tile.
     blocks: HashMap<UVec2, StorageBlock>,
     /// Number of tiles in the storage
     len: usize,
@@ -71,7 +78,8 @@ pub struct TiledTileLayerStorage {
 /// A square block of [`TiledTileLayerStorage::BLOCK_SIZE`] positions.
 #[derive(Clone, Debug)]
 struct StorageBlock {
-    tiles: Box<[Option<Entity>]>,
+    /// One slot per position of the block, indexed by [`TiledTileLayerStorage::locate`]
+    tiles: Box<[Option<Entity>; TiledTileLayerStorage::BLOCK_AREA]>,
     /// Number of tiles in the block
     count: u32,
 }
@@ -79,12 +87,7 @@ struct StorageBlock {
 impl Default for StorageBlock {
     fn default() -> Self {
         Self {
-            tiles: vec![
-                None;
-                (TiledTileLayerStorage::BLOCK_SIZE * TiledTileLayerStorage::BLOCK_SIZE)
-                    as usize
-            ]
-            .into_boxed_slice(),
+            tiles: Box::new([None; TiledTileLayerStorage::BLOCK_AREA]),
             count: 0,
         }
     }
@@ -93,6 +96,8 @@ impl Default for StorageBlock {
 impl TiledTileLayerStorage {
     /// Size of a storage block, in tiles
     const BLOCK_SIZE: u32 = 16;
+    /// Number of positions in a storage block
+    const BLOCK_AREA: usize = (Self::BLOCK_SIZE * Self::BLOCK_SIZE) as usize;
 
     /// Block and index in this block of a position
     fn locate(position: TilePos) -> (UVec2, usize) {
