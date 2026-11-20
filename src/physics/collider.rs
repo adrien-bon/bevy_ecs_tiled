@@ -13,6 +13,7 @@ use bevy::{platform::collections::HashMap, prelude::*};
 ///
 /// Helps to distinguish between colliders created from Tiled objects and those created from Tiled tile layers.
 #[derive(Component, Reflect, Copy, PartialEq, Clone, Debug)]
+#[component(immutable)]
 #[reflect(Component, Debug)]
 pub enum TiledColliderSource {
     /// Collider is created by a [`tiled::TileLayer`] (ie. a collection of [`tiled::Tile`])
@@ -141,16 +142,18 @@ impl TiledColliderChunkSize {
 ///
 /// The inner value is the chunk index: the chunk holds the colliders of tiles
 /// whose [`TilePos`] is within `index * chunk_size .. (index + 1) * chunk_size`.
-#[derive(Component, Reflect, Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Component, Reflect, Copy, Clone, PartialEq, Eq, Hash, Debug, Deref)]
+#[component(immutable)]
 #[reflect(Component, Debug, PartialEq, Hash)]
 #[require(Transform, Visibility)]
-pub struct TiledColliderChunk(pub UVec2);
+pub struct TiledColliderChunk(pub(crate) UVec2);
 
 /// Raw geometry a physics collider was created from.
 ///
 /// If several colliders are created from the same geometry (see [`TiledColliderStrategy::LineStrip`]),
 /// each of them holds the whole geometry.
 #[derive(Component, PartialEq, Clone, Debug, Deref)]
+#[component(immutable)]
 #[require(Transform)]
 pub struct TiledColliderPolygons(pub Vec<geo::MultiPolygon<f32>>);
 

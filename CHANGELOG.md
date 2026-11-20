@@ -78,6 +78,9 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - `TiledObject`, `TiledColliderStrategy`, `TiledColliderShape` and system sets enums are `#[non_exhaustive]`
 - `physics_settings` and `physics_orientation` examples replace their Avian and Rapier variants
 - `TiledUpdateSystems::UpdateTiledImagePositionAndSize` is removed
+- `TiledMapReference`, `TiledWorldReference`, `TiledLayer`, `TiledTilemap`, `TiledName`, `TiledProperties`, `TiledColliderSource`, `TiledColliderChunk` and `TiledColliderPolygons` are immutable components: insert them again to replace them
+- `TiledMapReference`, `TiledWorldReference` and `TiledColliderChunk` fields are private: use `TiledMapReference::entity()`, `TiledWorldReference::world()` / `map_id()` and `Deref`
+- `TiledAnimation` fields are private: use `TiledAnimation::frames()`
 - Physics: modifying `TiledPhysicsSettings` no longer respawns the map (or world): only colliders are spawned again, so modifications made to the map at runtime are kept
 - Physics: colliders are computed much faster. Polygons of each kind of tile are only computed once per layer, and are merged using a single union operation instead of pairwise unions
 - Debug plugins draw their gizmos using the `TiledDebugGizmos` group instead of `DefaultGizmoConfigGroup`

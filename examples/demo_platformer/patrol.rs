@@ -54,7 +54,7 @@ fn select_next_waypoint(
         let Some(vertices) = patrol_route_query.get(route.0).ok().and_then(
             |(route, map_reference, route_transform)| {
                 map_query
-                    .get(map_reference.0)
+                    .get(map_reference.entity())
                     .ok()
                     .and_then(|map_handle| maps_assets.get(&map_handle.0))
                     .map(|map_asset| map_asset.object_vertices(route, route_transform))

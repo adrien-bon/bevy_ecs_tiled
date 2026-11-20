@@ -381,7 +381,7 @@ impl TiledMapAsset {
     ///     tilemap_query: Query<&GlobalTransform, With<TiledTilemap>>,
     /// ) {
     ///     for (tile_pos, tile, tilemap_id, map_ref) in tile_query.iter() {
-    ///         let Ok((tiled_map, anchor)) = map_query.get(map_ref.0) else { continue; };
+    ///         let Ok((tiled_map, anchor)) = map_query.get(map_ref.entity()) else { continue; };
     ///         let Some(map_asset) = assets.get(&tiled_map.0) else { continue; };
     ///         let Some(position) = map_asset.tile_relative_position(tile_pos, tile, anchor) else { continue; };
     ///         // Combine with the tilemap transform to get the tile global position

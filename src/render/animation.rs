@@ -13,11 +13,18 @@ use bevy::prelude::*;
 #[require(Visibility, Transform, Sprite)]
 pub struct TiledAnimation {
     /// All animation frames as `(atlas_index, duration_secs)` pairs.
-    pub frames: Vec<(usize, f32)>,
+    pub(crate) frames: Vec<(usize, f32)>,
     /// Index into `frames` currently being displayed.
-    pub current_frame: usize,
+    pub(crate) current_frame: usize,
     /// Counts down the current frame's individual duration.
-    pub timer: Timer,
+    pub(crate) timer: Timer,
+}
+
+impl TiledAnimation {
+    /// Returns all animation frames as `(atlas_index, duration_secs)` pairs.
+    pub fn frames(&self) -> &[(usize, f32)] {
+        &self.frames
+    }
 }
 
 pub(crate) fn plugin(app: &mut App) {

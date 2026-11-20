@@ -6,6 +6,7 @@ use bevy::prelude::*;
 ///
 /// Apply for Layers, Tilesets and Objects.
 #[derive(Component, Reflect, Clone, Debug, Default, PartialEq, Eq, Hash)]
+#[component(immutable)]
 #[reflect(Component, Debug, Default, PartialEq, Hash)]
 pub struct TiledName(pub String);
 

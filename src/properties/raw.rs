@@ -17,6 +17,7 @@ use bevy::prelude::*;
 /// Since [`tiled::PropertyValue`] does not implement [`Reflect`], the `properties` field is ignored by reflection:
 /// it is not visible in inspectors and not saved in scenes.
 #[derive(Component, Default, Reflect, Clone, Debug)]
+#[component(immutable)]
 #[reflect(Component, Default, Debug)]
 pub struct TiledProperties {
     /// Class (also called user type) of the Tiled item, or an empty string if it does not have one

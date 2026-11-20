@@ -121,8 +121,16 @@ impl Default for TiledMapImageRepeatMargin {
 /// When spawning a [`TiledTile`] or a [`TiledObject`] yourself, you do not need to insert it: it is
 /// automatically inserted from the parent [`TiledLayer`] of the tile or object during [`TiledPostUpdateSystems::First`].
 #[derive(Component, Reflect, Copy, Clone, Debug, Deref)]
+#[component(immutable)]
 #[reflect(Component, Debug)]
-pub struct TiledMapReference(pub Entity);
+pub struct TiledMapReference(pub(crate) Entity);
+
+impl TiledMapReference {
+    /// Returns the [`TiledMap`] entity
+    pub fn entity(&self) -> Entity {
+        self.0
+    }
+}
 
 /// Marker component to trigger a respawn (reload) of a Tiled map.
 ///

@@ -25,6 +25,7 @@ use bevy_ecs_tilemap::prelude::{TilemapBundle, TilemapSpacing};
 ///
 /// See [`TilemapBundle`] for more information on available [`Component`]s.
 #[derive(Component, Default, Reflect, Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[component(immutable)]
 #[reflect(Component, Default, Debug, PartialEq, Hash)]
 #[require(Visibility, Transform, TiledName)]
 pub struct TiledTilemap {

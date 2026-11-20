@@ -14,12 +14,23 @@ use bevy::{
 /// Gives the world a map belongs to and the [`WorldMapId`] of this map in the world.
 /// Should not be manually inserted: maps of a world are spawned by its [`TiledWorldStreaming`].
 #[derive(Component, Reflect, Copy, Clone, Debug, PartialEq, Eq)]
+#[component(immutable)]
 #[reflect(Component, Debug, PartialEq)]
 pub struct TiledWorldReference {
-    /// The [`TiledWorld`] entity
-    pub world: Entity,
-    /// ID of the map in the world
-    pub map_id: WorldMapId,
+    pub(crate) world: Entity,
+    pub(crate) map_id: WorldMapId,
+}
+
+impl TiledWorldReference {
+    /// Returns the [`TiledWorld`] entity
+    pub fn world(&self) -> Entity {
+        self.world
+    }
+
+    /// Returns the ID of the map in the world
+    pub fn map_id(&self) -> WorldMapId {
+        self.map_id
+    }
 }
 
 /// [`SystemParam`] querying the map entities of a given world, through their [`TiledWorldReference`].
@@ -37,7 +48,7 @@ pub struct TiledWorldReference {
 /// fn log_world_maps(worlds: Query<Entity, With<TiledWorld>>, maps: TiledWorldMaps<&TiledWorldReference>) {
 ///     for world in worlds.iter() {
 ///         for map in maps.iter(world) {
-///             info!("Map {} of world {world} is spawned", map.map_id);
+///             info!("Map {} of world {world} is spawned", map.map_id());
 ///         }
 ///         if let Some(first_map) = maps.map_entity(world, WorldMapId(0)) {
 ///             info!("First map of world {world} is {first_map}");

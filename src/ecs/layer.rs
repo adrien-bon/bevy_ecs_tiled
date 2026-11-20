@@ -17,6 +17,7 @@ use bevy::{platform::collections::HashMap, prelude::*};
 /// - `Image`: A layer containing an image, parent of a single [`TiledImage`] entity.
 /// - `Group`: A group of layers, used to organize multiple layers hierarchically.
 #[derive(Component, Reflect, Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[component(immutable)]
 #[reflect(Component, Debug, PartialEq, Hash)]
 #[require(Visibility, Transform, TiledName, TiledTileLayerStorage)]
 pub enum TiledLayer {
