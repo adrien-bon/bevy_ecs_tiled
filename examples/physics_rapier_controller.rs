@@ -53,11 +53,17 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 Transform::from_xyz(50., -50., 0.),
             ));
         })
-        // Automatically insert a `RigidBody::Static` component on all the map entities
+        // Automatically insert a `RigidBody::Fixed` component on all the map colliders
+        // A `ColliderCreated` event is sent for each collider. A tiles layer or an object can have several
+        // colliders (eg. `TiledColliderStrategy::LineStrip` or collider chunks), held by its entity or by its
+        // descendants (the event `origin`).
+        // Insert the rigid body on the layer or object itself: colliders are attached to the rigid body of
+        // their closest ancestor, so they all belong to a single body. Inserting it on each `origin` instead
+        // would create several nested rigid bodies, which only behaves correctly as long as they never move.
         .observe(
             |collider_created: On<TiledEvent<ColliderCreated>>, mut commands: Commands| {
                 commands
-                    .entity(collider_created.origin)
+                    .entity(collider_created.source_entity())
                     .insert(RigidBody::Fixed);
             },
         );

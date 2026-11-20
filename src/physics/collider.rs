@@ -161,7 +161,12 @@ pub struct TiledColliderPolygons(pub Vec<geo::MultiPolygon<f32>>);
 ///
 /// The [`TiledEvent::origin`] of this event is the entity holding the collider. The event is triggered
 /// for the Tiled object or [`TiledLayer::Tiles`] the collider is created for, which you can retrieve
-/// using [`TiledEvent::object_entity`] or [`TiledEvent::layer_entity`], depending on [`ColliderCreated::source`].
+/// using [`TiledEvent::source_entity`].
+///
+/// This event is sent for each collider: a tiles layer or an object can have several colliders
+/// (eg. [`TiledColliderStrategy::LineStrip`] or [`TiledColliderChunkSize`]), held by its entity or by its descendants.
+/// To add a rigid body, insert it on [`TiledEvent::source_entity`] rather than on each [`TiledEvent::origin`]:
+/// colliders are attached to the rigid body of their closest ancestor, so they all belong to a single body.
 ///
 /// See also [`TiledEvent`]
 #[derive(Clone, Copy, PartialEq, Debug, Reflect)]
@@ -172,6 +177,17 @@ pub struct ColliderCreated {
 }
 
 crate::ecs::event::impl_event_kind!(ColliderCreated);
+
+impl TiledEvent<ColliderCreated> {
+    /// Retrieve the entity the collider is created for: the [`TiledLayer::Tiles`] or the Tiled object,
+    /// depending on [`ColliderCreated::source`].
+    ///
+    /// Unlike [`TiledEvent::origin`], it is the same for all the colliders of a layer or an object,
+    /// and unlike [`TiledEvent::entity`], it does not change while the event bubbles up the hierarchy.
+    pub fn source_entity(&self) -> Entity {
+        self.target()
+    }
+}
 
 pub(crate) fn plugin(app: &mut App) {
     app.register_type::<TiledColliderSource>();

@@ -264,6 +264,9 @@ When a collider entity is spawned, a [`TiledEvent<ColliderCreated>`](https://doc
 Since colliders are spawned again when their source changes, you can receive this event several times for the same tiles layer or object.
 It contains information about the origin of the collider.
 
+This event is sent for each collider: a tiles layer or an object can have several colliders (for instance with `TiledColliderStrategy::LineStrip` or collider chunks), held by its entity or by its descendants.
+The event [`origin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TiledEvent.html#structfield.origin) is the entity holding the collider, while [`source_entity()`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TiledEvent.html#method.source_entity) is the tiles layer or object it is created for.
+
 This can be useful to add custom components to your colliders.
 For instance, with Avian:
 
@@ -279,9 +282,10 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .observe(|collider_created: On<TiledEvent<ColliderCreated>>, mut commands: Commands| {
             // Filter collider created from Tiled objects
             if collider_created.event().event.source == TiledColliderSource::Object {
-                // Add a RigidBody::Static to the collider entity
+                // Add a RigidBody::Static to the object: insert it on the source entity rather than on
+                // each collider entity, so all the colliders of the object belong to a single rigid body
                 commands
-                    .entity(collider_created.origin)
+                    .entity(collider_created.source_entity())
                     .insert(RigidBody::Static);
             }
         });

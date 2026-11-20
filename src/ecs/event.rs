@@ -152,6 +152,11 @@ where
         }
     }
 
+    /// Entity the event was initially triggered for, before bubbling up the hierarchy
+    pub(crate) fn target(&self) -> Entity {
+        self.target
+    }
+
     /// Creates a [`TiledEvent`] of another kind, keeping the context of this one (world, map, layer, ...).
     ///
     /// If `origin` is [`None`], the new event keeps the origin of this one.

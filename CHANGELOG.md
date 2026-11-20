@@ -15,6 +15,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Add `TiledTileLayerStorage` component on layers entities, giving the tile at a given position of a tiles layer
 - Add `TiledTilemapOf` / `TiledTilemaps` relationship between a tilemap and its layer
 - Add `TiledMapAsset::tileset()`, `tile()`, `layer()`, `object()` and `tile_size()` methods and `map_type` and `grid_size` fields: `tileset()` and `tile()` also handle tilesets only used by templates, and `layer()` also finds group layers
+- Add `TiledEvent<ColliderCreated>::source_entity()`, giving the tiles layer or object entity a collider is created for
 - Add `TiledEvent::tile_tileset_id()`, and `TiledEvent::is_original()` to tell the original event from its copies bubbling up the entity hierarchy
 - Add `TiledMapHelper` system parameter, retrieving the map asset and anchor of any Tiled entity, and the position of a tile
 - Add `TiledMapQuery` system parameter and its `TiledMapLayers`, `TiledMapTiles` and `TiledMapObjects` aliases, iterating over the layers, tiles or objects entities of a given map

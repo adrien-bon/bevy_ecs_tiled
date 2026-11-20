@@ -1587,6 +1587,7 @@ mod physics {
                 let ev = ev.event();
                 // Events are propagated to parent entities: only count the original one
                 if ev.is_original() {
+                    assert_eq!(ev.source_entity(), ev.entity);
                     *created.0.entry(ev.entity).or_default() += 1;
                 }
             },
