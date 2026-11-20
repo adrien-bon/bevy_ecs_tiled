@@ -60,7 +60,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - The `text` and `debug` features now enable the `render` feature
 - Repeated images position and size are only updated once per frame, during `TiledPostUpdateSystems::SyncRender`
 - Tiles entities only have a `Name` component when the `debug` feature is enabled
-- Helper functions `tileset_from_map()`, `tile_from_map()`, `layer_from_map()`, `object_from_map()`, `tilemap_type_from_map()`, `try_tilemap_type_from_map()` and `grid_size_from_map()` are removed: use `TiledMapAsset::tileset()`, `tile()`, `layer()`, `object()`, `map_type` and `grid_size`
+- Helper functions `tileset_from_map()`, `tile_from_map()`, `layer_from_map()`, `object_from_map()`, `tilemap_type_from_map()`, `try_tilemap_type_from_map()`, `grid_size_from_map()` and `tile_size()` are removed: use `TiledMapAsset::tileset()`, `tile()`, `layer()`, `object()`, `map_type`, `grid_size` and `tile_size()`
 - `TiledEvent::tilemap_tileset()` and `TiledEvent::tile()` also work for tilesets only used by object templates
 - `TiledEvent` can no longer be built nor sent from outside the crate (`new()`, `transmute()`, `with_*()` and `send()` are private), its kind is bound by the sealed `TiledEventKind` trait, and it is no longer a `Component`
 - `ColliderCreated::collider_of` and `ColliderCreated::new()` are removed: the event origin is the collider entity
@@ -70,16 +70,15 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - `simplify_geometry()` is removed
 - The `tiled` module is split into `asset`, `ecs`, `render` and `properties` modules; `TiledPlugin` and `sets` move to the crate root
 - The prelude only holds commonly used items: the `tiled`, `geo` and `regex` crates are re-exported at the crate root, physics geometry helpers are in `physics::geometry` and `tiled_debug_gizmos_enabled()` in `debug`
-- `TiledWorldChunking` is renamed `TiledWorldStreaming`, along with its module, system set, debug plugin and example
-- `TiledWorldStreaming` and `TiledColliderChunkSize` are enums instead of wrappers around an `Option`
+- `TiledWorldChunking` is renamed `TiledWorldStreaming`, along with its module, system set, debug plugin and example, and is an enum instead of a wrapper around an `Option`
 - `TiledLayerParallax` holds a `parallax: Vec2` instead of `parallax_x` and `parallax_y`
-- `tile_size()` is no longer public, and `TiledMapAsset::tile_relative_position()` takes a `TiledTile` and returns an `Option`
+- `TiledMapAsset::tile_relative_position()` takes a `TiledTile` and returns an `Option`
 - `TiledObject::kind()` and `TiledName::matches()` are removed
 - `TiledObject`, `TiledColliderStrategy`, `TiledColliderShape` and system sets enums are `#[non_exhaustive]`
 - `physics_settings` and `physics_orientation` examples replace their Avian and Rapier variants
 - `TiledUpdateSystems::UpdateTiledImagePositionAndSize` is removed
-- `TiledMapReference`, `TiledWorldReference`, `TiledLayer`, `TiledTilemap`, `TiledName`, `TiledProperties`, `TiledColliderSource`, `TiledColliderChunk` and `TiledColliderPolygons` are immutable components: insert them again to replace them
-- `TiledMapReference`, `TiledWorldReference` and `TiledColliderChunk` fields are private: use `TiledMapReference::entity()`, `TiledWorldReference::world()` / `map_id()` and `Deref`
+- `TiledMapReference`, `TiledLayer`, `TiledTilemap`, `TiledName`, `TiledColliderSource` and `TiledColliderPolygons` are immutable components: insert them again to replace them
+- `TiledMapReference` field is private: use `TiledMapReference::entity()` or `Deref`
 - `TiledAnimation` fields are private: use `TiledAnimation::frames()`
 - Physics: modifying `TiledPhysicsSettings` no longer respawns the map (or world): only colliders are spawned again, so modifications made to the map at runtime are kept
 - Physics: colliders are computed much faster. Polygons of each kind of tile are only computed once per layer, and are merged using a single union operation instead of pairwise unions
