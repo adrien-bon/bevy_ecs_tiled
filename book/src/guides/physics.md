@@ -238,7 +238,8 @@ fn on_layer_created(
 When chunking is enabled for a layer:
 
 - the layer entity does not hold any collider. Each chunk with at least one collider has its own [`TiledColliderChunk`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliderChunk.html) entity, child of the layer, holding the collider of the chunk;
-- colliders are not merged across chunks: two adjacent tiles which are not in the same chunk have separate colliders. Depending on your physics engine and collider strategy, bodies sliding over a chunk boundary can catch on it ("ghost collisions"): prefer larger chunks if this is an issue;
+- colliders are not merged across chunks: two adjacent tiles which are not in the same chunk have separate colliders. With the `Polyline` and `LineStrip` strategies, the edges shared by two chunks are not part of their colliders, so the outline of the layer is the same than without chunks. With the `Triangulation` strategy, each chunk is a separate solid;
+- a chunk boundary is still a junction between two colliders: depending on your physics engine, a body with a flat side (eg. a box) sliding over it can catch on the first vertex of the next collider ("ghost collision"). Give such bodies rounded corners, for instance using a [`CollisionMargin`](https://docs.rs/avian2d/latest/avian2d/collision/collider/struct.CollisionMargin.html) with Avian, or use larger chunks;
 - smaller chunks make updates faster, but produce more colliders.
 
 With the `debug` feature, the [`TiledDebugColliderChunksPlugin`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/collider_chunks/index.html) displays the bounding box of each chunk colliders.
@@ -253,6 +254,7 @@ Just create a struct that implements the [`TiledPhysicsBackend`](https://docs.rs
 A backend only has to create colliders out of a geometry: it declares the component(s) making a collider (the `Collider` associated type) and provides a `colliders()` function returning them for a given geometry and [`TiledColliderStrategy`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderStrategy.html).
 `bevy_ecs_tiled` takes care of inserting these colliders on the right entities and of removing them when their source changes.
 The [`collider_shapes()`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/geometry/fn.collider_shapes.html) helper converts a geometry into simple shapes (polylines or triangles) according to the requested strategy.
+The geometry is a [`TiledColliderGeometry`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/geometry/struct.TiledColliderGeometry.html): besides its polygons, it holds the geometry of the adjacent [colliders chunks](#colliders-chunks), if any. Colliders made of segments should be built from its `outline()`, which does not include the edges shared with these chunks.
 
 See [this example](https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/physics_custom.rs) for more information.
 

@@ -68,6 +68,7 @@ pub mod prelude {
             ColliderCreated, TiledColliderChunk, TiledColliderChunkSize, TiledColliderOf,
             TiledColliderPolygons, TiledColliderSource, TiledColliderStrategy, TiledColliders,
         },
+        geometry::TiledColliderGeometry,
         settings::TiledPhysicsSettings,
     };
     #[cfg(feature = "render")]

@@ -25,7 +25,7 @@ use crate::prelude::*;
 /// Example:
 /// ```rust,no_run
 /// use bevy::prelude::*;
-/// use bevy_ecs_tiled::{geo, prelude::*};
+/// use bevy_ecs_tiled::prelude::*;
 ///
 /// /// A "collider" which only holds the number of polygons of its geometry
 /// #[derive(Component)]
@@ -41,9 +41,9 @@ use crate::prelude::*;
 ///         &self,
 ///         _strategy: TiledColliderStrategy,
 ///         _source: TiledColliderSource,
-///         geometry: &geo::MultiPolygon<f32>,
+///         geometry: &TiledColliderGeometry,
 ///     ) -> Vec<Self::Collider> {
-///         vec![MyCollider(geometry.0.len())]
+///         vec![MyCollider(geometry.polygons.0.len())]
 ///     }
 /// }
 /// ```
@@ -73,6 +73,9 @@ pub trait TiledPhysicsBackend:
     /// Creates physics colliders for the given geometry, of the given `source` kind.
     ///
     /// The `geometry` is relative to the Tiled object or tiles layer entity.
+    /// When the colliders of a tiles layer are split in chunks, it also holds the geometry of the adjacent
+    /// chunks: to prevent bodies from getting stuck at chunk junctions, colliders made of segments should only
+    /// use its [`outline`](TiledColliderGeometry::outline), which does not include the edges shared with them.
     /// The `strategy` tells how colliders should be created from it: a backend which does not support
     /// all strategies is free to fall back to another one.
     ///
@@ -85,7 +88,7 @@ pub trait TiledPhysicsBackend:
         &self,
         strategy: TiledColliderStrategy,
         source: TiledColliderSource,
-        geometry: &geo::MultiPolygon<f32>,
+        geometry: &TiledColliderGeometry,
     ) -> Vec<Self::Collider>;
 }
 

@@ -87,6 +87,15 @@ pub struct TiledColliders(Vec<Entity>);
 /// A size with a zero dimension also disables chunking.
 /// Colliders of the layer are spawned again when this component is inserted, modified or removed.
 ///
+/// Colliders are not merged across chunks. With [`TiledColliderStrategy::Polyline`] and
+/// [`TiledColliderStrategy::LineStrip`], the edges shared by adjacent chunks are not part of their colliders
+/// (see [`TiledColliderGeometry::outline`]): the outline of the layer is the same than without chunks.
+/// With [`TiledColliderStrategy::Triangulation`], each chunk is a separate solid.
+///
+/// In both cases, a chunk junction is still a junction between two colliders: depending on your physics engine,
+/// a body with a flat side sliding over it can catch on the first vertex of the next collider ("ghost collision").
+/// Giving such bodies rounded corners (eg. a collision margin) prevents it.
+///
 /// Since it is a regular component, it can also be set from Tiled using a custom property
 /// (see the `user_properties` feature).
 ///
@@ -397,6 +406,8 @@ pub(crate) enum ColliderTarget {
 
 /// Spawn colliders for the given polygons using the physics backend from `settings`.
 ///
+/// `neighbors` is the geometry of the adjacent colliders, if any (see [`TiledColliderGeometry::neighbors`]).
+///
 /// Returns all the entities holding a collider.
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
@@ -405,6 +416,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
     target: ColliderTarget,
     commands: &mut Commands,
     polygons: Vec<geo::Polygon<f32>>,
+    neighbors: geo::MultiPolygon<f32>,
     source_entity: Entity,
     collider_created: TiledEvent<ColliderCreated>,
     message_writer: &mut MessageWriter<TiledEvent<ColliderCreated>>,
@@ -417,12 +429,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
     // Try to simplify geometry by merging together adjacent polygons: nothing to merge for a single one
     let geometries =
         if polygons.len() > 1 && !disable_geometry_simplification && settings.simplify_geometry {
-            // Boolean operations expect a consistent winding order
-            let polygons = polygons
-                .into_iter()
-                .map(|polygon| polygon.orient(::geo::orient::Direction::Default))
-                .collect::<Vec<_>>();
-            vec![::geo::unary_union(&polygons)]
+            vec![union_polygons(polygons)]
         } else {
             polygons
                 .into_iter()
@@ -437,6 +444,10 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
     let mut entities = Vec::new();
     for geometry in geometries {
         // Actually create our colliders using provided physics backend
+        let geometry = TiledColliderGeometry {
+            polygons: geometry,
+            neighbors: neighbors.clone(),
+        };
         for collider in settings.backend.colliders(strategy, source, &geometry) {
             let entity = match first {
                 None => match target {
@@ -461,7 +472,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
             commands.entity(entity).insert((
                 collider,
                 source,
-                TiledColliderPolygons(vec![geometry.clone()]),
+                TiledColliderPolygons(vec![geometry.polygons.clone()]),
                 collider_of,
             ));
 
@@ -472,6 +483,19 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
         }
     }
     entities
+}
+
+/// Merge polygons together, so their shared edges disappear.
+pub(crate) fn union_polygons(polygons: Vec<geo::Polygon<f32>>) -> geo::MultiPolygon<f32> {
+    if polygons.len() < 2 {
+        return geo::MultiPolygon::new(polygons);
+    }
+    // Boolean operations expect a consistent winding order
+    let polygons = polygons
+        .into_iter()
+        .map(|polygon| polygon.orient(::geo::orient::Direction::Default))
+        .collect::<Vec<_>>();
+    ::geo::unary_union(&polygons)
 }
 
 fn polygons_from_tile(

@@ -1352,15 +1352,10 @@ mod physics {
             &self,
             strategy: TiledColliderStrategy,
             _source: TiledColliderSource,
-            geometry: &geo::MultiPolygon<f32>,
+            geometry: &TiledColliderGeometry,
         ) -> Vec<Self::Collider> {
-            // Like built-in backends, the line strip strategy produces a collider for each ring
-            let count = match strategy {
-                TiledColliderStrategy::LineStrip => {
-                    crate::physics::geometry::multi_polygon_as_line_strings(geometry).count()
-                }
-                _ => 1,
-            };
+            // Produce as many colliders as built-in backends
+            let count = crate::physics::geometry::collider_shapes(strategy, geometry).len();
             vec![TestCollider(strategy); count]
         }
     }
@@ -1754,18 +1749,21 @@ mod physics {
         assert!(app.world().get::<TestCollider>(ground).is_none());
         let (first, second) = (chunks[0].1, chunks[1].1);
 
-        // Modifying a tile only spawns again the colliders of its chunk
+        // Modifying a tile spawns again the colliders of its chunk, and of the adjacent chunks
+        // since their outline depends on it
         let tile = tile_at(&mut app, ground, TilePos::new(1, 3));
         app.world_mut().get_mut::<TileFlip>(tile).unwrap().x = true;
         app.update();
         let chunks = collider_chunks(&mut app, ground);
         assert_eq!(chunks.len(), 2);
-        assert_eq!(chunks[0].1, first);
+        assert_ne!(chunks[0].1, first);
         assert_ne!(chunks[1].1, second);
+        assert!(app.world().get_entity(first).is_err());
         assert!(app.world().get_entity(second).is_err());
-        let second = chunks[1].1;
+        let (first, second) = (chunks[0].1, chunks[1].1);
 
-        // Moving a tile updates both the chunk it leaves and the one it enters
+        // Moving a tile updates both the chunk it leaves and the one it enters,
+        // and the chunks they are next to
         let tile = tile_at(&mut app, ground, TilePos::new(0, 3));
         *app.world_mut().get_mut::<TilePos>(tile).unwrap() = TilePos::new(2, 1);
         app.update();
@@ -1774,10 +1772,11 @@ mod physics {
             chunks.iter().map(|(c, _, a)| (*c, *a)).collect::<Vec<_>>(),
             vec![((1, 3), 256.), ((2, 1), 256.)]
         );
-        assert_eq!(chunks[0].1, second);
         assert!(app.world().get_entity(first).is_err());
+        assert!(app.world().get_entity(second).is_err());
+        let second = chunks[0].1;
 
-        // Despawning a tile removes its chunk
+        // Despawning a tile removes its chunk: other chunks are not next to it and are kept
         app.world_mut().entity_mut(tile).despawn();
         app.update();
         let chunks = collider_chunks(&mut app, ground);

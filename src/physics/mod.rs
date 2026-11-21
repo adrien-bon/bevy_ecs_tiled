@@ -360,7 +360,21 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
                 HashSet::default()
             }
         } else if matches {
-            dirty_positions.iter().map(chunk_of).collect()
+            // The outline of a chunk depends on the tiles around it (see below): a modified tile
+            // also makes dirty the adjacent chunks it is next to
+            dirty_positions
+                .iter()
+                .flat_map(|position| {
+                    let around =
+                        |coord: u32| [coord.saturating_sub(1), coord, coord.saturating_add(1)];
+                    around(position.x).into_iter().flat_map(move |x| {
+                        around(position.y)
+                            .into_iter()
+                            .map(move |y| TilePos::new(x, y))
+                    })
+                })
+                .map(|position| chunk_of(&position))
+                .collect()
         } else {
             HashSet::default()
         }
@@ -381,14 +395,15 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
                 let min = chunk.saturating_mul(size);
                 (min, min.saturating_add(size - UVec2::ONE))
             });
+            let tile_data = |(position, entity): (TilePos, Entity)| {
+                tiles_query
+                    .get(entity)
+                    .ok()
+                    .map(|(tile, flip)| (position, tile.tileset_id, tile.tile_id, *flip))
+            };
             let tiles = storage
                 .iter_in(TilePos::new(min.x, min.y), TilePos::new(max.x, max.y))
-                .filter_map(|(position, entity)| {
-                    tiles_query
-                        .get(entity)
-                        .ok()
-                        .map(|(tile, flip)| (position, tile.tileset_id, tile.tile_id, *flip))
-                });
+                .filter_map(tile_data);
             let polygons = collider::tiles_polygons(
                 map_asset,
                 anchor,
@@ -396,6 +411,37 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
                 &settings.tiles_objects_filter,
                 &mut polygons_cache,
             );
+
+            // Geometry of the tiles around the chunk, which belong to adjacent chunks: the edges
+            // our colliders share with them are not part of the layer outline.
+            // Neighbor tiles are within one tile of the chunk, whatever the map orientation.
+            // Note: a tile collision shape which overhangs its own cell by more than a tile
+            // is not taken into account.
+            let neighbors = if chunk_size.is_some() && !polygons.is_empty() {
+                let in_chunk = |position: &TilePos| {
+                    (min.x..=max.x).contains(&position.x) && (min.y..=max.y).contains(&position.y)
+                };
+                let (around_min, around_max) = (
+                    min.saturating_sub(UVec2::ONE),
+                    max.saturating_add(UVec2::ONE),
+                );
+                let tiles = storage
+                    .iter_in(
+                        TilePos::new(around_min.x, around_min.y),
+                        TilePos::new(around_max.x, around_max.y),
+                    )
+                    .filter(|(position, _)| !in_chunk(position))
+                    .filter_map(tile_data);
+                collider::union_polygons(collider::tiles_polygons(
+                    map_asset,
+                    anchor,
+                    tiles,
+                    &settings.tiles_objects_filter,
+                    &mut polygons_cache,
+                ))
+            } else {
+                geo::MultiPolygon::new(vec![])
+            };
 
             let event = TiledEvent::new(
                 layer_entity,
@@ -414,6 +460,7 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
                 },
                 &mut commands,
                 polygons,
+                neighbors,
                 layer_entity,
                 event,
                 &mut message_writer,
@@ -531,6 +578,7 @@ fn update_objects_colliders<T: TiledPhysicsBackend>(
             collider::ColliderTarget::Source,
             &mut commands,
             polygons,
+            geo::MultiPolygon::new(vec![]),
             object_entity,
             event,
             &mut message_writer,

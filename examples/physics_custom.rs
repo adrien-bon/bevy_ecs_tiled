@@ -6,7 +6,7 @@ use bevy::{
     ecs::{lifecycle::HookContext, world::DeferredWorld},
     prelude::*,
 };
-use bevy_ecs_tiled::{geo, physics::geometry::multi_polygon_as_line_strings, prelude::*};
+use bevy_ecs_tiled::prelude::*;
 
 mod helper;
 
@@ -55,14 +55,15 @@ impl TiledPhysicsBackend for MyCustomPhysicsBackend {
         // We always draw the geometry outline, whatever the requested strategy
         _strategy: TiledColliderStrategy,
         source: TiledColliderSource,
-        geometry: &geo::MultiPolygon<f32>,
+        geometry: &TiledColliderGeometry,
     ) -> Vec<Self::Collider> {
         let color = match source {
             TiledColliderSource::Object => Color::from(PURPLE),
             TiledColliderSource::TilesLayer => Color::from(RED),
         };
         let mut vertices = vec![];
-        for line_string in multi_polygon_as_line_strings(geometry) {
+        // The outline does not include the edges shared with adjacent collider chunks, if any
+        for line_string in &geometry.outline() {
             for line in line_string.lines() {
                 let points = line.points();
                 vertices.push([points.0.x(), points.0.y(), 10.]);

@@ -23,9 +23,15 @@ pub(super) fn plugin(app: &mut App) {
 /// We require [`TiledColliderStrategy::Triangulation`] for this object, overriding the strategy
 /// of the map: the default [`TiledColliderStrategy::Polyline`] only creates the outline of the shape,
 /// which has no area and thus no mass, while a dynamic body needs a solid collider.
+///
+/// We also require a small [`CollisionMargin`], which rounds the corners of the prop collider.
+/// The ground is split in several colliders (see `tiles_chunk_size` in the `level` module):
+/// without it, the flat side of a crate sliding on the ground would catch on the first vertex
+/// of the next collider ("ghost collision") and the crate would be stuck at the junction.
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[require(
     TiledColliderStrategy::Triangulation,
+    CollisionMargin(2.),
     // Props can be teleported or killed by trigger zones, like the player
     TriggerActor
 )]

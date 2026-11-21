@@ -41,7 +41,7 @@ impl TiledPhysicsBackend for TiledPhysicsRapierBackend {
         &self,
         strategy: TiledColliderStrategy,
         _source: TiledColliderSource,
-        geometry: &geo::MultiPolygon<f32>,
+        geometry: &TiledColliderGeometry,
     ) -> Vec<Self::Collider> {
         collider_shapes(strategy, geometry)
             .into_iter()

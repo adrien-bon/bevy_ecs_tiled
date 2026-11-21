@@ -60,7 +60,8 @@ pub struct TiledPhysicsSettings<T: TiledPhysicsBackend> {
     /// When a chunk size is set, each tiles layer is divided into chunks of this number of tiles and each
     /// chunk gets its own colliders, held by a [`TiledColliderChunk`] entity, child of the layer.
     /// Only the chunks whose tiles are modified are computed again, which is much faster for large maps
-    /// modified at runtime. In return, colliders are not merged across chunks boundaries.
+    /// modified at runtime. In return, colliders are not merged across chunks boundaries
+    /// (see [`TiledColliderChunkSize`] for the consequences).
     ///
     /// This size applies to all the tiles layers of the map, but can be overridden for a given layer
     /// by inserting a [`TiledColliderChunkSize`] component on its entity.
