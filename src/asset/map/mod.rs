@@ -371,6 +371,8 @@ impl TiledMapAsset {
     ///
     /// Example:
     /// ```rust,no_run
+    /// # #[cfg(feature = "render")]
+    /// # {
     /// use bevy::prelude::*;
     /// use bevy_ecs_tiled::prelude::*;
     ///
@@ -389,6 +391,7 @@ impl TiledMapAsset {
     ///         let tile_position = tilemap_transform.transform_point(position.extend(0.));
     ///     }
     /// }
+    /// # }
     /// ```
     pub fn tile_relative_position(
         &self,

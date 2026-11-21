@@ -25,6 +25,8 @@ use std::marker::PhantomData;
 ///
 /// Example:
 /// ```rust,no_run
+/// # #[cfg(feature = "avian")]
+/// # {
 /// use bevy::prelude::*;
 /// use bevy_ecs_tiled::prelude::*;
 ///
@@ -32,6 +34,7 @@ use std::marker::PhantomData;
 /// // note that we also support TiledPhysicsRapierBackend
 /// App::new()
 ///     .add_plugins(TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default());
+/// # }
 /// ```
 ///
 /// We provide several [`TiledPhysicsBackend`] that can be used out of the box:
