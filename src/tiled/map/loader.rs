@@ -433,8 +433,7 @@ fn tileset_to_tiled_map_tileset(
             let asset_path = AssetPath::from(img.source.clone());
             let texture: Handle<Image> = load_context.load(asset_path);
 
-            let columns = (img.width as u32 - tileset.margin + tileset.spacing)
-                / (tileset.tile_width + tileset.spacing);
+            let columns = tileset.columns;
             if columns > 0 {
                 texture_atlas_layout_handle = load_context
                     .labeled_asset_scope(path.to_owned(), |_| {
