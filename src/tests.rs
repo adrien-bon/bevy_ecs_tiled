@@ -136,6 +136,7 @@ fn map_entities<F: bevy::ecs::query::QueryFilter>(app: &mut App, map: Entity) ->
 }
 
 /// Returns the entities of a given tile of a map, sorted
+#[cfg(feature = "render")]
 fn map_tiles_of_kind(app: &mut App, map: Entity, tile: TiledTile) -> Vec<Entity> {
     let mut entities = app
         .world_mut()
@@ -1002,7 +1003,7 @@ fn tiled_plugin_only_requires_asset_plugin() {
 
     let deadline = Instant::now() + Duration::from_secs(10);
     while app
-        .world()
+        .world_mut()
         .query_filtered::<&TiledMapReference, With<TiledLayer>>()
         .iter(app.world())
         .all(|map_ref| map_ref.0 != map)
@@ -1032,14 +1033,10 @@ fn text_objects_are_not_displayed_without_render() {
     assert!(!texts.is_empty());
     assert!(texts.iter().all(|text| text == "Hello World"));
 
-    // ...but nothing is displayed
+    // ...but nothing is displayed: objects have no child visual entity
     assert_eq!(
         app.world_mut()
-            .query_filtered::<(), Or<(
-                With<TiledObjectVisualOf>,
-                With<TiledObjectTextBox>,
-                With<TiledObjectText>
-            )>>()
+            .query_filtered::<(), (With<TiledObject>, With<Children>)>()
             .iter(app.world())
             .count(),
         0
@@ -1084,7 +1081,7 @@ fn map_is_spawned_without_image_assets() {
     );
     assert_eq!(
         app.world_mut()
-            .query_filtered::<(), With<TiledObjectVisualOf>>()
+            .query_filtered::<(), (With<TiledObject>, With<Children>)>()
             .iter(app.world())
             .count(),
         0

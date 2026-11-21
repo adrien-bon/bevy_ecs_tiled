@@ -72,7 +72,7 @@ pub struct TiledMapAsset {
     /// Map of the tilesets ID by label
     ///
     /// Key is a unique label to identify the Tiled tileset within the map.
-    /// See [`tileset_label`](crate::asset::map::tileset_label) function.
+    /// See [`tileset_label`] function.
     pub(crate) tilesets_id_by_label: HashMap<String, TilesetId>,
     /// Map of the images used in the map
     ///

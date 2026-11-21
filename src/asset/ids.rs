@@ -1,7 +1,7 @@
 //! IDs of the items of Tiled maps and worlds.
 //!
 //! These IDs are those defined in Tiled: use them to look up the corresponding raw [`tiled`] data
-//! in a [`TiledMapAsset`](crate::asset::map::TiledMapAsset) or a world asset.
+//! in a [`TiledMapAsset`] or a world asset.
 
 #[allow(unused_imports)]
 use crate::prelude::*;

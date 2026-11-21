@@ -153,6 +153,7 @@ where
     }
 
     /// Entity the event was initially triggered for, before bubbling up the hierarchy
+    #[cfg(feature = "physics")]
     pub(crate) fn target(&self) -> Entity {
         self.target
     }
