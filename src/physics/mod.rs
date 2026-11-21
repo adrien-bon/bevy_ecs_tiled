@@ -280,7 +280,6 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
         (
             Entity,
             &TiledLayer,
-            &TiledName,
             &TiledMapReference,
             &TiledTileLayerStorage,
             &mut TiledLayerColliders<T>,
@@ -298,7 +297,6 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
     for (
         layer_entity,
         layer,
-        layer_name,
         map_ref,
         storage,
         mut colliders,
@@ -342,7 +340,9 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
                 UVec2::new(position.x, position.y) / size
             })
         };
-        let matches = settings.tiles_layer_filter.matches(&layer_name.0);
+        // Layer own strategy, then the one of the map
+        let strategy = strategy.copied().unwrap_or(settings.collider_strategy);
+        let matches = strategy != TiledColliderStrategy::Disabled;
 
         // Chunks whose colliders must be spawned again
         let mut dirty_chunks = if dirty_all || colliders.chunk_size != chunk_size {
@@ -408,7 +408,7 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
                 map_asset,
                 anchor,
                 tiles,
-                &settings.tiles_objects_filter,
+                &settings.tile_shapes_filter,
                 &mut polygons_cache,
             );
 
@@ -436,7 +436,7 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
                     map_asset,
                     anchor,
                     tiles,
-                    &settings.tiles_objects_filter,
+                    &settings.tile_shapes_filter,
                     &mut polygons_cache,
                 ))
             } else {
@@ -453,7 +453,7 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
             .with_layer(layer_entity);
             let entities = collider::spawn_colliders::<T>(
                 settings,
-                strategy.copied().unwrap_or(settings.collider_strategy),
+                strategy,
                 match chunk_size {
                     Some(_) => collider::ColliderTarget::Chunk(chunk),
                     None => collider::ColliderTarget::Source,
@@ -480,7 +480,6 @@ fn update_objects_colliders<T: TiledPhysicsBackend>(
         (
             Entity,
             &TiledObject,
-            &TiledName,
             &TiledMapReference,
             Option<&ChildOf>,
             Option<&TiledColliders>,
@@ -490,7 +489,7 @@ fn update_objects_colliders<T: TiledPhysicsBackend>(
         ),
         Or<(Changed<TiledObject>, With<TiledCollidersDirty<T>>)>,
     >,
-    layers_query: Query<(&TiledName, Option<&TiledColliderStrategy>), With<TiledLayer>>,
+    layers_query: Query<Option<&TiledColliderStrategy>, With<TiledLayer>>,
     maps_query: Query<(&TiledMap, &TiledPhysicsSettings<T>)>,
     assets: Res<Assets<TiledMapAsset>>,
     mut message_writer: MessageWriter<TiledEvent<ColliderCreated>>,
@@ -498,7 +497,6 @@ fn update_objects_colliders<T: TiledPhysicsBackend>(
     for (
         object_entity,
         object,
-        object_name,
         map_ref,
         child_of,
         colliders,
@@ -532,7 +530,7 @@ fn update_objects_colliders<T: TiledPhysicsBackend>(
                 .entity(object_entity)
                 .remove::<TiledCollidersDirty<T>>();
         }
-        let Some((layer_entity, (layer_name, layer_strategy))) =
+        let Some((layer_entity, layer_strategy)) =
             child_of.and_then(|c| layers_query.get(c.parent()).ok().map(|l| (c.parent(), l)))
         else {
             continue;
@@ -544,9 +542,12 @@ fn update_objects_colliders<T: TiledPhysicsBackend>(
             colliders.into_iter().flat_map(|colliders| colliders.iter()),
         );
 
-        if !settings.objects_layer_filter.matches(&layer_name.0)
-            || !settings.objects_filter.matches(&object_name.0)
-        {
+        // Object own strategy, then the one of its layer, then the one of the map
+        let strategy = object_strategy
+            .or(layer_strategy)
+            .copied()
+            .unwrap_or(settings.collider_strategy);
+        if strategy == TiledColliderStrategy::Disabled {
             continue;
         }
 
@@ -554,7 +555,7 @@ fn update_objects_colliders<T: TiledPhysicsBackend>(
             map_asset,
             object,
             match object {
-                TiledObject::Tile { .. } => &settings.tiles_objects_filter,
+                TiledObject::Tile { .. } => &settings.tile_shapes_filter,
                 _ => &TiledFilter::All,
             },
         );
@@ -570,11 +571,7 @@ fn update_objects_colliders<T: TiledPhysicsBackend>(
         .with_object(object_entity);
         collider::spawn_colliders::<T>(
             settings,
-            // Object own strategy, then the one of its layer, then the one of the map
-            object_strategy
-                .or(layer_strategy)
-                .copied()
-                .unwrap_or(settings.collider_strategy),
+            strategy,
             collider::ColliderTarget::Source,
             &mut commands,
             polygons,

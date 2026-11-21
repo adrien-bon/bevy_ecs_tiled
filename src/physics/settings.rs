@@ -1,8 +1,7 @@
 //! Physics settings management for Tiled maps and worlds.
 //!
 //! This module defines the [`TiledPhysicsSettings`] component, which controls how physics colliders are generated
-//! for Tiled maps and worlds in Bevy. It notably provides filtering options for selecting which Tiled objects and tiles
-//! should receive colliders.
+//! for Tiled maps and worlds in Bevy.
 
 use super::{TiledCollidersDirty, TiledLayerColliders};
 use crate::prelude::*;
@@ -10,7 +9,8 @@ use bevy::prelude::*;
 
 /// Component for configuring physics collider generation for Tiled maps and worlds.
 ///
-/// Allows filtering which objects and tiles receive colliders.
+/// Layers and objects get colliders according to their [`TiledColliderStrategy`]: use
+/// [`TiledColliderStrategy::Disabled`] to select which ones do not get any.
 /// Attach this component to [`TiledWorld`] or [`TiledMap`] entities to control their physics behavior.
 ///
 /// Modifying this component spawns again all the colliders of the map, without respawning the map itself.
@@ -18,26 +18,13 @@ use bevy::prelude::*;
 #[derive(Component, Reflect, Clone, Debug)]
 #[reflect(Component, Default, Debug)]
 pub struct TiledPhysicsSettings<T: TiledPhysicsBackend> {
-    /// Specify which Tiled object to add colliders for using their layer name.
+    /// Select the collision shapes of tiles to add colliders for, using their name.
     ///
-    /// Colliders will be automatically added for all objects whose containing layer name matches this filter.
-    /// By default, we add colliders for all objects.
-    pub objects_layer_filter: TiledFilter,
-    /// Specify which Tiled object to add colliders for using their name.
+    /// Collision shapes are defined for each tile in the Tiled tileset editor. This filter applies
+    /// to tiles of tiles layers as well as to tile objects. By default, we use all collision shapes.
     ///
-    /// Colliders will be automatically added for all objects whose name matches this filter.
-    /// By default, we add colliders for all objects.
-    pub objects_filter: TiledFilter,
-    /// Specify which tiles collision object to add colliders for using their layer name.
-    ///
-    /// Colliders will be automatically added for all tiles collision objects whose layer name matches this filter.
-    /// By default, we add colliders for all collision objects.
-    pub tiles_layer_filter: TiledFilter,
-    /// Specify which tiles collision object to add colliders for using their name.
-    ///
-    /// Colliders will be automatically added for all tiles collision objects whose name matches this filter.
-    /// By default, we add colliders for all collision objects.
-    pub tiles_objects_filter: TiledFilter,
+    /// To select which layers or objects get colliders, use [`TiledColliderStrategy::Disabled`] instead.
+    pub tile_shapes_filter: TiledFilter,
     /// Enables merging of colliders.
     ///
     /// When `true`, complex collision shapes (e.g., multiple overlapping or connected polygons) are merged
@@ -47,7 +34,8 @@ pub struct TiledPhysicsSettings<T: TiledPhysicsBackend> {
     /// When `false`, all collision shapes are kept as-is without simplification. This preserves exact geometry
     /// but may result in slower physics simulation for highly complex maps with many objects.
     pub simplify_geometry: bool,
-    /// How colliders are created from the geometry of Tiled objects and tiles.
+    /// How colliders are created from the geometry of Tiled objects and tiles, if they are created at all
+    /// (see [`TiledColliderStrategy::Disabled`]).
     ///
     /// This strategy applies to the whole map, but can be overridden for a given layer or object
     /// by inserting a [`TiledColliderStrategy`] component on its entity.
@@ -73,10 +61,7 @@ pub struct TiledPhysicsSettings<T: TiledPhysicsBackend> {
 impl<T: TiledPhysicsBackend> Default for TiledPhysicsSettings<T> {
     fn default() -> Self {
         Self {
-            objects_layer_filter: TiledFilter::default(),
-            objects_filter: TiledFilter::default(),
-            tiles_layer_filter: TiledFilter::default(),
-            tiles_objects_filter: TiledFilter::default(),
+            tile_shapes_filter: TiledFilter::default(),
             simplify_geometry: true,
             collider_strategy: TiledColliderStrategy::default(),
             tiles_chunk_size: TiledColliderChunkSize::Disabled,

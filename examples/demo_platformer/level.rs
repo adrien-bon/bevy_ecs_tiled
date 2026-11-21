@@ -14,21 +14,32 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             TiledMap(asset_server.load("demo_platformer/demo.tmx")),
             TilemapAnchor::Center,
             TiledPhysicsSettings::<TiledPhysicsAvianBackend> {
-                // Only add colliders for the objects we use as trigger zones or physics props:
-                // we do not want the patrol routes to become walls.
-                objects_filter: TiledFilter::from([
-                    "KillZone",
-                    "TeleportZone",
-                    "Crate",
-                    "Bomb",
-                    "Weight",
-                ]),
                 // Split tiles colliders in chunks, so only a small part of them
                 // would have to be computed again if we were to update some tiles.
                 tiles_chunk_size: TiledColliderChunkSize::Size(UVec2::splat(16)),
                 ..default()
             },
         ))
+        // Only add colliders for the objects we use as trigger zones or physics props:
+        // we do not want the patrol routes to become walls.
+        .observe(
+            |object_created: On<TiledEvent<ObjectCreated>>,
+             objects_query: Query<&TiledName, With<TiledObject>>,
+             mut commands: Commands| {
+                let object = object_created.origin;
+                let Ok(name) = objects_query.get(object) else {
+                    return;
+                };
+                if !matches!(
+                    name.0.as_str(),
+                    "KillZone" | "TeleportZone" | "Crate" | "Bomb" | "Weight"
+                ) {
+                    commands
+                        .entity(object)
+                        .insert(TiledColliderStrategy::Disabled);
+                }
+            },
+        )
         // Colliders created from the map do not move, unless they already have a rigid body:
         // make them static, but do not overwrite the dynamic body of our props (see the `prop` module).
         // A `ColliderCreated` event is sent for each collider. A tiles layer or an object can have several

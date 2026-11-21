@@ -34,6 +34,9 @@ pub enum TiledColliderSource {
 /// Since it is a regular component, it can also be set from Tiled using a custom property
 /// (see the `user_properties` feature).
 ///
+/// [`TiledColliderStrategy::Disabled`] selects which layers and objects get colliders: for instance,
+/// use it as the map strategy and insert another strategy on the few layers or objects which need colliders.
+///
 /// Example:
 /// ```rust,no_run
 /// use bevy::prelude::*;
@@ -48,6 +51,18 @@ pub enum TiledColliderSource {
 ///     let layer = layer_created.origin;
 ///     if layers_query.get(layer).is_ok_and(|name| name.0 == "water") {
 ///         commands.entity(layer).insert(TiledColliderStrategy::Triangulation);
+///     }
+/// }
+///
+/// // Do not create colliders for objects named "spawn"
+/// fn on_object_created(
+///     object_created: On<TiledEvent<ObjectCreated>>,
+///     objects_query: Query<&TiledName, With<TiledObject>>,
+///     mut commands: Commands,
+/// ) {
+///     let object = object_created.origin;
+///     if objects_query.get(object).is_ok_and(|name| name.0 == "spawn") {
+///         commands.entity(object).insert(TiledColliderStrategy::Disabled);
 ///     }
 /// }
 /// ```
@@ -65,6 +80,8 @@ pub enum TiledColliderStrategy {
     Triangulation,
     /// Create a line strip collider for each line string of the geometry: this produces several colliders.
     LineStrip,
+    /// Do not create any collider.
+    Disabled,
 }
 
 /// Relationship [`Component`] for the collider of a [`TiledObject`] or [`TiledLayer::Tiles`].

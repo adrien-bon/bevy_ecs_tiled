@@ -89,14 +89,21 @@ We provide two [`TiledPhysicsBackend`](https://docs.rs/bevy_ecs_tiled/latest/bev
 
 ---
 
-## Filtering Which Objects Get Colliders
+## Selecting Which Layers and Objects Get Colliders
 
-By default, colliders are spawned for **all** objects (regular objects and tile colliders).
-If you want more control, use the [`TiledPhysicsSettings`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/settings/struct.TiledPhysicsSettings.html) component.
+By default, colliders are spawned for **all** tiles layers and objects.
+To select which ones get colliders, use [`TiledColliderStrategy::Disabled`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderStrategy.html#variant.Disabled), the same way as any other [collider strategy](#collider-strategy):
 
-This component lets you filter which objects/layers should have colliders, based on their names.
+- set it in [`TiledPhysicsSettings`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/settings/struct.TiledPhysicsSettings.html) to disable colliders for the whole map,
+- insert it as a component on a layer or an object entity to disable colliders for this layer or object only.
 
-**Example: Only spawn colliders for certain objects/layers**
+An object uses its own strategy if it has one, otherwise the one of its layer, otherwise the one of the map.
+For instance, you can disable colliders for the whole map and enable them for a few layers or objects only, by inserting another strategy on them.
+Colliders are spawned again, or despawned, when this component is inserted, modified or removed.
+
+Since it is a regular component, it can be set from Tiled using a custom property (see the [custom properties guide](properties.md)), or inserted from an observer, for instance to select layers or objects by name:
+
+**Example: Only spawn colliders for certain layers and objects**
 
 ```rust,no_run
 use bevy::prelude::*;
@@ -105,14 +112,54 @@ use bevy_ecs_tiled::prelude::*;
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d);
+    commands
+        .spawn((
+            TiledMap(asset_server.load("finite.tmx")),
+            // Do not create colliders by default...
+            TiledPhysicsSettings::<TiledPhysicsAvianBackend> {
+                collider_strategy: TiledColliderStrategy::Disabled,
+                ..default()
+            },
+        ))
+        // ... but create them for the layer named 'collision'
+        .observe(
+            |layer_created: On<TiledEvent<LayerCreated>>,
+             layers_query: Query<&TiledName, With<TiledLayer>>,
+             mut commands: Commands| {
+                let layer = layer_created.origin;
+                if layers_query.get(layer).is_ok_and(|name| name.0 == "collision") {
+                    commands.entity(layer).insert(TiledColliderStrategy::Polyline);
+                }
+            },
+        )
+        // ... and for the objects named 'hitbox'
+        .observe(
+            |object_created: On<TiledEvent<ObjectCreated>>,
+             objects_query: Query<&TiledName, With<TiledObject>>,
+             mut commands: Commands| {
+                let object = object_created.origin;
+                if objects_query.get(object).is_ok_and(|name| name.0 == "hitbox") {
+                    commands.entity(object).insert(TiledColliderStrategy::Polyline);
+                }
+            },
+        );
+}
+```
+
+The collision shapes of tiles, defined in the Tiled tileset editor, are not entities: to only use some of them, filter them by name using [`TiledPhysicsSettings::tile_shapes_filter`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/settings/struct.TiledPhysicsSettings.html#structfield.tile_shapes_filter).
+It applies to the tiles of tiles layers as well as to tile objects:
+
+```rust,no_run
+use bevy::prelude::*;
+use avian2d::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         TiledMap(asset_server.load("finite.tmx")),
-        // Restrict colliders to:
-        // - objects named 'hitbox' or 'collision'
-        // - tile colliders in a layer named 'collision'
+        // Only use the tiles collision shapes named 'collision'
         TiledPhysicsSettings::<TiledPhysicsAvianBackend> {
-            objects_filter: TiledFilter::Names(vec!["hitbox".into(), "collision".into()]),
-            tiles_layer_filter: TiledFilter::Names(vec!["collision".into()]),
+            tile_shapes_filter: TiledFilter::from(["collision"]),
             ..default()
         },
     ));
@@ -146,6 +193,7 @@ The [`TiledColliderStrategy`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_til
 - `Polyline` (default): a single collider made of all the segments outlining the shapes. Bodies can end up inside of the shape.
 - `Triangulation`: shapes are triangulated and all triangles are aggregated in a single "solid" compound collider.
 - `LineStrip`: one collider for each ring outlining the shapes, so there can be several colliders.
+- `Disabled`: no collider at all (see [above](#selecting-which-layers-and-objects-get-colliders)).
 
 The strategy is set for the whole map, in [`TiledPhysicsSettings`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/settings/struct.TiledPhysicsSettings.html):
 

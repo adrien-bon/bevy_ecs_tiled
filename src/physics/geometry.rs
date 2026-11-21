@@ -84,6 +84,7 @@ pub enum TiledColliderShape {
 ///   polygons. Since it is a solid shape, it does not depend on the neighbors of the geometry.
 /// - [`TiledColliderStrategy::LineStrip`]: a [`TiledColliderShape::Polyline`] for each line string of the geometry
 ///   [outline](TiledColliderGeometry::outline).
+/// - [`TiledColliderStrategy::Disabled`]: no shape at all.
 ///
 /// Nothing is returned for an empty geometry.
 pub fn collider_shapes(
@@ -129,6 +130,7 @@ pub fn collider_shapes(
                 indices: None,
             })
             .collect(),
+        TiledColliderStrategy::Disabled => vec![],
     }
 }
 

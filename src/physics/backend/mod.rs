@@ -78,6 +78,7 @@ pub trait TiledPhysicsBackend:
     /// use its [`outline`](TiledColliderGeometry::outline), which does not include the edges shared with them.
     /// The `strategy` tells how colliders should be created from it: a backend which does not support
     /// all strategies is free to fall back to another one.
+    /// It is never [`TiledColliderStrategy::Disabled`]: no collider is created in this case.
     ///
     /// Usually returns a single collider, but there can be several (see [`TiledColliderStrategy::LineStrip`])
     /// or none if the geometry is not supported.

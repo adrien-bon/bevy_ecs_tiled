@@ -1671,6 +1671,52 @@ mod physics {
     }
 
     #[test]
+    fn disabled_strategy_selects_which_sources_get_colliders() {
+        use TiledColliderStrategy::*;
+
+        let mut app = test_app();
+        app.add_plugins(TiledPhysicsPlugin::<TestBackend>::default());
+        let map = spawn_test_map(&mut app);
+        let ground = layer_by_name(&mut app, "ground");
+        let objects = layer_by_name(&mut app, "objects");
+        let rectangle = object_by_name(&mut app, "rectangle");
+        assert_eq!(colliders_strategies(&app, ground), vec![Polyline]);
+        assert_eq!(colliders_strategies(&app, rectangle), vec![Polyline]);
+
+        // Disable a tiles layer and an objects layer: their colliders are despawned
+        app.world_mut().entity_mut(ground).insert(Disabled);
+        app.world_mut().entity_mut(objects).insert(Disabled);
+        app.update();
+        assert!(colliders_strategies(&app, ground).is_empty());
+        assert!(colliders_strategies(&app, rectangle).is_empty());
+        assert!(app.world().get::<TestCollider>(ground).is_none());
+        assert!(app.world().get::<TestCollider>(rectangle).is_none());
+
+        // An object of a disabled layer can still have colliders
+        app.world_mut().entity_mut(rectangle).insert(Triangulation);
+        app.update();
+        assert_eq!(colliders_strategies(&app, rectangle), vec![Triangulation]);
+
+        // Removing the overrides restores the colliders
+        app.world_mut().entity_mut(ground).remove::<TiledColliderStrategy>();
+        app.world_mut().entity_mut(objects).remove::<TiledColliderStrategy>();
+        app.world_mut().entity_mut(rectangle).remove::<TiledColliderStrategy>();
+        app.update();
+        assert_eq!(colliders_strategies(&app, ground), vec![Polyline]);
+        assert_eq!(colliders_strategies(&app, rectangle), vec![Polyline]);
+
+        // Disable colliders for the whole map, but keep them for a single layer
+        app.world_mut()
+            .get_mut::<TiledPhysicsSettings<TestBackend>>(map)
+            .unwrap()
+            .collider_strategy = Disabled;
+        app.world_mut().entity_mut(ground).insert(Polyline);
+        app.update();
+        assert_eq!(colliders_strategies(&app, ground), vec![Polyline]);
+        assert!(colliders_strategies(&app, rectangle).is_empty());
+    }
+
+    #[test]
     fn map_collider_strategy_is_used() {
         let mut app = test_app();
         app.add_plugins(TiledPhysicsPlugin::<TestBackend>::default());
@@ -1889,13 +1935,12 @@ mod physics {
             vec![TiledColliderStrategy::Triangulation]
         );
 
-        // Filters are applied as well
+        // Colliders can be disabled for the whole map
         let mut settings = app
             .world_mut()
             .get_mut::<TiledPhysicsSettings<TestBackend>>(map)
             .unwrap();
-        settings.tiles_layer_filter = TiledFilter::None;
-        settings.objects_filter = TiledFilter::None;
+        settings.collider_strategy = TiledColliderStrategy::Disabled;
         app.update();
         assert!(colliders_area(&app, ground).is_empty());
         assert!(colliders_area(&app, rectangle).is_empty());

@@ -65,11 +65,24 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             c.insert((
                 TilemapAnchor::Center,
                 TiledPhysicsSettings::<helper::physics::Backend> {
-                    objects_layer_filter: TiledFilter::None,
-                    tiles_objects_filter: TiledFilter::Names(vec![String::from("collision")]),
+                    // Only use the tiles collision shapes named 'collision'
+                    tile_shapes_filter: TiledFilter::from(["collision"]),
                     ..default()
                 },
-            ));
+            ))
+            // Disable colliders for objects layers
+            .observe(
+                |layer_created: On<TiledEvent<LayerCreated>>,
+                 layers_query: Query<&TiledLayer>,
+                 mut commands: Commands| {
+                    let layer = layer_created.origin;
+                    if let Ok(TiledLayer::Objects) = layers_query.get(layer) {
+                        commands
+                            .entity(layer)
+                            .insert(TiledColliderStrategy::Disabled);
+                    }
+                },
+            );
         },
     ));
     mgr.add_map(helper::assets::MapInfos::new(
@@ -79,12 +92,25 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         |c| {
             c.insert((
                 TilemapAnchor::Center,
+                // Disable colliders for the whole map...
                 TiledPhysicsSettings::<helper::physics::Backend> {
-                    objects_layer_filter: TiledFilter::All,
-                    tiles_objects_filter: TiledFilter::None,
+                    collider_strategy: TiledColliderStrategy::Disabled,
                     ..default()
                 },
-            ));
+            ))
+            // ... but enable them for objects layers
+            .observe(
+                |layer_created: On<TiledEvent<LayerCreated>>,
+                 layers_query: Query<&TiledLayer>,
+                 mut commands: Commands| {
+                    let layer = layer_created.origin;
+                    if let Ok(TiledLayer::Objects) = layers_query.get(layer) {
+                        commands
+                            .entity(layer)
+                            .insert(TiledColliderStrategy::Polyline);
+                    }
+                },
+            );
         },
     ));
     mgr.add_map(helper::assets::MapInfos::new(
