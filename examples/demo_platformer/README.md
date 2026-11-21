@@ -12,7 +12,7 @@ This example showcases the power of `bevy_ecs_tiled`'s custom properties feature
 
 Game elements are represented as Bevy entities with custom components that are automatically loaded from Tiled:
 
-- Add marker components to objects or layers in the editor (e.g., [`PlayerSpawnPoint`](./player.rs), [`Enemy`](./enemy.rs), [`PatrolRoute`](./patrol.rs), [`TriggerZone`](./trigger.rs) or [`OneWayPlatform`](./platform.rs))
+- Add marker components to objects or layers in the editor (e.g., [`PlayerSpawnPoint`](./player.rs), [`Enemy`](./enemy.rs), [`PatrolRoute`](./patrol.rs), [`TriggerZone`](./trigger.rs), [`OneWayPlatform`](./platform.rs) or [`DynamicProp`](./prop.rs))
 - Let the plugin automatically instantiate components on map load
 - Write your own game logic associated to these components (using `On<Add>` observers or regular query)
 
@@ -22,8 +22,9 @@ The example demonstrates physics collider spawning for:
 
 - Platform tiles and objects (static colliders)
 - Dynamic enemies and player character with an associated [controller](./controller.rs)
+- Dynamic [props](./prop.rs) (crates, a bomb and a weight) placed in Tiled as tile objects: their colliders are created from the collision shapes of their tile and they only need the `DynamicProp` user property to fall and be pushed around
 
-The [level](./level.rs) also shows how to tune colliders creation using `TiledPhysicsSettings`: only some objects get a collider and tiles colliders are split in chunks.
+The [level](./level.rs) also shows how to tune colliders creation using `TiledPhysicsSettings`: only some objects get a collider and tiles colliders are split in chunks. Map colliders are made static, except for the ones which already have a rigid body, such as our props.
 
 It also leverages `Avian` physics integration to [trigger](./trigger.rs) game logic events such as teleportation or dead zones when the player enters a certain zone.
 

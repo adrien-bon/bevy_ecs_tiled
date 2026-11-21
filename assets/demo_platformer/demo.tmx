@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="128" tileheight="128" infinite="1" nextlayerid="8" nextobjectid="7">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="128" tileheight="128" infinite="1" nextlayerid="8" nextobjectid="13">
  <tileset firstgid="1" source="tilesets/ground.tsx"/>
  <tileset firstgid="129" source="tilesets/tiles.tsx"/>
  <imagelayer id="2" name="Background" offsetx="6.06061" offsety="154.545" parallaxx="0.3" repeatx="1">
@@ -134,6 +134,36 @@
   </object>
   <object id="6" name="Teleporter Destination" x="-64.4791" y="329.702">
    <point/>
+  </object>
+  <object id="7" name="Crate" gid="153" x="-400" y="1024" width="80" height="80">
+   <properties>
+    <property name="DynamicProp" type="class" propertytype="demo_platformer::prop::DynamicProp"/>
+   </properties>
+  </object>
+  <object id="8" name="Crate" gid="161" x="-400" y="944" width="80" height="80">
+   <properties>
+    <property name="DynamicProp" type="class" propertytype="demo_platformer::prop::DynamicProp"/>
+   </properties>
+  </object>
+  <object id="9" name="Crate" gid="153" x="-320" y="1024" width="80" height="80">
+   <properties>
+    <property name="DynamicProp" type="class" propertytype="demo_platformer::prop::DynamicProp"/>
+   </properties>
+  </object>
+  <object id="10" name="Crate" gid="161" x="-880" y="500" width="64" height="64">
+   <properties>
+    <property name="DynamicProp" type="class" propertytype="demo_platformer::prop::DynamicProp"/>
+   </properties>
+  </object>
+  <object id="11" name="Bomb" gid="217" x="-900" y="1000" width="64" height="64">
+   <properties>
+    <property name="DynamicProp" type="class" propertytype="demo_platformer::prop::DynamicProp"/>
+   </properties>
+  </object>
+  <object id="12" name="Weight" gid="233" x="200" y="1024" width="80" height="80">
+   <properties>
+    <property name="DynamicProp" type="class" propertytype="demo_platformer::prop::DynamicProp"/>
+   </properties>
   </object>
  </objectgroup>
 </map>

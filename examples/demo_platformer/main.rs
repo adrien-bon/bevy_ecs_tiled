@@ -4,8 +4,9 @@
 //! - `level`: load the map and configure its physics colliders
 //! - `player`: spawn the player on its spawn point and handle keyboard inputs
 //! - `enemy` and `patrol`: enemies walking along a route drawn in Tiled
-//! - `trigger`: zones which kill or teleport the player
+//! - `trigger`: zones which kill or teleport the player and props
 //! - `platform`: one-way platforms
+//! - `prop`: dynamic physics objects, such as crates
 //! - `controller`, `animation`, `camera`, `minimap`: not specific to Tiled
 //!
 //! See the `README.md` file next to this one for more information.
@@ -25,6 +26,7 @@ mod minimap;
 mod patrol;
 mod platform;
 mod player;
+mod prop;
 mod trigger;
 
 fn main() {
@@ -73,6 +75,7 @@ fn main() {
         enemy::plugin,
         patrol::plugin,
         platform::plugin,
+        prop::plugin,
         level::plugin,
         trigger::plugin,
         controller::plugin,

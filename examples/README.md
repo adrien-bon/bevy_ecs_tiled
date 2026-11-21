@@ -32,7 +32,7 @@ Most examples support the following controls:
 
 | Name | Required features | Description |
 |------|-------------------|-------------|
-| `demo_platformer` | `avian`, `user_properties` | A small platformer game: objects properties, physics, one-way platforms and a minimap. |
+| `demo_platformer` | `avian`, `user_properties` | A small platformer game: objects properties, physics, dynamic props, one-way platforms and a minimap. |
 | `demo_topdown` | `user_properties` | A small top-down game: tiles properties, mouse picking, pathfinding, maps switching and a custom tilemap material. |
 | `map_anchor` | None | This example shows the basic usage of `TilemapAnchor`. |
 | `map_basic` | None | This example shows the basic usage of the plugin to load a Tiled map. |
@@ -48,10 +48,10 @@ Most examples support the following controls:
 | `orientation_hexagonal` | None | This example cycles through different kinds of hexagonal maps. |
 | `orientation_isometric` | None | This example cycles through different kinds of isometric maps. |
 | `orientation_orthogonal` | None | This example cycles through different kinds of orthogonal maps. |
-| `physics_avian_controller` | `avian_debug` | This example shows a simple player-controlled object using Avian2D physics. You can move the object using arrow keys. |
+| `physics_avian_controller` | `avian_debug` | This example shows a simple player-controlled object using Avian2D physics. You can move the object using arrow keys. Some objects from the map are turned into dynamic bodies you can push around. |
 | `physics_custom` | `physics` | This example shows how to use a custom physics backend. |
 | `physics_orientation` | `avian_debug` or `rapier_debug` | This example shows physics colliders on maps of various orientations, with the Avian or Rapier backend. |
-| `physics_rapier_controller` | `rapier_debug` | This example shows a simple player-controlled object using Rapier physics. You can move the object using arrow keys. |
+| `physics_rapier_controller` | `rapier_debug` | This example shows a simple player-controlled object using Rapier physics. You can move the object using arrow keys. Some objects from the map are turned into dynamic bodies you can push around. |
 | `physics_settings` | `avian_debug` or `rapier_debug` | This example shows how to tune physics colliders generation, with the Avian or Rapier backend. |
 | `properties_basic` | `user_properties` | This example shows how to map custom tiles and objects properties from Tiled to Bevy Components. |
 | `world_basic` | `world` | This example shows the basic usage of the plugin to load a Tiled world. |

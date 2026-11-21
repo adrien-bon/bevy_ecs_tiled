@@ -92,7 +92,7 @@
   },
   {
     "id": 9,
-    "name": "demo_platformer::trigger::TriggerActor",
+    "name": "demo_platformer::prop::DynamicProp",
     "type": "class",
     "useAs": [
       "property"
@@ -103,6 +103,17 @@
   },
   {
     "id": 10,
+    "name": "demo_platformer::trigger::TriggerActor",
+    "type": "class",
+    "useAs": [
+      "property"
+    ],
+    "color": "#000000",
+    "drawFill": true,
+    "members": []
+  },
+  {
+    "id": 11,
     "name": "demo_platformer::trigger::TriggerZone:::Variant",
     "type": "enum",
     "storageType": "string",
@@ -113,7 +124,7 @@
     "valuesAsFlags": false
   },
   {
-    "id": 11,
+    "id": 12,
     "name": "demo_platformer::trigger::TriggerZone::Teleport",
     "type": "class",
     "useAs": [
@@ -130,7 +141,7 @@
     ]
   },
   {
-    "id": 12,
+    "id": 13,
     "name": "demo_platformer::trigger::TriggerZone",
     "type": "class",
     "useAs": [

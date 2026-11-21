@@ -14,16 +14,23 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             TiledMap(asset_server.load("demo_platformer/demo.tmx")),
             TilemapAnchor::Center,
             TiledPhysicsSettings::<TiledPhysicsAvianBackend> {
-                // Only add colliders for the objects we use as trigger zones:
+                // Only add colliders for the objects we use as trigger zones or physics props:
                 // we do not want the patrol routes to become walls.
-                objects_filter: TiledFilter::from(["KillZone", "TeleportZone"]),
+                objects_filter: TiledFilter::from([
+                    "KillZone",
+                    "TeleportZone",
+                    "Crate",
+                    "Bomb",
+                    "Weight",
+                ]),
                 // Split tiles colliders in chunks, so only a small part of them
                 // would have to be computed again if we were to update some tiles.
                 tiles_chunk_size: TiledColliderChunkSize::Size(UVec2::splat(16)),
                 ..default()
             },
         ))
-        // Colliders created from the map never move: make them static
+        // Colliders created from the map do not move, unless they already have a rigid body:
+        // make them static, but do not overwrite the dynamic body of our props (see the `prop` module).
         // A `ColliderCreated` event is sent for each collider. A tiles layer or an object can have several
         // colliders (eg. `TiledColliderStrategy::LineStrip` or collider chunks), held by its entity or by its
         // descendants (the event `origin`).
@@ -34,7 +41,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             |collider_created: On<TiledEvent<ColliderCreated>>, mut commands: Commands| {
                 commands
                     .entity(collider_created.source_entity())
-                    .insert(RigidBody::Static);
+                    .insert_if_new(RigidBody::Static);
             },
         );
 }

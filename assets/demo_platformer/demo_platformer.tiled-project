@@ -100,6 +100,18 @@
         {
             "color": "#ff000000",
             "drawFill": true,
+            "id": 12,
+            "members": [
+            ],
+            "name": "demo_platformer::prop::DynamicProp",
+            "type": "class",
+            "useAs": [
+                "property"
+            ]
+        },
+        {
+            "color": "#ff000000",
+            "drawFill": true,
             "id": 7,
             "members": [
             ],
