@@ -1698,9 +1698,15 @@ mod physics {
         assert_eq!(colliders_strategies(&app, rectangle), vec![Triangulation]);
 
         // Removing the overrides restores the colliders
-        app.world_mut().entity_mut(ground).remove::<TiledColliderStrategy>();
-        app.world_mut().entity_mut(objects).remove::<TiledColliderStrategy>();
-        app.world_mut().entity_mut(rectangle).remove::<TiledColliderStrategy>();
+        app.world_mut()
+            .entity_mut(ground)
+            .remove::<TiledColliderStrategy>();
+        app.world_mut()
+            .entity_mut(objects)
+            .remove::<TiledColliderStrategy>();
+        app.world_mut()
+            .entity_mut(rectangle)
+            .remove::<TiledColliderStrategy>();
         app.update();
         assert_eq!(colliders_strategies(&app, ground), vec![Polyline]);
         assert_eq!(colliders_strategies(&app, rectangle), vec![Polyline]);
