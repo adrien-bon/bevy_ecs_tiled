@@ -11,6 +11,7 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Maps can be modified after they have been loaded: tilemaps, objects visuals, image sprites and physics colliders are derived from tiles, objects and images entities, and are automatically updated when these entities are spawned, despawned or modified
 - Add `map_dynamic` example and a "Modify a map at runtime" book guide
 - Add `demo_topdown` example: a small top-down game with tiles properties, mouse picking, pathfinding, maps switching and a custom tilemap material
+- Rework `demo_platformer` example: one-way platforms, dynamic props spawned from the Tiled map and tiles colliders split in chunks. `physics_avian_controller` and `physics_rapier_controller` examples spawn dynamic objects from the map
 - Add `TiledProperties` component, holding the class and custom properties of the map, layers and objects as defined in Tiled, whether the `user_properties` feature is enabled or not
 - Add `TiledTileLayerStorage` component on layers entities, giving the tile at a given position of a tiles layer
 - Add `TiledTilemapOf` / `TiledTilemaps` relationship between a tilemap and its layer
@@ -41,7 +42,6 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - Tiles are direct children of their `TiledLayer::Tiles` entity instead of their `TiledTilemap`, and have a `TiledMapReference`
 - Tilemaps, objects visuals and image sprites are spawned during `TiledPostUpdateSystems::SyncRender` instead of when spawning the map; empty tilemaps are despawned
 - `TiledEvent<TilemapCreated>` is sent whenever a tilemap is spawned during `TiledPostUpdateSystems::SyncRender`, only with the `render` feature
-- Physics colliders are computed from ECS components and spawned during `TiledPostUpdateSystems::SyncPhysics`, and spawned again when their source changes; `TiledPreUpdateSystems::SpawnPhysicsColliders` is removed
 - `TiledTile` holds its tileset ID and tile ID, and `TiledTilemap` holds its tileset ID: `TiledTilesetId` and `TiledTileId` components are removed
 - `TiledLayerId` and `TiledObjectId` components are removed. `TiledEvent::layer_id()`, `layer()`, `object_id()` and `object()` are removed
 - `TiledMapStorage` component is removed: use the `TiledMapLayers`, `TiledMapTiles` and `TiledMapObjects` system parameters to iterate over the entities of a map
@@ -51,56 +51,53 @@ A [migration guide](https://adrien-bon.github.io/bevy_ecs_tiled/migrations/v0_16
 - `TiledObject::Tile` holds its tileset ID, tile ID and flip flags; `TiledObject::from_object_data()` takes the `TiledMapAsset` as first argument
 - `TiledImage` holds the image handle and repeat settings, and is not `Copy` anymore
 - `TiledObjectVisualOf` no longer requires a `Sprite` and is also used for text objects text box
-- `TiledEvent<ColliderCreated>::tiles()` is removed
-- Physics: `TiledPhysicsBackend` trait only creates colliders, through its new `Collider` associated type and `colliders()` function replacing `spawn_colliders()`: colliders entities are now spawned and despawned by `bevy_ecs_tiled`. Its geometry is a new `TiledColliderGeometry`, whose `outline()` excludes the edges shared with adjacent collider chunks
-- Physics: `TiledPhysicsSettings` `objects_layer_filter`, `objects_filter` and `tiles_layer_filter` are removed: use `TiledColliderStrategy::Disabled` on the map, or on given layers or objects, instead. `tiles_objects_filter` is renamed `tile_shapes_filter`
-- Physics: `TiledPhysicsAvianBackend` and `TiledPhysicsRapierBackend` are unit structs: their `Polyline`, `Triangulation` and `LineStrip` variants moved to `TiledColliderStrategy`
-- Physics: the first collider of a tiles layer or an object is always the layer or object entity itself, next ones (if any) are children entities named `TiledCollider(<index>)`. Each of them has the `TiledColliderOf`, `TiledColliderSource` and `TiledColliderPolygons` components, and gets its own `TiledEvent<ColliderCreated>`
-- Physics: `multi_polygon_as_line_strings()` returns an iterator over borrowed line strings, and `multi_polygon_as_triangles()` returns an empty list instead of panicking when triangulation fails
 - Without the `render` feature, images and texture atlas layouts are not loaded anymore: `ImagePlugin` and `TextureAtlasPlugin` are no longer required to load a map, which can be done on a headless server
 - Without the `render` feature, nothing is displayed: objects do not have any visual (tile sprite or text), image layers do not have a `Sprite`, and `TiledImage::image`, `TiledAnimation` and the rendering components of the `render` module (`TiledTilemap*`, `TiledObjectVisual*`, `TiledObjectText*`) do not exist
 - The `text` and `debug` features now enable the `render` feature
 - Repeated images position and size are only updated once per frame, during `TiledPostUpdateSystems::SyncRender`
 - Tiles entities only have a `Name` component when the `debug` feature is enabled
 - Helper functions `tileset_from_map()`, `tile_from_map()`, `layer_from_map()`, `object_from_map()`, `tilemap_type_from_map()`, `try_tilemap_type_from_map()`, `grid_size_from_map()` and `tile_size()` are removed: use `TiledMapAsset::tileset()`, `tile()`, `layer()`, `object()`, `map_type`, `grid_size` and `tile_size()`
-- `TiledEvent::tilemap_tileset()` and `TiledEvent::tile()` also work for tilesets only used by object templates
 - `TiledEvent` can no longer be built nor sent from outside the crate (`new()`, `transmute()`, `with_*()` and `send()` are private), its kind is bound by the sealed `TiledEventKind` trait, and it is no longer a `Component`
-- `ColliderCreated::collider_of` and `ColliderCreated::new()` are removed: the event origin is the collider entity
 - `TiledObject::center()`, `vertices()`, `line_string()` and `polygon()` are no longer public: use `TiledMapAsset::object_*()` functions
 - `TiledObject::Text::font_size` is a `f32`
 - `TiledPluginConfig` is removed: its fields are directly on `TiledPlugin`, renamed `types_export_file` and `types_filter`, and types are no longer exported by default
-- `simplify_geometry()` is removed
 - The `tiled` module is split into `asset`, `ecs`, `render` and `properties` modules; `TiledPlugin` and `sets` move to the crate root
 - The prelude only holds commonly used items: the `tiled`, `geo` and `regex` crates are re-exported at the crate root, physics geometry helpers are in `physics::geometry` and `tiled_debug_gizmos_enabled()` in `debug`
 - `TiledWorldChunking` is renamed `TiledWorldStreaming`, along with its module, system set, debug plugin and example, and is an enum instead of a wrapper around an `Option`
 - `TiledLayerParallax` holds a `parallax: Vec2` instead of `parallax_x` and `parallax_y`
 - `TiledMapAsset::tile_relative_position()` takes a `TiledTile` and returns an `Option`
 - `TiledObject::kind()` and `TiledName::matches()` are removed
-- `TiledObject`, `TiledColliderStrategy`, `TiledColliderShape` and system sets enums are `#[non_exhaustive]`
+- `TiledObject` and system sets enums are `#[non_exhaustive]`
 - `physics_settings` and `physics_orientation` examples replace their Avian and Rapier variants
 - `TiledUpdateSystems::UpdateTiledImagePositionAndSize` is removed
 - `TiledMapReference`, `TiledLayer`, `TiledTilemap`, `TiledName`, `TiledColliderSource` and `TiledColliderPolygons` are immutable components: insert them again to replace them
 - `TiledMapReference` field is private: use `TiledMapReference::entity()` or `Deref`
 - `TiledAnimation` fields are private: use `TiledAnimation::frames()`
-- Physics: modifying `TiledPhysicsSettings` no longer respawns the map (or world): only colliders are spawned again, so modifications made to the map at runtime are kept
-- Physics: colliders are computed much faster. Polygons of each kind of tile are only computed once per layer, and are merged using a single union operation instead of pairwise unions
 - Debug plugins draw their gizmos using the `TiledDebugGizmos` group instead of `DefaultGizmoConfigGroup`
 - Examples add all debug plugins through their helper plugin when the `debug` feature is enabled, and debug gizmos can be toggled using the F2 key: `map_anchor`, `orientation_*`, `world_streaming` and `world_orientation` examples no longer require the `debug` feature
+- Physics: colliders are computed from ECS components and spawned during `TiledPostUpdateSystems::SyncPhysics`, and spawned again when their source changes; `TiledPreUpdateSystems::SpawnPhysicsColliders` is removed
+- Physics: `TiledPhysicsBackend` trait only creates colliders, through its new `Collider` associated type and `colliders()` function replacing `spawn_colliders()`: colliders entities are now spawned and despawned by `bevy_ecs_tiled`. Its geometry is a new `TiledColliderGeometry`, whose `outline()` excludes the edges shared with adjacent collider chunks
+- Physics: `TiledPhysicsSettings` `objects_layer_filter`, `objects_filter` and `tiles_layer_filter` are removed: use `TiledColliderStrategy::Disabled` on the map, or on given layers or objects, instead. `tiles_objects_filter` is renamed `tile_shapes_filter`
+- Physics: `TiledPhysicsAvianBackend` and `TiledPhysicsRapierBackend` are unit structs: their `Polyline`, `Triangulation` and `LineStrip` variants moved to `TiledColliderStrategy`
+- Physics: the first collider of a tiles layer or an object is always the layer or object entity itself (or its `TiledColliderChunk` entity when colliders are split in chunks), next ones (if any) are children entities named `TiledCollider(<index>)`. Each of them has the `TiledColliderOf`, `TiledColliderSource` and `TiledColliderPolygons` components, and gets its own `TiledEvent<ColliderCreated>`
+- Physics: `multi_polygon_as_line_strings()` returns an iterator over borrowed line strings, and `multi_polygon_as_triangles()` returns an empty list instead of panicking when triangulation fails
+- Physics: `ColliderCreated::collider_of`, `ColliderCreated::new()` and `TiledEvent<ColliderCreated>::tiles()` are removed: the event origin is the collider entity
+- Physics: `simplify_geometry()` is removed
+- Physics: modifying `TiledPhysicsSettings` no longer respawns the map (or world): only colliders are spawned again, so modifications made to the map at runtime are kept
+- Physics: colliders are computed much faster. Polygons of each kind of tile are only computed once per layer, and are merged using a single union operation instead of pairwise unions
 
 ### Fixed
 
-- Colliders of tiles layers take tiles flips (including diagonal flip) into account
-- Physics: a tiles layer or an object which does not produce any collider anymore (eg. all the tiles of the layer have been despawned) no longer keeps the collider previously inserted on its own entity by the Avian and Rapier backends
-- Physics: additional colliders of a tiles layer or an object (`LineStrip` strategy, or geometry simplification disabled) are despawned when colliders are spawned again, instead of piling up
+- Physics: colliders of tiles layers take tiles flips (including diagonal flip) into account
 - World streaming: a map visible from several cameras is no longer spawned once per camera
 - World streaming: a map of a world despawned by the user is spawned again when it should be visible, instead of being considered as still spawned
-- Group layers can be retrieved from their ID (`TiledMapAsset::layer()`)
 - Tilesets and templates cache is actually cleared when a map is hot-reloaded, and a panic while using it no longer makes it unusable
 - Tilesets and templates with an upper case extension (eg. `.TSX`) are preloaded, so they can be used on WASM
 - Infinite maps whose tiles layers do not have any chunk no longer get an invalid size
 - `TiledAnimation` no longer drifts: time left when a frame ends is carried over to the next frame
 - User properties: a Bevy `Name` property (as a component, or as a field of a custom type) is correctly deserialized and inserted, instead of being dropped with an error
 - User properties: a `Handle<T>` property (eg. the `image` of a `Sprite`) is loaded as an asset of type `T`, from a path relative to the map or tileset it is defined in, instead of giving a handle to an unrelated asset (#59)
+- `TiledEvent::tilemap_tileset()` and `TiledEvent::tile()` work for tilesets only used by object templates
 
 ## v0.15.1
 
