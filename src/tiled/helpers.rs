@@ -18,15 +18,15 @@ pub fn layer_from_map(map: &tiled::Map, layer_id: u32) -> Option<tiled::Layer<'_
         layer_id: u32,
     ) -> Option<tiled::Layer<'a>> {
         layers
-            .filter_map(|l| match l.layer_type() {
-                tiled::LayerType::Group(group_layer) => {
-                    find_layer_by_id(group_layer.layers(), layer_id)
-                }
-                _ => {
-                    if l.id() == layer_id {
-                        Some(l)
-                    } else {
-                        None
+            .filter_map(|l| {
+                if l.id() == layer_id {
+                    Some(l)
+                } else {
+                    match l.layer_type() {
+                        tiled::LayerType::Group(group_layer) => {
+                            find_layer_by_id(group_layer.layers(), layer_id)
+                        }
+                        _ => None,
                     }
                 }
             })
