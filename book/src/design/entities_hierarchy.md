@@ -26,7 +26,8 @@ flowchart TD
     OB["<b>TiledObjectTextBox</b><br/>(text objects)"]
     OT["<b>TiledObjectText</b>"]
     I["<b>TiledImage</b>"]
-    C["<b>TiledColliderOf</b><br/>(physics colliders)"]
+    CC["<b>TiledColliderChunk</b><br/>(colliders chunks)"]
+    C["<b>TiledColliderOf</b><br/>(additional colliders)"]
 
     W --> M
     M --> LT & LO & LI & LG
@@ -36,11 +37,13 @@ flowchart TD
     O --> OV
     O --> OB --> OT
     LI --> I
+    LT -.-> CC -.-> C
     LT -.-> C
     O -.-> C
 ```
 
-Dashed arrows are only present when the physics feature is enabled and the corresponding layer or object is selected to produce colliders.
+Dashed arrows are only present when the `physics` feature is enabled and the corresponding layer or object is selected to produce colliders.
+The first collider of a tiles layer or an object is held by the layer or object entity itself, or by its `TiledColliderChunk` when colliders are split in chunks: only additional colliders get their own entity (see [Physics Colliders](#physics-colliders)).
 
 ---
 
@@ -58,11 +61,14 @@ On the other hand, you should not modify derived entities yourself, since your c
 
 See [Modify a map at runtime](../guides/dynamic_maps.md) for more information.
 
-Whatever their level in the hierarchy, entities spawned by `bevy_ecs_tiled` share a few common components:
+Most entities spawned by `bevy_ecs_tiled` share a few common components:
 
-- [`TiledMapReference`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapReference.html): the map entity they belong to, so you do not have to walk up the hierarchy to find it.
-- [`TiledName`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/filter/struct.TiledName.html): the name given in Tiled to the layer, tileset or object.
+- [`TiledMapReference`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapReference.html), for layers, tiles, tilemaps, objects and images: the map entity they belong to, so you do not have to walk up the hierarchy to find it.
+  Object visuals and physics colliders do not have one: use the map reference of their object or layer.
+- [`TiledName`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/filter/struct.TiledName.html), for layers, objects and tilemaps: the name given in Tiled to the layer, object or tileset.
 - [`TiledProperties`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/properties/struct.TiledProperties.html), for the map, layers and objects: their class and custom properties, as defined in Tiled.
+
+`TiledMapReference`, `TiledName`, `TiledProperties` and `TiledLayer` are [immutable components](https://docs.rs/bevy/latest/bevy/ecs/component/trait.Component.html): they cannot be queried mutably, insert a new value instead.
 
 ---
 
@@ -107,6 +113,7 @@ Below each `TiledLayer::Tiles`, you find two kinds of sibling entities:
 Tilemaps are derived from tiles: a tilemap is spawned when a tile using a new tileset is added to a layer, and despawned once it does not contain any tile anymore.
 
 A position of a layer can only hold a single tile, as in Tiled.
+To find the tile at a given position, use the [`TiledTileLayerStorage`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/struct.TiledTileLayerStorage.html) component of the layer (see [Modify a map at runtime](../guides/dynamic_maps.md)).
 Spawning a tile, or moving a tile (ie. changing its `TilePos`), onto a position already used by another tile of the same layer despawns this other tile, whatever its tileset.
 
 Note that:
@@ -161,12 +168,35 @@ Without the `render` feature, it has no image handle and no `Sprite`.
 ## Physics Colliders
 
 At the bottom of the hierarchy, you find physics colliders.  
-They are spawned as children of their source, either a `TiledLayer::Tiles` or a `TiledObject`, and are spawned again when their source changes (for instance when a tile of the layer is added, modified or removed).
-They carry:
+They are created for a source entity, either a `TiledLayer::Tiles` or a `TiledObject`, and are spawned again when their source changes (for instance when a tile of the layer is added, modified or removed).
 
-- a [`TiledColliderOf`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliderOf.html) relationship pointing to their source entity.
+### Objects
+
+The first collider of an object is inserted on the `TiledObject` entity itself, so you can directly add other physics components to it.
+An object can have several colliders, for instance with `TiledColliderStrategy::LineStrip`: the next ones are spawned as children of the object entity.
+
+### Tiles layers
+
+The tiles of a layer do not get their own colliders: the colliders of all the tiles of a `TiledLayer::Tiles` are created together, for the layer.
+
+- By default, the first collider is inserted on the layer entity itself, and the next ones, if any, are spawned as children of the layer entity.
+  They are all spawned again whenever a tile of the layer is added, modified or removed.
+- When the colliders of the layer are [split in chunks](../guides/physics.md#colliders-chunks), the layer entity does not hold any collider.
+  Each chunk with at least one collider gets its own [`TiledColliderChunk`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliderChunk.html) entity, child of the layer, which holds the first collider of the chunk; the next ones are children of the chunk entity.
+  When a tile is modified, only the colliders of its chunk (and of the adjacent chunks) are spawned again.
+
+In both cases, the layer entity remains the source of all these colliders.
+
+### Collider components
+
+Each entity holding a collider carries:
+
+- a [`TiledColliderOf`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliderOf.html) relationship pointing to their source entity (possibly itself).
   On the other side, the source has a [`TiledColliders`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliders.html) component listing all its colliders.
 - a [`TiledColliderSource`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderSource.html) component telling whether the collider comes from a tiles layer or from an object.
+- a [`TiledColliderPolygons`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliderPolygons.html) component holding the raw geometry the collider was created from.
+
+Since a source can have several colliders spread over several entities, add a rigid body to the source entity, given by [`TiledEvent<ColliderCreated>::source_entity()`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TiledEvent.html#method.source_entity), rather than to each collider entity.
 
 See the [physics guide](../guides/physics.md) for more information.
 
