@@ -95,7 +95,9 @@ By default, colliders are spawned for **all** tiles layers and objects.
 To select which ones get colliders, use [`TiledColliderStrategy::Disabled`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderStrategy.html#variant.Disabled), the same way as any other [collider strategy](#collider-strategy):
 
 - set it in [`TiledPhysicsSettings`](https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/settings/struct.TiledPhysicsSettings.html) to disable colliders for the whole map,
-- insert it as a component on a layer or an object entity to disable colliders for this layer or object only.
+- insert it as a component on a layer or an object entity to disable colliders for this layer or object only,
+- insert it as a component on a tile entity to exclude this tile from the colliders of its layer. On a tile, other strategies have no effect: the tile uses the strategy of its layer.
+  Since tiles inherit the custom properties of their tile in the tileset, adding a `TiledColliderStrategy` custom property to a tile in the Tiled tileset editor (with the `user_properties` feature) excludes all the tiles of this kind.
 
 An object uses its own strategy if it has one, otherwise the one of its layer, otherwise the one of the map.
 For instance, you can disable colliders for the whole map and enable them for a few layers or objects only, by inserting another strategy on them.

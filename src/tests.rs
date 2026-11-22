@@ -1854,6 +1854,80 @@ mod physics {
     }
 
     #[test]
+    fn disabled_strategy_on_tile_excludes_it_from_layer_colliders() {
+        use TiledColliderStrategy::*;
+
+        let mut app = test_app();
+        app.add_plugins(TiledPhysicsPlugin::<TestBackend>::default());
+        count_colliders_created(&mut app);
+        spawn_test_map(&mut app);
+        let ground = layer_by_name(&mut app, "ground");
+        let tile = tile_at(&mut app, ground, TilePos::new(1, 3));
+        assert_eq!(colliders_area(&app, ground), vec![512.]);
+
+        // A disabled tile is not part of the layer colliders
+        app.world_mut().entity_mut(tile).insert(Disabled);
+        app.update();
+        assert_eq!(colliders_area(&app, ground), vec![256.]);
+        assert_eq!(colliders_strategies(&app, ground), vec![Polyline]);
+        assert_eq!(colliders_created(&app, ground), 2);
+
+        // Other strategies have no effect on a tile
+        app.world_mut().entity_mut(tile).insert(Triangulation);
+        app.update();
+        assert_eq!(colliders_area(&app, ground), vec![512.]);
+        assert_eq!(colliders_strategies(&app, ground), vec![Polyline]);
+
+        // Removing the strategy restores the tile collider
+        app.world_mut().entity_mut(tile).insert(Disabled);
+        app.update();
+        assert_eq!(colliders_area(&app, ground), vec![256.]);
+        app.world_mut()
+            .entity_mut(tile)
+            .remove::<TiledColliderStrategy>();
+        app.update();
+        assert_eq!(colliders_area(&app, ground), vec![512.]);
+    }
+
+    #[test]
+    fn disabled_tile_is_excluded_from_its_collider_chunk() {
+        let mut app = test_app();
+        app.add_plugins(TiledPhysicsPlugin::<TestBackend>::default());
+        spawn_map_with(
+            &mut app,
+            DYNAMIC_MAP,
+            TiledPhysicsSettings::<TestBackend> {
+                tiles_chunk_size: TiledColliderChunkSize::Size(UVec2::ONE),
+                ..default()
+            },
+        );
+        let ground = layer_by_name(&mut app, "ground");
+        let tile = tile_at(&mut app, ground, TilePos::new(1, 3));
+
+        // The chunk of the disabled tile is removed, the other one remains
+        app.world_mut()
+            .entity_mut(tile)
+            .insert(TiledColliderStrategy::Disabled);
+        app.update();
+        let chunks = collider_chunks(&mut app, ground);
+        assert_eq!(
+            chunks.iter().map(|(c, _, a)| (*c, *a)).collect::<Vec<_>>(),
+            vec![((0, 3), 256.)]
+        );
+
+        // Removing the strategy restores its chunk
+        app.world_mut()
+            .entity_mut(tile)
+            .remove::<TiledColliderStrategy>();
+        app.update();
+        let chunks = collider_chunks(&mut app, ground);
+        assert_eq!(
+            chunks.iter().map(|(c, _, a)| (*c, *a)).collect::<Vec<_>>(),
+            vec![((0, 3), 256.), ((1, 3), 256.)]
+        );
+    }
+
+    #[test]
     fn collider_chunk_size_can_be_overridden_for_a_layer() {
         let mut app = test_app();
         app.add_plugins(TiledPhysicsPlugin::<TestBackend>::default());

@@ -37,6 +37,11 @@ pub enum TiledColliderSource {
 /// [`TiledColliderStrategy::Disabled`] selects which layers and objects get colliders: for instance,
 /// use it as the map strategy and insert another strategy on the few layers or objects which need colliders.
 ///
+/// It can also be inserted on a [`TiledTile`] entity: [`TiledColliderStrategy::Disabled`] excludes this tile
+/// from the colliders of its layer. Other strategies have no effect on a tile, which uses the strategy of its layer.
+/// Since tiles inherit the custom properties of their tile in the tileset, this lets you exclude all
+/// the tiles of a given kind from Tiled.
+///
 /// Example:
 /// ```rust,no_run
 /// use bevy::prelude::*;

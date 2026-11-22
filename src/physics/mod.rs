@@ -80,6 +80,7 @@ impl<T: TiledPhysicsBackend> Plugin for TiledPhysicsPlugin<T> {
         app.add_observer(on_object_removed::<T>);
         app.add_observer(on_config_removed::<T, TiledColliderStrategy>);
         app.add_observer(on_config_removed::<T, TiledColliderChunkSize>);
+        app.add_observer(on_tile_strategy_removed::<T>);
         app.add_plugins((backend::plugin, collider::plugin, settings::plugin::<T>));
     }
 }
@@ -139,7 +140,12 @@ fn mark_tiles_colliders_dirty<T: TiledPhysicsBackend>(
         (&ChildOf, &TilePos),
         (
             With<TiledTile>,
-            Or<(Changed<TiledTile>, Changed<TilePos>, Changed<TileFlip>)>,
+            Or<(
+                Changed<TiledTile>,
+                Changed<TilePos>,
+                Changed<TileFlip>,
+                Changed<TiledColliderStrategy>,
+            )>,
         ),
     >,
     mut vacated: MessageReader<TiledTilePositionVacated>,
@@ -157,6 +163,19 @@ fn mark_tiles_colliders_dirty<T: TiledPhysicsBackend>(
         if let Ok(mut colliders) = layers_query.get_mut(layer) {
             colliders.dirty_positions.push(position);
         }
+    }
+}
+
+/// Update the colliders of the layer of a tile whose [`TiledColliderStrategy`] has been removed
+fn on_tile_strategy_removed<T: TiledPhysicsBackend>(
+    removed: On<Remove<TiledColliderStrategy>>,
+    tiles_query: Query<(&ChildOf, &TilePos), With<TiledTile>>,
+    mut layers_query: Query<&mut TiledLayerColliders<T>>,
+) {
+    if let Ok((child_of, position)) = tiles_query.get(removed.entity)
+        && let Ok(mut colliders) = layers_query.get_mut(child_of.parent())
+    {
+        colliders.dirty_positions.push(*position);
     }
 }
 
@@ -292,7 +311,7 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
         ),
         With<TiledLayer>,
     >,
-    tiles_query: Query<(&TiledTile, &TileFlip)>,
+    tiles_query: Query<(&TiledTile, &TileFlip, Option<&TiledColliderStrategy>)>,
     maps_query: Query<(&TiledMap, &TiledPhysicsSettings<T>, &TilemapAnchor)>,
     assets: Res<Assets<TiledMapAsset>>,
     mut message_writer: MessageWriter<TiledEvent<ColliderCreated>>,
@@ -398,11 +417,13 @@ fn update_tiles_layers_colliders<T: TiledPhysicsBackend>(
                 let min = chunk.saturating_mul(size);
                 (min, min.saturating_add(size - UVec2::ONE))
             });
+            // Tiles with a disabled strategy are not part of the layer colliders
             let tile_data = |(position, entity): (TilePos, Entity)| {
                 tiles_query
                     .get(entity)
                     .ok()
-                    .map(|(tile, flip)| (position, tile.tileset_id, tile.tile_id, *flip))
+                    .filter(|(_, _, strategy)| strategy != &Some(&TiledColliderStrategy::Disabled))
+                    .map(|(tile, flip, _)| (position, tile.tileset_id, tile.tile_id, *flip))
             };
             let tiles = storage
                 .iter_in(TilePos::new(min.x, min.y), TilePos::new(max.x, max.y))
