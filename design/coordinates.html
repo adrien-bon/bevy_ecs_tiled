@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-b86f2860.js";
+            window.path_to_searchindex_js = "../searchindex-ba955552.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-53cb13dc.js"></script>
+        <script src="../toc-a898eaa9.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -180,7 +180,7 @@
 <ul>
 <li>find which tile is under the cursor,</li>
 <li>place a gameplay entity where an object was drawn in Tiled,</li>
-<li>read raw data from <a href="https://docs.rs/tiled/latest/tiled/struct.Map.html"><code>tiled::Map</code></a> (the <code>map</code> field of <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html"><code>TiledMapAsset</code></a>) and use it in Bevy.</li>
+<li>read raw data from <a href="https://docs.rs/tiled/latest/tiled/struct.Map.html"><code>tiled::Map</code></a> (the <code>map</code> field of <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html"><code>TiledMapAsset</code></a>) and use it in Bevy.</li>
 </ul>
 <p>This page explains the two coordinate systems and how <code>bevy_ecs_tiled</code> converts from one to the other.</p>
 <hr>
@@ -217,7 +217,7 @@
 Almost every conversion therefore comes down to <strong>flipping the Y axis</strong> and <strong>moving the origin</strong>.</p>
 <hr>
 <h2 id="converting-a-tiled-position"><a class="header" href="#converting-a-tiled-position">Converting a Tiled position</a></h2>
-<p>Every Tiled pixel position (objects, image layers, map corners, …) is converted by <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html#method.world_space_from_tiled_position"><code>TiledMapAsset::world_space_from_tiled_position</code></a>.
+<p>Every Tiled pixel position (objects, image layers, map corners, …) is converted by <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html#method.world_space_from_tiled_position"><code>TiledMapAsset::world_space_from_tiled_position</code></a>.
 It returns a position <strong>relative to the map entity</strong>.</p>
 <hr>
 <h2 id="infinite-maps"><a class="header" href="#infinite-maps">Infinite maps</a></h2>
@@ -232,7 +232,7 @@ It returns a position <strong>relative to the map entity</strong>.</p>
                                         └────────┴────────┴────────┘
                                        (0,0) ▲ bottom-left tile
 </code></pre>
-<p>The map size used by Bevy (<a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html#structfield.tilemap_size"><code>TiledMapAsset::tilemap_size</code></a>) is the bounding box of all the chunks, not the <code>width</code> / <code>height</code> stored in the <code>.tmx</code> file.
+<p>The map size used by Bevy (<a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html#structfield.tilemap_size"><code>TiledMapAsset::tilemap_size</code></a>) is the bounding box of all the chunks, not the <code>width</code> / <code>height</code> stored in the <code>.tmx</code> file.
 Tiled pixel positions are shifted by the same amount, so objects stay aligned with tiles.</p>
 <hr>
 <h2 id="isometric-maps"><a class="header" href="#isometric-maps">Isometric maps</a></h2>
@@ -268,22 +268,41 @@ However, flipping the Y axis changes which rows (or columns) are “staggered”
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Tiled stagger axis</th><th>Tiled stagger index</th><th><code>HexCoordSystem</code></th></tr>
+<tr><th>Tiled stagger axis</th><th>Tiled stagger index</th><th><code>HexCoordSystem</code> (even map height)</th><th><code>HexCoordSystem</code> (odd map height)</th></tr>
 </thead>
 <tbody>
-<tr><td>X</td><td>Even</td><td><code>ColumnOdd</code></td></tr>
-<tr><td>X</td><td>Odd</td><td><code>ColumnEven</code></td></tr>
-<tr><td>Y</td><td>Even</td><td><code>RowOdd</code></td></tr>
-<tr><td>Y</td><td>Odd</td><td><code>RowEven</code></td></tr>
+<tr><td>X</td><td>Even</td><td><code>ColumnOdd</code></td><td><code>ColumnOdd</code></td></tr>
+<tr><td>X</td><td>Odd</td><td><code>ColumnEven</code></td><td><code>ColumnEven</code></td></tr>
+<tr><td>Y</td><td>Even</td><td><code>RowOdd</code></td><td><code>RowEven</code></td></tr>
+<tr><td>Y</td><td>Odd</td><td><code>RowEven</code></td><td><code>RowOdd</code></td></tr>
 </tbody>
 </table>
 </div>
-<p>This is handled by <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/helpers/fn.tilemap_type_from_map.html"><code>tilemap_type_from_map</code></a>, which you can use if you need the <code>TilemapType</code> of a map.</p>
+<p>When the stagger axis is Y, Tiled row <code>r</code> becomes row <code>height - 1 - r</code> in Bevy: if the map height is odd, flipping the Y axis does not change the rows parity, hence the different coordinate system.
+Infinite maps always have an even height (a multiple of the chunk size).</p>
+<p>The resulting <code>TilemapType</code> of a map is available in <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html#structfield.map_type"><code>TiledMapAsset::map_type</code></a>.</p>
+<h3 id="hexagon-side-length"><a class="header" href="#hexagon-side-length">Hexagon side length</a></h3>
+<p>In Tiled, staggered rows (or columns) are <code>(tile_size + hexsidelength) / 2</code> pixels apart.
+<code>bevy_ecs_tilemap</code> assumes regular hexagons and spaces them by <code>0.75 * grid_size</code>.
+To render the map like Tiled, the grid size is adjusted along the stagger axis:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Tiled stagger axis</th><th>Grid size</th></tr>
+</thead>
+<tbody>
+<tr><td>X</td><td><code>(2 * (tile_width + hexsidelength) / 3, tile_height)</code></td></tr>
+<tr><td>Y</td><td><code>(tile_width, 2 * (tile_height + hexsidelength) / 3)</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>When <code>hexsidelength</code> is half the tile size, the grid size is the tile size.
+Always use <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html#structfield.grid_size"><code>TiledMapAsset::grid_size</code></a>, and not the Tiled tile size, with <code>bevy_ecs_tilemap</code> helpers such as <code>TilePos::center_in_world()</code> or <code>TilePos::from_world_pos()</code>.</p>
 <hr>
 <h2 id="worlds"><a class="header" href="#worlds">Worlds</a></h2>
 <p>In a <code>.world</code> file, each map position is the Tiled pixel position of its <strong>top-left</strong> corner, with Y pointing down.
-<code>bevy_ecs_tiled</code> flips it so that the world bounding box (<a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/asset/struct.TiledWorldAsset.html#structfield.rect"><code>TiledWorldAsset::rect</code></a>) starts at <code>(0, 0)</code> and grows towards positive X and Y.</p>
-<p>The <code>TilemapAnchor</code> of a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/struct.TiledWorld.html"><code>TiledWorld</code></a> applies to the whole world bounding box, not to each map individually.</p>
+<code>bevy_ecs_tiled</code> flips it so that the world bounding box (<a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/world/struct.TiledWorldAsset.html#structfield.rect"><code>TiledWorldAsset::rect</code></a>) starts at <code>(0, 0)</code> and grows towards positive X and Y.</p>
+<p>The <code>TilemapAnchor</code> of a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/struct.TiledWorld.html"><code>TiledWorld</code></a> applies to the whole world bounding box, not to each map individually.</p>
 
                     </main>
 

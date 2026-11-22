@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-b86f2860.js";
+            window.path_to_searchindex_js = "../searchindex-ba955552.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-53cb13dc.js"></script>
+        <script src="../toc-a898eaa9.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -194,66 +194,95 @@
     OB["&lt;b&gt;TiledObjectTextBox&lt;/b&gt;&lt;br/&gt;(text objects)"]
     OT["&lt;b&gt;TiledObjectText&lt;/b&gt;"]
     I["&lt;b&gt;TiledImage&lt;/b&gt;"]
-    C["&lt;b&gt;TiledColliderOf&lt;/b&gt;&lt;br/&gt;(physics colliders)"]
+    CC["&lt;b&gt;TiledColliderChunk&lt;/b&gt;&lt;br/&gt;(colliders chunks)"]
+    C["&lt;b&gt;TiledColliderOf&lt;/b&gt;&lt;br/&gt;(additional colliders)"]
 
     W --&gt; M
     M --&gt; LT &amp; LO &amp; LI &amp; LG
     LG --&gt; LS
-    LT --&gt; T --&gt; TI
+    LT --&gt; T &amp; TI
     LO --&gt; O
     O --&gt; OV
     O --&gt; OB --&gt; OT
     LI --&gt; I
+    LT -.-&gt; CC -.-&gt; C
     LT -.-&gt; C
     O -.-&gt; C
 </pre>
 
-<p>Dashed arrows are only present when the physics feature is enabled and the corresponding layer or object is selected to produce colliders.</p>
-<p>Whatever their level in the hierarchy, entities spawned by <code>bevy_ecs_tiled</code> share a few common components:</p>
+<p>Dashed arrows are only present when the <code>physics</code> feature is enabled and the corresponding layer or object is selected to produce colliders.
+The first collider of a tiles layer or an object is held by the layer or object entity itself, or by its <code>TiledColliderChunk</code> when colliders are split in chunks: only additional colliders get their own entity (see <a href="#physics-colliders">Physics Colliders</a>).</p>
+<hr>
+<h2 id="tiled-data-and-derived-entities"><a class="header" href="#tiled-data-and-derived-entities">Tiled Data and Derived Entities</a></h2>
+<p>Entities spawned by <code>bevy_ecs_tiled</code> fall into two categories:</p>
 <ul>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMapReference.html"><code>TiledMapReference</code></a>: the map entity they belong to, so you do not have to walk up the hierarchy to find it.</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/filter/struct.TiledName.html"><code>TiledName</code></a>: the name given in Tiled to the layer, tileset or object.</li>
-<li>A Tiled identifier, such as <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/struct.TiledLayerId.html"><code>TiledLayerId</code></a> or <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/struct.TiledObjectId.html"><code>TiledObjectId</code></a>, to retrieve the raw Tiled data.</li>
+<li><strong>Tiled data</strong>: the map, layers, tiles, objects and images entities.
+They hold what was defined in Tiled, such as a tile <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTile.html"><code>TiledTile</code></a> (tileset ID and tile ID) and <code>TilePos</code>, or a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html"><code>TiledObject</code></a> shape.</li>
+<li><strong>Derived entities and components</strong>: <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/tilemap/struct.TiledTilemap.html"><code>TiledTilemap</code></a>s, tile objects and text objects visuals, image <code>Sprite</code>s and physics colliders.
+They are computed from the Tiled data during <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/sets/enum.TiledPostUpdateSystems.html"><code>TiledPostUpdateSystems::SyncRender</code></a> and <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/sets/enum.TiledPostUpdateSystems.html"><code>TiledPostUpdateSystems::SyncPhysics</code></a>.</li>
 </ul>
+<p>Tiled data are the source of truth: you can spawn, despawn or modify them after the map has been loaded and derived entities will automatically follow.
+On the other hand, you should not modify derived entities yourself, since your changes could be overwritten.</p>
+<p>See <a href="../guides/dynamic_maps.html">Modify a map at runtime</a> for more information.</p>
+<p>Most entities spawned by <code>bevy_ecs_tiled</code> share a few common components:</p>
+<ul>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapReference.html"><code>TiledMapReference</code></a>, for layers, tiles, tilemaps, objects and images: the map entity they belong to, so you do not have to walk up the hierarchy to find it.
+Object visuals and physics colliders do not have one: use the map reference of their object or layer.</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/filter/struct.TiledName.html"><code>TiledName</code></a>, for layers, objects and tilemaps: the name given in Tiled to the layer, object or tileset.</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/properties/struct.TiledProperties.html"><code>TiledProperties</code></a>, for the map, layers and objects: their class and custom properties, as defined in Tiled.</li>
+</ul>
+<p><code>TiledMapReference</code>, <code>TiledName</code>, <code>TiledProperties</code> and <code>TiledLayer</code> are <a href="https://docs.rs/bevy/latest/bevy/ecs/component/trait.Component.html">immutable components</a>: they cannot be queried mutably, insert a new value instead.</p>
 <hr>
 <h2 id="world"><a class="header" href="#world">World</a></h2>
-<p>A world is the optional top of the tree.<br>Loading a <code>.world</code> asset gives you a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/struct.TiledWorld.html"><code>TiledWorld</code></a> entity, which holds a handle to the corresponding <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/asset/struct.TiledWorldAsset.html"><code>TiledWorldAsset</code></a>.</p>
-<p>Each map of the world is spawned as a child of this entity.<br>All map-level settings can be added to the world entity: they are propagated down to every underlying map.</p>
+<p>A world is the optional top of the tree.<br>Loading a <code>.world</code> asset gives you a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/struct.TiledWorld.html"><code>TiledWorld</code></a> entity, which holds a handle to the corresponding <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/world/struct.TiledWorldAsset.html"><code>TiledWorldAsset</code></a>.</p>
+<p>Each map of the world is spawned as a child of this entity, with a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/query/struct.TiledWorldReference.html"><code>TiledWorldReference</code></a> component giving its world and its <code>WorldMapId</code>: use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/query/struct.TiledWorldMaps.html"><code>TiledWorldMaps</code></a> system parameter to retrieve the spawned maps of a world.<br>All map-level settings can be added to the world entity: they are propagated down to every underlying map.</p>
 <h2 id="map"><a class="header" href="#map">Map</a></h2>
-<p>Loading a <code>.tmx</code> asset gives you a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMap.html"><code>TiledMap</code></a> entity, which holds a handle to the corresponding <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html"><code>TiledMapAsset</code></a>.<br>It is the top of the tree, unless the map belongs to a world.</p>
-<p>This is where you put map-level settings, such as the <a href="https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/anchor/enum.TilemapAnchor.html"><code>TilemapAnchor</code></a> or the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMapLayerZOffset.html"><code>TiledMapLayerZOffset</code></a>.<br>It also holds a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/storage/struct.TiledMapStorage.html"><code>TiledMapStorage</code></a> component, which maps Tiled IDs to the spawned entities and the other way around.</p>
+<p>Loading a <code>.tmx</code> asset gives you a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMap.html"><code>TiledMap</code></a> entity, which holds a handle to the corresponding <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html"><code>TiledMapAsset</code></a>.<br>It is the top of the tree, unless the map belongs to a world.</p>
+<p>This is where you put map-level settings, such as the <a href="https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/anchor/enum.TilemapAnchor.html"><code>TilemapAnchor</code></a> or the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapLayerZOffset.html"><code>TiledMapLayerZOffset</code></a>.<br>All the entities spawned from the map have a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapReference.html"><code>TiledMapReference</code></a> to the map entity: use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/query/struct.TiledMapQuery.html"><code>TiledMapLayers</code>, <code>TiledMapTiles</code> and <code>TiledMapObjects</code></a> system parameters to iterate over the entities of a given map.</p>
 <h2 id="layers"><a class="header" href="#layers">Layers</a></h2>
-<p>Each Tiled layer is spawned as a child of the map, with a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html"><code>TiledLayer</code></a> component.<br>Its value tells you the kind of layer, and what you will find below it:</p>
+<p>Each Tiled layer is spawned as a child of the map, with a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/enum.TiledLayer.html"><code>TiledLayer</code></a> component.<br>Its value tells you the kind of layer, and what you will find below it:</p>
 <div class="table-wrapper">
 <table>
 <thead>
 <tr><th>Variant</th><th>Children</th></tr>
 </thead>
 <tbody>
-<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html#variant.Tiles"><code>TiledLayer::Tiles</code></a></td><td>one <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilemap.html"><code>TiledTilemap</code></a> per tileset</td></tr>
-<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html#variant.Objects"><code>TiledLayer::Objects</code></a></td><td>one <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html"><code>TiledObject</code></a> per object</td></tr>
-<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html#variant.Image"><code>TiledLayer::Image</code></a></td><td>a single <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/image/struct.TiledImage.html"><code>TiledImage</code></a></td></tr>
-<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html#variant.Group"><code>TiledLayer::Group</code></a></td><td>other layers, nested as in Tiled</td></tr>
+<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/enum.TiledLayer.html#variant.Tiles"><code>TiledLayer::Tiles</code></a></td><td>one <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTile.html"><code>TiledTile</code></a> per tile and one <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/tilemap/struct.TiledTilemap.html"><code>TiledTilemap</code></a> per tileset</td></tr>
+<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/enum.TiledLayer.html#variant.Objects"><code>TiledLayer::Objects</code></a></td><td>one <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html"><code>TiledObject</code></a> per object</td></tr>
+<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/enum.TiledLayer.html#variant.Image"><code>TiledLayer::Image</code></a></td><td>a single <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/image/struct.TiledImage.html"><code>TiledImage</code></a></td></tr>
+<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/enum.TiledLayer.html#variant.Group"><code>TiledLayer::Group</code></a></td><td>other layers, nested as in Tiled</td></tr>
 </tbody>
 </table>
 </div>
 <h2 id="tiles"><a class="header" href="#tiles">Tiles</a></h2>
-<p>Tiles are stored in two levels:</p>
+<p>Below each <code>TiledLayer::Tiles</code>, you find two kinds of sibling entities:</p>
 <ul>
-<li>Below each <code>TiledLayer::Tiles</code>, there is one <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilemap.html"><code>TiledTilemap</code></a> entity per tileset used by the layer.
-It holds the <code>TilemapBundle</code> from <code>bevy_ecs_tilemap</code>, so this is where the tilemap size, grid size or texture live.</li>
-<li>Below these tilemaps are the actual <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTile.html"><code>TiledTile</code></a> entities, one for each tile of the layer using this tileset.
-They are identified in Tiled by their <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilesetId.html"><code>TiledTilesetId</code></a> and <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTileId.html"><code>TiledTileId</code></a>, and positioned with a <code>TilePos</code>.</li>
+<li>the actual <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTile.html"><code>TiledTile</code></a> entities, one for each tile of the layer.
+Their <code>TiledTile</code> component gives their tileset ID and tile ID, and they are positioned with a <code>TilePos</code>.</li>
+<li>one <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/tilemap/struct.TiledTilemap.html"><code>TiledTilemap</code></a> entity per tileset used by the layer, rendering the tiles using this tileset (given by its <code>tileset_id</code> field).
+It holds the <code>TilemapBundle</code> from <code>bevy_ecs_tilemap</code>, so this is where the tilemap size, grid size or texture live.
+You can reach the tilemaps of a layer through the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/tilemap/struct.TiledTilemaps.html"><code>TiledTilemaps</code></a> relationship, and the tilemap of a tile through its <code>TilemapId</code>.</li>
+</ul>
+<p>Tilemaps are derived from tiles: a tilemap is spawned when a tile using a new tileset is added to a layer, and despawned once it does not contain any tile anymore.</p>
+<p>A position of a layer can only hold a single tile, as in Tiled.
+To find the tile at a given position, use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/struct.TiledTileLayerStorage.html"><code>TiledTileLayerStorage</code></a> component of the layer (see <a href="../guides/dynamic_maps.html">Modify a map at runtime</a>).
+Spawning a tile, or moving a tile (ie. changing its <code>TilePos</code>), onto a position already used by another tile of the same layer despawns this other tile, whatever its tileset.</p>
+<p>Note that:</p>
+<ul>
+<li>tiles outside of the map bounds (see <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html"><code>TiledMapAsset::tilemap_size</code></a>) are neither rendered nor used to compute physics colliders: layers cannot grow,</li>
+<li>moving a tile to another layer (ie. changing its <code>ChildOf</code>) is not supported: despawn it and spawn a new one in the other layer instead.</li>
 </ul>
 <h2 id="objects"><a class="header" href="#objects">Objects</a></h2>
-<p>Each Tiled object is spawned as a child of its <code>TiledLayer::Objects</code>, with a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html"><code>TiledObject</code></a> component describing its shape (point, rectangle, polygon, …).<br>Most objects are a single entity, but two kinds of objects have children holding their visual.</p>
+<p>Each Tiled object is spawned as a child of its <code>TiledLayer::Objects</code>, with a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html"><code>TiledObject</code></a> component describing its shape (point, rectangle, polygon, …).<br>Most objects are a single entity, but two kinds of objects have children holding their visual.</p>
 <h3 id="tile-objects"><a class="header" href="#tile-objects">Tile objects</a></h3>
-<p>A <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html#variant.Tile"><code>TiledObject::Tile</code></a> has a child entity with a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/struct.TiledObjectVisualOf.html"><code>TiledObjectVisualOf</code></a> component.<br>This child holds the <code>Sprite</code> of the tile and, if the tile is animated, a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/animation/struct.TiledAnimation.html"><code>TiledAnimation</code></a>.<br>From the object entity, you can reach it through the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/struct.TiledObjectVisuals.html"><code>TiledObjectVisuals</code></a> relationship.</p>
+<p>A <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html#variant.Tile"><code>TiledObject::Tile</code></a> has a child entity with a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/object/struct.TiledObjectVisualOf.html"><code>TiledObjectVisualOf</code></a> component, spawned again whenever the <code>TiledObject</code> changes.<br>This child holds the <code>Sprite</code> of the tile and, if the tile is animated, a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/animation/struct.TiledAnimation.html"><code>TiledAnimation</code></a>.<br>From the object entity, you can reach it through the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/object/struct.TiledObjectVisuals.html"><code>TiledObjectVisuals</code></a> relationship.</p>
+<p>Visual entities and <code>TiledAnimation</code> only exist with the <code>render</code> feature.</p>
 <h3 id="text-objects"><a class="header" href="#text-objects">Text objects</a></h3>
-<p>A <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html#variant.Text"><code>TiledObject::Text</code></a> is rendered using two nested entities, if the <code>text</code> feature is enabled (it is by default):</p>
+<p>A <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html#variant.Text"><code>TiledObject::Text</code></a> is rendered using two nested entities, if the <code>text</code> feature is enabled (it is by default):</p>
 <ul>
-<li>a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/struct.TiledObjectTextBox.html"><code>TiledObjectTextBox</code></a> child, which represents the text box drawn in Tiled: its <code>Aabb</code> has the size of the box.</li>
-<li>below it, a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/struct.TiledObjectText.html"><code>TiledObjectText</code></a> entity holding the actual <code>Text2d</code> and <code>TextFont</code>.
+<li>a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/object/struct.TiledObjectTextBox.html"><code>TiledObjectTextBox</code></a> child, which represents the text box drawn in Tiled: its <code>Aabb</code> has the size of the box.
+It also has a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/object/struct.TiledObjectVisualOf.html"><code>TiledObjectVisualOf</code></a> component: it is spawned again whenever the <code>TiledObject</code> changes.</li>
+<li>below it, a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/object/struct.TiledObjectText.html"><code>TiledObjectText</code></a> entity holding the actual <code>Text2d</code> and <code>TextFont</code>.
 Its <code>Anchor</code> and position inside the box follow the horizontal and vertical alignment set in Tiled.</li>
 </ul>
 <p>To change the text content or style at runtime, query the <code>TiledObjectText</code> entity:</p>
@@ -270,14 +299,32 @@ fn make_texts_red(mut texts: Query&lt;&amp;mut TextColor, Added&lt;TiledObjectTe
 <span class="boring">}</span></code></pre>
 <p>See the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/map_text.rs"><code>map_text</code> example</a> for a demo.</p>
 <h2 id="images"><a class="header" href="#images">Images</a></h2>
-<p>An image layer has a single <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/image/struct.TiledImage.html"><code>TiledImage</code></a> child, holding the <code>Sprite</code> of the image.<br>When the image is repeated along an axis, the sprite size is updated to cover what the camera can see.</p>
+<p>An image layer has a single <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/image/struct.TiledImage.html"><code>TiledImage</code></a> child.
+It holds the image handle, position, size and repeat settings, from which its <code>Sprite</code> is derived.<br>When the image is repeated along an axis, the sprite size is updated to cover what the camera can see.<br>Without the <code>render</code> feature, it has no image handle and no <code>Sprite</code>.</p>
 <h2 id="physics-colliders"><a class="header" href="#physics-colliders">Physics Colliders</a></h2>
-<p>At the bottom of the hierarchy, you find physics colliders.<br>They are spawned as children of their source, either a <code>TiledLayer::Tiles</code> or a <code>TiledObject</code>, and carry:</p>
+<p>At the bottom of the hierarchy, you find physics colliders.<br>They are created for a source entity, either a <code>TiledLayer::Tiles</code> or a <code>TiledObject</code>, and are spawned again when their source changes (for instance when a tile of the layer is added, modified or removed).</p>
+<h3 id="objects-1"><a class="header" href="#objects-1">Objects</a></h3>
+<p>The first collider of an object is inserted on the <code>TiledObject</code> entity itself, so you can directly add other physics components to it.
+An object can have several colliders, for instance with <code>TiledColliderStrategy::LineStrip</code>: the next ones are spawned as children of the object entity.</p>
+<h3 id="tiles-layers"><a class="header" href="#tiles-layers">Tiles layers</a></h3>
+<p>The tiles of a layer do not get their own colliders: the colliders of all the tiles of a <code>TiledLayer::Tiles</code> are created together, for the layer.</p>
 <ul>
-<li>a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliderOf.html"><code>TiledColliderOf</code></a> relationship pointing to their source entity.
+<li>By default, the first collider is inserted on the layer entity itself, and the next ones, if any, are spawned as children of the layer entity.
+They are all spawned again whenever a tile of the layer is added, modified or removed.</li>
+<li>When the colliders of the layer are <a href="../guides/physics.html#colliders-chunks">split in chunks</a>, the layer entity does not hold any collider.
+Each chunk with at least one collider gets its own <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliderChunk.html"><code>TiledColliderChunk</code></a> entity, child of the layer, which holds the first collider of the chunk; the next ones are children of the chunk entity.
+When a tile is modified, only the colliders of its chunk (and of the adjacent chunks) are spawned again.</li>
+</ul>
+<p>In both cases, the layer entity remains the source of all these colliders.</p>
+<h3 id="collider-components"><a class="header" href="#collider-components">Collider components</a></h3>
+<p>Each entity holding a collider carries:</p>
+<ul>
+<li>a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliderOf.html"><code>TiledColliderOf</code></a> relationship pointing to their source entity (possibly itself).
 On the other side, the source has a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliders.html"><code>TiledColliders</code></a> component listing all its colliders.</li>
 <li>a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderSource.html"><code>TiledColliderSource</code></a> component telling whether the collider comes from a tiles layer or from an object.</li>
+<li>a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliderPolygons.html"><code>TiledColliderPolygons</code></a> component holding the raw geometry the collider was created from.</li>
 </ul>
+<p>Since a source can have several colliders spread over several entities, add a rigid body to the source entity, given by <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TiledEvent.html#method.source_entity"><code>TiledEvent&lt;ColliderCreated&gt;::source_entity()</code></a>, rather than to each collider entity.</p>
 <p>See the <a href="../guides/physics.html">physics guide</a> for more information.</p>
 <hr>
 <h2 id="transform-and-visibility-propagation"><a class="header" href="#transform-and-visibility-propagation">Transform and Visibility Propagation</a></h2>
@@ -287,7 +334,7 @@ On the other side, the source has a <a href="https://docs.rs/bevy_ecs_tiled/late
 <li>Adding <code>Visibility::Hidden</code> to an object layer will hide all objects in that layer.</li>
 <li>Moving an object layer will also move all objects it contains.</li>
 </ul>
-<p><strong>Special case for tiles:</strong><br>Tiles are not rendered as individual entities, but as part of a “chunk” of several tiles for performance reasons.<br>Each individual tile entity does <strong>not</strong> have its own <a href="https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html"><code>Transform</code></a> or <a href="https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html"><code>Visibility</code></a> component.<br>Instead, these components are propagated down to the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilemap.html"><code>TiledTilemap</code></a>, and <code>bevy_ecs_tilemap</code> handles updating the corresponding tile chunks.</p>
+<p><strong>Special case for tiles:</strong><br>Tiles are not rendered as individual entities, but as part of a “chunk” of several tiles for performance reasons.<br>Each individual tile entity does <strong>not</strong> have its own <a href="https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html"><code>Transform</code></a> or <a href="https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html"><code>Visibility</code></a> component.<br>Instead, these components are propagated down to the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/tilemap/struct.TiledTilemap.html"><code>TiledTilemap</code></a>, and <code>bevy_ecs_tilemap</code> handles updating the corresponding tile chunks.</p>
 <blockquote>
 <p><strong>Important:</strong><br>Even though you technically could, you should <strong>not</strong> add <a href="https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html"><code>Transform</code></a> or <a href="https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html"><code>Visibility</code></a> components to individual tile entities:</p>
 <ul>
@@ -300,7 +347,7 @@ On the other side, the source has a <a href="https://docs.rs/bevy_ecs_tiled/late
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../design/why_tiled.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../design/api_overview.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
@@ -314,7 +361,7 @@ On the other side, the source has a <a href="https://docs.rs/bevy_ecs_tiled/late
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../design/why_tiled.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../design/api_overview.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 

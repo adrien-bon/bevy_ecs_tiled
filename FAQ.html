@@ -35,10 +35,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b86f2860.js";
+            window.path_to_searchindex_js = "searchindex-ba955552.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-53cb13dc.js"></script>
+        <script src="toc-a898eaa9.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -197,7 +197,7 @@ But you can still use an isometric map with an orthogonal tileset.</p>
 <h2 id="i-want-a-huge-map-for-my-game-is-it-a-problem"><a class="header" href="#i-want-a-huge-map-for-my-game-is-it-a-problem">I want a huge map for my game, is it a problem?</a></h2>
 <p>If you have performance issues with a single large map, consider using a <a href="https://doc.mapeditor.org/en/stable/manual/worlds/">Tiled world</a>.
 A Tiled world is a collection of multiple maps, and you can control which ones are loaded at any given time.</p>
-<p>To spawn a Tiled world, use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/struct.TiledWorld.html"><code>TiledWorld</code></a> component after loading a <code>.world</code> asset:</p>
+<p>To spawn a Tiled world, use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/struct.TiledWorld.html"><code>TiledWorld</code></a> component after loading a <code>.world</code> asset:</p>
 <pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
@@ -213,7 +213,7 @@ fn startup(
     );
 }
 <span class="boring">}</span></code></pre>
-<p>You can customize world loading with the same components and events / observers as for maps, and use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/chunking/struct.TiledWorldChunking.html"><code>TiledWorldChunking</code></a> component to control map chunking.</p>
+<p>You can customize world loading with the same components and events / observers as for maps, and use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/streaming/enum.TiledWorldStreaming.html"><code>TiledWorldStreaming</code></a> component to only spawn the maps around the camera.</p>
 <hr>
 <h2 id="im-using-an-isometric-map-and-it-seems-all-messed-up"><a class="header" href="#im-using-an-isometric-map-and-it-seems-all-messed-up">I’m using an isometric map and it seems all messed up!</a></h2>
 <ul>
@@ -235,9 +235,29 @@ See the <a href="guides/physics.html">dedicated physics guide</a> for details.</
 The crate will automatically insert the corresponding Bevy <code>Component</code> on the Tiled entity when you load the map, making it available for your game logic.</p>
 <p>See the <a href="guides/properties.html">custom properties guide</a> for more information.</p>
 <hr>
+<h2 id="can-i-modify-a-map-after-it-has-been-loaded"><a class="header" href="#can-i-modify-a-map-after-it-has-been-loaded">Can I modify a map after it has been loaded?</a></h2>
+<p>Yes: tiles, objects and images entities hold Tiled data, from which their rendering and physics colliders are derived.
+You can spawn, despawn or modify them (for instance change a tile <code>TiledTile</code> or <code>TilePos</code>, or an object <code>TiledObject</code> shape) and their rendering and colliders will automatically follow.</p>
+<p>See the <a href="guides/dynamic_maps.html">dedicated guide</a> for more information and the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/map_dynamic.rs"><code>map_dynamic</code> example</a> for a demo.</p>
+<p>Note that respawning a map, for instance when it is hot-reloaded, discards all these modifications: see <a href="guides/spawn_reload.html">Spawn / Despawn / Reload a Map</a>.</p>
+<hr>
+<h2 id="can-i-load-a-map-on-a-headless-server"><a class="header" href="#can-i-load-a-map-on-a-headless-server">Can I load a map on a headless server?</a></h2>
+<p>Yes: disable the default features, in particular <code>render</code>. The <code>text</code> and <code>debug</code> features both enable it, so do not use them either.</p>
+<pre><code class="language-toml">[dependencies]
+bevy_ecs_tiled = { version = "0.16", default-features = false }
+</code></pre>
+<pre><code class="language-rust ignore">App::new().add_plugins((
+    MinimalPlugins,
+    AssetPlugin::default(),
+    TiledPlugin::default(),
+));</code></pre>
+<p>Images and texture atlas layouts are not loaded and nothing is displayed: there are no tilemaps, sprites or texts.
+Maps, layers, tiles and objects are still spawned with their data, and you can use the <code>physics</code> feature to get their colliders.</p>
+<hr>
 <h2 id="how-do-i-enable-map-hot-reload"><a class="header" href="#how-do-i-enable-map-hot-reload">How do I enable map hot-reload?</a></h2>
 <p>Enable the Bevy <code>file_watcher</code> feature in your project.
 With this enabled, <code>bevy_ecs_tiled</code> will automatically reload a map or world whenever it is updated in Tiled.</p>
+<p>Reloading a map respawns it from its asset: all the modifications made to its entities since it has been spawned are lost.</p>
 <hr>
 <h2 id="is-this-crate-wasm-compatible"><a class="header" href="#is-this-crate-wasm-compatible">Is this crate WASM compatible?</a></h2>
 <p>Yes it is!</p>
@@ -247,12 +267,18 @@ With this enabled, <code>bevy_ecs_tiled</code> will automatically reload a map o
 </code></pre>
 <hr>
 <h2 id="how-do-i-access-tiled-raw-data"><a class="header" href="#how-do-i-access-tiled-raw-data">How do I access Tiled “raw” data?</a></h2>
-<p>Sometimes you may need to access the underlying Tiled data, such as a <code>tiled::ObjectData</code> or <code>tiled::TileData</code>.</p>
-<p>You have several options:</p>
+<p>Sometimes you may need to access the underlying Tiled data, such as a tile or the custom properties of an object.</p>
+<p>Tiled data are held by ECS components, so you can read them directly from the entities:</p>
 <ul>
-<li>Use provided ECS components such as <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/struct.TiledLayerId.html"><code>TiledLayerId</code></a> and associated helper methods.</li>
-<li>Listen to <a href="./design/map_events.html">map loading events</a> and use <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TiledEvent.html"><code>TiledEvent&lt;E&gt;</code></a> helper methods to access Tiled data.</li>
-<li>Retrieve the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/storage/struct.TiledMapStorage.html"><code>TiledMapStorage</code></a> component from your map entity to get the mapping between Bevy entities and their corresponding Tiled data.</li>
+<li>The map, layers and objects have a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/properties/struct.TiledProperties.html"><code>TiledProperties</code></a> component, which holds their class and custom properties as defined in Tiled, whether the <code>user_properties</code> feature is enabled or not.</li>
+<li>Tiles have a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTile.html"><code>TiledTile</code></a> component, which holds their tileset ID and tile ID: use <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html#method.tile"><code>TiledMapAsset::tile()</code></a> to retrieve the corresponding <code>tiled::Tile</code>.</li>
+<li>Objects have a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html"><code>TiledObject</code></a> component, which describes their shape, and a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/filter/struct.TiledName.html"><code>TiledName</code></a>.</li>
+</ul>
+<p>You can also:</p>
+<ul>
+<li>Listen to <a href="./design/map_events.html">map loading events</a> and use <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TiledEvent.html"><code>TiledEvent&lt;E&gt;</code></a> helper methods to access the map asset and the entities related to the event.</li>
+<li>Use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/query/struct.TiledMapQuery.html"><code>TiledMapLayers</code>, <code>TiledMapTiles</code> and <code>TiledMapObjects</code></a> system parameters to list the layers, tiles and objects entities of a map.</li>
+<li>Read the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html"><code>TiledMapAsset</code></a> directly. Note that it is not updated when you modify the map entities after the map has been loaded.</li>
 </ul>
 <p>These options are demonstrated in <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples">examples</a> and <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/src/debug">debug plugins</a>.</p>
 <hr>

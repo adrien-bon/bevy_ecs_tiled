@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-b86f2860.js";
+            window.path_to_searchindex_js = "../searchindex-ba955552.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-53cb13dc.js"></script>
+        <script src="../toc-a898eaa9.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -212,6 +212,31 @@ If you add a new map, update <code>assets/README.md</code> with its characterist
 If you add a new asset, update the “Assets credits” section of the main <code>README.md</code> and ensure you have the right to use it.</li>
 </ul>
 <p>If you’re not sure about something, feel free to open a draft PR or ask questions in your issue or PR.</p>
+<h2 id="manual-checks"><a class="header" href="#manual-checks">Manual Checks</a></h2>
+<p>Some behaviors cannot be checked by automated tests and must be checked manually.</p>
+<h3 id="tiles-rendering"><a class="header" href="#tiles-rendering">Tiles Rendering</a></h3>
+<p>Tests run without a renderer: they check that tiles are added to or removed from their tilemap <code>TileStorage</code>, but not what is actually drawn.
+However, how a tile is drawn after it has been modified relies on <code>bevy_ecs_tilemap</code> internals: to make sure a moved or replaced tile is removed from its previous location, its <code>TilePos</code> component is removed then inserted again (see <code>sync_tiles</code> in <code>src/tiled/tile.rs</code>).</p>
+<p>When changing tiles rendering code, when upgrading <code>bevy_ecs_tilemap</code> and before each release, run the <code>map_dynamic</code> example with physics colliders displayed:</p>
+<pre><code class="language-sh">cargo run --example map_dynamic --features avian
+</code></pre>
+<p>Then check that rendering and colliders always match:</p>
+<ul>
+<li><code>[1]</code> (despawn a tile): the tile and its collider disappear.</li>
+<li><code>[2]</code> (change a tile): the tile texture changes and its collider follows the new tile shape.</li>
+<li><code>[3]</code> (move a tile), several times in a row: the tile is drawn at its new position only, along with its collider.
+Also move a tile onto another one, then away: the tile it replaced is neither drawn nor has a collider anymore.</li>
+<li><code>[4]</code> (spawn a tile): the new tile is drawn, along with its collider.</li>
+<li><code>[5]</code> and <code>[6]</code> (despawn an object, change an object shape): the object collider follows.</li>
+<li><code>[R]</code> (reload the map): the map is back to its initial state.</li>
+</ul>
+<h3 id="performance"><a class="header" href="#performance">Performance</a></h3>
+<p>A performance test measures, on a large map, the time needed to spawn, modify and despawn its tiles and objects.
+It is ignored by default: run it in release mode to compare performance before and after a change.</p>
+<pre><code class="language-sh">cargo test --release --all-features --lib perf -- --ignored --nocapture
+</code></pre>
+<p>Each scenario is run several times (5 by default, or the value of the <code>PERF_RUNS</code> environment variable): the test prints the median and minimum duration of a frame, along with the time spent spawning map data and in the <code>SyncTiles</code>, <code>SyncRender</code> and <code>SyncPhysics</code> system sets.
+Measures can vary significantly from one run to another: when comparing two versions, alternate their runs rather than comparing runs made at different times.</p>
 <hr>
 <p>Thanks in advance for helping make <code>bevy_ecs_tiled</code> better!</p>
 

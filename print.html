@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b86f2860.js";
+            window.path_to_searchindex_js = "searchindex-ba955552.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-53cb13dc.js"></script>
+        <script src="toc-a898eaa9.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -184,6 +184,7 @@
 <li><strong>Comprehensive Map Support:</strong><br>Load orthogonal, isometric, or hexagonal maps, with finite or infinite layers, using either external or embedded tilesets, atlases, or multiple images.</li>
 <li><strong>Rich Tiled Feature Integration:</strong><br>Supports animated tiles, image layers, tile objects, and <a href="https://doc.mapeditor.org/en/stable/manual/worlds/">Tiled worlds</a> for multi-map projects.</li>
 <li><strong>Entity-Based Architecture:</strong><br>Every Tiled item (layer, tile, object, etc.) is represented as a Bevy entity, organized in a clear hierarchy: layers are children of the map entity, tiles and objects are children of their respective layers. <code>Visibility</code> and <code>Transform</code> are automatically propagated.</li>
+<li><strong>Dynamic Maps:</strong><br>Spawn, despawn or modify tiles, objects and images after a map has been loaded: their rendering and physics colliders are automatically updated.</li>
 <li><strong>Flexible Map Lifecycle:</strong><br>Control how maps are spawned and despawned. Use Bevy events and observers to customize scene setup or react when a map is loaded and ready.</li>
 <li><strong>Automatic Physics Integration:</strong><br>Automatically spawn <a href="https://rapier.rs/">Rapier</a> or <a href="https://github.com/Jondolf/avian">Avian</a> physics colliders for tiles and objects, with support for custom backends.</li>
 <li><strong>Custom Properties as Components:</strong><br>Use <a href="https://doc.mapeditor.org/en/stable/manual/custom-properties/">Tiled custom properties</a> to automatically insert your own components on objects, tiles, or layers, enabling powerful data-driven workflows.</li>
@@ -240,7 +241,7 @@ But you can still use an isometric map with an orthogonal tileset.</p>
 <h2 id="i-want-a-huge-map-for-my-game-is-it-a-problem"><a class="header" href="#i-want-a-huge-map-for-my-game-is-it-a-problem">I want a huge map for my game, is it a problem?</a></h2>
 <p>If you have performance issues with a single large map, consider using a <a href="https://doc.mapeditor.org/en/stable/manual/worlds/">Tiled world</a>.
 A Tiled world is a collection of multiple maps, and you can control which ones are loaded at any given time.</p>
-<p>To spawn a Tiled world, use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/struct.TiledWorld.html"><code>TiledWorld</code></a> component after loading a <code>.world</code> asset:</p>
+<p>To spawn a Tiled world, use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/struct.TiledWorld.html"><code>TiledWorld</code></a> component after loading a <code>.world</code> asset:</p>
 <pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
@@ -256,7 +257,7 @@ fn startup(
     );
 }
 <span class="boring">}</span></code></pre>
-<p>You can customize world loading with the same components and events / observers as for maps, and use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/chunking/struct.TiledWorldChunking.html"><code>TiledWorldChunking</code></a> component to control map chunking.</p>
+<p>You can customize world loading with the same components and events / observers as for maps, and use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/streaming/enum.TiledWorldStreaming.html"><code>TiledWorldStreaming</code></a> component to only spawn the maps around the camera.</p>
 <hr>
 <h2 id="im-using-an-isometric-map-and-it-seems-all-messed-up"><a class="header" href="#im-using-an-isometric-map-and-it-seems-all-messed-up">I’m using an isometric map and it seems all messed up!</a></h2>
 <ul>
@@ -278,9 +279,29 @@ See the <a href="#add-physics-colliders">dedicated physics guide</a> for details
 The crate will automatically insert the corresponding Bevy <code>Component</code> on the Tiled entity when you load the map, making it available for your game logic.</p>
 <p>See the <a href="#using-tiled-custom-properties">custom properties guide</a> for more information.</p>
 <hr>
+<h2 id="can-i-modify-a-map-after-it-has-been-loaded"><a class="header" href="#can-i-modify-a-map-after-it-has-been-loaded">Can I modify a map after it has been loaded?</a></h2>
+<p>Yes: tiles, objects and images entities hold Tiled data, from which their rendering and physics colliders are derived.
+You can spawn, despawn or modify them (for instance change a tile <code>TiledTile</code> or <code>TilePos</code>, or an object <code>TiledObject</code> shape) and their rendering and colliders will automatically follow.</p>
+<p>See the <a href="#modify-a-map-at-runtime">dedicated guide</a> for more information and the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/map_dynamic.rs"><code>map_dynamic</code> example</a> for a demo.</p>
+<p>Note that respawning a map, for instance when it is hot-reloaded, discards all these modifications: see <a href="#spawn--despawn--reload-a-map">Spawn / Despawn / Reload a Map</a>.</p>
+<hr>
+<h2 id="can-i-load-a-map-on-a-headless-server"><a class="header" href="#can-i-load-a-map-on-a-headless-server">Can I load a map on a headless server?</a></h2>
+<p>Yes: disable the default features, in particular <code>render</code>. The <code>text</code> and <code>debug</code> features both enable it, so do not use them either.</p>
+<pre><code class="language-toml">[dependencies]
+bevy_ecs_tiled = { version = "0.16", default-features = false }
+</code></pre>
+<pre><code class="language-rust ignore">App::new().add_plugins((
+    MinimalPlugins,
+    AssetPlugin::default(),
+    TiledPlugin::default(),
+));</code></pre>
+<p>Images and texture atlas layouts are not loaded and nothing is displayed: there are no tilemaps, sprites or texts.
+Maps, layers, tiles and objects are still spawned with their data, and you can use the <code>physics</code> feature to get their colliders.</p>
+<hr>
 <h2 id="how-do-i-enable-map-hot-reload"><a class="header" href="#how-do-i-enable-map-hot-reload">How do I enable map hot-reload?</a></h2>
 <p>Enable the Bevy <code>file_watcher</code> feature in your project.
 With this enabled, <code>bevy_ecs_tiled</code> will automatically reload a map or world whenever it is updated in Tiled.</p>
+<p>Reloading a map respawns it from its asset: all the modifications made to its entities since it has been spawned are lost.</p>
 <hr>
 <h2 id="is-this-crate-wasm-compatible"><a class="header" href="#is-this-crate-wasm-compatible">Is this crate WASM compatible?</a></h2>
 <p>Yes it is!</p>
@@ -290,12 +311,18 @@ With this enabled, <code>bevy_ecs_tiled</code> will automatically reload a map o
 </code></pre>
 <hr>
 <h2 id="how-do-i-access-tiled-raw-data"><a class="header" href="#how-do-i-access-tiled-raw-data">How do I access Tiled “raw” data?</a></h2>
-<p>Sometimes you may need to access the underlying Tiled data, such as a <code>tiled::ObjectData</code> or <code>tiled::TileData</code>.</p>
-<p>You have several options:</p>
+<p>Sometimes you may need to access the underlying Tiled data, such as a tile or the custom properties of an object.</p>
+<p>Tiled data are held by ECS components, so you can read them directly from the entities:</p>
 <ul>
-<li>Use provided ECS components such as <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/struct.TiledLayerId.html"><code>TiledLayerId</code></a> and associated helper methods.</li>
-<li>Listen to <a href="#map-loading-events">map loading events</a> and use <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TiledEvent.html"><code>TiledEvent&lt;E&gt;</code></a> helper methods to access Tiled data.</li>
-<li>Retrieve the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/storage/struct.TiledMapStorage.html"><code>TiledMapStorage</code></a> component from your map entity to get the mapping between Bevy entities and their corresponding Tiled data.</li>
+<li>The map, layers and objects have a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/properties/struct.TiledProperties.html"><code>TiledProperties</code></a> component, which holds their class and custom properties as defined in Tiled, whether the <code>user_properties</code> feature is enabled or not.</li>
+<li>Tiles have a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTile.html"><code>TiledTile</code></a> component, which holds their tileset ID and tile ID: use <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html#method.tile"><code>TiledMapAsset::tile()</code></a> to retrieve the corresponding <code>tiled::Tile</code>.</li>
+<li>Objects have a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html"><code>TiledObject</code></a> component, which describes their shape, and a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/filter/struct.TiledName.html"><code>TiledName</code></a>.</li>
+</ul>
+<p>You can also:</p>
+<ul>
+<li>Listen to <a href="#map-loading-events">map loading events</a> and use <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TiledEvent.html"><code>TiledEvent&lt;E&gt;</code></a> helper methods to access the map asset and the entities related to the event.</li>
+<li>Use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/query/struct.TiledMapQuery.html"><code>TiledMapLayers</code>, <code>TiledMapTiles</code> and <code>TiledMapObjects</code></a> system parameters to list the layers, tiles and objects entities of a map.</li>
+<li>Read the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html"><code>TiledMapAsset</code></a> directly. Note that it is not updated when you modify the map entities after the map has been loaded.</li>
 </ul>
 <p>These options are demonstrated in <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples">examples</a> and <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/src/debug">debug plugins</a>.</p>
 <hr>
@@ -324,6 +351,60 @@ If you’d like to contribute, please read the <a href="#contributing">contribut
 <p>For my own needs—specifically, working with hexagonal maps—<a href="https://www.mapeditor.org/">Tiled</a> was the obvious choice!</p>
 <p>However, if you only need orthogonal maps, you might want to try <a href="https://ldtk.io/">LDTK</a>, especially in combination with the <a href="https://github.com/Trouv/bevy_ecs_ldtk"><code>bevy_ecs_ldtk</code> crate</a>.<br>Of course, <a href="https://www.mapeditor.org/">Tiled</a> remains a robust and versatile option for a wide range of 2D games.</p>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="api-overview"><a class="header" href="#api-overview">API Overview</a></h1>
+<p>Where to look in the API, depending on what you want to do.
+Everything listed here is in the prelude (<code>use bevy_ecs_tiled::prelude::*;</code>), unless a full path is given.</p>
+<h2 id="crate-layout"><a class="header" href="#crate-layout">Crate Layout</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Module</th><th>Content</th></tr>
+</thead>
+<tbody>
+<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/index.html"><code>asset</code></a></td><td>Tiled files loaded as Bevy assets: <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html"><code>TiledMapAsset</code></a>, <code>TiledWorldAsset</code> and Tiled IDs.</td></tr>
+<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/index.html"><code>ecs</code></a></td><td>Entities and components holding the Tiled data: the source of truth, which you can modify.</td></tr>
+<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/index.html"><code>render</code></a></td><td>Rendering derived from the <code>ecs</code> entities (<code>render</code> feature).</td></tr>
+<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/index.html"><code>physics</code></a></td><td>Physics colliders derived from the <code>ecs</code> entities (<code>physics</code> feature).</td></tr>
+<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/properties/index.html"><code>properties</code></a></td><td>Tiled custom properties.</td></tr>
+<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/index.html"><code>debug</code></a></td><td>Debug gizmos (<code>debug</code> feature).</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="i-want-to"><a class="header" href="#i-want-to">I Want To…</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>I want to…</th><th>Use</th></tr>
+</thead>
+<tbody>
+<tr><td>Load a map</td><td>Add the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/struct.TiledPlugin.html"><code>TiledPlugin</code></a>, spawn a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMap.html"><code>TiledMap</code></a></td></tr>
+<tr><td>Load a world</td><td>Spawn a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/struct.TiledWorld.html"><code>TiledWorld</code></a> (<code>world</code> feature)</td></tr>
+<tr><td>Only spawn the maps of a world around the camera</td><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/streaming/enum.TiledWorldStreaming.html"><code>TiledWorldStreaming</code></a></td></tr>
+<tr><td>Find the spawned maps of a world</td><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/query/struct.TiledWorldMaps.html"><code>TiledWorldMaps</code></a> system parameter, <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/query/struct.TiledWorldReference.html"><code>TiledWorldReference</code></a> on the map entity</td></tr>
+<tr><td>Reload a map</td><td>Insert <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.RespawnTiledMap.html"><code>RespawnTiledMap</code></a>, or a new <code>TiledMap</code></td></tr>
+<tr><td>Place the map</td><td><code>TilemapAnchor</code> and <code>Transform</code> on the map entity</td></tr>
+<tr><td>Change the Z offset between layers</td><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapLayerZOffset.html"><code>TiledMapLayerZOffset</code></a></td></tr>
+<tr><td>React when a map, layer or object is spawned</td><td>An observer on <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TiledEvent.html"><code>TiledEvent&lt;MapCreated&gt;</code></a> (or <code>LayerCreated</code>, <code>ObjectCreated</code>, …)</td></tr>
+<tr><td>Find the map of a layer, tile or object</td><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapReference.html"><code>TiledMapReference</code></a>, or <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapHelper.html"><code>TiledMapHelper</code></a></td></tr>
+<tr><td>Iterate over the layers, tiles or objects of a map</td><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/query/struct.TiledMapQuery.html"><code>TiledMapLayers</code>, <code>TiledMapTiles</code>, <code>TiledMapObjects</code></a> system parameters</td></tr>
+<tr><td>Find the tile at a given position</td><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/struct.TiledTileLayerStorage.html"><code>TiledTileLayerStorage</code></a> on the layer entity</td></tr>
+<tr><td>Know where a tile is displayed</td><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapHelper.html"><code>TiledMapHelper::tile_relative_position</code></a></td></tr>
+<tr><td>Modify the map at runtime</td><td>Spawn, modify or despawn <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTile.html"><code>TiledTile</code></a> and <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html"><code>TiledObject</code></a> entities (see <a href="#modify-a-map-at-runtime">the guide</a>)</td></tr>
+<tr><td>Read raw Tiled data</td><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html"><code>TiledMapAsset</code></a> (<code>map</code> field, <code>tileset()</code>, <code>tile()</code>, <code>layer()</code>, <code>object()</code>) and the re-exported <a href="https://docs.rs/tiled/latest/tiled/"><code>tiled</code></a> crate</td></tr>
+<tr><td>Read custom properties as they are in Tiled</td><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/properties/struct.TiledProperties.html"><code>TiledProperties</code></a></td></tr>
+<tr><td>Get custom properties as my own components</td><td>The <code>user_properties</code> feature (see <a href="#using-tiled-custom-properties">the guide</a>)</td></tr>
+<tr><td>Customize the tilemaps of a layer</td><td>An observer on <code>TiledEvent&lt;TilemapCreated&gt;</code>, <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/tilemap/struct.TiledTilemap.html"><code>TiledTilemap</code></a></td></tr>
+<tr><td>Add parallax to layers</td><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/struct.TiledParallaxCamera.html"><code>TiledParallaxCamera</code></a> on the camera</td></tr>
+<tr><td>Add physics colliders</td><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/struct.TiledPhysicsPlugin.html"><code>TiledPhysicsPlugin</code></a> and <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/settings/struct.TiledPhysicsSettings.html"><code>TiledPhysicsSettings</code></a> (see <a href="#add-physics-colliders">the guide</a>)</td></tr>
+<tr><td>Split tiles colliders into chunks</td><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderChunkSize.html"><code>TiledColliderChunkSize</code></a></td></tr>
+<tr><td>React when colliders are created</td><td>An observer on <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.ColliderCreated.html"><code>TiledEvent&lt;ColliderCreated&gt;</code></a></td></tr>
+<tr><td>Use another physics engine</td><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/trait.TiledPhysicsBackend.html"><code>TiledPhysicsBackend</code></a> and <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/geometry/fn.collider_shapes.html"><code>physics::geometry::collider_shapes</code></a></td></tr>
+<tr><td>Run my systems before or after <code>bevy_ecs_tiled</code> ones</td><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/sets/index.html">System sets</a></td></tr>
+<tr><td>See what is going on</td><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/struct.TiledDebugPluginGroup.html"><code>TiledDebugPluginGroup</code></a> (see <a href="#debug-your-project">the guide</a>)</td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="entities-hierarchy-and-marker-components"><a class="header" href="#entities-hierarchy-and-marker-components">Entities Hierarchy and Marker Components</a></h1>
 <p>When a map is loaded, it spawns <strong>many</strong> entities: for the map, for layers, for tiles, for objects, for colliders, and more.<br>To keep things organized, these entities are structured in a <a href="https://bevy-cheatbook.github.io/fundamentals/hierarchy.html">parent/child hierarchy</a>, and every entity has an associated marker component to help with queries and system targeting.</p>
 <p>Using a hierarchy also enables inheritance of certain components from top-level entities down the tree.<br>For example, if you change the <a href="https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html"><code>Visibility</code></a> of a layer entity, it will automatically apply to all entities below it in the hierarchy, such as tiles or objects.</p>
@@ -344,66 +425,95 @@ If you’d like to contribute, please read the <a href="#contributing">contribut
     OB["&lt;b&gt;TiledObjectTextBox&lt;/b&gt;&lt;br/&gt;(text objects)"]
     OT["&lt;b&gt;TiledObjectText&lt;/b&gt;"]
     I["&lt;b&gt;TiledImage&lt;/b&gt;"]
-    C["&lt;b&gt;TiledColliderOf&lt;/b&gt;&lt;br/&gt;(physics colliders)"]
+    CC["&lt;b&gt;TiledColliderChunk&lt;/b&gt;&lt;br/&gt;(colliders chunks)"]
+    C["&lt;b&gt;TiledColliderOf&lt;/b&gt;&lt;br/&gt;(additional colliders)"]
 
     W --&gt; M
     M --&gt; LT &amp; LO &amp; LI &amp; LG
     LG --&gt; LS
-    LT --&gt; T --&gt; TI
+    LT --&gt; T &amp; TI
     LO --&gt; O
     O --&gt; OV
     O --&gt; OB --&gt; OT
     LI --&gt; I
+    LT -.-&gt; CC -.-&gt; C
     LT -.-&gt; C
     O -.-&gt; C
 </pre>
 
-<p>Dashed arrows are only present when the physics feature is enabled and the corresponding layer or object is selected to produce colliders.</p>
-<p>Whatever their level in the hierarchy, entities spawned by <code>bevy_ecs_tiled</code> share a few common components:</p>
+<p>Dashed arrows are only present when the <code>physics</code> feature is enabled and the corresponding layer or object is selected to produce colliders.
+The first collider of a tiles layer or an object is held by the layer or object entity itself, or by its <code>TiledColliderChunk</code> when colliders are split in chunks: only additional colliders get their own entity (see <a href="#physics-colliders">Physics Colliders</a>).</p>
+<hr>
+<h2 id="tiled-data-and-derived-entities"><a class="header" href="#tiled-data-and-derived-entities">Tiled Data and Derived Entities</a></h2>
+<p>Entities spawned by <code>bevy_ecs_tiled</code> fall into two categories:</p>
 <ul>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMapReference.html"><code>TiledMapReference</code></a>: the map entity they belong to, so you do not have to walk up the hierarchy to find it.</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/filter/struct.TiledName.html"><code>TiledName</code></a>: the name given in Tiled to the layer, tileset or object.</li>
-<li>A Tiled identifier, such as <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/struct.TiledLayerId.html"><code>TiledLayerId</code></a> or <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/struct.TiledObjectId.html"><code>TiledObjectId</code></a>, to retrieve the raw Tiled data.</li>
+<li><strong>Tiled data</strong>: the map, layers, tiles, objects and images entities.
+They hold what was defined in Tiled, such as a tile <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTile.html"><code>TiledTile</code></a> (tileset ID and tile ID) and <code>TilePos</code>, or a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html"><code>TiledObject</code></a> shape.</li>
+<li><strong>Derived entities and components</strong>: <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/tilemap/struct.TiledTilemap.html"><code>TiledTilemap</code></a>s, tile objects and text objects visuals, image <code>Sprite</code>s and physics colliders.
+They are computed from the Tiled data during <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/sets/enum.TiledPostUpdateSystems.html"><code>TiledPostUpdateSystems::SyncRender</code></a> and <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/sets/enum.TiledPostUpdateSystems.html"><code>TiledPostUpdateSystems::SyncPhysics</code></a>.</li>
 </ul>
+<p>Tiled data are the source of truth: you can spawn, despawn or modify them after the map has been loaded and derived entities will automatically follow.
+On the other hand, you should not modify derived entities yourself, since your changes could be overwritten.</p>
+<p>See <a href="#modify-a-map-at-runtime">Modify a map at runtime</a> for more information.</p>
+<p>Most entities spawned by <code>bevy_ecs_tiled</code> share a few common components:</p>
+<ul>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapReference.html"><code>TiledMapReference</code></a>, for layers, tiles, tilemaps, objects and images: the map entity they belong to, so you do not have to walk up the hierarchy to find it.
+Object visuals and physics colliders do not have one: use the map reference of their object or layer.</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/filter/struct.TiledName.html"><code>TiledName</code></a>, for layers, objects and tilemaps: the name given in Tiled to the layer, object or tileset.</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/properties/struct.TiledProperties.html"><code>TiledProperties</code></a>, for the map, layers and objects: their class and custom properties, as defined in Tiled.</li>
+</ul>
+<p><code>TiledMapReference</code>, <code>TiledName</code>, <code>TiledProperties</code> and <code>TiledLayer</code> are <a href="https://docs.rs/bevy/latest/bevy/ecs/component/trait.Component.html">immutable components</a>: they cannot be queried mutably, insert a new value instead.</p>
 <hr>
 <h2 id="world"><a class="header" href="#world">World</a></h2>
-<p>A world is the optional top of the tree.<br>Loading a <code>.world</code> asset gives you a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/struct.TiledWorld.html"><code>TiledWorld</code></a> entity, which holds a handle to the corresponding <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/asset/struct.TiledWorldAsset.html"><code>TiledWorldAsset</code></a>.</p>
-<p>Each map of the world is spawned as a child of this entity.<br>All map-level settings can be added to the world entity: they are propagated down to every underlying map.</p>
+<p>A world is the optional top of the tree.<br>Loading a <code>.world</code> asset gives you a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/struct.TiledWorld.html"><code>TiledWorld</code></a> entity, which holds a handle to the corresponding <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/world/struct.TiledWorldAsset.html"><code>TiledWorldAsset</code></a>.</p>
+<p>Each map of the world is spawned as a child of this entity, with a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/query/struct.TiledWorldReference.html"><code>TiledWorldReference</code></a> component giving its world and its <code>WorldMapId</code>: use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/query/struct.TiledWorldMaps.html"><code>TiledWorldMaps</code></a> system parameter to retrieve the spawned maps of a world.<br>All map-level settings can be added to the world entity: they are propagated down to every underlying map.</p>
 <h2 id="map"><a class="header" href="#map">Map</a></h2>
-<p>Loading a <code>.tmx</code> asset gives you a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMap.html"><code>TiledMap</code></a> entity, which holds a handle to the corresponding <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html"><code>TiledMapAsset</code></a>.<br>It is the top of the tree, unless the map belongs to a world.</p>
-<p>This is where you put map-level settings, such as the <a href="https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/anchor/enum.TilemapAnchor.html"><code>TilemapAnchor</code></a> or the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMapLayerZOffset.html"><code>TiledMapLayerZOffset</code></a>.<br>It also holds a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/storage/struct.TiledMapStorage.html"><code>TiledMapStorage</code></a> component, which maps Tiled IDs to the spawned entities and the other way around.</p>
+<p>Loading a <code>.tmx</code> asset gives you a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMap.html"><code>TiledMap</code></a> entity, which holds a handle to the corresponding <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html"><code>TiledMapAsset</code></a>.<br>It is the top of the tree, unless the map belongs to a world.</p>
+<p>This is where you put map-level settings, such as the <a href="https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/anchor/enum.TilemapAnchor.html"><code>TilemapAnchor</code></a> or the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapLayerZOffset.html"><code>TiledMapLayerZOffset</code></a>.<br>All the entities spawned from the map have a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapReference.html"><code>TiledMapReference</code></a> to the map entity: use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/query/struct.TiledMapQuery.html"><code>TiledMapLayers</code>, <code>TiledMapTiles</code> and <code>TiledMapObjects</code></a> system parameters to iterate over the entities of a given map.</p>
 <h2 id="layers"><a class="header" href="#layers">Layers</a></h2>
-<p>Each Tiled layer is spawned as a child of the map, with a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html"><code>TiledLayer</code></a> component.<br>Its value tells you the kind of layer, and what you will find below it:</p>
+<p>Each Tiled layer is spawned as a child of the map, with a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/enum.TiledLayer.html"><code>TiledLayer</code></a> component.<br>Its value tells you the kind of layer, and what you will find below it:</p>
 <div class="table-wrapper">
 <table>
 <thead>
 <tr><th>Variant</th><th>Children</th></tr>
 </thead>
 <tbody>
-<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html#variant.Tiles"><code>TiledLayer::Tiles</code></a></td><td>one <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilemap.html"><code>TiledTilemap</code></a> per tileset</td></tr>
-<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html#variant.Objects"><code>TiledLayer::Objects</code></a></td><td>one <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html"><code>TiledObject</code></a> per object</td></tr>
-<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html#variant.Image"><code>TiledLayer::Image</code></a></td><td>a single <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/image/struct.TiledImage.html"><code>TiledImage</code></a></td></tr>
-<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/layer/enum.TiledLayer.html#variant.Group"><code>TiledLayer::Group</code></a></td><td>other layers, nested as in Tiled</td></tr>
+<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/enum.TiledLayer.html#variant.Tiles"><code>TiledLayer::Tiles</code></a></td><td>one <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTile.html"><code>TiledTile</code></a> per tile and one <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/tilemap/struct.TiledTilemap.html"><code>TiledTilemap</code></a> per tileset</td></tr>
+<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/enum.TiledLayer.html#variant.Objects"><code>TiledLayer::Objects</code></a></td><td>one <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html"><code>TiledObject</code></a> per object</td></tr>
+<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/enum.TiledLayer.html#variant.Image"><code>TiledLayer::Image</code></a></td><td>a single <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/image/struct.TiledImage.html"><code>TiledImage</code></a></td></tr>
+<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/enum.TiledLayer.html#variant.Group"><code>TiledLayer::Group</code></a></td><td>other layers, nested as in Tiled</td></tr>
 </tbody>
 </table>
 </div>
 <h2 id="tiles"><a class="header" href="#tiles">Tiles</a></h2>
-<p>Tiles are stored in two levels:</p>
+<p>Below each <code>TiledLayer::Tiles</code>, you find two kinds of sibling entities:</p>
 <ul>
-<li>Below each <code>TiledLayer::Tiles</code>, there is one <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilemap.html"><code>TiledTilemap</code></a> entity per tileset used by the layer.
-It holds the <code>TilemapBundle</code> from <code>bevy_ecs_tilemap</code>, so this is where the tilemap size, grid size or texture live.</li>
-<li>Below these tilemaps are the actual <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTile.html"><code>TiledTile</code></a> entities, one for each tile of the layer using this tileset.
-They are identified in Tiled by their <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilesetId.html"><code>TiledTilesetId</code></a> and <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTileId.html"><code>TiledTileId</code></a>, and positioned with a <code>TilePos</code>.</li>
+<li>the actual <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTile.html"><code>TiledTile</code></a> entities, one for each tile of the layer.
+Their <code>TiledTile</code> component gives their tileset ID and tile ID, and they are positioned with a <code>TilePos</code>.</li>
+<li>one <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/tilemap/struct.TiledTilemap.html"><code>TiledTilemap</code></a> entity per tileset used by the layer, rendering the tiles using this tileset (given by its <code>tileset_id</code> field).
+It holds the <code>TilemapBundle</code> from <code>bevy_ecs_tilemap</code>, so this is where the tilemap size, grid size or texture live.
+You can reach the tilemaps of a layer through the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/tilemap/struct.TiledTilemaps.html"><code>TiledTilemaps</code></a> relationship, and the tilemap of a tile through its <code>TilemapId</code>.</li>
+</ul>
+<p>Tilemaps are derived from tiles: a tilemap is spawned when a tile using a new tileset is added to a layer, and despawned once it does not contain any tile anymore.</p>
+<p>A position of a layer can only hold a single tile, as in Tiled.
+To find the tile at a given position, use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/struct.TiledTileLayerStorage.html"><code>TiledTileLayerStorage</code></a> component of the layer (see <a href="#modify-a-map-at-runtime">Modify a map at runtime</a>).
+Spawning a tile, or moving a tile (ie. changing its <code>TilePos</code>), onto a position already used by another tile of the same layer despawns this other tile, whatever its tileset.</p>
+<p>Note that:</p>
+<ul>
+<li>tiles outside of the map bounds (see <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html"><code>TiledMapAsset::tilemap_size</code></a>) are neither rendered nor used to compute physics colliders: layers cannot grow,</li>
+<li>moving a tile to another layer (ie. changing its <code>ChildOf</code>) is not supported: despawn it and spawn a new one in the other layer instead.</li>
 </ul>
 <h2 id="objects"><a class="header" href="#objects">Objects</a></h2>
-<p>Each Tiled object is spawned as a child of its <code>TiledLayer::Objects</code>, with a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html"><code>TiledObject</code></a> component describing its shape (point, rectangle, polygon, …).<br>Most objects are a single entity, but two kinds of objects have children holding their visual.</p>
+<p>Each Tiled object is spawned as a child of its <code>TiledLayer::Objects</code>, with a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html"><code>TiledObject</code></a> component describing its shape (point, rectangle, polygon, …).<br>Most objects are a single entity, but two kinds of objects have children holding their visual.</p>
 <h3 id="tile-objects"><a class="header" href="#tile-objects">Tile objects</a></h3>
-<p>A <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html#variant.Tile"><code>TiledObject::Tile</code></a> has a child entity with a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/struct.TiledObjectVisualOf.html"><code>TiledObjectVisualOf</code></a> component.<br>This child holds the <code>Sprite</code> of the tile and, if the tile is animated, a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/animation/struct.TiledAnimation.html"><code>TiledAnimation</code></a>.<br>From the object entity, you can reach it through the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/struct.TiledObjectVisuals.html"><code>TiledObjectVisuals</code></a> relationship.</p>
+<p>A <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html#variant.Tile"><code>TiledObject::Tile</code></a> has a child entity with a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/object/struct.TiledObjectVisualOf.html"><code>TiledObjectVisualOf</code></a> component, spawned again whenever the <code>TiledObject</code> changes.<br>This child holds the <code>Sprite</code> of the tile and, if the tile is animated, a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/animation/struct.TiledAnimation.html"><code>TiledAnimation</code></a>.<br>From the object entity, you can reach it through the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/object/struct.TiledObjectVisuals.html"><code>TiledObjectVisuals</code></a> relationship.</p>
+<p>Visual entities and <code>TiledAnimation</code> only exist with the <code>render</code> feature.</p>
 <h3 id="text-objects"><a class="header" href="#text-objects">Text objects</a></h3>
-<p>A <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html#variant.Text"><code>TiledObject::Text</code></a> is rendered using two nested entities, if the <code>text</code> feature is enabled (it is by default):</p>
+<p>A <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html#variant.Text"><code>TiledObject::Text</code></a> is rendered using two nested entities, if the <code>text</code> feature is enabled (it is by default):</p>
 <ul>
-<li>a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/struct.TiledObjectTextBox.html"><code>TiledObjectTextBox</code></a> child, which represents the text box drawn in Tiled: its <code>Aabb</code> has the size of the box.</li>
-<li>below it, a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/struct.TiledObjectText.html"><code>TiledObjectText</code></a> entity holding the actual <code>Text2d</code> and <code>TextFont</code>.
+<li>a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/object/struct.TiledObjectTextBox.html"><code>TiledObjectTextBox</code></a> child, which represents the text box drawn in Tiled: its <code>Aabb</code> has the size of the box.
+It also has a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/object/struct.TiledObjectVisualOf.html"><code>TiledObjectVisualOf</code></a> component: it is spawned again whenever the <code>TiledObject</code> changes.</li>
+<li>below it, a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/object/struct.TiledObjectText.html"><code>TiledObjectText</code></a> entity holding the actual <code>Text2d</code> and <code>TextFont</code>.
 Its <code>Anchor</code> and position inside the box follow the horizontal and vertical alignment set in Tiled.</li>
 </ul>
 <p>To change the text content or style at runtime, query the <code>TiledObjectText</code> entity:</p>
@@ -420,14 +530,32 @@ fn make_texts_red(mut texts: Query&lt;&amp;mut TextColor, Added&lt;TiledObjectTe
 <span class="boring">}</span></code></pre>
 <p>See the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/map_text.rs"><code>map_text</code> example</a> for a demo.</p>
 <h2 id="images"><a class="header" href="#images">Images</a></h2>
-<p>An image layer has a single <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/image/struct.TiledImage.html"><code>TiledImage</code></a> child, holding the <code>Sprite</code> of the image.<br>When the image is repeated along an axis, the sprite size is updated to cover what the camera can see.</p>
+<p>An image layer has a single <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/image/struct.TiledImage.html"><code>TiledImage</code></a> child.
+It holds the image handle, position, size and repeat settings, from which its <code>Sprite</code> is derived.<br>When the image is repeated along an axis, the sprite size is updated to cover what the camera can see.<br>Without the <code>render</code> feature, it has no image handle and no <code>Sprite</code>.</p>
 <h2 id="physics-colliders"><a class="header" href="#physics-colliders">Physics Colliders</a></h2>
-<p>At the bottom of the hierarchy, you find physics colliders.<br>They are spawned as children of their source, either a <code>TiledLayer::Tiles</code> or a <code>TiledObject</code>, and carry:</p>
+<p>At the bottom of the hierarchy, you find physics colliders.<br>They are created for a source entity, either a <code>TiledLayer::Tiles</code> or a <code>TiledObject</code>, and are spawned again when their source changes (for instance when a tile of the layer is added, modified or removed).</p>
+<h3 id="objects-1"><a class="header" href="#objects-1">Objects</a></h3>
+<p>The first collider of an object is inserted on the <code>TiledObject</code> entity itself, so you can directly add other physics components to it.
+An object can have several colliders, for instance with <code>TiledColliderStrategy::LineStrip</code>: the next ones are spawned as children of the object entity.</p>
+<h3 id="tiles-layers"><a class="header" href="#tiles-layers">Tiles layers</a></h3>
+<p>The tiles of a layer do not get their own colliders: the colliders of all the tiles of a <code>TiledLayer::Tiles</code> are created together, for the layer.</p>
 <ul>
-<li>a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliderOf.html"><code>TiledColliderOf</code></a> relationship pointing to their source entity.
+<li>By default, the first collider is inserted on the layer entity itself, and the next ones, if any, are spawned as children of the layer entity.
+They are all spawned again whenever a tile of the layer is added, modified or removed.</li>
+<li>When the colliders of the layer are <a href="#colliders-chunks">split in chunks</a>, the layer entity does not hold any collider.
+Each chunk with at least one collider gets its own <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliderChunk.html"><code>TiledColliderChunk</code></a> entity, child of the layer, which holds the first collider of the chunk; the next ones are children of the chunk entity.
+When a tile is modified, only the colliders of its chunk (and of the adjacent chunks) are spawned again.</li>
+</ul>
+<p>In both cases, the layer entity remains the source of all these colliders.</p>
+<h3 id="collider-components"><a class="header" href="#collider-components">Collider components</a></h3>
+<p>Each entity holding a collider carries:</p>
+<ul>
+<li>a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliderOf.html"><code>TiledColliderOf</code></a> relationship pointing to their source entity (possibly itself).
 On the other side, the source has a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliders.html"><code>TiledColliders</code></a> component listing all its colliders.</li>
 <li>a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderSource.html"><code>TiledColliderSource</code></a> component telling whether the collider comes from a tiles layer or from an object.</li>
+<li>a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliderPolygons.html"><code>TiledColliderPolygons</code></a> component holding the raw geometry the collider was created from.</li>
 </ul>
+<p>Since a source can have several colliders spread over several entities, add a rigid body to the source entity, given by <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TiledEvent.html#method.source_entity"><code>TiledEvent&lt;ColliderCreated&gt;::source_entity()</code></a>, rather than to each collider entity.</p>
 <p>See the <a href="#add-physics-colliders">physics guide</a> for more information.</p>
 <hr>
 <h2 id="transform-and-visibility-propagation"><a class="header" href="#transform-and-visibility-propagation">Transform and Visibility Propagation</a></h2>
@@ -437,7 +565,7 @@ On the other side, the source has a <a href="https://docs.rs/bevy_ecs_tiled/late
 <li>Adding <code>Visibility::Hidden</code> to an object layer will hide all objects in that layer.</li>
 <li>Moving an object layer will also move all objects it contains.</li>
 </ul>
-<p><strong>Special case for tiles:</strong><br>Tiles are not rendered as individual entities, but as part of a “chunk” of several tiles for performance reasons.<br>Each individual tile entity does <strong>not</strong> have its own <a href="https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html"><code>Transform</code></a> or <a href="https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html"><code>Visibility</code></a> component.<br>Instead, these components are propagated down to the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/tile/struct.TiledTilemap.html"><code>TiledTilemap</code></a>, and <code>bevy_ecs_tilemap</code> handles updating the corresponding tile chunks.</p>
+<p><strong>Special case for tiles:</strong><br>Tiles are not rendered as individual entities, but as part of a “chunk” of several tiles for performance reasons.<br>Each individual tile entity does <strong>not</strong> have its own <a href="https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html"><code>Transform</code></a> or <a href="https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html"><code>Visibility</code></a> component.<br>Instead, these components are propagated down to the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/render/tilemap/struct.TiledTilemap.html"><code>TiledTilemap</code></a>, and <code>bevy_ecs_tilemap</code> handles updating the corresponding tile chunks.</p>
 <blockquote>
 <p><strong>Important:</strong><br>Even though you technically could, you should <strong>not</strong> add <a href="https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html"><code>Transform</code></a> or <a href="https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html"><code>Visibility</code></a> components to individual tile entities:</p>
 <ul>
@@ -459,7 +587,7 @@ On the other side, the source has a <a href="https://docs.rs/bevy_ecs_tiled/late
 <li>The next one: <code>-2 × OFFSET</code></li>
 <li>And so on…</li>
 </ul>
-<p>By default, <code>OFFSET</code> is set to <code>+100</code>.<br>You can adjust this value by adding or modifying the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMapLayerZOffset.html"><code>TiledMapLayerZOffset</code></a> component on your map entity.</p>
+<p>By default, <code>OFFSET</code> is set to <code>+100</code>.<br>You can adjust this value by adding or modifying the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapLayerZOffset.html"><code>TiledMapLayerZOffset</code></a> component on your map entity.</p>
 <blockquote>
 <p><strong>Tip:</strong><br><code>bevy_ecs_tilemap</code> also applies a small Z offset to each chunk for correct rendering.<br>If your layer offset is too small, you may see unexpected rendering order issues.<br>A larger offset (like the default <code>100</code>) helps avoid this.</p>
 </blockquote>
@@ -486,7 +614,7 @@ On the other side, the source has a <a href="https://docs.rs/bevy_ecs_tiled/late
 </ul>
 <hr>
 <h2 id="tiledevente"><a class="header" href="#tiledevente"><code>TiledEvent&lt;E&gt;</code></a></h2>
-<p>All <code>bevy_ecs_tiled</code> events are encapsulated in the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TiledEvent.html"><code>TiledEvent&lt;E&gt;</code></a> structure.
+<p>All <code>bevy_ecs_tiled</code> events are encapsulated in the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TiledEvent.html"><code>TiledEvent&lt;E&gt;</code></a> structure.
 This provides more context for each event, including the origin of each particular event <code>E</code> and helper methods to access Tiled data.</p>
 <p>For example, an event related to an object will contain not only information to identify the object itself, but also the layer and the map containing it.</p>
 <pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
@@ -514,20 +642,20 @@ fn handle_event(
 <ul>
 <li><strong>For maps and worlds:</strong>
 <ul>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.MapCreated.html"><code>TiledEvent&lt;MapCreated&gt;</code></a>:<br>Emitted once a map has finished loading. Contains information about the map entity.<br>(If loading a world, this is called after the world event.)</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.LayerCreated.html"><code>TiledEvent&lt;LayerCreated&gt;</code></a>:<br>Emitted for each layer after the map is loaded. Contains information about the layer entity.</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TilemapCreated.html"><code>TiledEvent&lt;TilemapCreated&gt;</code></a>:<br>Emitted for each tilemap, for every tile layer, after the map is loaded. Contains information about the tilemap entity.</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TileCreated.html"><code>TiledEvent&lt;TileCreated&gt;</code></a>:<br>Emitted for each tile after the map is loaded. Contains information about the tile entity. Note this event is only fired for tiles using custom properties.</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.ObjectCreated.html"><code>TiledEvent&lt;ObjectCreated&gt;</code></a>:<br>Emitted for each object after the map is loaded. Contains information about the object entity.</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.MapCreated.html"><code>TiledEvent&lt;MapCreated&gt;</code></a>:<br>Emitted once a map has finished loading. Contains information about the map entity.<br>(If loading a world, this is called after the world event.)</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.LayerCreated.html"><code>TiledEvent&lt;LayerCreated&gt;</code></a>:<br>Emitted for each layer after the map is loaded. Contains information about the layer entity.</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TilemapCreated.html"><code>TiledEvent&lt;TilemapCreated&gt;</code></a>:<br>Emitted each time a tilemap is spawned, see <a href="#tilemapcreated-is-a-rendering-event">below</a>. Contains information about the tilemap entity.</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TileWithPropertiesCreated.html"><code>TiledEvent&lt;TileWithPropertiesCreated&gt;</code></a>:<br>Emitted after the map is loaded for each tile which has custom properties: tiles without any custom property do not get this event. Contains information about the tile entity.</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.ObjectCreated.html"><code>TiledEvent&lt;ObjectCreated&gt;</code></a>:<br>Emitted for each object after the map is loaded. Contains information about the object entity.</li>
 </ul>
 </li>
 <li><strong>For worlds only:</strong>
 <ul>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.WorldCreated.html"><code>TiledEvent&lt;WorldCreated&gt;</code></a>:<br>Emitted once the world has finished loading. Contains information about the world entity.</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.WorldCreated.html"><code>TiledEvent&lt;WorldCreated&gt;</code></a>:<br>Emitted once the world has finished loading. Contains information about the world entity.</li>
 </ul>
 </li>
 </ul>
-<p>All these events are sent <strong>after</strong> the map or world is fully loaded and all components (including those from user properties) have been inserted.</p>
+<p>Except for <code>TilemapCreated</code>, all these events are sent <strong>after</strong> the map or world is fully loaded and all components (including those from user properties) have been inserted.</p>
 <hr>
 <h2 id="how-to-use-map-events"><a class="header" href="#how-to-use-map-events">How to Use Map Events</a></h2>
 <p>You can listen to these events in two ways:</p>
@@ -573,9 +701,40 @@ fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
         });
 }
 <span class="boring">}</span></code></pre>
+<h3 id="events-bubble-up-beware-of-global-observers"><a class="header" href="#events-bubble-up-beware-of-global-observers">Events Bubble Up: Beware of Global Observers</a></h3>
+<p>Observed events bubble up the entity hierarchy: an observer attached to a world entity also receives the events of all its maps.
+While an event bubbles up, <code>TiledEvent::entity</code> is the entity currently observing it, whereas <code>TiledEvent::origin</code> always is the entity the event was sent for (eg. the created layer).</p>
+<p>A <strong>global observer</strong> (ie. added with <code>App::add_observer</code>) runs once <strong>for each entity the event bubbles through</strong>: it usually receives the same event several times.
+Use <code>TiledEvent::is_original()</code> to only handle it once:</p>
+<pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn main() {
+    App::new().add_observer(on_object_created);
+}
+
+fn on_object_created(object_created: On&lt;TiledEvent&lt;ObjectCreated&gt;&gt;) {
+    // Skip the copies of this event received while it bubbles up the hierarchy
+    if !object_created.is_original() {
+        return;
+    }
+    info!("Object {} created", object_created.origin);
+}</code></pre>
+<p>If you want to handle all the events of a given kind, whatever the map, a <code>MessageReader</code> is usually simpler: each event is read exactly once.</p>
 <hr>
 <h2 id="when-are-events-sent"><a class="header" href="#when-are-events-sent">When Are Events Sent?</a></h2>
-<p>All these events are sent <strong>after</strong> the map or world is actually loaded and their components have been inserted, including those coming from user properties.<br>This means you can safely query for components and child entities in your event handlers.</p>
+<p>All these events are sent <strong>after</strong> the map or world is actually loaded and all its Tiled data entities (layers, tiles, objects, images) have been spawned, with their components inserted, including those coming from user properties.<br>This means you can safely query for components and child entities in your event handlers: for instance, when receiving a <code>LayerCreated</code> event, all the other layers of the map already exist.</p>
+<p>Events are sent in the following order: <code>MapCreated</code>, then <code>LayerCreated</code>, <code>TileWithPropertiesCreated</code> and finally <code>ObjectCreated</code>.</p>
+<p>Note that rendering components and physics colliders are derived from Tiled data later in the frame, during <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/sets/enum.TiledPostUpdateSystems.html"><code>TiledPostUpdateSystems</code></a>: they do not exist yet when these events are sent.
+If you need them, use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.ColliderCreated.html"><code>ColliderCreated</code></a> and <code>TilemapCreated</code> events instead.</p>
+<h3 id="tilemapcreated-is-a-rendering-event"><a class="header" href="#tilemapcreated-is-a-rendering-event"><code>TilemapCreated</code> Is a Rendering Event</a></h3>
+<p>Tilemaps are rendering entities derived from tiles (see <a href="#entities-hierarchy-and-marker-components">Entities hierarchy</a>).
+As such, <code>TilemapCreated</code> is sent whenever a tilemap is spawned, during <code>TiledPostUpdateSystems::SyncRender</code>:</p>
+<ul>
+<li>when the map is loaded, once for each layer and tileset combination,</li>
+<li>later on, when a tile using a new tileset is added to a layer.</li>
+</ul>
+<p>It is only sent when the <code>render</code> feature is enabled.</p>
 <hr>
 <h2 id="dedicated-example"><a class="header" href="#dedicated-example">Dedicated Example</a></h2>
 <p>A <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/map_events.rs">dedicated example</a> is available to demonstrate how to use these events in practice.</p>
@@ -586,7 +745,7 @@ fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
 <ul>
 <li>find which tile is under the cursor,</li>
 <li>place a gameplay entity where an object was drawn in Tiled,</li>
-<li>read raw data from <a href="https://docs.rs/tiled/latest/tiled/struct.Map.html"><code>tiled::Map</code></a> (the <code>map</code> field of <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html"><code>TiledMapAsset</code></a>) and use it in Bevy.</li>
+<li>read raw data from <a href="https://docs.rs/tiled/latest/tiled/struct.Map.html"><code>tiled::Map</code></a> (the <code>map</code> field of <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html"><code>TiledMapAsset</code></a>) and use it in Bevy.</li>
 </ul>
 <p>This page explains the two coordinate systems and how <code>bevy_ecs_tiled</code> converts from one to the other.</p>
 <hr>
@@ -623,7 +782,7 @@ fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
 Almost every conversion therefore comes down to <strong>flipping the Y axis</strong> and <strong>moving the origin</strong>.</p>
 <hr>
 <h2 id="converting-a-tiled-position"><a class="header" href="#converting-a-tiled-position">Converting a Tiled position</a></h2>
-<p>Every Tiled pixel position (objects, image layers, map corners, …) is converted by <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html#method.world_space_from_tiled_position"><code>TiledMapAsset::world_space_from_tiled_position</code></a>.
+<p>Every Tiled pixel position (objects, image layers, map corners, …) is converted by <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html#method.world_space_from_tiled_position"><code>TiledMapAsset::world_space_from_tiled_position</code></a>.
 It returns a position <strong>relative to the map entity</strong>.</p>
 <hr>
 <h2 id="infinite-maps"><a class="header" href="#infinite-maps">Infinite maps</a></h2>
@@ -638,7 +797,7 @@ It returns a position <strong>relative to the map entity</strong>.</p>
                                         └────────┴────────┴────────┘
                                        (0,0) ▲ bottom-left tile
 </code></pre>
-<p>The map size used by Bevy (<a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/asset/struct.TiledMapAsset.html#structfield.tilemap_size"><code>TiledMapAsset::tilemap_size</code></a>) is the bounding box of all the chunks, not the <code>width</code> / <code>height</code> stored in the <code>.tmx</code> file.
+<p>The map size used by Bevy (<a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html#structfield.tilemap_size"><code>TiledMapAsset::tilemap_size</code></a>) is the bounding box of all the chunks, not the <code>width</code> / <code>height</code> stored in the <code>.tmx</code> file.
 Tiled pixel positions are shifted by the same amount, so objects stay aligned with tiles.</p>
 <hr>
 <h2 id="isometric-maps"><a class="header" href="#isometric-maps">Isometric maps</a></h2>
@@ -674,32 +833,51 @@ However, flipping the Y axis changes which rows (or columns) are “staggered”
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Tiled stagger axis</th><th>Tiled stagger index</th><th><code>HexCoordSystem</code></th></tr>
+<tr><th>Tiled stagger axis</th><th>Tiled stagger index</th><th><code>HexCoordSystem</code> (even map height)</th><th><code>HexCoordSystem</code> (odd map height)</th></tr>
 </thead>
 <tbody>
-<tr><td>X</td><td>Even</td><td><code>ColumnOdd</code></td></tr>
-<tr><td>X</td><td>Odd</td><td><code>ColumnEven</code></td></tr>
-<tr><td>Y</td><td>Even</td><td><code>RowOdd</code></td></tr>
-<tr><td>Y</td><td>Odd</td><td><code>RowEven</code></td></tr>
+<tr><td>X</td><td>Even</td><td><code>ColumnOdd</code></td><td><code>ColumnOdd</code></td></tr>
+<tr><td>X</td><td>Odd</td><td><code>ColumnEven</code></td><td><code>ColumnEven</code></td></tr>
+<tr><td>Y</td><td>Even</td><td><code>RowOdd</code></td><td><code>RowEven</code></td></tr>
+<tr><td>Y</td><td>Odd</td><td><code>RowEven</code></td><td><code>RowOdd</code></td></tr>
 </tbody>
 </table>
 </div>
-<p>This is handled by <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/helpers/fn.tilemap_type_from_map.html"><code>tilemap_type_from_map</code></a>, which you can use if you need the <code>TilemapType</code> of a map.</p>
+<p>When the stagger axis is Y, Tiled row <code>r</code> becomes row <code>height - 1 - r</code> in Bevy: if the map height is odd, flipping the Y axis does not change the rows parity, hence the different coordinate system.
+Infinite maps always have an even height (a multiple of the chunk size).</p>
+<p>The resulting <code>TilemapType</code> of a map is available in <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html#structfield.map_type"><code>TiledMapAsset::map_type</code></a>.</p>
+<h3 id="hexagon-side-length"><a class="header" href="#hexagon-side-length">Hexagon side length</a></h3>
+<p>In Tiled, staggered rows (or columns) are <code>(tile_size + hexsidelength) / 2</code> pixels apart.
+<code>bevy_ecs_tilemap</code> assumes regular hexagons and spaces them by <code>0.75 * grid_size</code>.
+To render the map like Tiled, the grid size is adjusted along the stagger axis:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Tiled stagger axis</th><th>Grid size</th></tr>
+</thead>
+<tbody>
+<tr><td>X</td><td><code>(2 * (tile_width + hexsidelength) / 3, tile_height)</code></td></tr>
+<tr><td>Y</td><td><code>(tile_width, 2 * (tile_height + hexsidelength) / 3)</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>When <code>hexsidelength</code> is half the tile size, the grid size is the tile size.
+Always use <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html#structfield.grid_size"><code>TiledMapAsset::grid_size</code></a>, and not the Tiled tile size, with <code>bevy_ecs_tilemap</code> helpers such as <code>TilePos::center_in_world()</code> or <code>TilePos::from_world_pos()</code>.</p>
 <hr>
 <h2 id="worlds"><a class="header" href="#worlds">Worlds</a></h2>
 <p>In a <code>.world</code> file, each map position is the Tiled pixel position of its <strong>top-left</strong> corner, with Y pointing down.
-<code>bevy_ecs_tiled</code> flips it so that the world bounding box (<a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/asset/struct.TiledWorldAsset.html#structfield.rect"><code>TiledWorldAsset::rect</code></a>) starts at <code>(0, 0)</code> and grows towards positive X and Y.</p>
-<p>The <code>TilemapAnchor</code> of a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/world/struct.TiledWorld.html"><code>TiledWorld</code></a> applies to the whole world bounding box, not to each map individually.</p>
+<code>bevy_ecs_tiled</code> flips it so that the world bounding box (<a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/world/struct.TiledWorldAsset.html#structfield.rect"><code>TiledWorldAsset::rect</code></a>) starts at <code>(0, 0)</code> and grows towards positive X and Y.</p>
+<p>The <code>TilemapAnchor</code> of a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/world/struct.TiledWorld.html"><code>TiledWorld</code></a> applies to the whole world bounding box, not to each map individually.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h1>
 <p>Add the required dependencies to your <code>Cargo.toml</code> file:</p>
 <pre><code class="language-toml">[dependencies]
 bevy = "0.20"
-bevy_ecs_tiled = "0.15"
+bevy_ecs_tiled = "0.16"
 </code></pre>
 <h3 id="basic-usage"><a class="header" href="#basic-usage">Basic Usage</a></h3>
 <p>To get started, add the plugin to your app and spawn a map entity.
-All you need to do is spawn a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMap.html"><code>TiledMap</code></a> component with the map asset you want to load (e.g., your <code>map.tmx</code> file).
+All you need to do is spawn a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMap.html"><code>TiledMap</code></a> component with the map asset you want to load (e.g., your <code>map.tmx</code> file).
 Make sure this map asset, along with any required dependencies (such as images or tilesets), is present in your local assets folder (by default, <code>./assets/</code>).</p>
 <pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
@@ -731,11 +909,11 @@ fn startup(
 }</code></pre>
 <p>This simple example will load a map using the default settings.</p>
 <h3 id="customizing-map-loading"><a class="header" href="#customizing-map-loading">Customizing Map Loading</a></h3>
-<p>You can customize how the map is loaded by listening to specific <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TiledEvent.html"><code>TiledEvent</code></a> or adding various components to the map entity, such as:</p>
+<p>You can customize how the map is loaded by listening to specific <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TiledEvent.html"><code>TiledEvent</code></a> or adding various components to the map entity, such as:</p>
 <ul>
 <li><a href="https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/anchor/enum.TilemapAnchor.html"><code>TilemapAnchor</code></a> — Controls the anchor point of the tilemap.</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMapLayerZOffset.html"><code>TiledMapLayerZOffset</code></a> — Adjusts the Z offset between map layers.</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMapImageRepeatMargin.html"><code>TiledMapImageRepeatMargin</code></a> — Control the margin for repeated images.</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapLayerZOffset.html"><code>TiledMapLayerZOffset</code></a> — Adjusts the Z offset between map layers.</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapImageRepeatMargin.html"><code>TiledMapImageRepeatMargin</code></a> — Control the margin for repeated images.</li>
 <li><a href="https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/map/struct.TilemapRenderSettings.html"><code>TilemapRenderSettings</code></a> — Configures rendering options.</li>
 <li><a href="https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html"><code>Transform</code></a> — Sets the position, rotation, and scale of the map.</li>
 <li><a href="https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html"><code>Visibility</code></a> — Controls the visibility of the map entity.</li>
@@ -761,9 +939,10 @@ fn spawn_map(
         .observe(
             |map_created: On&lt;TiledEvent&lt;MapCreated&gt;&gt;,
              assets: Res&lt;Assets&lt;TiledMapAsset&gt;&gt;,
-             query: Query&lt;(&amp;Name, &amp;TiledMapStorage), With&lt;TiledMap&gt;&gt;| {
+             query: Query&lt;&amp;Name, With&lt;TiledMap&gt;&gt;,
+             objects: TiledMapObjects&lt;(Entity, &amp;TiledObject)&gt;| {
                 // We can access the map components via a regular query
-                let Ok((name, storage)) = query.get(map_created.event().origin) else {
+                let Ok(name) = query.get(map_created.origin) else {
                     return;
                 };
                 info!("=&gt; Observer TiledMapCreated was triggered for map '{name}'");
@@ -774,24 +953,20 @@ fn spawn_map(
                 };
                 info!("Loaded map: {:?}", map);
 
-                // Additionally, we can access Tiled items using the TiledMapStorage
-                // component: we can retrieve Tiled items entity and access
-                // their own components with another query (not shown here).
+                // Additionally, we can query the Tiled items of this map using the
+                // TiledMapLayers, TiledMapTiles and TiledMapObjects system parameters.
                 // This can be useful if you want for instance to create a resource
                 // based upon tiles or objects data but make it available only when
                 // the map is actually spawned.
-                for (id, entity) in storage.objects() {
-                    info!(
-                        "(map) Object ID {:?} was spawned as entity {:?}",
-                        id, entity
-                    );
+                for (entity, object) in objects.iter(map_created.origin) {
+                    info!("(map) {object} object was spawned as entity {entity:?}");
                 }
             }
         );
 }
 <span class="boring">}</span></code></pre>
 <h3 id="more-examples"><a class="header" href="#more-examples">More Examples</a></h3>
-<p>For more advanced use cases, such as loading worlds, chunking, custom properties, or integrating with physics, see the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/README.md">examples directory</a> in the repository and notably the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/demo_platformer/">demo_platformer</a>.</p>
+<p>For more advanced use cases, such as loading worlds, chunking, custom properties, or integrating with physics, see the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/README.md">examples directory</a> in the repository and notably the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/demo_platformer/">demo_platformer</a> and <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/demo_topdown/">demo_topdown</a> demos.</p>
 <p>You can also refer to the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/">API documentation</a> for details on all available components and configuration options.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="spawn--despawn--reload-a-map"><a class="header" href="#spawn--despawn--reload-a-map">Spawn / Despawn / Reload a Map</a></h1>
@@ -801,7 +976,7 @@ fn spawn_map(
 <p>Spawning a map is a two-step process:</p>
 <ol>
 <li><strong>Load the map asset</strong> using Bevy’s <code>AssetServer</code>.</li>
-<li><strong>Spawn a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMap.html"><code>TiledMap</code></a></strong> containing a reference to this map asset.</li>
+<li><strong>Spawn a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMap.html"><code>TiledMap</code></a></strong> containing a reference to this map asset.</li>
 </ol>
 <pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -837,7 +1012,7 @@ fn spawn_map(
 <span class="boring">}</span></code></pre>
 <hr>
 <h2 id="respawning--reloading-a-map"><a class="header" href="#respawning--reloading-a-map">Respawning / Reloading a Map</a></h2>
-<p>If you want to reload or respawn a map, you can despawn it and spawn it again as shown above.<br>However, there is a more ergonomic way: insert the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.RespawnTiledMap.html"><code>RespawnTiledMap</code></a> component on the map entity.</p>
+<p>If you want to reload or respawn a map, you can despawn it and spawn it again as shown above.<br>However, there is a more ergonomic way: insert the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.RespawnTiledMap.html"><code>RespawnTiledMap</code></a> component on the map entity.</p>
 <pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn respawn_map(
@@ -852,12 +1027,15 @@ fn spawn_map(
 <p>This will reload the same map asset, despawning and respawning all child entities (layers, tiles, objects, etc.), while preserving the top-level map entity and its components.</p>
 <ul>
 <li>Any changes you made to child entities (e.g., tile color, object position) will be reset to their original state.</li>
-<li>Components on the map entity itself (such as <a href="https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/map/struct.TilemapRenderSettings.html"><code>TilemapRenderSettings</code></a>, <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMapLayerZOffset.html"><code>TiledMapLayerZOffset</code></a>, or <a href="https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html"><code>Transform</code></a>) will be <strong>preserved</strong>.</li>
+<li>Components on the map entity itself (such as <a href="https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/map/struct.TilemapRenderSettings.html"><code>TilemapRenderSettings</code></a>, <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapLayerZOffset.html"><code>TiledMapLayerZOffset</code></a>, or <a href="https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html"><code>Transform</code></a>) will be <strong>preserved</strong>.</li>
 </ul>
 <p>This is useful for implementing level respawn or resetting a map to its initial state.</p>
+<p>Note that the map is also respawned when you modify one of these components on the map entity: <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMap.html"><code>TiledMap</code></a>, <a href="https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/anchor/enum.TilemapAnchor.html"><code>TilemapAnchor</code></a>, <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapLayerZOffset.html"><code>TiledMapLayerZOffset</code></a> or <a href="https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/map/struct.TilemapRenderSettings.html"><code>TilemapRenderSettings</code></a>.
+Modifying <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/settings/struct.TiledPhysicsSettings.html"><code>TiledPhysicsSettings</code></a> does not respawn the map: only its physics colliders are spawned again.
+In all these cases, the modifications you made to the map entities at runtime (spawned, despawned or modified tiles and objects, see <a href="#modify-a-map-at-runtime">Modify a map at runtime</a>) are lost.</p>
 <hr>
 <h2 id="loading-a-new-map-over-an-existing-one"><a class="header" href="#loading-a-new-map-over-an-existing-one">Loading a New Map Over an Existing One</a></h2>
-<p>To replace the current map with a different one, simply insert a new <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMap.html"><code>TiledMap</code></a> on the existing map entity:</p>
+<p>To replace the current map with a different one, simply insert a new <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMap.html"><code>TiledMap</code></a> on the existing map entity:</p>
 <pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn handle_reload(
@@ -874,16 +1052,202 @@ fn spawn_map(
 }
 <span class="boring">}</span></code></pre>
 <ul>
-<li>If you insert the same map handle, it is equivalent to inserting the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.RespawnTiledMap.html"><code>RespawnTiledMap</code></a> component.</li>
+<li>If you insert the same map handle, it is equivalent to inserting the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.RespawnTiledMap.html"><code>RespawnTiledMap</code></a> component.</li>
 </ul>
 <hr>
 <h2 id="summary"><a class="header" href="#summary">Summary</a></h2>
 <ul>
-<li><strong>Spawn</strong>: Load the map asset and spawn a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMap.html"><code>TiledMap</code></a>.</li>
+<li><strong>Spawn</strong>: Load the map asset and spawn a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMap.html"><code>TiledMap</code></a>.</li>
 <li><strong>Despawn</strong>: Remove the map entity (children are cleaned up automatically).</li>
-<li><strong>Respawn/Reload</strong>: Insert <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.RespawnTiledMap.html"><code>RespawnTiledMap</code></a> or a new <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMap.html"><code>TiledMap</code></a> to reload or swap maps efficiently.</li>
+<li><strong>Respawn/Reload</strong>: Insert <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.RespawnTiledMap.html"><code>RespawnTiledMap</code></a> or a new <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMap.html"><code>TiledMap</code></a> to reload or swap maps efficiently.</li>
 </ul>
 <p>For more advanced usage, see the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/map_reload.rs">examples</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="modify-a-map-at-runtime"><a class="header" href="#modify-a-map-at-runtime">Modify a Map at Runtime</a></h1>
+<p>Once a map has been loaded, you can freely modify it: spawn, despawn or modify its tiles, objects and images.
+<code>bevy_ecs_tiled</code> takes care of keeping their rendering and their physics colliders up to date.</p>
+<p>This is useful to build destructible terrain, open doors, let the player build things, generate parts of a level procedurally, and more.</p>
+<p>A <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/map_dynamic.rs">dedicated example</a> demonstrates these features.</p>
+<hr>
+<h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
+<p>The entities spawned when loading a map fall into two categories:</p>
+<ul>
+<li><strong>Tiled data</strong>: the map, its layers, tiles, objects and images entities.
+They hold what was defined in Tiled: which tile is at which position, the shape of an object, the image of an image layer, …</li>
+<li><strong>Derived entities and components</strong>: tilemaps, objects visuals (sprites and texts), images sprites and physics colliders.
+They are computed from Tiled data and you should not modify them yourself, since your changes would be overwritten.</li>
+</ul>
+<p>Tiled data are the source of truth: when they change, derived entities are updated during <code>PostUpdate</code>, in the following <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/sets/enum.TiledPostUpdateSystems.html"><code>TiledPostUpdateSystems</code></a> sets:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>System set</th><th>What is updated</th></tr>
+</thead>
+<tbody>
+<tr><td><code>First</code></td><td>A <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapReference.html"><code>TiledMapReference</code></a> is inserted on new tiles and objects which do not have one.</td></tr>
+<tr><td><code>SyncTiles</code></td><td>Tiles are registered in the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/struct.TiledTileLayerStorage.html"><code>TiledTileLayerStorage</code></a> of their layer, and a tile moved onto another one replaces it.</td></tr>
+<tr><td><code>SyncRender</code></td><td>Tilemaps, objects visuals and images sprites are spawned, updated or despawned.</td></tr>
+<tr><td><code>SyncPhysics</code></td><td>Physics colliders are spawned again.</td></tr>
+</tbody>
+</table>
+</div>
+<p>These sets run before Bevy transform and visibility propagation: if you modify Tiled data during <code>Update</code> (or earlier), the result is visible in the same frame.</p>
+<p>See the <a href="#entities-hierarchy-and-marker-components">entities hierarchy page</a> for a description of all the entities composing a map.</p>
+<hr>
+<h2 id="tiles-1"><a class="header" href="#tiles-1">Tiles</a></h2>
+<p>Each tile is an entity with a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTile.html"><code>TiledTile</code></a> component, child of its <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/enum.TiledLayer.html#variant.Tiles"><code>TiledLayer::Tiles</code></a> entity.
+Its Tiled data are held by the following components, which you can freely modify:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Component</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/tile/struct.TiledTile.html"><code>TiledTile</code></a></td><td>Tileset of the tile (<code>tileset_id</code>, a <code>TilesetId</code>) and tile in this tileset (<code>tile_id</code>)</td></tr>
+<tr><td><code>TilePos</code></td><td>Position of the tile in the layer (origin is the bottom-left corner of the map)</td></tr>
+<tr><td><code>TileFlip</code></td><td>Horizontal, vertical and diagonal flips</td></tr>
+<tr><td><code>TileVisible</code>, <code>TileColor</code></td><td>Visibility and color of the tile</td></tr>
+</tbody>
+</table>
+</div>
+<p>Other components, such as <code>TilemapId</code>, <code>TileTextureIndex</code> or <code>AnimatedTile</code>, are derived from these data: do not modify them.</p>
+<h3 id="modify-move-or-despawn-a-tile"><a class="header" href="#modify-move-or-despawn-a-tile">Modify, Move or Despawn a Tile</a></h3>
+<pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+/// Replace tile 0 with tile 1 of the same tileset, everywhere
+fn replace_tiles(mut tiles: Query&lt;&amp;mut TiledTile&gt;) {
+    for mut tile in tiles.iter_mut() {
+        if tile.tile_id == 0 {
+            tile.tile_id = 1;
+        }
+    }
+}
+
+/// Move all the tiles of a layer one step to the right
+fn move_tiles(mut tiles: Query&lt;&amp;mut TilePos, With&lt;TiledTile&gt;&gt;) {
+    for mut tile_pos in tiles.iter_mut() {
+        tile_pos.x += 1;
+    }
+}
+
+/// Despawn the tile at a given position of a given layer
+fn despawn_tile(mut commands: Commands, layers: Query&lt;&amp;TiledTileLayerStorage&gt;) {
+    let (layer, position) = (Entity::PLACEHOLDER, TilePos::new(3, 4));
+    // Each layer indexes its tiles by their position
+    if let Ok(storage) = layers.get(layer)
+        &amp;&amp; let Some(entity) = storage.get(position)
+    {
+        commands.entity(entity).despawn();
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>When a tile changes, it is moved to the tilemap of its new tileset, and the colliders of its layer are spawned again.
+A tilemap is spawned when a tile using a new tileset is added to a layer, and despawned once it does not contain any tile anymore.</p>
+<h3 id="spawn-a-tile"><a class="header" href="#spawn-a-tile">Spawn a Tile</a></h3>
+<p>To spawn a new tile, you only need to provide its Tiled data and its parent layer:</p>
+<pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn spawn_tile(mut commands: Commands, layers: Query&lt;(Entity, &amp;TiledLayer)&gt;) {
+    let Some((layer, _)) = layers.iter().find(|(_, l)| matches!(l, TiledLayer::Tiles)) else {
+        return;
+    };
+    commands.spawn((
+        // Tile 2 of the first tileset of the map
+        TiledTile::new(TilesetId(0), 2),
+        ChildOf(layer),
+        TilePos::new(3, 4),
+    ));
+}
+<span class="boring">}</span></code></pre>
+<p>Other components (<code>TileFlip</code>, <code>TileVisible</code>, <code>TileColor</code>, …) get a default value, and the <code>TiledMapReference</code> is inserted from the parent layer.
+If the tile has <a href="#using-tiled-custom-properties">custom properties</a> in its tileset, they are also inserted on the new entity.</p>
+<h3 id="rules-and-limitations"><a class="header" href="#rules-and-limitations">Rules and Limitations</a></h3>
+<ul>
+<li><strong>A position holds a single tile</strong>, as in Tiled: spawning a tile, or moving a tile, onto a position already used by another tile of the same layer despawns this other tile, whatever its tileset.</li>
+<li><strong>Layers cannot grow</strong>: tiles outside of the map bounds (see <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html#structfield.tilemap_size"><code>TiledMapAsset::tilemap_size</code></a>) are neither rendered nor used to compute physics colliders, and a warning is logged.</li>
+<li><strong>Tiles cannot change of layer</strong>: changing the <code>ChildOf</code> of a tile is not supported. Despawn it and spawn a new one in the other layer instead.</li>
+<li><strong>Custom properties are not updated</strong> when you modify the <code>TiledTile</code> component of an existing tile.</li>
+<li>A tileset which cannot be used in a tiles layer (for instance an images collection with images of different sizes) cannot be used for spawned tiles either.</li>
+</ul>
+<hr>
+<h2 id="objects-2"><a class="header" href="#objects-2">Objects</a></h2>
+<p>Each object is an entity with a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html"><code>TiledObject</code></a> component, describing its shape, child of its <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/enum.TiledLayer.html#variant.Objects"><code>TiledLayer::Objects</code></a> entity.
+Its position is given by its <code>Transform</code>, relative to its layer.</p>
+<p>When the <code>TiledObject</code> component changes, the object visual (for tile and text objects) and its physics colliders are spawned again.
+When it is removed or when the object is despawned, they are despawned as well.</p>
+<pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+/// Turn all ellipses into rectangles
+fn change_shapes(mut objects: Query&lt;&amp;mut TiledObject&gt;) {
+    for mut object in objects.iter_mut() {
+        if let TiledObject::Ellipse { width, height } = *object {
+            *object = TiledObject::Rectangle { width, height };
+        }
+    }
+}
+
+/// Spawn a new rectangle object in the given objects layer
+fn spawn_object(mut commands: Commands) {
+    let layer = Entity::PLACEHOLDER;
+    commands.spawn((
+        TiledObject::Rectangle {
+            width: 32.,
+            height: 16.,
+        },
+        TiledName("door".to_string()),
+        Transform::from_xyz(64., -32., 0.),
+        ChildOf(layer),
+    ));
+}
+<span class="boring">}</span></code></pre>
+<p>When spawning an object:</p>
+<ul>
+<li>give it a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/filter/struct.TiledName.html"><code>TiledName</code></a> if you use <a href="#add-physics-colliders">physics settings</a> filtering objects by name,</li>
+<li>as for tiles, its <code>TiledMapReference</code> is inserted from the parent layer, and a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/object/enum.TiledObject.html#variant.Tile"><code>TiledObject::Tile</code></a> gets the custom properties of its tile.</li>
+</ul>
+<p>Moving an object (ie. modifying its <code>Transform</code>) does not need any update: its visual and colliders are its children and move along with it.</p>
+<hr>
+<h2 id="images-1"><a class="header" href="#images-1">Images</a></h2>
+<p>An image layer has a single child holding a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/image/struct.TiledImage.html"><code>TiledImage</code></a> component: the image handle, its position, size and repeat settings.
+Its <code>Sprite</code> is derived from it: to change the image, modify the <code>TiledImage</code> component instead of the <code>Sprite</code>.</p>
+<p>Without the <code>render</code> feature, the image is not loaded: <code>TiledImage</code> has no image handle and there is no <code>Sprite</code>.</p>
+<hr>
+<h2 id="reacting-to-changes"><a class="header" href="#reacting-to-changes">Reacting to Changes</a></h2>
+<p><a href="#map-loading-events">Map loading events</a> (<code>MapCreated</code>, <code>LayerCreated</code>, <code>TileWithPropertiesCreated</code>, <code>ObjectCreated</code>) are only sent when a map is loaded, not when you modify it afterwards.
+Two events are however sent when derived entities are spawned:</p>
+<ul>
+<li><code>TiledEvent&lt;TilemapCreated&gt;</code>, each time a tilemap is spawned: when the map is loaded, but also when a tile using a new tileset is added to a layer.</li>
+<li><code>TiledEvent&lt;ColliderCreated&gt;</code>, each time a collider is spawned: since colliders are spawned again when their source changes, you receive this event every time a tiles layer or an object is modified.</li>
+</ul>
+<p>For instance, if you add a <code>RigidBody</code> to colliders when receiving <code>ColliderCreated</code> (see the <a href="#add-physics-colliders">physics guide</a>), new colliders will get it as well.</p>
+<p>Entities spawned at runtime get a <code>TiledMapReference</code> to their map, so the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/query/struct.TiledMapQuery.html"><code>TiledMapLayers</code>, <code>TiledMapTiles</code> and <code>TiledMapObjects</code></a> system parameters list them along with the ones spawned with the map.
+To find the tile at a given position of a layer, use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/layer/struct.TiledTileLayerStorage.html"><code>TiledTileLayerStorage</code></a> component of this layer.</p>
+<hr>
+<h2 id="respawning-a-map-discards-modifications"><a class="header" href="#respawning-a-map-discards-modifications">Respawning a Map Discards Modifications</a></h2>
+<p>All the modifications you made are lost when the map is respawned from its asset, which happens when:</p>
+<ul>
+<li>you insert the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.RespawnTiledMap.html"><code>RespawnTiledMap</code></a> component,</li>
+<li>the map is hot-reloaded,</li>
+<li>you modify the <code>TiledMap</code>, <code>TilemapAnchor</code>, <code>TiledMapLayerZOffset</code>, <code>TilemapRenderSettings</code> or <code>TiledPhysicsSettings</code> components of the map entity.</li>
+</ul>
+<p>See <a href="#spawn--despawn--reload-a-map">Spawn / Despawn / Reload a Map</a> for more information.</p>
+<hr>
+<h2 id="performance"><a class="header" href="#performance">Performance</a></h2>
+<ul>
+<li>Modifying tiles only updates the tiles which changed, and the tilemaps they belong to.</li>
+<li>However, <strong>physics colliders of a tiles layer are computed again as a whole</strong> whenever one of its tiles changes: on a layer with many tiles, it can take a significant amount of time.
+If you frequently modify a large tiles layer, consider keeping colliders out of it (see the <a href="#add-physics-colliders">physics settings</a> to filter layers), or splitting it into several layers.</li>
+<li>Modifications are processed once per frame: modifying many tiles in the same frame costs much less than modifying them over several frames.</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="add-physics-colliders"><a class="header" href="#add-physics-colliders">Add Physics Colliders</a></h1>
 <p>Tiled allows you to add objects to your map—either directly on an object layer or attached to a tile.
@@ -915,7 +1279,7 @@ You can also enable only the <code>physics</code> feature and provide your own b
 <p><strong>Example: Using the Avian backend</strong></p>
 <pre><code class="language-toml">[dependencies]
 bevy = "0.20"
-bevy_ecs_tiled = { version = "0.15", features = ["avian"] }
+bevy_ecs_tiled = { version = "0.16", features = ["avian"] }
 </code></pre>
 <blockquote>
 <p><strong>Note:</strong>
@@ -950,21 +1314,31 @@ fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
     commands.spawn(TiledMap(asset_server.load("map.tmx")));
 }</code></pre>
 <p>Colliders will be spawned for every object or tiles colliders in your map automatically.</p>
+<p>Colliders are derived from the map entities: if you add, modify or remove a tile or an object after the map has been loaded, the corresponding colliders are automatically spawned again.</p>
 <p>We provide two <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/trait.TiledPhysicsBackend.html"><code>TiledPhysicsBackend</code></a> that can be used out of the box:</p>
 <ul>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/avian/enum.TiledPhysicsAvianBackend.html"><code>TiledPhysicsAvianBackend</code></a>: for the Avian 2D physics engine</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/rapier/enum.TiledPhysicsRapierBackend.html"><code>TiledPhysicsRapierBackend</code></a>: for the Rapier 2D physics engine</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/avian/struct.TiledPhysicsAvianBackend.html"><code>TiledPhysicsAvianBackend</code></a>: for the Avian 2D physics engine</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/rapier/struct.TiledPhysicsRapierBackend.html"><code>TiledPhysicsRapierBackend</code></a>: for the Rapier 2D physics engine</li>
 </ul>
 <blockquote>
 <p><strong>Note:</strong>
 You can actually use several physics backends at the same time if you register the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/struct.TiledPhysicsPlugin.html"><code>TiledPhysicsPlugin&lt;T&gt;</code></a> plugin multiple times, but with different <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/trait.TiledPhysicsBackend.html"><code>TiledPhysicsBackend</code></a>.</p>
 </blockquote>
 <hr>
-<h2 id="filtering-which-objects-get-colliders"><a class="header" href="#filtering-which-objects-get-colliders">Filtering Which Objects Get Colliders</a></h2>
-<p>By default, colliders are spawned for <strong>all</strong> objects (regular objects and tile colliders).
-If you want more control, use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/settings/struct.TiledPhysicsSettings.html"><code>TiledPhysicsSettings</code></a> component.</p>
-<p>This component lets you filter which objects/layers should have colliders, based on their names.</p>
-<p><strong>Example: Only spawn colliders for certain objects/layers</strong></p>
+<h2 id="selecting-which-layers-and-objects-get-colliders"><a class="header" href="#selecting-which-layers-and-objects-get-colliders">Selecting Which Layers and Objects Get Colliders</a></h2>
+<p>By default, colliders are spawned for <strong>all</strong> tiles layers and objects.
+To select which ones get colliders, use <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderStrategy.html#variant.Disabled"><code>TiledColliderStrategy::Disabled</code></a>, the same way as any other <a href="#collider-strategy">collider strategy</a>:</p>
+<ul>
+<li>set it in <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/settings/struct.TiledPhysicsSettings.html"><code>TiledPhysicsSettings</code></a> to disable colliders for the whole map,</li>
+<li>insert it as a component on a layer or an object entity to disable colliders for this layer or object only,</li>
+<li>insert it as a component on a tile entity to exclude this tile from the colliders of its layer. On a tile, other strategies have no effect: the tile uses the strategy of its layer.
+Since tiles inherit the custom properties of their tile in the tileset, adding a <code>TiledColliderStrategy</code> custom property to a tile in the Tiled tileset editor (with the <code>user_properties</code> feature) excludes all the tiles of this kind.</li>
+</ul>
+<p>An object uses its own strategy if it has one, otherwise the one of its layer, otherwise the one of the map.
+For instance, you can disable colliders for the whole map and enable them for a few layers or objects only, by inserting another strategy on them.
+Colliders are spawned again, or despawned, when this component is inserted, modified or removed.</p>
+<p>Since it is a regular component, it can be set from Tiled using a custom property (see the <a href="#using-tiled-custom-properties">custom properties guide</a>), or inserted from an observer, for instance to select layers or objects by name:</p>
+<p><strong>Example: Only spawn colliders for certain layers and objects</strong></p>
 <pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
@@ -973,14 +1347,53 @@ use bevy_ecs_tiled::prelude::*;
 
 fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
     commands.spawn(Camera2d);
+    commands
+        .spawn((
+            TiledMap(asset_server.load("finite.tmx")),
+            // Do not create colliders by default...
+            TiledPhysicsSettings::&lt;TiledPhysicsAvianBackend&gt; {
+                collider_strategy: TiledColliderStrategy::Disabled,
+                ..default()
+            },
+        ))
+        // ... but create them for the layer named 'collision'
+        .observe(
+            |layer_created: On&lt;TiledEvent&lt;LayerCreated&gt;&gt;,
+             layers_query: Query&lt;&amp;TiledName, With&lt;TiledLayer&gt;&gt;,
+             mut commands: Commands| {
+                let layer = layer_created.origin;
+                if layers_query.get(layer).is_ok_and(|name| name.0 == "collision") {
+                    commands.entity(layer).insert(TiledColliderStrategy::Polyline);
+                }
+            },
+        )
+        // ... and for the objects named 'hitbox'
+        .observe(
+            |object_created: On&lt;TiledEvent&lt;ObjectCreated&gt;&gt;,
+             objects_query: Query&lt;&amp;TiledName, With&lt;TiledObject&gt;&gt;,
+             mut commands: Commands| {
+                let object = object_created.origin;
+                if objects_query.get(object).is_ok_and(|name| name.0 == "hitbox") {
+                    commands.entity(object).insert(TiledColliderStrategy::Polyline);
+                }
+            },
+        );
+}
+<span class="boring">}</span></code></pre>
+<p>The collision shapes of tiles, defined in the Tiled tileset editor, are not entities: to only use some of them, filter them by name using <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/settings/struct.TiledPhysicsSettings.html#structfield.tile_shapes_filter"><code>TiledPhysicsSettings::tile_shapes_filter</code></a>.
+It applies to the tiles of tiles layers as well as to tile objects:</p>
+<pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use bevy::prelude::*;
+use avian2d::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
     commands.spawn((
         TiledMap(asset_server.load("finite.tmx")),
-        // Restrict colliders to:
-        // - objects named 'hitbox' or 'collision'
-        // - tile colliders in a layer named 'collision'
+        // Only use the tiles collision shapes named 'collision'
         TiledPhysicsSettings::&lt;TiledPhysicsAvianBackend&gt; {
-            objects_filter: TiledFilter::Names(vec!["hitbox".into(), "collision".into()]),
-            tiles_layer_filter: TiledFilter::Names(vec!["collision".into()]),
+            tile_shapes_filter: TiledFilter::from(["collision"]),
             ..default()
         },
     ));
@@ -991,25 +1404,128 @@ fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
 <p>Tiled uses simple shapes (rectangles, ellipses, polygons) to define colliders.
 To reduce the number of physics colliders and improve performance, <code>bevy_ecs_tiled</code> tries to merge these simple shape colliders into a single complex one whenever possible.</p>
 <ul>
-<li><strong>Tiles:</strong> Merging is actually performed at the tilemap level.
-Eventhough you can use several shapes to define a tile’s collider, these shape will be merged into a single collider and all tile colliders for a given tilemap will also be merged together.
-The collider entity is spawned at the tilemap level.</li>
+<li><strong>Tiles:</strong> Merging is actually performed at the tiles layer level.
+Eventhough you can use several shapes to define a tile’s collider, these shape will be merged into a single collider and all tile colliders for a given tiles layer will also be merged together.
+The collider is inserted on the tiles layer entity, and spawned again whenever a tile of this layer is added, modified (including its <code>TileFlip</code>) or removed.
+Colliders of large layers can also be <a href="#colliders-chunks">split in chunks</a>.
+Tiles flips (horizontal, vertical and diagonal) are applied to their collider, the same way they are applied to their rendering.</li>
 <li><strong>Regular objects:</strong> If an object references a tile, it will inherit that tile’s collider and if the tile has several shapes, they will be merged.
-The collider entity is spawned at the object level and each object always gets its own collider.</li>
+The collider is inserted on the object entity and each object always gets its own collider.</li>
 </ul>
-<blockquote>
-<p><strong>Note:</strong>
-Both <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/avian/enum.TiledPhysicsAvianBackend.html"><code>TiledPhysicsAvianBackend</code></a> and <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/rapier/enum.TiledPhysicsRapierBackend.html"><code>TiledPhysicsRapierBackend</code></a> provide several strategies to aggregate colliders. You can see their respective documentation for more information.</p>
-</blockquote>
+<p>The first collider of a tiles layer or an object is inserted on the layer or object entity itself, so you can directly add other physics components to it.
+If there are several colliders (see below), the next ones are spawned as children of this entity.</p>
+<hr>
+<h2 id="collider-strategy"><a class="header" href="#collider-strategy">Collider Strategy</a></h2>
+<p>The <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderStrategy.html"><code>TiledColliderStrategy</code></a> selects how physics colliders are created from Tiled shapes:</p>
+<ul>
+<li><code>Polyline</code> (default): a single collider made of all the segments outlining the shapes. Bodies can end up inside of the shape.</li>
+<li><code>Triangulation</code>: shapes are triangulated and all triangles are aggregated in a single “solid” compound collider.</li>
+<li><code>LineStrip</code>: one collider for each ring outlining the shapes, so there can be several colliders.</li>
+<li><code>Disabled</code>: no collider at all (see <a href="#selecting-which-layers-and-objects-get-colliders">above</a>).</li>
+</ul>
+<p>The strategy is set for the whole map, in <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/settings/struct.TiledPhysicsSettings.html"><code>TiledPhysicsSettings</code></a>:</p>
+<pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
+    commands.spawn((
+        TiledMap(asset_server.load("map.tmx")),
+        TiledPhysicsSettings::&lt;TiledPhysicsAvianBackend&gt; {
+            collider_strategy: TiledColliderStrategy::Triangulation,
+            ..default()
+        },
+    ));
+}
+<span class="boring">}</span></code></pre>
+<p>It can be overridden for a given layer or object: <code>TiledColliderStrategy</code> is also a component, which you can insert on a layer or an object entity.
+An object uses its own strategy if it has one, otherwise the one of its layer, otherwise the one of the map.</p>
+<pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+// Use line strips for the tiles layer named "walls"
+fn on_layer_created(
+    layer_created: On&lt;TiledEvent&lt;LayerCreated&gt;&gt;,
+    layers_query: Query&lt;&amp;TiledName, With&lt;TiledLayer&gt;&gt;,
+    mut commands: Commands,
+) {
+    let layer = layer_created.origin;
+    if layers_query.get(layer).is_ok_and(|name| name.0 == "walls") {
+        commands.entity(layer).insert(TiledColliderStrategy::LineStrip);
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>Colliders are spawned again when this component is inserted, modified or removed.
+With the <code>user_properties</code> feature, you can also directly add it from Tiled as a <a href="#using-tiled-custom-properties">custom property</a> of the layer or object.</p>
+<hr>
+<h2 id="colliders-chunks"><a class="header" href="#colliders-chunks">Colliders Chunks</a></h2>
+<p>By default, all the tiles of a layer are merged in a single set of colliders.
+This is the best option for maps which are not modified once loaded, but it means that all the colliders of the layer are computed again whenever one of its tiles is added, modified or removed, which can take a while on large maps.</p>
+<p>If you <a href="#modify-a-map-at-runtime">modify your maps at runtime</a>, you can split the colliders of tiles layers in chunks: each chunk of tiles gets its own colliders and only the chunks whose tiles are modified are computed again.</p>
+<p>The chunk size, in tiles, is set for all the tiles layers of the map in <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/settings/struct.TiledPhysicsSettings.html"><code>TiledPhysicsSettings</code></a>:</p>
+<pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
+    commands.spawn((
+        TiledMap(asset_server.load("map.tmx")),
+        TiledPhysicsSettings::&lt;TiledPhysicsAvianBackend&gt; {
+            // Split tiles layers colliders in chunks of 32x32 tiles
+            tiles_chunk_size: TiledColliderChunkSize::Size(UVec2::splat(32)),
+            ..default()
+        },
+    ));
+}
+<span class="boring">}</span></code></pre>
+<p>It can be overridden for a given tiles layer by inserting a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderChunkSize.html"><code>TiledColliderChunkSize</code></a> component on the layer entity, either to use another size or to disable chunking for this layer (<code>TiledColliderChunkSize::Disabled</code>).
+You can also only use this component, to enable chunking for a single layer of the map:</p>
+<pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn on_layer_created(
+    layer_created: On&lt;TiledEvent&lt;LayerCreated&gt;&gt;,
+    layers_query: Query&lt;&amp;TiledName, With&lt;TiledLayer&gt;&gt;,
+    mut commands: Commands,
+) {
+    let layer = layer_created.origin;
+    if layers_query.get(layer).is_ok_and(|name| name.0 == "destructible") {
+        commands
+            .entity(layer)
+            .insert(TiledColliderChunkSize::Size(UVec2::splat(16)));
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>When chunking is enabled for a layer:</p>
+<ul>
+<li>the layer entity does not hold any collider. Each chunk with at least one collider has its own <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliderChunk.html"><code>TiledColliderChunk</code></a> entity, child of the layer, holding the collider of the chunk;</li>
+<li>colliders are not merged across chunks: two adjacent tiles which are not in the same chunk have separate colliders. With the <code>Polyline</code> and <code>LineStrip</code> strategies, the edges shared by two chunks are not part of their colliders, so the outline of the layer is the same than without chunks. With the <code>Triangulation</code> strategy, each chunk is a separate solid;</li>
+<li>a chunk boundary is still a junction between two colliders: depending on your physics engine, a body with a flat side (eg. a box) sliding over it can catch on the first vertex of the next collider (“ghost collision”). Give such bodies rounded corners, for instance using a <a href="https://docs.rs/avian2d/latest/avian2d/collision/collider/struct.CollisionMargin.html"><code>CollisionMargin</code></a> with Avian, or use larger chunks;</li>
+<li>smaller chunks make updates faster, but produce more colliders.</li>
+</ul>
+<p>With the <code>debug</code> feature, the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/collider_chunks/index.html"><code>TiledDebugColliderChunksPlugin</code></a> displays the bounding box of each chunk colliders.</p>
 <hr>
 <h2 id="custom-physics-backends"><a class="header" href="#custom-physics-backends">Custom Physics Backends</a></h2>
 <p>For advanced use cases, you can implement your own physics backend.
-Just create a struct that implements the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/trait.TiledPhysicsBackend.html"><code>TiledPhysicsBackend</code></a> trait (i.e., provide a <code>spawn_colliders</code> function), and use it when registering the <code>TiledPhysicsPlugin&lt;T&gt;</code> plugin.</p>
-<p>See <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/physics_custom_backend.rs">this example</a> for more information.</p>
+Just create a struct that implements the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/trait.TiledPhysicsBackend.html"><code>TiledPhysicsBackend</code></a> trait, and use it when registering the <code>TiledPhysicsPlugin&lt;T&gt;</code> plugin.</p>
+<p>A backend only has to create colliders out of a geometry: it declares the component(s) making a collider (the <code>Collider</code> associated type) and provides a <code>colliders()</code> function returning them for a given geometry and <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderStrategy.html"><code>TiledColliderStrategy</code></a>.
+<code>bevy_ecs_tiled</code> takes care of inserting these colliders on the right entities and of removing them when their source changes.
+The <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/geometry/fn.collider_shapes.html"><code>collider_shapes()</code></a> helper converts a geometry into simple shapes (polylines or triangles) according to the requested strategy.
+The geometry is a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/geometry/struct.TiledColliderGeometry.html"><code>TiledColliderGeometry</code></a>: besides its polygons, it holds the geometry of the adjacent <a href="#colliders-chunks">colliders chunks</a>, if any. Colliders made of segments should be built from its <code>outline()</code>, which does not include the edges shared with these chunks.</p>
+<p>See <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/physics_custom.rs">this example</a> for more information.</p>
 <hr>
 <h2 id="physics-events"><a class="header" href="#physics-events">Physics Events</a></h2>
 <p>When a collider entity is spawned, a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.ColliderCreated.html"><code>TiledEvent&lt;ColliderCreated&gt;</code></a> event is sent.
+Since colliders are spawned again when their source changes, you can receive this event several times for the same tiles layer or object.
 It contains information about the origin of the collider.</p>
+<p>This event is sent for each collider: a tiles layer or an object can have several colliders (for instance with <code>TiledColliderStrategy::LineStrip</code> or collider chunks), held by its entity or by its descendants.
+The event <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TiledEvent.html#structfield.origin"><code>origin</code></a> is the entity holding the collider, while <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TiledEvent.html#method.source_entity"><code>source_entity()</code></a> is the tiles layer or object it is created for.</p>
 <p>This can be useful to add custom components to your colliders.
 For instance, with Avian:</p>
 <pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
@@ -1025,9 +1541,10 @@ fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
         .observe(|collider_created: On&lt;TiledEvent&lt;ColliderCreated&gt;&gt;, mut commands: Commands| {
             // Filter collider created from Tiled objects
             if collider_created.event().event.source == TiledColliderSource::Object {
-                // Add a RigidBody::Static to the collider entity
+                // Add a RigidBody::Static to the object: insert it on the source entity rather than on
+                // each collider entity, so all the colliders of the object belong to a single rigid body
                 commands
-                    .entity(collider_created.event().origin)
+                    .entity(collider_created.source_entity())
                     .insert(RigidBody::Static);
             }
         });
@@ -1050,6 +1567,11 @@ This means you can define game logic directly in the Tiled editor and use it sea
 <li>Add a generic “trigger zone” (e.g., damaging zone, victory zone)</li>
 <li>…or anything else your game needs!</li>
 </ul>
+<blockquote>
+<p><strong>Note:</strong>
+Even without the <code>user_properties</code> feature, the class and custom properties of the map, layers and objects are available as raw Tiled data in their <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/properties/struct.TiledProperties.html"><code>TiledProperties</code></a> component.
+Tiles properties can be retrieved from their tileset, using <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/asset/map/struct.TiledMapAsset.html#method.tile"><code>TiledMapAsset::tile()</code></a>.</p>
+</blockquote>
 <hr>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>The user properties mechanism relies on Bevy’s reflection system.</p>
@@ -1115,9 +1637,19 @@ Deriving <code>Default</code> is useful: you don’t have to fill all fields in 
 <hr>
 <h2 id="importing-custom-properties-into-tiled"><a class="header" href="#importing-custom-properties-into-tiled">Importing Custom Properties into Tiled</a></h2>
 <p>Before you can add custom properties in Tiled, you need to export them from your app and import them into Tiled.</p>
-<p>When running with the <code>user_properties</code> feature, your app will automatically produce a <code>.json</code> export of all types registered with Bevy.
-By default, this file is named <code>tiled_types_export.json</code> and is created in your workspace root.
-You can change the filename or disable export via <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/struct.TiledPluginConfig.html"><code>TiledPluginConfig</code></a>.</p>
+<p>With the <code>user_properties</code> feature, your app can produce, at startup, a <code>.json</code> export of all the types registered with Bevy.
+Export is disabled by default: set the path of the export file on the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/struct.TiledPlugin.html"><code>TiledPlugin</code></a>:</p>
+<pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+App::new().add_plugins(TiledPlugin {
+    types_export_file: Some("tiled_types_export.json".into()),
+    // Only export the types of your game
+    types_filter: TiledFilter::from(bevy_ecs_tiled::regex::RegexSet::new([r"^my_game::.*"]).unwrap()),
+});
+<span class="boring">}</span></code></pre>
 <p>To import this file in Tiled:</p>
 <ol>
 <li>In Tiled, go to <strong>View → Custom Types Editor</strong>
@@ -1140,10 +1672,20 @@ You can change the filename or disable export via <a href="https://docs.rs/bevy_
 <li>Set the values as needed for this element.</li>
 </ol>
 <p>When you load the map, the corresponding Bevy entity will have the appropriate <code>Component</code> with the values you set.</p>
+<h3 id="tile-properties"><a class="header" href="#tile-properties">Tile Properties</a></h3>
+<p>Properties added to a tile in a tileset are inserted on every entity referencing this tile:</p>
+<ul>
+<li>the tiles using it in tiles layers,</li>
+<li>the tile objects using it. If the object also has its own properties, they take precedence over the tile ones.</li>
+</ul>
+<p>This also applies to tiles and tile objects you spawn after the map has been loaded: tile properties are inserted during <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/sets/enum.TiledPostUpdateSystems.html"><code>TiledPostUpdateSystems::SyncTiles</code></a>.
+Note that modifying the <code>TiledTile</code> component (tileset ID or tile ID) of an existing tile does not update its properties.
+Since Tiled object IDs are not known anymore once the map has been loaded, object references in these properties cannot be resolved: they are set to <code>Entity::PLACEHOLDER</code>.</p>
+<p>When loading a map, all custom properties are inserted before the map events (<code>MapCreated</code>, <code>LayerCreated</code>, …) are sent.</p>
 <blockquote>
 <p><strong>Note:</strong>
 Only add properties imported from Bevy. Properties created only in Tiled (ie. not exported from your app) will not be loaded in Bevy.
-You can also control which properties are exported from your application via <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/struct.TiledPluginConfig.html"><code>TiledPluginConfig</code></a></p>
+You can also control which properties are exported from your application using <code>TiledPlugin::types_filter</code>.</p>
 </blockquote>
 <hr>
 <h2 id="custom-properties-usage-with-bevy"><a class="header" href="#custom-properties-usage-with-bevy">Custom Properties Usage with Bevy</a></h2>
@@ -1215,12 +1757,54 @@ fn main() {
 }</code></pre>
 <p>Or add them individually as needed:</p>
 <ul>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/objects/index.html"><code>TiledDebugObjectsPlugin</code></a>: Displays an <code>arrow_2d</code> and a polyline outline <code>Gizmos</code> at each Tiled object’s position and shape.</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/tiles/index.html"><code>TiledDebugTilesPlugin</code></a>: Shows the <code>bevy_ecs_tilemap</code> tile index (<code>TilePos</code>) above each tile.</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/world_chunk/index.html"><code>TiledDebugWorldChunkPlugin</code></a>: Draws a <code>Gizmos</code> rectangle for each map boundary and world render chunk.</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/map_aabb/index.html"><code>TiledDebugMapAabbPlugin</code></a>: Draws <code>Gizmos</code> rectangles for each map axis-aligned bounding box (AABB).</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/axis/index.html"><code>TiledDebugAxisPlugin</code></a>: Displays a <code>Gizmos</code> axes marker at the world origin.</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/objects/index.html"><code>TiledDebugObjectsPlugin</code></a>: outline and position of each Tiled object;</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/tiles/index.html"><code>TiledDebugTilesPlugin</code></a>: <code>bevy_ecs_tilemap</code> index (<code>TilePos</code>) of each tile;</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/map_aabb/index.html"><code>TiledDebugMapAabbPlugin</code></a>: axis-aligned bounding box (AABB) of each map;</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/world_streaming/index.html"><code>TiledDebugWorldStreamingPlugin</code></a>: maps boundaries and streaming area of each world (requires the <code>world</code> feature);</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/collider_chunks/index.html"><code>TiledDebugColliderChunksPlugin</code></a>: bounding box of each physics collider chunk of tiles layers (requires the <code>physics</code> feature, see the <a href="#colliders-chunks">physics guide</a>);</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/axis/index.html"><code>TiledDebugAxisPlugin</code></a>: axes at the world origin;</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/struct.TiledDebugTogglePlugin.html"><code>TiledDebugTogglePlugin</code></a>: toggle all debug gizmos using a keyboard key.</li>
 </ul>
+<p>Most plugins take a configuration, which is inserted as a <code>Resource</code>: you can also update it at runtime.</p>
+<h3 id="objects-3"><a class="header" href="#objects-3">Objects</a></h3>
+<p>The <code>TiledDebugObjectsPlugin</code> draws, for each object, its outline and an arrow pointing to its position (ie. its <code>Transform</code>).
+Colors are cycled from a list, so neighbor objects can be told apart.
+It is useful to check objects placement, for instance on isometric maps or after a rotation.</p>
+<pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn main() {
+    App::new()
+        .add_plugins(TiledDebugObjectsPlugin(TiledDebugObjectsConfig {
+            // Draw all objects in white, with a longer arrow
+            objects_colors_list: vec![Color::WHITE],
+            arrow_length: Vec2::new(-30., 30.),
+        }))
+        .run();
+}</code></pre>
+<h3 id="tiles-2"><a class="header" href="#tiles-2">Tiles</a></h3>
+<p>The <code>TiledDebugTilesPlugin</code> draws the <code>TilePos</code> of each tile above it.
+Note that <code>bevy_ecs_tilemap</code> origin is the bottom-left tile and its Y axis points up, whereas Tiled origin is the top-left tile.</p>
+<p>On maps with small tiles, indexes may overlap and become hard to read: reduce the text size using <code>TiledDebugTilesConfig</code>.
+Since text gizmos are drawn using lines, you can also reduce the lines width of the <code>TiledDebugGizmos</code> group (see <a href="#toggle-and-configure-debug-gizmos">below</a>):</p>
+<pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn main() {
+    App::new()
+        .add_plugins(TiledDebugTilesPlugin(TiledDebugTilesConfig {
+            text_size: 5.,
+            ..default()
+        }))
+        .add_systems(Startup, |mut config_store: ResMut&lt;GizmoConfigStore&gt;| {
+            config_store.config_mut::&lt;TiledDebugGizmos&gt;().0.line.width = 1.;
+        })
+        .run();
+}</code></pre>
+<blockquote>
+<p><strong>Note:</strong>
+One text is drawn per tile, every frame: on large maps, this plugin can be expensive.</p>
+</blockquote>
 <h3 id="map-bounding-boxes"><a class="header" href="#map-bounding-boxes">Map bounding boxes</a></h3>
 <p>The <code>TiledDebugMapAabbPlugin</code> draws two rectangles for each map:</p>
 <ul>
@@ -1247,7 +1831,43 @@ fn main() {
         }))
         .run();
 }</code></pre>
-<p>Since the configuration is a <code>Resource</code>, you can also update it at runtime.</p>
+<h3 id="world-streaming"><a class="header" href="#world-streaming">World streaming</a></h3>
+<p>The <code>TiledDebugWorldStreamingPlugin</code> draws, for each world:</p>
+<ul>
+<li>a rectangle around each map of the world, colors being cycled from a list;</li>
+<li>if <code>TiledWorldStreaming</code> is set, a red rectangle centered on the camera: maps overlapping this area are spawned, the others are despawned.</li>
+</ul>
+<p>It helps tuning the streaming area and checking maps alignment within a world.
+Set <code>streaming_area_color</code> to <code>None</code> or <code>maps_colors_list</code> to an empty list in <code>TiledDebugWorldStreamingConfig</code> to hide one or the other.</p>
+<h3 id="axis"><a class="header" href="#axis">Axis</a></h3>
+<p>The <code>TiledDebugAxisPlugin</code> draws the X (red) and Y (green) axes at the world origin.
+It does not have any configuration: use it as a reference when positioning maps, worlds or anchors.</p>
+<h3 id="toggle-and-configure-debug-gizmos"><a class="header" href="#toggle-and-configure-debug-gizmos">Toggle and configure debug gizmos</a></h3>
+<p>All debug plugins draw their gizmos using the <code>TiledDebugGizmos</code> <a href="https://docs.rs/bevy/latest/bevy/gizmos/config/trait.GizmoConfigGroup.html">gizmo config group</a>.
+When this group is disabled, debug gizmos are hidden and debug systems do not run at all.</p>
+<p>The easiest way to toggle debug gizmos is to choose a keyboard key for the <code>TiledDebugTogglePlugin</code>, which is part of <code>TiledDebugPluginGroup</code> but does not use any key by default:</p>
+<pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn main() {
+    App::new()
+        .add_plugins(TiledDebugPluginGroup.set(TiledDebugTogglePlugin {
+            key: Some(KeyCode::F2),
+        }))
+        .run();
+}</code></pre>
+<p>If you add debug plugins individually, add <code>TiledDebugTogglePlugin</code> as well.</p>
+<p>You can also configure debug gizmos (enabled, lines width, render layers…) from your own systems using the <code>GizmoConfigStore</code> resource, and use the <code>tiled_debug_gizmos_enabled</code> run condition for your own debug systems:</p>
+<pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn hide_debug_gizmos(mut config_store: ResMut&lt;GizmoConfigStore&gt;) {
+    let (config, _) = config_store.config_mut::&lt;TiledDebugGizmos&gt;();
+    config.enabled = false;
+}
+<span class="boring">}</span></code></pre>
 <p>For more details, see the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/index.html">API reference</a>.</p>
 <hr>
 <h2 id="third-party-debugging-tools"><a class="header" href="#third-party-debugging-tools">Third-Party Debugging Tools</a></h2>
@@ -1302,10 +1922,441 @@ fn main() {
 For Rapier, you must enable either the <code>debug-render-2d</code> feature on the <code>bevy_rapier2d</code> crate or the <code>rapier_debug</code> feature on <code>bevy_ecs_tiled</code>.</p>
 </blockquote>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="migration-to-bevy_ecs_tiled-v016"><a class="header" href="#migration-to-bevy_ecs_tiled-v016">Migration to <code>bevy_ecs_tiled</code> v0.16</a></h1>
+<p>This guide outlines the steps required to migrate your project to version <code>0.16</code> of <code>bevy_ecs_tiled</code>.</p>
+<p>This version still targets Bevy v0.20: there is no Bevy upgrade involved, only <code>bevy_ecs_tiled</code> API changes.</p>
+<h2 id="main-changes"><a class="header" href="#main-changes">Main Changes</a></h2>
+<ul>
+<li><strong>Dynamic maps:</strong> a map can now be modified after it has been loaded. Tilemaps, objects visuals, image sprites and physics colliders are derived from tiles, objects and images entities during <code>PostUpdate</code>.
+See the <a href="#modify-a-map-at-runtime">Modify a map at runtime</a> guide and the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/map_dynamic.rs"><code>map_dynamic</code> example</a>.</li>
+<li><strong>Tiles are direct children of their layer</strong>, next to the tilemaps rendering them.</li>
+<li><strong>Tileset, layer and object IDs</strong> are no longer standalone components, and IDs now have dedicated types.</li>
+<li><strong>New modules layout and a smaller prelude.</strong></li>
+<li><strong>Physics:</strong> backends only create colliders, and <code>TiledColliderStrategy</code> replaces both the backends variants and the name filters of <code>TiledPhysicsSettings</code>. It can be set for the whole map, or for a given layer or object.</li>
+</ul>
+<h2 id="migration-steps"><a class="header" href="#migration-steps">Migration Steps</a></h2>
+<h3 id="1-update-dependencies"><a class="header" href="#1-update-dependencies">1. Update Dependencies</a></h3>
+<pre><code class="language-toml">bevy = "0.20"
+bevy_ecs_tiled = "0.16"
+</code></pre>
+<h3 id="2-modules-and-prelude"><a class="header" href="#2-modules-and-prelude">2. Modules and Prelude</a></h3>
+<p>The <code>bevy_ecs_tiled::tiled</code> module has been split by layer: <code>asset</code> (loading Tiled files), <code>ecs</code> (entities holding Tiled data), <code>render</code> (rendering derived from these entities) and <code>properties</code>.
+If you only use the prelude, the only change is that advanced items left it:</p>
+<ul>
+<li>the <code>tiled</code>, <code>geo</code> and <code>regex</code> crates are re-exported at the crate root: <code>use bevy_ecs_tiled::{tiled, geo, regex};</code> instead of <code>bevy_ecs_tiled::prelude::{tiled, geo, regex}</code>,</li>
+<li><code>collider_shapes()</code>, <code>multi_polygon_as_line_strings()</code>, <code>multi_polygon_as_triangles()</code> and <code>TiledColliderShape</code>, mainly used to write a custom physics backend: <code>use bevy_ecs_tiled::physics::geometry::*;</code>,</li>
+<li><code>tiled_debug_gizmos_enabled()</code>: <code>use bevy_ecs_tiled::debug::tiled_debug_gizmos_enabled;</code>.</li>
+</ul>
+<p>If you use full paths, update them:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Before</th><th>After</th></tr>
+</thead>
+<tbody>
+<tr><td><code>tiled::TiledPlugin</code></td><td><code>TiledPlugin</code> (crate root)</td></tr>
+<tr><td><code>tiled::sets::*</code></td><td><code>sets::*</code></td></tr>
+<tr><td><code>tiled::map::asset::TiledMapAsset</code></td><td><code>asset::map::TiledMapAsset</code></td></tr>
+<tr><td><code>tiled::map::loader::TiledMapLoaderError</code></td><td><code>asset::map::TiledMapLoaderError</code></td></tr>
+<tr><td><code>tiled::world::asset::TiledWorldAsset</code></td><td><code>asset::world::TiledWorldAsset</code></td></tr>
+<tr><td><code>tiled::world::loader::TiledWorldLoaderError</code></td><td><code>asset::world::TiledWorldLoaderError</code></td></tr>
+<tr><td><code>tiled::{map, world, layer, tile, object, image, event, filter}::*</code></td><td><code>ecs::{map, world, layer, tile, object, image, event, filter}::*</code></td></tr>
+<tr><td><code>tiled::world::chunking::*</code></td><td><code>ecs::world::streaming::*</code> (see <a href="#8-worlds">Worlds</a>)</td></tr>
+<tr><td><code>tiled::animation::TiledAnimation</code></td><td><code>render::animation::TiledAnimation</code></td></tr>
+<tr><td><code>tiled::tile::TiledTilemap</code></td><td><code>render::tilemap::TiledTilemap</code></td></tr>
+<tr><td><code>tiled::object::{TiledObjectVisualOf, TiledObjectVisuals, TiledObjectTextBox, TiledObjectText}</code></td><td><code>render::object::*</code></td></tr>
+<tr><td><code>tiled::properties::export_types</code></td><td><code>properties::export_types</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Items of the <code>render</code> module only exist with the <code>render</code> feature (see <a href="#running-without-the-render-feature">Running without the <code>render</code> feature</a>).</p>
+<h3 id="3-plugin-configuration"><a class="header" href="#3-plugin-configuration">3. Plugin Configuration</a></h3>
+<p><code>TiledPluginConfig</code> has been removed: its fields are now directly on <code>TiledPlugin</code>, only with the <code>user_properties</code> feature, and have been renamed.
+<strong>Types are no longer exported by default</strong>: set <code>types_export_file</code> to keep exporting them.</p>
+<pre><code class="language-rust ignore">// Before
+App::new().add_plugins(TiledPlugin(TiledPluginConfig {
+    tiled_types_export_file: Some(path),
+    tiled_types_filter: filter,
+}));
+
+// After
+App::new().add_plugins(TiledPlugin {
+    types_export_file: Some(path),
+    types_filter: filter,
+});</code></pre>
+<h3 id="4-derived-entities-and-tiles-hierarchy"><a class="header" href="#4-derived-entities-and-tiles-hierarchy">4. Derived Entities and Tiles Hierarchy</a></h3>
+<p><code>MapCreated</code>, <code>LayerCreated</code>, <code>TileWithPropertiesCreated</code> and <code>ObjectCreated</code> events are now sent before tilemaps, objects visuals, image sprites and physics colliders are spawned.
+These are spawned later in the same frame, in <code>PostUpdate</code>. If you relied on them in one of these event handlers:</p>
+<ul>
+<li>use <code>TiledEvent&lt;TilemapCreated&gt;</code> for tilemaps: it is sent each time a tilemap is spawned, including after the map has been loaded, and is no longer ordered with other <code>*Created</code> events,</li>
+<li>use <code>TiledEvent&lt;ColliderCreated&gt;</code> for physics colliders,</li>
+<li>use an <code>On&lt;Add&lt;TiledObjectVisualOf&gt;&gt;</code> observer, or a regular system, for objects visuals,</li>
+<li>use a regular system, running after <code>TiledPostUpdateSystems::SyncRender</code>, for image sprites.</li>
+</ul>
+<p>Do not modify derived components, such as the <code>Sprite</code> of an image: they are overwritten when their source changes.</p>
+<p>Tiles are no longer children of their <code>TiledTilemap</code>: both are now direct children of their <code>TiledLayer::Tiles</code>.
+To retrieve the tilemap of a tile, use its <code>TilemapId</code> component instead of its <code>ChildOf</code> component:</p>
+<pre><code class="language-rust ignore">// Before (v0.15)
+fn system(tiles: Query&lt;&amp;ChildOf, With&lt;TiledTile&gt;&gt;, tilemaps: Query&lt;&amp;GlobalTransform, With&lt;TiledTilemap&gt;&gt;) {
+    for child_of in tiles.iter() {
+        let tilemap_transform = tilemaps.get(child_of.parent());
+    }
+}
+
+// After (v0.16)
+fn system(tiles: Query&lt;&amp;TilemapId, With&lt;TiledTile&gt;&gt;, tilemaps: Query&lt;&amp;GlobalTransform, With&lt;TiledTilemap&gt;&gt;) {
+    for tilemap_id in tiles.iter() {
+        let tilemap_transform = tilemaps.get(tilemap_id.0);
+    }
+}</code></pre>
+<p>Tilemaps are created when needed and despawned once empty: you should not spawn them yourself.</p>
+<h3 id="5-ids"><a class="header" href="#5-ids">5. IDs</a></h3>
+<h4 id="removed-id-components"><a class="header" href="#removed-id-components">Removed ID components</a></h4>
+<p>The <code>TiledTilesetId</code> and <code>TiledTileId</code> components have been removed: these IDs are now fields of the <code>TiledTile</code> and <code>TiledTilemap</code> components.</p>
+<pre><code class="language-rust ignore">// Before (v0.15)
+fn system(tiles: Query&lt;(&amp;TiledTilesetId, &amp;TiledTileId), With&lt;TiledTile&gt;&gt;) { /* ... */ }
+
+// After (v0.16)
+fn system(tiles: Query&lt;&amp;TiledTile&gt;) { /* tile.tileset_id, tile.tile_id */ }</code></pre>
+<p>Use <code>Changed&lt;TiledTile&gt;</code> instead of <code>Changed&lt;TiledTilesetId&gt;</code> / <code>Changed&lt;TiledTileId&gt;</code>.</p>
+<p>The <code>TiledLayerId</code> and <code>TiledObjectId</code> components have been removed, along with the APIs relying on them:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Removed</th><th>Replacement</th></tr>
+</thead>
+<tbody>
+<tr><td><code>TiledEvent::layer_id()</code>, <code>object_id()</code></td><td><code>layer_entity()</code>, <code>object_entity()</code></td></tr>
+<tr><td><code>TiledEvent::layer()</code>, <code>object()</code></td><td>query the components of the layer or object entity</td></tr>
+</tbody>
+</table>
+</div>
+<p>To read the class or custom properties of the map, a layer or an object, use the new <code>TiledProperties</code> component, which is available even without the <code>user_properties</code> feature:</p>
+<pre><code class="language-rust ignore">// Before (v0.15)
+fn on_object(event: On&lt;TiledEvent&lt;ObjectCreated&gt;&gt;, assets: Res&lt;Assets&lt;TiledMapAsset&gt;&gt;) {
+    let Some(object) = event.event().object(&amp;assets) else { return };
+    info!("{:?}", object.properties);
+}
+
+// After (v0.16)
+fn on_object(event: On&lt;TiledEvent&lt;ObjectCreated&gt;&gt;, objects: Query&lt;&amp;TiledProperties&gt;) {
+    let Ok(properties) = objects.get(event.origin) else { return };
+    info!("{} {:?}", properties.class, properties.properties);
+}</code></pre>
+<h4 id="dedicated-id-types"><a class="header" href="#dedicated-id-types">Dedicated ID types</a></h4>
+<p>IDs are not plain <code>u32</code> anymore. The tile ID is still a <code>tiled::TileId</code>.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Type</th><th>ID</th><th>Main APIs</th></tr>
+</thead>
+<tbody>
+<tr><td><code>TilesetId</code></td><td>tileset of a map</td><td><code>TiledTile</code>, <code>TiledTilemap</code>, <code>TiledObject::Tile</code>, <code>TiledEvent::tilemap_tileset_id()</code>, <code>TiledMapAsset::tileset()</code>, <code>TiledMapAsset::tile()</code></td></tr>
+<tr><td><code>LayerId</code></td><td>Tiled layer ID</td><td><code>TiledMapAsset::layer()</code></td></tr>
+<tr><td><code>ObjectId</code></td><td>Tiled object ID</td><td><code>TiledMapAsset::object()</code></td></tr>
+<tr><td><code>WorldMapId</code></td><td>index of a map in its <code>.world</code> file</td><td><code>TiledWorldReference</code>, <code>TiledWorldMaps::map_entity()</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Wrap the raw value to build an ID, and use <code>.0</code> or <code>u32::from()</code> to read it:</p>
+<pre><code class="language-rust ignore">// Before (v0.15)
+let layer = layer_from_map(&amp;map_asset.map, 3);
+let map_entity = world_storage.map_entity(1);
+
+// After (v0.16)
+let layer = map_asset.layer(LayerId(3));
+let map_entity = world_maps.map_entity(world_entity, WorldMapId(1));</code></pre>
+<h4 id="map-helper-functions"><a class="header" href="#map-helper-functions">Map helper functions</a></h4>
+<p>Helper functions taking a <code>tiled::Map</code> have been replaced by methods and fields of <code>TiledMapAsset</code>, which also handle tilesets only used by object templates:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Before</th><th>After</th></tr>
+</thead>
+<tbody>
+<tr><td><code>tileset_from_map(&amp;map_asset.map, id)</code></td><td><code>map_asset.tileset(id)</code></td></tr>
+<tr><td><code>tile_from_map(&amp;map_asset.map, tileset_id, tile_id)</code></td><td><code>map_asset.tile(tileset_id, tile_id)</code></td></tr>
+<tr><td><code>layer_from_map(&amp;map_asset.map, id)</code></td><td><code>map_asset.layer(id)</code>, which also finds group layers</td></tr>
+<tr><td><code>object_from_map(&amp;map_asset.map, id)</code></td><td><code>map_asset.object(id)</code></td></tr>
+<tr><td><code>tilemap_type_from_map(&amp;map_asset.map)</code></td><td><code>map_asset.map_type</code></td></tr>
+<tr><td><code>try_tilemap_type_from_map(&amp;map)</code></td><td>removed: maps with an unsupported orientation fail to load</td></tr>
+<tr><td><code>grid_size_from_map(&amp;map_asset.map)</code></td><td><code>map_asset.grid_size</code></td></tr>
+<tr><td><code>tile_size(&amp;tile)</code></td><td><code>map_asset.tile_size(&amp;tiled_tile)</code></td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="6-events"><a class="header" href="#6-events">6. Events</a></h3>
+<ul>
+<li><code>TileCreated</code> has been renamed <code>TileWithPropertiesCreated</code>: as before, it is only sent for tiles with custom properties, when the map is loaded. It no longer holds tilemap information: <code>tilemap_entity()</code> and <code>tilemap_tileset_id()</code> return <code>None</code>, use <code>tile_tileset_id()</code> instead.</li>
+<li><code>TiledEvent</code> can no longer be built nor sent from outside the crate: <code>new()</code>, <code>transmute()</code>, <code>with_*()</code> and <code>send()</code> are now private. If you sent your own <code>TiledEvent</code>s, define your own event type instead.</li>
+<li>The type parameter of <code>TiledEvent&lt;E&gt;</code> is bound by the new sealed <code>TiledEventKind</code> trait: replace <code>E: Debug + Clone + Copy + Reflect</code> by <code>E: TiledEventKind</code> in your generic code.</li>
+<li><code>TiledEvent</code> is no longer a <code>Component</code>.</li>
+</ul>
+<h3 id="7-map-layers-objects-and-images"><a class="header" href="#7-map-layers-objects-and-images">7. Map, Layers, Objects and Images</a></h3>
+<p>The <code>TiledMapStorage</code> component has been removed. Use the new <code>TiledMapLayers</code>, <code>TiledMapTiles</code> and <code>TiledMapObjects</code> system parameters, which work like a <code>Query</code> restricted to the entities of a given map:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Removed</th><th>Replacement</th></tr>
+</thead>
+<tbody>
+<tr><td><code>TiledMapStorage::layers()</code></td><td><code>TiledMapLayers&lt;Entity&gt;::iter(map)</code></td></tr>
+<tr><td><code>TiledMapStorage::objects()</code></td><td><code>TiledMapObjects&lt;Entity&gt;::iter(map)</code></td></tr>
+<tr><td><code>TiledMapStorage::tiles()</code></td><td><code>TiledMapTiles&lt;(Entity, &amp;TiledTile)&gt;::iter(map)</code></td></tr>
+<tr><td><code>TiledMapStorage::tile_entities()</code></td><td><code>TiledMapTiles&lt;(Entity, &amp;TiledTile)&gt;::iter(map)</code>, filtered on the <code>TiledTile</code></td></tr>
+<tr><td><code>TiledMapStorage::layer_entity()</code>, <code>object_entity()</code> (and other lookups by Tiled ID)</td><td>iterate over <code>TiledMapLayers</code> / <code>TiledMapObjects</code></td></tr>
+<tr><td><code>TiledMapStorage::tile_id()</code>, <code>tile()</code></td><td>the <code>TiledTile</code> component of the tile entity, and <code>TiledMapAsset::tile()</code></td></tr>
+</tbody>
+</table>
+</div>
+<pre><code class="language-rust ignore">// Before (v0.15)
+fn on_map_created(
+    event: On&lt;TiledEvent&lt;MapCreated&gt;&gt;,
+    maps: Query&lt;&amp;TiledMapStorage&gt;,
+    tiles: Query&lt;&amp;TilePos&gt;,
+) {
+    let Ok(storage) = maps.get(event.origin) else { return };
+    for (_, entities) in storage.tiles() {
+        for position in entities.iter().filter_map(|e| tiles.get(*e).ok()) { /* ... */ }
+    }
+}
+
+// After (v0.16)
+fn on_map_created(event: On&lt;TiledEvent&lt;MapCreated&gt;&gt;, tiles: TiledMapTiles&lt;&amp;TilePos&gt;) {
+    for position in tiles.iter(event.origin) { /* ... */ }
+}</code></pre>
+<p>Entities are given in no particular order. To find the tile at a given position, use the new <code>TiledTileLayerStorage</code> component of its layer.</p>
+<ul>
+<li><code>TiledMapAsset::tile_relative_position()</code> takes the <code>TiledTile</code> instead of its size, and returns an <code>Option&lt;Vec2&gt;</code> (<code>None</code> if the tile does not exist in the map). You can also use the new <code>TiledMapHelper</code> system parameter, which only needs the tile entity: <code>maps.tile_relative_position(tile_entity)</code>.</li>
+<li><code>TiledLayerParallax::parallax_x</code> and <code>parallax_y</code> are merged into <code>parallax: Vec2</code>.</li>
+<li><code>TiledObject::kind()</code> has been removed: <code>TiledObject</code> implements <code>Display</code> instead (<code>format!("{object}")</code>).</li>
+<li><code>TiledObject::center()</code>, <code>vertices()</code>, <code>line_string()</code> and <code>polygon()</code> are no longer public: use <code>TiledMapAsset::object_center()</code>, <code>object_vertices()</code>, <code>object_line_string()</code> and <code>object_polygon()</code>, which only need the object and its <code>GlobalTransform</code>.</li>
+<li><code>TiledObject::Text::font_size</code> is now a <code>f32</code>.</li>
+<li><code>TiledObject::from_object_data()</code> now takes the <code>TiledMapAsset</code> as first argument.</li>
+<li><code>TiledObjectVisualOf</code> no longer requires a <code>Sprite</code>, and is also inserted on the <code>TiledObjectTextBox</code> of text objects: do not assume that a visual entity has a <code>Sprite</code>.</li>
+<li><code>TiledName::matches()</code> has been removed: use <code>filter.matches(&amp;name.0)</code> instead.</li>
+</ul>
+<p><code>TiledObject::Tile</code> now holds the tile it references. Use <code>TiledMapAsset::tileset()</code> and <code>TiledMapAsset::tile()</code> to read the corresponding Tiled data: its tileset can be only used by a template, which is not part of the <code>tiled::Map</code> tilesets.</p>
+<pre><code class="language-rust ignore">TiledObject::Tile {
+    width: f32,
+    height: f32,
+    tileset_id: TilesetId,
+    tile_id: tiled::TileId,
+    flip_x: bool,
+    flip_y: bool,
+}</code></pre>
+<p><code>TiledImage</code> now holds all the image data and is not <code>Copy</code> anymore. To change the image, modify this component instead of the <code>Sprite</code>.</p>
+<pre><code class="language-rust ignore">pub struct TiledImage {
+    pub image: Handle&lt;Image&gt;,
+    pub base_position: Vec2,
+    pub base_size: Vec2,
+    pub repeat_x: bool,
+    pub repeat_y: bool,
+}</code></pre>
+<h3 id="8-worlds"><a class="header" href="#8-worlds">8. Worlds</a></h3>
+<p>Tiled worlds (<code>.world</code> files) support is now behind the <code>world</code> feature. It is enabled by default: if you disable default features and use Tiled worlds, enable it explicitly.</p>
+<pre><code class="language-toml">bevy_ecs_tiled = { version = "0.16", default-features = false, features = ["render", "world"] }
+</code></pre>
+<p>Without it, worlds related APIs do not exist: <code>TiledWorld</code>, <code>RespawnTiledWorld</code>, <code>TiledWorldAsset</code>, <code>TiledWorldStreaming</code>, <code>TiledWorldReference</code>, <code>TiledWorldMaps</code>, <code>WorldMapId</code>, <code>TiledWorldLoaderError</code>, <code>TiledEvent&lt;WorldCreated&gt;</code>, <code>TiledEvent::world_entity()</code>, <code>world_asset()</code>, <code>world()</code> and <code>TiledDebugWorldStreamingPlugin</code>.</p>
+<p>The <code>TiledWorldStorage</code> component has been removed. Each map of a world now has a <code>TiledWorldReference</code> component, giving its world entity and its <code>WorldMapId</code>, and the new <code>TiledWorldMaps</code> system parameter works like a <code>Query</code> restricted to the spawned maps of a given world:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Removed</th><th>Replacement</th></tr>
+</thead>
+<tbody>
+<tr><td><code>TiledWorldStorage::maps()</code></td><td><code>TiledWorldMaps&lt;(Entity, &amp;TiledWorldReference)&gt;::iter(world)</code></td></tr>
+<tr><td><code>TiledWorldStorage::map_entity(id)</code></td><td><code>TiledWorldMaps::map_entity(world, id)</code></td></tr>
+<tr><td><code>TiledWorldStorage::map_id(entity)</code></td><td>the <code>TiledWorldReference</code> component of the map entity</td></tr>
+</tbody>
+</table>
+</div>
+<pre><code class="language-rust ignore">// Before (v0.15)
+fn system(worlds: Query&lt;&amp;TiledWorldStorage&gt;) {
+    for storage in worlds.iter() {
+        for (map_id, map_entity) in storage.maps() { /* ... */ }
+    }
+}
+
+// After (v0.16)
+fn system(worlds: Query&lt;Entity, With&lt;TiledWorld&gt;&gt;, maps: TiledWorldMaps&lt;(Entity, &amp;TiledWorldReference)&gt;) {
+    for world in worlds.iter() {
+        for (map_entity, world_map) in maps.iter(world) { /* world_map.map_id() */ }
+    }
+}</code></pre>
+<p><code>TiledWorldChunking</code> has been renamed <code>TiledWorldStreaming</code>, to avoid confusion with physics colliders chunks and infinite maps chunks, and is now an enum:</p>
+<pre><code class="language-rust ignore">// Before
+TiledWorldChunking(None)
+let area: Option&lt;Vec2&gt; = world_chunking.0;
+
+// After
+TiledWorldStreaming::Disabled
+let area: Option&lt;Vec2&gt; = world_streaming.area();</code></pre>
+<p><code>TiledWorldStreaming::new()</code> works as <code>TiledWorldChunking::new()</code> did. Related renames:</p>
+<ul>
+<li><code>TiledPostUpdateSystems::HandleWorldChunking</code> is now <code>HandleWorldStreaming</code>,</li>
+<li><code>TiledDebugWorldChunkPlugin</code> and <code>TiledDebugWorldChunkConfig</code> are now <code>TiledDebugWorldStreamingPlugin</code> and <code>TiledDebugWorldStreamingConfig</code>, whose <code>world_chunk_color</code> field is now <code>streaming_area_color</code>,</li>
+<li>the <code>world_chunking</code> example is now <code>world_streaming</code>.</li>
+</ul>
+<p>If you set <code>TiledWorldChunking</code> from Tiled custom properties, export your types again and use <code>TiledWorldStreaming</code> instead.</p>
+<h3 id="9-physics"><a class="header" href="#9-physics">9. Physics</a></h3>
+<ul>
+<li><code>TiledPreUpdateSystems::SpawnPhysicsColliders</code> has been removed: use <code>TiledPostUpdateSystems::SyncPhysics</code>.</li>
+<li>Colliders are spawned again when their source changes: you can receive <code>TiledEvent&lt;ColliderCreated&gt;</code> several times for the same source.</li>
+<li>Modifying <code>TiledPhysicsSettings</code> no longer respawns the map or the world: only physics colliders are spawned again.</li>
+<li><code>TiledEvent&lt;ColliderCreated&gt;::tiles()</code> has been removed: query the <code>TiledTile</code> children of the layer instead (<code>TiledTile</code>, <code>TilePos</code>, <code>TileFlip</code>).</li>
+<li><code>ColliderCreated::collider_of</code> and <code>ColliderCreated::new()</code> have been removed: the event origin is the collider entity. Use <code>TiledEvent::source_entity()</code>, or the <code>TiledColliderOf</code> component of the collider entity, to retrieve its source.</li>
+<li>Colliders of tiles layers now take tiles flips into account, which can change their shape.</li>
+<li><code>simplify_geometry()</code> has been removed: use <a href="https://docs.rs/geo/latest/geo/algorithm/bool_ops/fn.unary_union.html"><code>geo::unary_union</code></a> to merge polygons. The <code>TiledPhysicsSettings::simplify_geometry</code> setting is unchanged.</li>
+</ul>
+<h4 id="collider-strategy-1"><a class="header" href="#collider-strategy-1">Collider strategy</a></h4>
+<p>How colliders are created from Tiled shapes is no longer selected by the physics backend: <code>TiledPhysicsAvianBackend</code> and <code>TiledPhysicsRapierBackend</code> are now unit structs, and their variants moved to the new <code>TiledColliderStrategy</code> enum, set in <code>TiledPhysicsSettings</code>:</p>
+<pre><code class="language-rust ignore">// Before
+TiledPhysicsSettings::&lt;TiledPhysicsAvianBackend&gt; {
+    backend: TiledPhysicsAvianBackend::Triangulation,
+    ..default()
+}
+
+// After
+TiledPhysicsSettings::&lt;TiledPhysicsAvianBackend&gt; {
+    collider_strategy: TiledColliderStrategy::Triangulation,
+    ..default()
+}</code></pre>
+<p><code>TiledColliderStrategy</code> is also a component: insert it on a layer or an object entity to override the map strategy for this layer or object only.</p>
+<h4 id="selecting-which-layers-and-objects-get-colliders-1"><a class="header" href="#selecting-which-layers-and-objects-get-colliders-1">Selecting which layers and objects get colliders</a></h4>
+<p>The name filters of <code>TiledPhysicsSettings</code> have been replaced by the new <code>TiledColliderStrategy::Disabled</code> variant, which disables colliders for a whole map, or for a given layer or object:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Before</th><th>After</th></tr>
+</thead>
+<tbody>
+<tr><td><code>objects_layer_filter</code></td><td>Insert <code>TiledColliderStrategy::Disabled</code> on the objects layers which should not get colliders</td></tr>
+<tr><td><code>objects_filter</code></td><td>Insert <code>TiledColliderStrategy::Disabled</code> on the objects which should not get colliders</td></tr>
+<tr><td><code>tiles_layer_filter</code></td><td>Insert <code>TiledColliderStrategy::Disabled</code> on the tiles layers which should not get colliders</td></tr>
+<tr><td><code>tiles_objects_filter</code></td><td>Renamed <code>tile_shapes_filter</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>To keep selecting them by name, insert the component from an observer of <code>TiledEvent&lt;LayerCreated&gt;</code> or <code>TiledEvent&lt;ObjectCreated&gt;</code>, or set it from Tiled using a custom property:</p>
+<pre><code class="language-rust ignore">// Before
+TiledPhysicsSettings::&lt;TiledPhysicsAvianBackend&gt; {
+    tiles_layer_filter: TiledFilter::from(["collision"]),
+    ..default()
+}
+
+// After: disable colliders for the whole map, but enable them for the layer named "collision"
+commands
+    .spawn((
+        TiledMap(asset_server.load("map.tmx")),
+        TiledPhysicsSettings::&lt;TiledPhysicsAvianBackend&gt; {
+            collider_strategy: TiledColliderStrategy::Disabled,
+            ..default()
+        },
+    ))
+    .observe(
+        |layer_created: On&lt;TiledEvent&lt;LayerCreated&gt;&gt;,
+         layers_query: Query&lt;&amp;TiledName, With&lt;TiledLayer&gt;&gt;,
+         mut commands: Commands| {
+            let layer = layer_created.origin;
+            if layers_query.get(layer).is_ok_and(|name| name.0 == "collision") {
+                commands.entity(layer).insert(TiledColliderStrategy::Polyline);
+            }
+        },
+    );</code></pre>
+<h4 id="colliders-entities"><a class="header" href="#colliders-entities">Colliders entities</a></h4>
+<ul>
+<li>The first collider of a tiles layer or an object is always inserted on the layer or object entity itself. This was already the case with the provided backends. The only exception is when the colliders of a tiles layer are <a href="#colliders-chunks">split in chunks</a>, a new opt-in feature: the first collider of each chunk is then inserted on a <code>TiledColliderChunk</code> entity, child of the layer.</li>
+<li>Additional colliders (<code>TiledColliderStrategy::LineStrip</code>, or geometry simplification disabled) are children of this entity, named <code>TiledCollider(&lt;index&gt;)</code> instead of <code>Avian[...]</code> / <code>Rapier[...]</code>. They now also have the <code>TiledColliderOf</code>, <code>TiledColliderSource</code> and <code>TiledColliderPolygons</code> components, and a <code>TiledEvent&lt;ColliderCreated&gt;</code> is sent for each of them.</li>
+<li><code>TiledColliderPolygons</code> holds the geometry its collider was created from, instead of all the polygons of the layer or object.</li>
+</ul>
+<h4 id="custom-physics-backends-1"><a class="header" href="#custom-physics-backends-1">Custom physics backends</a></h4>
+<p>The <code>TiledPhysicsBackend</code> trait no longer spawns entities: it only creates the colliders for a given geometry, and <code>bevy_ecs_tiled</code> inserts them on the right entities and removes them when their source changes.</p>
+<pre><code class="language-rust ignore">// Before
+impl TiledPhysicsBackend for MyBackend {
+    fn spawn_colliders(
+        &amp;self,
+        commands: &amp;mut Commands,
+        source: TiledColliderSource,
+        origin: Entity,
+        multi_polygons_list: Vec&lt;geo::MultiPolygon&lt;f32&gt;&gt;,
+    ) -&gt; Option&lt;Entity&gt; {
+        /* spawn an entity with a collider */
+    }
+}
+
+// After
+impl TiledPhysicsBackend for MyBackend {
+    // The component(s) making a collider
+    type Collider = MyCollider;
+
+    fn colliders(
+        &amp;self,
+        strategy: TiledColliderStrategy,
+        source: TiledColliderSource,
+        geometry: &amp;TiledColliderGeometry,
+    ) -&gt; Vec&lt;Self::Collider&gt; {
+        /* return the collider(s) for this geometry */
+    }
+}</code></pre>
+<ul>
+<li><code>colliders()</code> is called once for each geometry: a single time if geometry simplification is enabled (the default).</li>
+<li>The geometry is a <code>TiledColliderGeometry</code>: its <code>polygons</code> replace the former <code>MultiPolygon</code>, and its <code>outline()</code> gives the segments to use for colliders made of segments (it does not include the edges shared with adjacent <a href="#colliders-chunks">colliders chunks</a>).</li>
+<li>The new <code>physics::geometry::collider_shapes()</code> helper converts a geometry into <code>TiledColliderShape</code>s according to the requested strategy.</li>
+<li>If you need access to the <code>World</code> to build your collider (eg. to add an asset), use component hooks or observers on your collider component: see the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/physics_custom.rs"><code>physics_custom</code> example</a>.</li>
+<li><code>multi_polygon_as_line_strings()</code> now returns an iterator over borrowed line strings instead of a <code>Vec</code>.</li>
+</ul>
+<h3 id="10-system-sets"><a class="header" href="#10-system-sets">10. System Sets</a></h3>
+<p><code>TiledPostUpdateSystems</code> has three new variants, which run in this order after <code>HandleMapAssetEvents</code> and before Bevy transform and visibility propagation: <code>SyncTiles</code>, <code>SyncRender</code> and <code>SyncPhysics</code>.
+If you order your systems against map rendering or colliders, use these sets.</p>
+<p><code>TiledUpdateSystems::UpdateTiledImagePositionAndSize</code> has been removed: repeated images position and size are updated during <code>TiledPostUpdateSystems::SyncRender</code>.</p>
+<h3 id="11-features"><a class="header" href="#11-features">11. Features</a></h3>
+<h4 id="custom-properties"><a class="header" href="#custom-properties">Custom properties</a></h4>
+<p>With the <code>user_properties</code> feature:</p>
+<ul>
+<li>tile objects now inherit the custom properties of their tile, as in the Tiled editor. Their own properties take precedence,</li>
+<li>tile properties are also inserted on tiles and tile objects spawned after the map has been loaded. Object references in these properties cannot be resolved: they are set to <code>Entity::PLACEHOLDER</code>.</li>
+</ul>
+<h4 id="running-without-the-render-feature"><a class="header" href="#running-without-the-render-feature">Running without the <code>render</code> feature</a></h4>
+<p>Without the <code>render</code> feature, nothing is displayed and images and texture atlas layouts are no longer loaded, so a map can be loaded on a headless server. It only requires this minimal set of plugins:</p>
+<pre><code class="language-rust ignore">App::new().add_plugins((
+    MinimalPlugins,
+    AssetPlugin::default(),
+    TiledPlugin::default(),
+));</code></pre>
+<p>You can remove <code>ImagePlugin</code> and <code>TextureAtlasPlugin</code> if you only added them for <code>bevy_ecs_tiled</code>.</p>
+<p>The <code>TiledObject</code> and <code>TiledImage</code> entities are still spawned with their data, including the content of text objects, but the <code>render</code> module does not exist: objects have no visual, image layers have no <code>Sprite</code>, and <code>TiledImage::image</code>, <code>TiledAnimation</code>, <code>TiledTilemap*</code> and <code>TiledObjectVisual*</code> / <code>TiledObjectText*</code> do not exist. If you displayed them without the <code>render</code> feature, enable it.</p>
+<p>The <code>text</code> and <code>debug</code> features now enable the <code>render</code> feature: disable them too to run without it.</p>
+<h3 id="12-non-exhaustive-enums"><a class="header" href="#12-non-exhaustive-enums">12. Non-Exhaustive Enums</a></h3>
+<p><code>TiledObject</code> and the <code>TiledPreUpdateSystems</code>, <code>TiledUpdateSystems</code> and <code>TiledPostUpdateSystems</code> system sets are now <code>#[non_exhaustive]</code>, so new variants can be added without a breaking change: add a wildcard arm (<code>_ =&gt; ...</code>) when matching on them.</p>
+<h3 id="13-immutable-components-and-private-fields"><a class="header" href="#13-immutable-components-and-private-fields">13. Immutable Components and Private Fields</a></h3>
+<p>The following components are now <a href="https://docs.rs/bevy/latest/bevy/ecs/component/trait.Component.html#immutable-components">immutable</a>: they cannot be queried with <code>&amp;mut</code> nor modified with <code>get_mut()</code>. They are set by <code>bevy_ecs_tiled</code> and are not meant to be modified; if you really need to, insert them again.</p>
+<p><code>TiledMapReference</code>, <code>TiledLayer</code>, <code>TiledTilemap</code>, <code>TiledName</code>, <code>TiledColliderSource</code> and <code>TiledColliderPolygons</code>.</p>
+<p>Some fields are no longer public:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Before</th><th>After</th></tr>
+</thead>
+<tbody>
+<tr><td><code>map_reference.0</code></td><td><code>map_reference.entity()</code> or <code>*map_reference</code></td></tr>
+<tr><td><code>animation.frames</code> (<code>TiledAnimation</code>)</td><td><code>animation.frames()</code></td></tr>
+</tbody>
+</table>
+</div>
+<p><code>TiledAnimation::current_frame</code> and <code>timer</code> are internal state and are no longer accessible.</p>
+<h2 id="resources"><a class="header" href="#resources">Resources</a></h2>
+<ul>
+<li><a href="#introduction">Main Documentation</a></li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/">API Reference</a></li>
+<li><a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/README.md">Examples</a></li>
+<li><a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/CHANGELOG.md">Full CHANGELOG</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="migration-to-bevy_ecs_tiled-v015"><a class="header" href="#migration-to-bevy_ecs_tiled-v015">Migration to <code>bevy_ecs_tiled</code> v0.15</a></h1>
 <p>This guide outlines the steps required to migrate your project to version <code>0.15</code> of <code>bevy_ecs_tiled</code>.</p>
 <p>This version still targets Bevy v0.20: there is no Bevy upgrade involved, only <code>bevy_ecs_tiled</code> API changes.</p>
-<h2 id="main-changes"><a class="header" href="#main-changes">Main Changes</a></h2>
+<h2 id="main-changes-1"><a class="header" href="#main-changes-1">Main Changes</a></h2>
 <ul>
 <li><strong>API cleanup:</strong> the <code>get_</code> prefix is dropped from <code>TiledEvent</code> accessors, <code>TiledMapStorage</code> / <code>TiledWorldStorage</code> lookups and map helper functions, following Rust API guidelines</li>
 <li><strong>Storage iterators</strong> now return opaque iterators yielding owned values</li>
@@ -1314,8 +2365,8 @@ For Rapier, you must enable either the <code>debug-render-2d</code> feature on t
 <li><strong>Isometric and hexagonal maps</strong> had multiple fixes and should now be positioned like in Tiled</li>
 <li><strong>New debug plugin</strong> <code>TiledDebugMapAabbPlugin</code> to display maps bounding boxes</li>
 </ul>
-<h2 id="migration-steps"><a class="header" href="#migration-steps">Migration Steps</a></h2>
-<h3 id="1-update-dependencies"><a class="header" href="#1-update-dependencies">1. Update Dependencies</a></h3>
+<h2 id="migration-steps-1"><a class="header" href="#migration-steps-1">Migration Steps</a></h2>
+<h3 id="1-update-dependencies-1"><a class="header" href="#1-update-dependencies-1">1. Update Dependencies</a></h3>
 <pre><code class="language-toml">bevy = "0.20"
 bevy_ecs_tiled = "0.15"
 </code></pre>
@@ -1470,7 +2521,7 @@ To respawn a map or a world, insert the <code>RespawnTiledMap</code> or <code>Re
 <span class="boring">}</span></code></pre>
 <p>When types export is configured through the plugin (<code>TiledPluginConfig::tiled_types_export_file</code>), a failure now logs an error instead of crashing the application.</p>
 <hr>
-<h2 id="resources"><a class="header" href="#resources">Resources</a></h2>
+<h2 id="resources-1"><a class="header" href="#resources-1">Resources</a></h2>
 <ul>
 <li><a href="#introduction">Main Documentation</a></li>
 <li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/">API Reference</a></li>
@@ -1480,12 +2531,12 @@ To respawn a map or a world, insert the <code>RespawnTiledMap</code> or <code>Re
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="migration-to-bevy_ecs_tiled-v014"><a class="header" href="#migration-to-bevy_ecs_tiled-v014">Migration to <code>bevy_ecs_tiled</code> v0.14</a></h1>
 <p>This guide outlines the steps required to migrate your project to version <code>0.14</code> of <code>bevy_ecs_tiled</code>.</p>
-<h2 id="main-changes-1"><a class="header" href="#main-changes-1">Main Changes</a></h2>
+<h2 id="main-changes-2"><a class="header" href="#main-changes-2">Main Changes</a></h2>
 <ul>
 <li><strong>Bevy v0.20 Support:</strong>
 <code>bevy_ecs_tiled</code> now works seamlessly with Bevy v0.20, allowing you to take advantage of the latest engine features and performance improvements. See the <a href="https://bevy.org/news/bevy-0-20/">Bevy 0.20 release notes</a> for details.</li>
 </ul>
-<h2 id="migration-steps-1"><a class="header" href="#migration-steps-1">Migration Steps</a></h2>
+<h2 id="migration-steps-2"><a class="header" href="#migration-steps-2">Migration Steps</a></h2>
 <ol>
 <li>
 <p><strong>Update Dependencies in <code>Cargo.toml</code>:</strong></p>
@@ -1502,7 +2553,7 @@ Follow Bevy’s official migration steps to update your project from Bevy v0.19.
 This will help you resolve breaking changes and take advantage of new features.</p>
 </li>
 </ol>
-<h2 id="resources-1"><a class="header" href="#resources-1">Resources</a></h2>
+<h2 id="resources-2"><a class="header" href="#resources-2">Resources</a></h2>
 <ul>
 <li><a href="#introduction">Main Documentation</a></li>
 <li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/">API Reference</a></li>
@@ -1512,12 +2563,12 @@ This will help you resolve breaking changes and take advantage of new features.<
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="migration-to-bevy_ecs_tiled-v013"><a class="header" href="#migration-to-bevy_ecs_tiled-v013">Migration to <code>bevy_ecs_tiled</code> v0.13</a></h1>
 <p>This guide outlines the steps required to migrate your project to version <code>0.13</code> of <code>bevy_ecs_tiled</code>.</p>
-<h2 id="main-changes-2"><a class="header" href="#main-changes-2">Main Changes</a></h2>
+<h2 id="main-changes-3"><a class="header" href="#main-changes-3">Main Changes</a></h2>
 <ul>
 <li><strong>Bevy v0.19 Support:</strong>
 <code>bevy_ecs_tiled</code> now works seamlessly with Bevy v0.19, allowing you to take advantage of the latest engine features and performance improvements. See the <a href="https://bevy.org/news/bevy-0-19/">Bevy 0.19 release notes</a> for details.</li>
 </ul>
-<h2 id="migration-steps-2"><a class="header" href="#migration-steps-2">Migration Steps</a></h2>
+<h2 id="migration-steps-3"><a class="header" href="#migration-steps-3">Migration Steps</a></h2>
 <ol>
 <li>
 <p><strong>Update Dependencies in <code>Cargo.toml</code>:</strong></p>
@@ -1534,7 +2585,7 @@ Follow Bevy’s official migration steps to update your project from Bevy v0.18.
 This will help you resolve breaking changes and take advantage of new features.</p>
 </li>
 </ol>
-<h2 id="resources-2"><a class="header" href="#resources-2">Resources</a></h2>
+<h2 id="resources-3"><a class="header" href="#resources-3">Resources</a></h2>
 <ul>
 <li><a href="#introduction">Main Documentation</a></li>
 <li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/">API Reference</a></li>
@@ -1544,14 +2595,14 @@ This will help you resolve breaking changes and take advantage of new features.<
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="migration-to-bevy_ecs_tiled-v012"><a class="header" href="#migration-to-bevy_ecs_tiled-v012">Migration to <code>bevy_ecs_tiled</code> v0.12</a></h1>
 <p>This guide outlines the steps required to migrate your project to version <code>0.12</code> of <code>bevy_ecs_tiled</code>.</p>
-<h2 id="main-changes-3"><a class="header" href="#main-changes-3">Main Changes</a></h2>
+<h2 id="main-changes-4"><a class="header" href="#main-changes-4">Main Changes</a></h2>
 <ul>
 <li><strong><code>TiledAnimation</code> API redesign</strong> for non-consecutive frame support</li>
 <li><strong>Physics colliders spawning rework</strong> with simplified geometry control</li>
 <li><strong>Support for Text Objects and Group Layer</strong></li>
 </ul>
-<h2 id="migration-steps-3"><a class="header" href="#migration-steps-3">Migration Steps</a></h2>
-<h3 id="1-update-dependencies-1"><a class="header" href="#1-update-dependencies-1">1. Update Dependencies</a></h3>
+<h2 id="migration-steps-4"><a class="header" href="#migration-steps-4">Migration Steps</a></h2>
+<h3 id="1-update-dependencies-2"><a class="header" href="#1-update-dependencies-2">1. Update Dependencies</a></h3>
 <p>Update your <code>Cargo.toml</code> to use version 0.12 and compatible physics backends:</p>
 <pre><code class="language-toml">bevy = "0.18"
 bevy_ecs_tiled = "0.12"
@@ -1628,7 +2679,7 @@ commands.entity(object_entity)
 </ul>
 <p>No migration action required unless you’re explicitly working with these features.</p>
 <hr>
-<h2 id="resources-3"><a class="header" href="#resources-3">Resources</a></h2>
+<h2 id="resources-4"><a class="header" href="#resources-4">Resources</a></h2>
 <ul>
 <li><a href="#introduction">Main Documentation</a></li>
 <li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/">API Reference</a></li>
@@ -1638,12 +2689,12 @@ commands.entity(object_entity)
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="migration-to-bevy_ecs_tiled-v011"><a class="header" href="#migration-to-bevy_ecs_tiled-v011">Migration to <code>bevy_ecs_tiled</code> v0.11</a></h1>
 <p>This guide outlines the steps required to migrate your project to version <code>0.11</code> of <code>bevy_ecs_tiled</code>.</p>
-<h2 id="main-changes-4"><a class="header" href="#main-changes-4">Main Changes</a></h2>
+<h2 id="main-changes-5"><a class="header" href="#main-changes-5">Main Changes</a></h2>
 <ul>
 <li><strong>Bevy v0.18 Support:</strong>
 <code>bevy_ecs_tiled</code> now works seamlessly with Bevy v0.18, allowing you to take advantage of the latest engine features and performance improvements. See the <a href="https://bevy.org/news/bevy-0-18/">Bevy 0.18 release notes</a> for details.</li>
 </ul>
-<h2 id="migration-steps-4"><a class="header" href="#migration-steps-4">Migration Steps</a></h2>
+<h2 id="migration-steps-5"><a class="header" href="#migration-steps-5">Migration Steps</a></h2>
 <ol>
 <li>
 <p><strong>Update Dependencies in <code>Cargo.toml</code>:</strong></p>
@@ -1660,7 +2711,7 @@ Follow Bevy’s official migration steps to update your project for Bevy v0.18.
 This will help you resolve breaking changes and take advantage of new features.</p>
 </li>
 </ol>
-<h2 id="resources-4"><a class="header" href="#resources-4">Resources</a></h2>
+<h2 id="resources-5"><a class="header" href="#resources-5">Resources</a></h2>
 <ul>
 <li><a href="#introduction">Main Documentation</a></li>
 <li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/">API Reference</a></li>
@@ -1670,7 +2721,7 @@ This will help you resolve breaking changes and take advantage of new features.<
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="migration-to-bevy_ecs_tiled-v010"><a class="header" href="#migration-to-bevy_ecs_tiled-v010">Migration to <code>bevy_ecs_tiled</code> v0.10</a></h1>
 <p>This guide outlines the steps required to migrate your project to version <code>0.10</code> of <code>bevy_ecs_tiled</code>.</p>
-<h2 id="main-changes-5"><a class="header" href="#main-changes-5">Main Changes</a></h2>
+<h2 id="main-changes-6"><a class="header" href="#main-changes-6">Main Changes</a></h2>
 <ul>
 <li>
 <p><strong>Bevy v0.17 Support:</strong>
@@ -1685,7 +2736,7 @@ The <code>ColliderCreated</code> event now includes a direct reference to the co
 Types from external crates (such as <code>rs-tiled</code>, <code>geo</code>, and <code>regex</code>) are now re-exported through dedicated modules. This avoids name clashes and makes type usage explicit.</p>
 </li>
 </ul>
-<h2 id="migration-steps-5"><a class="header" href="#migration-steps-5">Migration Steps</a></h2>
+<h2 id="migration-steps-6"><a class="header" href="#migration-steps-6">Migration Steps</a></h2>
 <ol>
 <li>
 <p><strong>Update Dependencies in <code>Cargo.toml</code>:</strong></p>
@@ -1718,7 +2769,7 @@ In v0.10, this has been renamed to <a href="https://docs.rs/bevy_ecs_tiled/lates
 This change makes it easier to interact with colliders and attach additional physics components directly after creation.</p>
 </li>
 </ol>
-<h2 id="resources-5"><a class="header" href="#resources-5">Resources</a></h2>
+<h2 id="resources-6"><a class="header" href="#resources-6">Resources</a></h2>
 <ul>
 <li><a href="#introduction">Main Documentation</a></li>
 <li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/">API Reference</a></li>
@@ -1728,14 +2779,14 @@ This change makes it easier to interact with colliders and attach additional phy
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="migration-to-bevy_ecs_tiled-v09"><a class="header" href="#migration-to-bevy_ecs_tiled-v09">Migration to <code>bevy_ecs_tiled</code> v0.9</a></h1>
 <p>This guide outlines the steps required to migrate your project to version <code>0.9</code> of <code>bevy_ecs_tiled</code>.</p>
-<h2 id="main-changes-6"><a class="header" href="#main-changes-6">Main Changes</a></h2>
+<h2 id="main-changes-7"><a class="header" href="#main-changes-7">Main Changes</a></h2>
 <ul>
 <li><strong>Improved Isometric Map Support:</strong><br>Isometric maps are now much better supported, including correct physics collider shapes and placement.</li>
 <li><strong>Accurate Physics Colliders for Isometric Maps:</strong><br>Physics colliders are now generated with the correct geometry and position for isometric maps.</li>
 <li><strong>Clear Distinction Between <code>grid_size</code> and <code>tile_size</code>:</strong><br>Previously, <code>tile_size</code> (the actual size of a tile) and <code>grid_size</code> (the space a tile occupies on the grid) were treated as equivalent. This is not always true, especially for isometric maps. The API now enforces a clear distinction.</li>
 <li><strong>API Renaming for Clarity:</strong><br>Several functions and methods have been renamed to improve clarity and expressiveness.</li>
 </ul>
-<h2 id="migration-steps-6"><a class="header" href="#migration-steps-6">Migration steps</a></h2>
+<h2 id="migration-steps-7"><a class="header" href="#migration-steps-7">Migration steps</a></h2>
 <ol>
 <li>
 <p><strong>Update the dependency in <code>Cargo.toml</code></strong>:</p>
@@ -1772,7 +2823,7 @@ This change makes it easier to interact with colliders and attach additional phy
 </ul>
 </li>
 </ul>
-<h2 id="resources-6"><a class="header" href="#resources-6">Resources</a></h2>
+<h2 id="resources-7"><a class="header" href="#resources-7">Resources</a></h2>
 <ul>
 <li><a href="#introduction">Main documentation</a></li>
 <li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/">API Reference</a></li>
@@ -1782,7 +2833,7 @@ This change makes it easier to interact with colliders and attach additional phy
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="migration-to-bevy_ecs_tiled-v08"><a class="header" href="#migration-to-bevy_ecs_tiled-v08">Migration to <code>bevy_ecs_tiled</code> v0.8</a></h1>
 <p>This guide outlines the steps required to migrate your project to version <code>0.8</code> of <code>bevy_ecs_tiled</code>.</p>
-<h2 id="main-changes-7"><a class="header" href="#main-changes-7">Main Changes</a></h2>
+<h2 id="main-changes-8"><a class="header" href="#main-changes-8">Main Changes</a></h2>
 <ul>
 <li><strong>Improved <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/"><code>TiledEvent</code></a> API</strong>: Provides an unified way to handle events and access underlying Tiled data.</li>
 <li><strong>Attach shape information to <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/object/enum.TiledObject.html"><code>TiledObject</code></a></strong>: Direct access to Tiled objects shape information through ECS.</li>
@@ -1793,7 +2844,7 @@ This change makes it easier to interact with colliders and attach additional phy
 <li><strong>Rationalize naming</strong>: Several types or functions have been renamed to better reflect what they actually do.</li>
 <li><strong>Source code re-organization</strong>: Several files have been moved around or renamed.</li>
 </ul>
-<h2 id="migration-steps-7"><a class="header" href="#migration-steps-7">Migration Steps</a></h2>
+<h2 id="migration-steps-8"><a class="header" href="#migration-steps-8">Migration Steps</a></h2>
 <ol>
 <li>
 <p><strong>Update the dependency in <code>Cargo.toml</code></strong>:</p>
@@ -1883,7 +2934,7 @@ It felt a bit cumbersome.<br>Now, everything is done via the new <a href="https:
 You should use the provided methods instead of accessing fields directly.</p>
 </li>
 </ol>
-<h2 id="resources-7"><a class="header" href="#resources-7">Resources</a></h2>
+<h2 id="resources-8"><a class="header" href="#resources-8">Resources</a></h2>
 <ul>
 <li><a href="#introduction">Main documentation</a></li>
 <li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/">API Reference</a></li>
@@ -2203,6 +3254,31 @@ If you add a new map, update <code>assets/README.md</code> with its characterist
 If you add a new asset, update the “Assets credits” section of the main <code>README.md</code> and ensure you have the right to use it.</li>
 </ul>
 <p>If you’re not sure about something, feel free to open a draft PR or ask questions in your issue or PR.</p>
+<h2 id="manual-checks"><a class="header" href="#manual-checks">Manual Checks</a></h2>
+<p>Some behaviors cannot be checked by automated tests and must be checked manually.</p>
+<h3 id="tiles-rendering"><a class="header" href="#tiles-rendering">Tiles Rendering</a></h3>
+<p>Tests run without a renderer: they check that tiles are added to or removed from their tilemap <code>TileStorage</code>, but not what is actually drawn.
+However, how a tile is drawn after it has been modified relies on <code>bevy_ecs_tilemap</code> internals: to make sure a moved or replaced tile is removed from its previous location, its <code>TilePos</code> component is removed then inserted again (see <code>sync_tiles</code> in <code>src/tiled/tile.rs</code>).</p>
+<p>When changing tiles rendering code, when upgrading <code>bevy_ecs_tilemap</code> and before each release, run the <code>map_dynamic</code> example with physics colliders displayed:</p>
+<pre><code class="language-sh">cargo run --example map_dynamic --features avian
+</code></pre>
+<p>Then check that rendering and colliders always match:</p>
+<ul>
+<li><code>[1]</code> (despawn a tile): the tile and its collider disappear.</li>
+<li><code>[2]</code> (change a tile): the tile texture changes and its collider follows the new tile shape.</li>
+<li><code>[3]</code> (move a tile), several times in a row: the tile is drawn at its new position only, along with its collider.
+Also move a tile onto another one, then away: the tile it replaced is neither drawn nor has a collider anymore.</li>
+<li><code>[4]</code> (spawn a tile): the new tile is drawn, along with its collider.</li>
+<li><code>[5]</code> and <code>[6]</code> (despawn an object, change an object shape): the object collider follows.</li>
+<li><code>[R]</code> (reload the map): the map is back to its initial state.</li>
+</ul>
+<h3 id="performance-1"><a class="header" href="#performance-1">Performance</a></h3>
+<p>A performance test measures, on a large map, the time needed to spawn, modify and despawn its tiles and objects.
+It is ignored by default: run it in release mode to compare performance before and after a change.</p>
+<pre><code class="language-sh">cargo test --release --all-features --lib perf -- --ignored --nocapture
+</code></pre>
+<p>Each scenario is run several times (5 by default, or the value of the <code>PERF_RUNS</code> environment variable): the test prints the median and minimum duration of a frame, along with the time spent spawning map data and in the <code>SyncTiles</code>, <code>SyncRender</code> and <code>SyncPhysics</code> system sets.
+Measures can vary significantly from one run to another: when comparing two versions, alternate their runs rather than comparing runs made at different times.</p>
 <hr>
 <p>Thanks in advance for helping make <code>bevy_ecs_tiled</code> better!</p>
 <div style="break-before: page; page-break-before: always;"></div>

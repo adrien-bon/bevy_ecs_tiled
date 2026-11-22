@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-b86f2860.js";
+            window.path_to_searchindex_js = "../searchindex-ba955552.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-53cb13dc.js"></script>
+        <script src="../toc-a898eaa9.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -200,12 +200,54 @@ fn main() {
 }</code></pre>
 <p>Or add them individually as needed:</p>
 <ul>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/objects/index.html"><code>TiledDebugObjectsPlugin</code></a>: Displays an <code>arrow_2d</code> and a polyline outline <code>Gizmos</code> at each Tiled object’s position and shape.</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/tiles/index.html"><code>TiledDebugTilesPlugin</code></a>: Shows the <code>bevy_ecs_tilemap</code> tile index (<code>TilePos</code>) above each tile.</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/world_chunk/index.html"><code>TiledDebugWorldChunkPlugin</code></a>: Draws a <code>Gizmos</code> rectangle for each map boundary and world render chunk.</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/map_aabb/index.html"><code>TiledDebugMapAabbPlugin</code></a>: Draws <code>Gizmos</code> rectangles for each map axis-aligned bounding box (AABB).</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/axis/index.html"><code>TiledDebugAxisPlugin</code></a>: Displays a <code>Gizmos</code> axes marker at the world origin.</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/objects/index.html"><code>TiledDebugObjectsPlugin</code></a>: outline and position of each Tiled object;</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/tiles/index.html"><code>TiledDebugTilesPlugin</code></a>: <code>bevy_ecs_tilemap</code> index (<code>TilePos</code>) of each tile;</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/map_aabb/index.html"><code>TiledDebugMapAabbPlugin</code></a>: axis-aligned bounding box (AABB) of each map;</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/world_streaming/index.html"><code>TiledDebugWorldStreamingPlugin</code></a>: maps boundaries and streaming area of each world (requires the <code>world</code> feature);</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/collider_chunks/index.html"><code>TiledDebugColliderChunksPlugin</code></a>: bounding box of each physics collider chunk of tiles layers (requires the <code>physics</code> feature, see the <a href="physics.html#colliders-chunks">physics guide</a>);</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/axis/index.html"><code>TiledDebugAxisPlugin</code></a>: axes at the world origin;</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/struct.TiledDebugTogglePlugin.html"><code>TiledDebugTogglePlugin</code></a>: toggle all debug gizmos using a keyboard key.</li>
 </ul>
+<p>Most plugins take a configuration, which is inserted as a <code>Resource</code>: you can also update it at runtime.</p>
+<h3 id="objects"><a class="header" href="#objects">Objects</a></h3>
+<p>The <code>TiledDebugObjectsPlugin</code> draws, for each object, its outline and an arrow pointing to its position (ie. its <code>Transform</code>).
+Colors are cycled from a list, so neighbor objects can be told apart.
+It is useful to check objects placement, for instance on isometric maps or after a rotation.</p>
+<pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn main() {
+    App::new()
+        .add_plugins(TiledDebugObjectsPlugin(TiledDebugObjectsConfig {
+            // Draw all objects in white, with a longer arrow
+            objects_colors_list: vec![Color::WHITE],
+            arrow_length: Vec2::new(-30., 30.),
+        }))
+        .run();
+}</code></pre>
+<h3 id="tiles"><a class="header" href="#tiles">Tiles</a></h3>
+<p>The <code>TiledDebugTilesPlugin</code> draws the <code>TilePos</code> of each tile above it.
+Note that <code>bevy_ecs_tilemap</code> origin is the bottom-left tile and its Y axis points up, whereas Tiled origin is the top-left tile.</p>
+<p>On maps with small tiles, indexes may overlap and become hard to read: reduce the text size using <code>TiledDebugTilesConfig</code>.
+Since text gizmos are drawn using lines, you can also reduce the lines width of the <code>TiledDebugGizmos</code> group (see <a href="#toggle-and-configure-debug-gizmos">below</a>):</p>
+<pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn main() {
+    App::new()
+        .add_plugins(TiledDebugTilesPlugin(TiledDebugTilesConfig {
+            text_size: 5.,
+            ..default()
+        }))
+        .add_systems(Startup, |mut config_store: ResMut&lt;GizmoConfigStore&gt;| {
+            config_store.config_mut::&lt;TiledDebugGizmos&gt;().0.line.width = 1.;
+        })
+        .run();
+}</code></pre>
+<blockquote>
+<p><strong>Note:</strong>
+One text is drawn per tile, every frame: on large maps, this plugin can be expensive.</p>
+</blockquote>
 <h3 id="map-bounding-boxes"><a class="header" href="#map-bounding-boxes">Map bounding boxes</a></h3>
 <p>The <code>TiledDebugMapAabbPlugin</code> draws two rectangles for each map:</p>
 <ul>
@@ -232,7 +274,43 @@ fn main() {
         }))
         .run();
 }</code></pre>
-<p>Since the configuration is a <code>Resource</code>, you can also update it at runtime.</p>
+<h3 id="world-streaming"><a class="header" href="#world-streaming">World streaming</a></h3>
+<p>The <code>TiledDebugWorldStreamingPlugin</code> draws, for each world:</p>
+<ul>
+<li>a rectangle around each map of the world, colors being cycled from a list;</li>
+<li>if <code>TiledWorldStreaming</code> is set, a red rectangle centered on the camera: maps overlapping this area are spawned, the others are despawned.</li>
+</ul>
+<p>It helps tuning the streaming area and checking maps alignment within a world.
+Set <code>streaming_area_color</code> to <code>None</code> or <code>maps_colors_list</code> to an empty list in <code>TiledDebugWorldStreamingConfig</code> to hide one or the other.</p>
+<h3 id="axis"><a class="header" href="#axis">Axis</a></h3>
+<p>The <code>TiledDebugAxisPlugin</code> draws the X (red) and Y (green) axes at the world origin.
+It does not have any configuration: use it as a reference when positioning maps, worlds or anchors.</p>
+<h3 id="toggle-and-configure-debug-gizmos"><a class="header" href="#toggle-and-configure-debug-gizmos">Toggle and configure debug gizmos</a></h3>
+<p>All debug plugins draw their gizmos using the <code>TiledDebugGizmos</code> <a href="https://docs.rs/bevy/latest/bevy/gizmos/config/trait.GizmoConfigGroup.html">gizmo config group</a>.
+When this group is disabled, debug gizmos are hidden and debug systems do not run at all.</p>
+<p>The easiest way to toggle debug gizmos is to choose a keyboard key for the <code>TiledDebugTogglePlugin</code>, which is part of <code>TiledDebugPluginGroup</code> but does not use any key by default:</p>
+<pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn main() {
+    App::new()
+        .add_plugins(TiledDebugPluginGroup.set(TiledDebugTogglePlugin {
+            key: Some(KeyCode::F2),
+        }))
+        .run();
+}</code></pre>
+<p>If you add debug plugins individually, add <code>TiledDebugTogglePlugin</code> as well.</p>
+<p>You can also configure debug gizmos (enabled, lines width, render layers…) from your own systems using the <code>GizmoConfigStore</code> resource, and use the <code>tiled_debug_gizmos_enabled</code> run condition for your own debug systems:</p>
+<pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn hide_debug_gizmos(mut config_store: ResMut&lt;GizmoConfigStore&gt;) {
+    let (config, _) = config_store.config_mut::&lt;TiledDebugGizmos&gt;();
+    config.enabled = false;
+}
+<span class="boring">}</span></code></pre>
 <p>For more details, see the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/index.html">API reference</a>.</p>
 <hr>
 <h2 id="third-party-debugging-tools"><a class="header" href="#third-party-debugging-tools">Third-Party Debugging Tools</a></h2>
@@ -295,7 +373,7 @@ For Rapier, you must enable either the <code>debug-render-2d</code> feature on t
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="../migrations/v0_15.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../migrations/v0_16.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -309,7 +387,7 @@ For Rapier, you must enable either the <code>debug-render-2d</code> feature on t
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="../migrations/v0_15.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../migrations/v0_16.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>

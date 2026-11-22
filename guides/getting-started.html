@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-b86f2860.js";
+            window.path_to_searchindex_js = "../searchindex-ba955552.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-53cb13dc.js"></script>
+        <script src="../toc-a898eaa9.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -178,11 +178,11 @@
 <p>Add the required dependencies to your <code>Cargo.toml</code> file:</p>
 <pre><code class="language-toml">[dependencies]
 bevy = "0.20"
-bevy_ecs_tiled = "0.15"
+bevy_ecs_tiled = "0.16"
 </code></pre>
 <h3 id="basic-usage"><a class="header" href="#basic-usage">Basic Usage</a></h3>
 <p>To get started, add the plugin to your app and spawn a map entity.
-All you need to do is spawn a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMap.html"><code>TiledMap</code></a> component with the map asset you want to load (e.g., your <code>map.tmx</code> file).
+All you need to do is spawn a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMap.html"><code>TiledMap</code></a> component with the map asset you want to load (e.g., your <code>map.tmx</code> file).
 Make sure this map asset, along with any required dependencies (such as images or tilesets), is present in your local assets folder (by default, <code>./assets/</code>).</p>
 <pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
@@ -214,11 +214,11 @@ fn startup(
 }</code></pre>
 <p>This simple example will load a map using the default settings.</p>
 <h3 id="customizing-map-loading"><a class="header" href="#customizing-map-loading">Customizing Map Loading</a></h3>
-<p>You can customize how the map is loaded by listening to specific <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TiledEvent.html"><code>TiledEvent</code></a> or adding various components to the map entity, such as:</p>
+<p>You can customize how the map is loaded by listening to specific <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TiledEvent.html"><code>TiledEvent</code></a> or adding various components to the map entity, such as:</p>
 <ul>
 <li><a href="https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/anchor/enum.TilemapAnchor.html"><code>TilemapAnchor</code></a> — Controls the anchor point of the tilemap.</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMapLayerZOffset.html"><code>TiledMapLayerZOffset</code></a> — Adjusts the Z offset between map layers.</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/map/struct.TiledMapImageRepeatMargin.html"><code>TiledMapImageRepeatMargin</code></a> — Control the margin for repeated images.</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapLayerZOffset.html"><code>TiledMapLayerZOffset</code></a> — Adjusts the Z offset between map layers.</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/map/struct.TiledMapImageRepeatMargin.html"><code>TiledMapImageRepeatMargin</code></a> — Control the margin for repeated images.</li>
 <li><a href="https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/map/struct.TilemapRenderSettings.html"><code>TilemapRenderSettings</code></a> — Configures rendering options.</li>
 <li><a href="https://docs.rs/bevy/latest/bevy/transform/components/struct.Transform.html"><code>Transform</code></a> — Sets the position, rotation, and scale of the map.</li>
 <li><a href="https://docs.rs/bevy/latest/bevy/render/view/visibility/enum.Visibility.html"><code>Visibility</code></a> — Controls the visibility of the map entity.</li>
@@ -244,9 +244,10 @@ fn spawn_map(
         .observe(
             |map_created: On&lt;TiledEvent&lt;MapCreated&gt;&gt;,
              assets: Res&lt;Assets&lt;TiledMapAsset&gt;&gt;,
-             query: Query&lt;(&amp;Name, &amp;TiledMapStorage), With&lt;TiledMap&gt;&gt;| {
+             query: Query&lt;&amp;Name, With&lt;TiledMap&gt;&gt;,
+             objects: TiledMapObjects&lt;(Entity, &amp;TiledObject)&gt;| {
                 // We can access the map components via a regular query
-                let Ok((name, storage)) = query.get(map_created.event().origin) else {
+                let Ok(name) = query.get(map_created.origin) else {
                     return;
                 };
                 info!("=&gt; Observer TiledMapCreated was triggered for map '{name}'");
@@ -257,24 +258,20 @@ fn spawn_map(
                 };
                 info!("Loaded map: {:?}", map);
 
-                // Additionally, we can access Tiled items using the TiledMapStorage
-                // component: we can retrieve Tiled items entity and access
-                // their own components with another query (not shown here).
+                // Additionally, we can query the Tiled items of this map using the
+                // TiledMapLayers, TiledMapTiles and TiledMapObjects system parameters.
                 // This can be useful if you want for instance to create a resource
                 // based upon tiles or objects data but make it available only when
                 // the map is actually spawned.
-                for (id, entity) in storage.objects() {
-                    info!(
-                        "(map) Object ID {:?} was spawned as entity {:?}",
-                        id, entity
-                    );
+                for (entity, object) in objects.iter(map_created.origin) {
+                    info!("(map) {object} object was spawned as entity {entity:?}");
                 }
             }
         );
 }
 <span class="boring">}</span></code></pre>
 <h3 id="more-examples"><a class="header" href="#more-examples">More Examples</a></h3>
-<p>For more advanced use cases, such as loading worlds, chunking, custom properties, or integrating with physics, see the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/README.md">examples directory</a> in the repository and notably the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/demo_platformer/">demo_platformer</a>.</p>
+<p>For more advanced use cases, such as loading worlds, chunking, custom properties, or integrating with physics, see the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/README.md">examples directory</a> in the repository and notably the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/demo_platformer/">demo_platformer</a> and <a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/demo_topdown/">demo_topdown</a> demos.</p>
 <p>You can also refer to the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/">API documentation</a> for details on all available components and configuration options.</p>
 
                     </main>

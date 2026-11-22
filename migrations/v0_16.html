@@ -1,0 +1,666 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Migration to v0.16 - bevy_ecs_tiled Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-e96d0476.css">
+        <link rel="stylesheet" href="../css/chrome-d279d366.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex-ba955552.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc-a898eaa9.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">bevy_ecs_tiled Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="migration-to-bevy_ecs_tiled-v016"><a class="header" href="#migration-to-bevy_ecs_tiled-v016">Migration to <code>bevy_ecs_tiled</code> v0.16</a></h1>
+<p>This guide outlines the steps required to migrate your project to version <code>0.16</code> of <code>bevy_ecs_tiled</code>.</p>
+<p>This version still targets Bevy v0.20: there is no Bevy upgrade involved, only <code>bevy_ecs_tiled</code> API changes.</p>
+<h2 id="main-changes"><a class="header" href="#main-changes">Main Changes</a></h2>
+<ul>
+<li><strong>Dynamic maps:</strong> a map can now be modified after it has been loaded. Tilemaps, objects visuals, image sprites and physics colliders are derived from tiles, objects and images entities during <code>PostUpdate</code>.
+See the <a href="../guides/dynamic_maps.html">Modify a map at runtime</a> guide and the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/map_dynamic.rs"><code>map_dynamic</code> example</a>.</li>
+<li><strong>Tiles are direct children of their layer</strong>, next to the tilemaps rendering them.</li>
+<li><strong>Tileset, layer and object IDs</strong> are no longer standalone components, and IDs now have dedicated types.</li>
+<li><strong>New modules layout and a smaller prelude.</strong></li>
+<li><strong>Physics:</strong> backends only create colliders, and <code>TiledColliderStrategy</code> replaces both the backends variants and the name filters of <code>TiledPhysicsSettings</code>. It can be set for the whole map, or for a given layer or object.</li>
+</ul>
+<h2 id="migration-steps"><a class="header" href="#migration-steps">Migration Steps</a></h2>
+<h3 id="1-update-dependencies"><a class="header" href="#1-update-dependencies">1. Update Dependencies</a></h3>
+<pre><code class="language-toml">bevy = "0.20"
+bevy_ecs_tiled = "0.16"
+</code></pre>
+<h3 id="2-modules-and-prelude"><a class="header" href="#2-modules-and-prelude">2. Modules and Prelude</a></h3>
+<p>The <code>bevy_ecs_tiled::tiled</code> module has been split by layer: <code>asset</code> (loading Tiled files), <code>ecs</code> (entities holding Tiled data), <code>render</code> (rendering derived from these entities) and <code>properties</code>.
+If you only use the prelude, the only change is that advanced items left it:</p>
+<ul>
+<li>the <code>tiled</code>, <code>geo</code> and <code>regex</code> crates are re-exported at the crate root: <code>use bevy_ecs_tiled::{tiled, geo, regex};</code> instead of <code>bevy_ecs_tiled::prelude::{tiled, geo, regex}</code>,</li>
+<li><code>collider_shapes()</code>, <code>multi_polygon_as_line_strings()</code>, <code>multi_polygon_as_triangles()</code> and <code>TiledColliderShape</code>, mainly used to write a custom physics backend: <code>use bevy_ecs_tiled::physics::geometry::*;</code>,</li>
+<li><code>tiled_debug_gizmos_enabled()</code>: <code>use bevy_ecs_tiled::debug::tiled_debug_gizmos_enabled;</code>.</li>
+</ul>
+<p>If you use full paths, update them:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Before</th><th>After</th></tr>
+</thead>
+<tbody>
+<tr><td><code>tiled::TiledPlugin</code></td><td><code>TiledPlugin</code> (crate root)</td></tr>
+<tr><td><code>tiled::sets::*</code></td><td><code>sets::*</code></td></tr>
+<tr><td><code>tiled::map::asset::TiledMapAsset</code></td><td><code>asset::map::TiledMapAsset</code></td></tr>
+<tr><td><code>tiled::map::loader::TiledMapLoaderError</code></td><td><code>asset::map::TiledMapLoaderError</code></td></tr>
+<tr><td><code>tiled::world::asset::TiledWorldAsset</code></td><td><code>asset::world::TiledWorldAsset</code></td></tr>
+<tr><td><code>tiled::world::loader::TiledWorldLoaderError</code></td><td><code>asset::world::TiledWorldLoaderError</code></td></tr>
+<tr><td><code>tiled::{map, world, layer, tile, object, image, event, filter}::*</code></td><td><code>ecs::{map, world, layer, tile, object, image, event, filter}::*</code></td></tr>
+<tr><td><code>tiled::world::chunking::*</code></td><td><code>ecs::world::streaming::*</code> (see <a href="#8-worlds">Worlds</a>)</td></tr>
+<tr><td><code>tiled::animation::TiledAnimation</code></td><td><code>render::animation::TiledAnimation</code></td></tr>
+<tr><td><code>tiled::tile::TiledTilemap</code></td><td><code>render::tilemap::TiledTilemap</code></td></tr>
+<tr><td><code>tiled::object::{TiledObjectVisualOf, TiledObjectVisuals, TiledObjectTextBox, TiledObjectText}</code></td><td><code>render::object::*</code></td></tr>
+<tr><td><code>tiled::properties::export_types</code></td><td><code>properties::export_types</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Items of the <code>render</code> module only exist with the <code>render</code> feature (see <a href="#running-without-the-render-feature">Running without the <code>render</code> feature</a>).</p>
+<h3 id="3-plugin-configuration"><a class="header" href="#3-plugin-configuration">3. Plugin Configuration</a></h3>
+<p><code>TiledPluginConfig</code> has been removed: its fields are now directly on <code>TiledPlugin</code>, only with the <code>user_properties</code> feature, and have been renamed.
+<strong>Types are no longer exported by default</strong>: set <code>types_export_file</code> to keep exporting them.</p>
+<pre><code class="language-rust ignore">// Before
+App::new().add_plugins(TiledPlugin(TiledPluginConfig {
+    tiled_types_export_file: Some(path),
+    tiled_types_filter: filter,
+}));
+
+// After
+App::new().add_plugins(TiledPlugin {
+    types_export_file: Some(path),
+    types_filter: filter,
+});</code></pre>
+<h3 id="4-derived-entities-and-tiles-hierarchy"><a class="header" href="#4-derived-entities-and-tiles-hierarchy">4. Derived Entities and Tiles Hierarchy</a></h3>
+<p><code>MapCreated</code>, <code>LayerCreated</code>, <code>TileWithPropertiesCreated</code> and <code>ObjectCreated</code> events are now sent before tilemaps, objects visuals, image sprites and physics colliders are spawned.
+These are spawned later in the same frame, in <code>PostUpdate</code>. If you relied on them in one of these event handlers:</p>
+<ul>
+<li>use <code>TiledEvent&lt;TilemapCreated&gt;</code> for tilemaps: it is sent each time a tilemap is spawned, including after the map has been loaded, and is no longer ordered with other <code>*Created</code> events,</li>
+<li>use <code>TiledEvent&lt;ColliderCreated&gt;</code> for physics colliders,</li>
+<li>use an <code>On&lt;Add&lt;TiledObjectVisualOf&gt;&gt;</code> observer, or a regular system, for objects visuals,</li>
+<li>use a regular system, running after <code>TiledPostUpdateSystems::SyncRender</code>, for image sprites.</li>
+</ul>
+<p>Do not modify derived components, such as the <code>Sprite</code> of an image: they are overwritten when their source changes.</p>
+<p>Tiles are no longer children of their <code>TiledTilemap</code>: both are now direct children of their <code>TiledLayer::Tiles</code>.
+To retrieve the tilemap of a tile, use its <code>TilemapId</code> component instead of its <code>ChildOf</code> component:</p>
+<pre><code class="language-rust ignore">// Before (v0.15)
+fn system(tiles: Query&lt;&amp;ChildOf, With&lt;TiledTile&gt;&gt;, tilemaps: Query&lt;&amp;GlobalTransform, With&lt;TiledTilemap&gt;&gt;) {
+    for child_of in tiles.iter() {
+        let tilemap_transform = tilemaps.get(child_of.parent());
+    }
+}
+
+// After (v0.16)
+fn system(tiles: Query&lt;&amp;TilemapId, With&lt;TiledTile&gt;&gt;, tilemaps: Query&lt;&amp;GlobalTransform, With&lt;TiledTilemap&gt;&gt;) {
+    for tilemap_id in tiles.iter() {
+        let tilemap_transform = tilemaps.get(tilemap_id.0);
+    }
+}</code></pre>
+<p>Tilemaps are created when needed and despawned once empty: you should not spawn them yourself.</p>
+<h3 id="5-ids"><a class="header" href="#5-ids">5. IDs</a></h3>
+<h4 id="removed-id-components"><a class="header" href="#removed-id-components">Removed ID components</a></h4>
+<p>The <code>TiledTilesetId</code> and <code>TiledTileId</code> components have been removed: these IDs are now fields of the <code>TiledTile</code> and <code>TiledTilemap</code> components.</p>
+<pre><code class="language-rust ignore">// Before (v0.15)
+fn system(tiles: Query&lt;(&amp;TiledTilesetId, &amp;TiledTileId), With&lt;TiledTile&gt;&gt;) { /* ... */ }
+
+// After (v0.16)
+fn system(tiles: Query&lt;&amp;TiledTile&gt;) { /* tile.tileset_id, tile.tile_id */ }</code></pre>
+<p>Use <code>Changed&lt;TiledTile&gt;</code> instead of <code>Changed&lt;TiledTilesetId&gt;</code> / <code>Changed&lt;TiledTileId&gt;</code>.</p>
+<p>The <code>TiledLayerId</code> and <code>TiledObjectId</code> components have been removed, along with the APIs relying on them:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Removed</th><th>Replacement</th></tr>
+</thead>
+<tbody>
+<tr><td><code>TiledEvent::layer_id()</code>, <code>object_id()</code></td><td><code>layer_entity()</code>, <code>object_entity()</code></td></tr>
+<tr><td><code>TiledEvent::layer()</code>, <code>object()</code></td><td>query the components of the layer or object entity</td></tr>
+</tbody>
+</table>
+</div>
+<p>To read the class or custom properties of the map, a layer or an object, use the new <code>TiledProperties</code> component, which is available even without the <code>user_properties</code> feature:</p>
+<pre><code class="language-rust ignore">// Before (v0.15)
+fn on_object(event: On&lt;TiledEvent&lt;ObjectCreated&gt;&gt;, assets: Res&lt;Assets&lt;TiledMapAsset&gt;&gt;) {
+    let Some(object) = event.event().object(&amp;assets) else { return };
+    info!("{:?}", object.properties);
+}
+
+// After (v0.16)
+fn on_object(event: On&lt;TiledEvent&lt;ObjectCreated&gt;&gt;, objects: Query&lt;&amp;TiledProperties&gt;) {
+    let Ok(properties) = objects.get(event.origin) else { return };
+    info!("{} {:?}", properties.class, properties.properties);
+}</code></pre>
+<h4 id="dedicated-id-types"><a class="header" href="#dedicated-id-types">Dedicated ID types</a></h4>
+<p>IDs are not plain <code>u32</code> anymore. The tile ID is still a <code>tiled::TileId</code>.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Type</th><th>ID</th><th>Main APIs</th></tr>
+</thead>
+<tbody>
+<tr><td><code>TilesetId</code></td><td>tileset of a map</td><td><code>TiledTile</code>, <code>TiledTilemap</code>, <code>TiledObject::Tile</code>, <code>TiledEvent::tilemap_tileset_id()</code>, <code>TiledMapAsset::tileset()</code>, <code>TiledMapAsset::tile()</code></td></tr>
+<tr><td><code>LayerId</code></td><td>Tiled layer ID</td><td><code>TiledMapAsset::layer()</code></td></tr>
+<tr><td><code>ObjectId</code></td><td>Tiled object ID</td><td><code>TiledMapAsset::object()</code></td></tr>
+<tr><td><code>WorldMapId</code></td><td>index of a map in its <code>.world</code> file</td><td><code>TiledWorldReference</code>, <code>TiledWorldMaps::map_entity()</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Wrap the raw value to build an ID, and use <code>.0</code> or <code>u32::from()</code> to read it:</p>
+<pre><code class="language-rust ignore">// Before (v0.15)
+let layer = layer_from_map(&amp;map_asset.map, 3);
+let map_entity = world_storage.map_entity(1);
+
+// After (v0.16)
+let layer = map_asset.layer(LayerId(3));
+let map_entity = world_maps.map_entity(world_entity, WorldMapId(1));</code></pre>
+<h4 id="map-helper-functions"><a class="header" href="#map-helper-functions">Map helper functions</a></h4>
+<p>Helper functions taking a <code>tiled::Map</code> have been replaced by methods and fields of <code>TiledMapAsset</code>, which also handle tilesets only used by object templates:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Before</th><th>After</th></tr>
+</thead>
+<tbody>
+<tr><td><code>tileset_from_map(&amp;map_asset.map, id)</code></td><td><code>map_asset.tileset(id)</code></td></tr>
+<tr><td><code>tile_from_map(&amp;map_asset.map, tileset_id, tile_id)</code></td><td><code>map_asset.tile(tileset_id, tile_id)</code></td></tr>
+<tr><td><code>layer_from_map(&amp;map_asset.map, id)</code></td><td><code>map_asset.layer(id)</code>, which also finds group layers</td></tr>
+<tr><td><code>object_from_map(&amp;map_asset.map, id)</code></td><td><code>map_asset.object(id)</code></td></tr>
+<tr><td><code>tilemap_type_from_map(&amp;map_asset.map)</code></td><td><code>map_asset.map_type</code></td></tr>
+<tr><td><code>try_tilemap_type_from_map(&amp;map)</code></td><td>removed: maps with an unsupported orientation fail to load</td></tr>
+<tr><td><code>grid_size_from_map(&amp;map_asset.map)</code></td><td><code>map_asset.grid_size</code></td></tr>
+<tr><td><code>tile_size(&amp;tile)</code></td><td><code>map_asset.tile_size(&amp;tiled_tile)</code></td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="6-events"><a class="header" href="#6-events">6. Events</a></h3>
+<ul>
+<li><code>TileCreated</code> has been renamed <code>TileWithPropertiesCreated</code>: as before, it is only sent for tiles with custom properties, when the map is loaded. It no longer holds tilemap information: <code>tilemap_entity()</code> and <code>tilemap_tileset_id()</code> return <code>None</code>, use <code>tile_tileset_id()</code> instead.</li>
+<li><code>TiledEvent</code> can no longer be built nor sent from outside the crate: <code>new()</code>, <code>transmute()</code>, <code>with_*()</code> and <code>send()</code> are now private. If you sent your own <code>TiledEvent</code>s, define your own event type instead.</li>
+<li>The type parameter of <code>TiledEvent&lt;E&gt;</code> is bound by the new sealed <code>TiledEventKind</code> trait: replace <code>E: Debug + Clone + Copy + Reflect</code> by <code>E: TiledEventKind</code> in your generic code.</li>
+<li><code>TiledEvent</code> is no longer a <code>Component</code>.</li>
+</ul>
+<h3 id="7-map-layers-objects-and-images"><a class="header" href="#7-map-layers-objects-and-images">7. Map, Layers, Objects and Images</a></h3>
+<p>The <code>TiledMapStorage</code> component has been removed. Use the new <code>TiledMapLayers</code>, <code>TiledMapTiles</code> and <code>TiledMapObjects</code> system parameters, which work like a <code>Query</code> restricted to the entities of a given map:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Removed</th><th>Replacement</th></tr>
+</thead>
+<tbody>
+<tr><td><code>TiledMapStorage::layers()</code></td><td><code>TiledMapLayers&lt;Entity&gt;::iter(map)</code></td></tr>
+<tr><td><code>TiledMapStorage::objects()</code></td><td><code>TiledMapObjects&lt;Entity&gt;::iter(map)</code></td></tr>
+<tr><td><code>TiledMapStorage::tiles()</code></td><td><code>TiledMapTiles&lt;(Entity, &amp;TiledTile)&gt;::iter(map)</code></td></tr>
+<tr><td><code>TiledMapStorage::tile_entities()</code></td><td><code>TiledMapTiles&lt;(Entity, &amp;TiledTile)&gt;::iter(map)</code>, filtered on the <code>TiledTile</code></td></tr>
+<tr><td><code>TiledMapStorage::layer_entity()</code>, <code>object_entity()</code> (and other lookups by Tiled ID)</td><td>iterate over <code>TiledMapLayers</code> / <code>TiledMapObjects</code></td></tr>
+<tr><td><code>TiledMapStorage::tile_id()</code>, <code>tile()</code></td><td>the <code>TiledTile</code> component of the tile entity, and <code>TiledMapAsset::tile()</code></td></tr>
+</tbody>
+</table>
+</div>
+<pre><code class="language-rust ignore">// Before (v0.15)
+fn on_map_created(
+    event: On&lt;TiledEvent&lt;MapCreated&gt;&gt;,
+    maps: Query&lt;&amp;TiledMapStorage&gt;,
+    tiles: Query&lt;&amp;TilePos&gt;,
+) {
+    let Ok(storage) = maps.get(event.origin) else { return };
+    for (_, entities) in storage.tiles() {
+        for position in entities.iter().filter_map(|e| tiles.get(*e).ok()) { /* ... */ }
+    }
+}
+
+// After (v0.16)
+fn on_map_created(event: On&lt;TiledEvent&lt;MapCreated&gt;&gt;, tiles: TiledMapTiles&lt;&amp;TilePos&gt;) {
+    for position in tiles.iter(event.origin) { /* ... */ }
+}</code></pre>
+<p>Entities are given in no particular order. To find the tile at a given position, use the new <code>TiledTileLayerStorage</code> component of its layer.</p>
+<ul>
+<li><code>TiledMapAsset::tile_relative_position()</code> takes the <code>TiledTile</code> instead of its size, and returns an <code>Option&lt;Vec2&gt;</code> (<code>None</code> if the tile does not exist in the map). You can also use the new <code>TiledMapHelper</code> system parameter, which only needs the tile entity: <code>maps.tile_relative_position(tile_entity)</code>.</li>
+<li><code>TiledLayerParallax::parallax_x</code> and <code>parallax_y</code> are merged into <code>parallax: Vec2</code>.</li>
+<li><code>TiledObject::kind()</code> has been removed: <code>TiledObject</code> implements <code>Display</code> instead (<code>format!("{object}")</code>).</li>
+<li><code>TiledObject::center()</code>, <code>vertices()</code>, <code>line_string()</code> and <code>polygon()</code> are no longer public: use <code>TiledMapAsset::object_center()</code>, <code>object_vertices()</code>, <code>object_line_string()</code> and <code>object_polygon()</code>, which only need the object and its <code>GlobalTransform</code>.</li>
+<li><code>TiledObject::Text::font_size</code> is now a <code>f32</code>.</li>
+<li><code>TiledObject::from_object_data()</code> now takes the <code>TiledMapAsset</code> as first argument.</li>
+<li><code>TiledObjectVisualOf</code> no longer requires a <code>Sprite</code>, and is also inserted on the <code>TiledObjectTextBox</code> of text objects: do not assume that a visual entity has a <code>Sprite</code>.</li>
+<li><code>TiledName::matches()</code> has been removed: use <code>filter.matches(&amp;name.0)</code> instead.</li>
+</ul>
+<p><code>TiledObject::Tile</code> now holds the tile it references. Use <code>TiledMapAsset::tileset()</code> and <code>TiledMapAsset::tile()</code> to read the corresponding Tiled data: its tileset can be only used by a template, which is not part of the <code>tiled::Map</code> tilesets.</p>
+<pre><code class="language-rust ignore">TiledObject::Tile {
+    width: f32,
+    height: f32,
+    tileset_id: TilesetId,
+    tile_id: tiled::TileId,
+    flip_x: bool,
+    flip_y: bool,
+}</code></pre>
+<p><code>TiledImage</code> now holds all the image data and is not <code>Copy</code> anymore. To change the image, modify this component instead of the <code>Sprite</code>.</p>
+<pre><code class="language-rust ignore">pub struct TiledImage {
+    pub image: Handle&lt;Image&gt;,
+    pub base_position: Vec2,
+    pub base_size: Vec2,
+    pub repeat_x: bool,
+    pub repeat_y: bool,
+}</code></pre>
+<h3 id="8-worlds"><a class="header" href="#8-worlds">8. Worlds</a></h3>
+<p>Tiled worlds (<code>.world</code> files) support is now behind the <code>world</code> feature. It is enabled by default: if you disable default features and use Tiled worlds, enable it explicitly.</p>
+<pre><code class="language-toml">bevy_ecs_tiled = { version = "0.16", default-features = false, features = ["render", "world"] }
+</code></pre>
+<p>Without it, worlds related APIs do not exist: <code>TiledWorld</code>, <code>RespawnTiledWorld</code>, <code>TiledWorldAsset</code>, <code>TiledWorldStreaming</code>, <code>TiledWorldReference</code>, <code>TiledWorldMaps</code>, <code>WorldMapId</code>, <code>TiledWorldLoaderError</code>, <code>TiledEvent&lt;WorldCreated&gt;</code>, <code>TiledEvent::world_entity()</code>, <code>world_asset()</code>, <code>world()</code> and <code>TiledDebugWorldStreamingPlugin</code>.</p>
+<p>The <code>TiledWorldStorage</code> component has been removed. Each map of a world now has a <code>TiledWorldReference</code> component, giving its world entity and its <code>WorldMapId</code>, and the new <code>TiledWorldMaps</code> system parameter works like a <code>Query</code> restricted to the spawned maps of a given world:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Removed</th><th>Replacement</th></tr>
+</thead>
+<tbody>
+<tr><td><code>TiledWorldStorage::maps()</code></td><td><code>TiledWorldMaps&lt;(Entity, &amp;TiledWorldReference)&gt;::iter(world)</code></td></tr>
+<tr><td><code>TiledWorldStorage::map_entity(id)</code></td><td><code>TiledWorldMaps::map_entity(world, id)</code></td></tr>
+<tr><td><code>TiledWorldStorage::map_id(entity)</code></td><td>the <code>TiledWorldReference</code> component of the map entity</td></tr>
+</tbody>
+</table>
+</div>
+<pre><code class="language-rust ignore">// Before (v0.15)
+fn system(worlds: Query&lt;&amp;TiledWorldStorage&gt;) {
+    for storage in worlds.iter() {
+        for (map_id, map_entity) in storage.maps() { /* ... */ }
+    }
+}
+
+// After (v0.16)
+fn system(worlds: Query&lt;Entity, With&lt;TiledWorld&gt;&gt;, maps: TiledWorldMaps&lt;(Entity, &amp;TiledWorldReference)&gt;) {
+    for world in worlds.iter() {
+        for (map_entity, world_map) in maps.iter(world) { /* world_map.map_id() */ }
+    }
+}</code></pre>
+<p><code>TiledWorldChunking</code> has been renamed <code>TiledWorldStreaming</code>, to avoid confusion with physics colliders chunks and infinite maps chunks, and is now an enum:</p>
+<pre><code class="language-rust ignore">// Before
+TiledWorldChunking(None)
+let area: Option&lt;Vec2&gt; = world_chunking.0;
+
+// After
+TiledWorldStreaming::Disabled
+let area: Option&lt;Vec2&gt; = world_streaming.area();</code></pre>
+<p><code>TiledWorldStreaming::new()</code> works as <code>TiledWorldChunking::new()</code> did. Related renames:</p>
+<ul>
+<li><code>TiledPostUpdateSystems::HandleWorldChunking</code> is now <code>HandleWorldStreaming</code>,</li>
+<li><code>TiledDebugWorldChunkPlugin</code> and <code>TiledDebugWorldChunkConfig</code> are now <code>TiledDebugWorldStreamingPlugin</code> and <code>TiledDebugWorldStreamingConfig</code>, whose <code>world_chunk_color</code> field is now <code>streaming_area_color</code>,</li>
+<li>the <code>world_chunking</code> example is now <code>world_streaming</code>.</li>
+</ul>
+<p>If you set <code>TiledWorldChunking</code> from Tiled custom properties, export your types again and use <code>TiledWorldStreaming</code> instead.</p>
+<h3 id="9-physics"><a class="header" href="#9-physics">9. Physics</a></h3>
+<ul>
+<li><code>TiledPreUpdateSystems::SpawnPhysicsColliders</code> has been removed: use <code>TiledPostUpdateSystems::SyncPhysics</code>.</li>
+<li>Colliders are spawned again when their source changes: you can receive <code>TiledEvent&lt;ColliderCreated&gt;</code> several times for the same source.</li>
+<li>Modifying <code>TiledPhysicsSettings</code> no longer respawns the map or the world: only physics colliders are spawned again.</li>
+<li><code>TiledEvent&lt;ColliderCreated&gt;::tiles()</code> has been removed: query the <code>TiledTile</code> children of the layer instead (<code>TiledTile</code>, <code>TilePos</code>, <code>TileFlip</code>).</li>
+<li><code>ColliderCreated::collider_of</code> and <code>ColliderCreated::new()</code> have been removed: the event origin is the collider entity. Use <code>TiledEvent::source_entity()</code>, or the <code>TiledColliderOf</code> component of the collider entity, to retrieve its source.</li>
+<li>Colliders of tiles layers now take tiles flips into account, which can change their shape.</li>
+<li><code>simplify_geometry()</code> has been removed: use <a href="https://docs.rs/geo/latest/geo/algorithm/bool_ops/fn.unary_union.html"><code>geo::unary_union</code></a> to merge polygons. The <code>TiledPhysicsSettings::simplify_geometry</code> setting is unchanged.</li>
+</ul>
+<h4 id="collider-strategy"><a class="header" href="#collider-strategy">Collider strategy</a></h4>
+<p>How colliders are created from Tiled shapes is no longer selected by the physics backend: <code>TiledPhysicsAvianBackend</code> and <code>TiledPhysicsRapierBackend</code> are now unit structs, and their variants moved to the new <code>TiledColliderStrategy</code> enum, set in <code>TiledPhysicsSettings</code>:</p>
+<pre><code class="language-rust ignore">// Before
+TiledPhysicsSettings::&lt;TiledPhysicsAvianBackend&gt; {
+    backend: TiledPhysicsAvianBackend::Triangulation,
+    ..default()
+}
+
+// After
+TiledPhysicsSettings::&lt;TiledPhysicsAvianBackend&gt; {
+    collider_strategy: TiledColliderStrategy::Triangulation,
+    ..default()
+}</code></pre>
+<p><code>TiledColliderStrategy</code> is also a component: insert it on a layer or an object entity to override the map strategy for this layer or object only.</p>
+<h4 id="selecting-which-layers-and-objects-get-colliders"><a class="header" href="#selecting-which-layers-and-objects-get-colliders">Selecting which layers and objects get colliders</a></h4>
+<p>The name filters of <code>TiledPhysicsSettings</code> have been replaced by the new <code>TiledColliderStrategy::Disabled</code> variant, which disables colliders for a whole map, or for a given layer or object:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Before</th><th>After</th></tr>
+</thead>
+<tbody>
+<tr><td><code>objects_layer_filter</code></td><td>Insert <code>TiledColliderStrategy::Disabled</code> on the objects layers which should not get colliders</td></tr>
+<tr><td><code>objects_filter</code></td><td>Insert <code>TiledColliderStrategy::Disabled</code> on the objects which should not get colliders</td></tr>
+<tr><td><code>tiles_layer_filter</code></td><td>Insert <code>TiledColliderStrategy::Disabled</code> on the tiles layers which should not get colliders</td></tr>
+<tr><td><code>tiles_objects_filter</code></td><td>Renamed <code>tile_shapes_filter</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>To keep selecting them by name, insert the component from an observer of <code>TiledEvent&lt;LayerCreated&gt;</code> or <code>TiledEvent&lt;ObjectCreated&gt;</code>, or set it from Tiled using a custom property:</p>
+<pre><code class="language-rust ignore">// Before
+TiledPhysicsSettings::&lt;TiledPhysicsAvianBackend&gt; {
+    tiles_layer_filter: TiledFilter::from(["collision"]),
+    ..default()
+}
+
+// After: disable colliders for the whole map, but enable them for the layer named "collision"
+commands
+    .spawn((
+        TiledMap(asset_server.load("map.tmx")),
+        TiledPhysicsSettings::&lt;TiledPhysicsAvianBackend&gt; {
+            collider_strategy: TiledColliderStrategy::Disabled,
+            ..default()
+        },
+    ))
+    .observe(
+        |layer_created: On&lt;TiledEvent&lt;LayerCreated&gt;&gt;,
+         layers_query: Query&lt;&amp;TiledName, With&lt;TiledLayer&gt;&gt;,
+         mut commands: Commands| {
+            let layer = layer_created.origin;
+            if layers_query.get(layer).is_ok_and(|name| name.0 == "collision") {
+                commands.entity(layer).insert(TiledColliderStrategy::Polyline);
+            }
+        },
+    );</code></pre>
+<h4 id="colliders-entities"><a class="header" href="#colliders-entities">Colliders entities</a></h4>
+<ul>
+<li>The first collider of a tiles layer or an object is always inserted on the layer or object entity itself. This was already the case with the provided backends. The only exception is when the colliders of a tiles layer are <a href="../guides/physics.html#colliders-chunks">split in chunks</a>, a new opt-in feature: the first collider of each chunk is then inserted on a <code>TiledColliderChunk</code> entity, child of the layer.</li>
+<li>Additional colliders (<code>TiledColliderStrategy::LineStrip</code>, or geometry simplification disabled) are children of this entity, named <code>TiledCollider(&lt;index&gt;)</code> instead of <code>Avian[...]</code> / <code>Rapier[...]</code>. They now also have the <code>TiledColliderOf</code>, <code>TiledColliderSource</code> and <code>TiledColliderPolygons</code> components, and a <code>TiledEvent&lt;ColliderCreated&gt;</code> is sent for each of them.</li>
+<li><code>TiledColliderPolygons</code> holds the geometry its collider was created from, instead of all the polygons of the layer or object.</li>
+</ul>
+<h4 id="custom-physics-backends"><a class="header" href="#custom-physics-backends">Custom physics backends</a></h4>
+<p>The <code>TiledPhysicsBackend</code> trait no longer spawns entities: it only creates the colliders for a given geometry, and <code>bevy_ecs_tiled</code> inserts them on the right entities and removes them when their source changes.</p>
+<pre><code class="language-rust ignore">// Before
+impl TiledPhysicsBackend for MyBackend {
+    fn spawn_colliders(
+        &amp;self,
+        commands: &amp;mut Commands,
+        source: TiledColliderSource,
+        origin: Entity,
+        multi_polygons_list: Vec&lt;geo::MultiPolygon&lt;f32&gt;&gt;,
+    ) -&gt; Option&lt;Entity&gt; {
+        /* spawn an entity with a collider */
+    }
+}
+
+// After
+impl TiledPhysicsBackend for MyBackend {
+    // The component(s) making a collider
+    type Collider = MyCollider;
+
+    fn colliders(
+        &amp;self,
+        strategy: TiledColliderStrategy,
+        source: TiledColliderSource,
+        geometry: &amp;TiledColliderGeometry,
+    ) -&gt; Vec&lt;Self::Collider&gt; {
+        /* return the collider(s) for this geometry */
+    }
+}</code></pre>
+<ul>
+<li><code>colliders()</code> is called once for each geometry: a single time if geometry simplification is enabled (the default).</li>
+<li>The geometry is a <code>TiledColliderGeometry</code>: its <code>polygons</code> replace the former <code>MultiPolygon</code>, and its <code>outline()</code> gives the segments to use for colliders made of segments (it does not include the edges shared with adjacent <a href="../guides/physics.html#colliders-chunks">colliders chunks</a>).</li>
+<li>The new <code>physics::geometry::collider_shapes()</code> helper converts a geometry into <code>TiledColliderShape</code>s according to the requested strategy.</li>
+<li>If you need access to the <code>World</code> to build your collider (eg. to add an asset), use component hooks or observers on your collider component: see the <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/physics_custom.rs"><code>physics_custom</code> example</a>.</li>
+<li><code>multi_polygon_as_line_strings()</code> now returns an iterator over borrowed line strings instead of a <code>Vec</code>.</li>
+</ul>
+<h3 id="10-system-sets"><a class="header" href="#10-system-sets">10. System Sets</a></h3>
+<p><code>TiledPostUpdateSystems</code> has three new variants, which run in this order after <code>HandleMapAssetEvents</code> and before Bevy transform and visibility propagation: <code>SyncTiles</code>, <code>SyncRender</code> and <code>SyncPhysics</code>.
+If you order your systems against map rendering or colliders, use these sets.</p>
+<p><code>TiledUpdateSystems::UpdateTiledImagePositionAndSize</code> has been removed: repeated images position and size are updated during <code>TiledPostUpdateSystems::SyncRender</code>.</p>
+<h3 id="11-features"><a class="header" href="#11-features">11. Features</a></h3>
+<h4 id="custom-properties"><a class="header" href="#custom-properties">Custom properties</a></h4>
+<p>With the <code>user_properties</code> feature:</p>
+<ul>
+<li>tile objects now inherit the custom properties of their tile, as in the Tiled editor. Their own properties take precedence,</li>
+<li>tile properties are also inserted on tiles and tile objects spawned after the map has been loaded. Object references in these properties cannot be resolved: they are set to <code>Entity::PLACEHOLDER</code>.</li>
+</ul>
+<h4 id="running-without-the-render-feature"><a class="header" href="#running-without-the-render-feature">Running without the <code>render</code> feature</a></h4>
+<p>Without the <code>render</code> feature, nothing is displayed and images and texture atlas layouts are no longer loaded, so a map can be loaded on a headless server. It only requires this minimal set of plugins:</p>
+<pre><code class="language-rust ignore">App::new().add_plugins((
+    MinimalPlugins,
+    AssetPlugin::default(),
+    TiledPlugin::default(),
+));</code></pre>
+<p>You can remove <code>ImagePlugin</code> and <code>TextureAtlasPlugin</code> if you only added them for <code>bevy_ecs_tiled</code>.</p>
+<p>The <code>TiledObject</code> and <code>TiledImage</code> entities are still spawned with their data, including the content of text objects, but the <code>render</code> module does not exist: objects have no visual, image layers have no <code>Sprite</code>, and <code>TiledImage::image</code>, <code>TiledAnimation</code>, <code>TiledTilemap*</code> and <code>TiledObjectVisual*</code> / <code>TiledObjectText*</code> do not exist. If you displayed them without the <code>render</code> feature, enable it.</p>
+<p>The <code>text</code> and <code>debug</code> features now enable the <code>render</code> feature: disable them too to run without it.</p>
+<h3 id="12-non-exhaustive-enums"><a class="header" href="#12-non-exhaustive-enums">12. Non-Exhaustive Enums</a></h3>
+<p><code>TiledObject</code> and the <code>TiledPreUpdateSystems</code>, <code>TiledUpdateSystems</code> and <code>TiledPostUpdateSystems</code> system sets are now <code>#[non_exhaustive]</code>, so new variants can be added without a breaking change: add a wildcard arm (<code>_ =&gt; ...</code>) when matching on them.</p>
+<h3 id="13-immutable-components-and-private-fields"><a class="header" href="#13-immutable-components-and-private-fields">13. Immutable Components and Private Fields</a></h3>
+<p>The following components are now <a href="https://docs.rs/bevy/latest/bevy/ecs/component/trait.Component.html#immutable-components">immutable</a>: they cannot be queried with <code>&amp;mut</code> nor modified with <code>get_mut()</code>. They are set by <code>bevy_ecs_tiled</code> and are not meant to be modified; if you really need to, insert them again.</p>
+<p><code>TiledMapReference</code>, <code>TiledLayer</code>, <code>TiledTilemap</code>, <code>TiledName</code>, <code>TiledColliderSource</code> and <code>TiledColliderPolygons</code>.</p>
+<p>Some fields are no longer public:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Before</th><th>After</th></tr>
+</thead>
+<tbody>
+<tr><td><code>map_reference.0</code></td><td><code>map_reference.entity()</code> or <code>*map_reference</code></td></tr>
+<tr><td><code>animation.frames</code> (<code>TiledAnimation</code>)</td><td><code>animation.frames()</code></td></tr>
+</tbody>
+</table>
+</div>
+<p><code>TiledAnimation::current_frame</code> and <code>timer</code> are internal state and are no longer accessible.</p>
+<h2 id="resources"><a class="header" href="#resources">Resources</a></h2>
+<ul>
+<li><a href="../index.html">Main Documentation</a></li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/">API Reference</a></li>
+<li><a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/examples/README.md">Examples</a></li>
+<li><a href="https://github.com/adrien-bon/bevy_ecs_tiled/tree/main/CHANGELOG.md">Full CHANGELOG</a></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../guides/debug.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="../migrations/v0_15.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../guides/debug.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="../migrations/v0_15.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
+
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-609e4cb8.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid-58c48a6a.min.js"></script>
+        <script src="../mermaid-init-53b67c53.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

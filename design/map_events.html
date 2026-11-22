@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-b86f2860.js";
+            window.path_to_searchindex_js = "../searchindex-ba955552.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-53cb13dc.js"></script>
+        <script src="../toc-a898eaa9.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -184,7 +184,7 @@
 </ul>
 <hr>
 <h2 id="tiledevente"><a class="header" href="#tiledevente"><code>TiledEvent&lt;E&gt;</code></a></h2>
-<p>All <code>bevy_ecs_tiled</code> events are encapsulated in the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TiledEvent.html"><code>TiledEvent&lt;E&gt;</code></a> structure.
+<p>All <code>bevy_ecs_tiled</code> events are encapsulated in the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TiledEvent.html"><code>TiledEvent&lt;E&gt;</code></a> structure.
 This provides more context for each event, including the origin of each particular event <code>E</code> and helper methods to access Tiled data.</p>
 <p>For example, an event related to an object will contain not only information to identify the object itself, but also the layer and the map containing it.</p>
 <pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
@@ -212,20 +212,20 @@ fn handle_event(
 <ul>
 <li><strong>For maps and worlds:</strong>
 <ul>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.MapCreated.html"><code>TiledEvent&lt;MapCreated&gt;</code></a>:<br>Emitted once a map has finished loading. Contains information about the map entity.<br>(If loading a world, this is called after the world event.)</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.LayerCreated.html"><code>TiledEvent&lt;LayerCreated&gt;</code></a>:<br>Emitted for each layer after the map is loaded. Contains information about the layer entity.</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TilemapCreated.html"><code>TiledEvent&lt;TilemapCreated&gt;</code></a>:<br>Emitted for each tilemap, for every tile layer, after the map is loaded. Contains information about the tilemap entity.</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.TileCreated.html"><code>TiledEvent&lt;TileCreated&gt;</code></a>:<br>Emitted for each tile after the map is loaded. Contains information about the tile entity. Note this event is only fired for tiles using custom properties.</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.ObjectCreated.html"><code>TiledEvent&lt;ObjectCreated&gt;</code></a>:<br>Emitted for each object after the map is loaded. Contains information about the object entity.</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.MapCreated.html"><code>TiledEvent&lt;MapCreated&gt;</code></a>:<br>Emitted once a map has finished loading. Contains information about the map entity.<br>(If loading a world, this is called after the world event.)</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.LayerCreated.html"><code>TiledEvent&lt;LayerCreated&gt;</code></a>:<br>Emitted for each layer after the map is loaded. Contains information about the layer entity.</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TilemapCreated.html"><code>TiledEvent&lt;TilemapCreated&gt;</code></a>:<br>Emitted each time a tilemap is spawned, see <a href="#tilemapcreated-is-a-rendering-event">below</a>. Contains information about the tilemap entity.</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TileWithPropertiesCreated.html"><code>TiledEvent&lt;TileWithPropertiesCreated&gt;</code></a>:<br>Emitted after the map is loaded for each tile which has custom properties: tiles without any custom property do not get this event. Contains information about the tile entity.</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.ObjectCreated.html"><code>TiledEvent&lt;ObjectCreated&gt;</code></a>:<br>Emitted for each object after the map is loaded. Contains information about the object entity.</li>
 </ul>
 </li>
 <li><strong>For worlds only:</strong>
 <ul>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/tiled/event/struct.WorldCreated.html"><code>TiledEvent&lt;WorldCreated&gt;</code></a>:<br>Emitted once the world has finished loading. Contains information about the world entity.</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.WorldCreated.html"><code>TiledEvent&lt;WorldCreated&gt;</code></a>:<br>Emitted once the world has finished loading. Contains information about the world entity.</li>
 </ul>
 </li>
 </ul>
-<p>All these events are sent <strong>after</strong> the map or world is fully loaded and all components (including those from user properties) have been inserted.</p>
+<p>Except for <code>TilemapCreated</code>, all these events are sent <strong>after</strong> the map or world is fully loaded and all components (including those from user properties) have been inserted.</p>
 <hr>
 <h2 id="how-to-use-map-events"><a class="header" href="#how-to-use-map-events">How to Use Map Events</a></h2>
 <p>You can listen to these events in two ways:</p>
@@ -271,9 +271,40 @@ fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
         });
 }
 <span class="boring">}</span></code></pre>
+<h3 id="events-bubble-up-beware-of-global-observers"><a class="header" href="#events-bubble-up-beware-of-global-observers">Events Bubble Up: Beware of Global Observers</a></h3>
+<p>Observed events bubble up the entity hierarchy: an observer attached to a world entity also receives the events of all its maps.
+While an event bubbles up, <code>TiledEvent::entity</code> is the entity currently observing it, whereas <code>TiledEvent::origin</code> always is the entity the event was sent for (eg. the created layer).</p>
+<p>A <strong>global observer</strong> (ie. added with <code>App::add_observer</code>) runs once <strong>for each entity the event bubbles through</strong>: it usually receives the same event several times.
+Use <code>TiledEvent::is_original()</code> to only handle it once:</p>
+<pre class="playground"><code class="language-rust no_run">use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn main() {
+    App::new().add_observer(on_object_created);
+}
+
+fn on_object_created(object_created: On&lt;TiledEvent&lt;ObjectCreated&gt;&gt;) {
+    // Skip the copies of this event received while it bubbles up the hierarchy
+    if !object_created.is_original() {
+        return;
+    }
+    info!("Object {} created", object_created.origin);
+}</code></pre>
+<p>If you want to handle all the events of a given kind, whatever the map, a <code>MessageReader</code> is usually simpler: each event is read exactly once.</p>
 <hr>
 <h2 id="when-are-events-sent"><a class="header" href="#when-are-events-sent">When Are Events Sent?</a></h2>
-<p>All these events are sent <strong>after</strong> the map or world is actually loaded and their components have been inserted, including those coming from user properties.<br>This means you can safely query for components and child entities in your event handlers.</p>
+<p>All these events are sent <strong>after</strong> the map or world is actually loaded and all its Tiled data entities (layers, tiles, objects, images) have been spawned, with their components inserted, including those coming from user properties.<br>This means you can safely query for components and child entities in your event handlers: for instance, when receiving a <code>LayerCreated</code> event, all the other layers of the map already exist.</p>
+<p>Events are sent in the following order: <code>MapCreated</code>, then <code>LayerCreated</code>, <code>TileWithPropertiesCreated</code> and finally <code>ObjectCreated</code>.</p>
+<p>Note that rendering components and physics colliders are derived from Tiled data later in the frame, during <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/sets/enum.TiledPostUpdateSystems.html"><code>TiledPostUpdateSystems</code></a>: they do not exist yet when these events are sent.
+If you need them, use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.ColliderCreated.html"><code>ColliderCreated</code></a> and <code>TilemapCreated</code> events instead.</p>
+<h3 id="tilemapcreated-is-a-rendering-event"><a class="header" href="#tilemapcreated-is-a-rendering-event"><code>TilemapCreated</code> Is a Rendering Event</a></h3>
+<p>Tilemaps are rendering entities derived from tiles (see <a href="entities_hierarchy.html">Entities hierarchy</a>).
+As such, <code>TilemapCreated</code> is sent whenever a tilemap is spawned, during <code>TiledPostUpdateSystems::SyncRender</code>:</p>
+<ul>
+<li>when the map is loaded, once for each layer and tileset combination,</li>
+<li>later on, when a tile using a new tileset is added to a layer.</li>
+</ul>
+<p>It is only sent when the <code>render</code> feature is enabled.</p>
 <hr>
 <h2 id="dedicated-example"><a class="header" href="#dedicated-example">Dedicated Example</a></h2>
 <p>A <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/map_events.rs">dedicated example</a> is available to demonstrate how to use these events in practice.</p>

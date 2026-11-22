@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-b86f2860.js";
+            window.path_to_searchindex_js = "../searchindex-ba955552.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-53cb13dc.js"></script>
+        <script src="../toc-a898eaa9.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -204,7 +204,7 @@ You can also enable only the <code>physics</code> feature and provide your own b
 <p><strong>Example: Using the Avian backend</strong></p>
 <pre><code class="language-toml">[dependencies]
 bevy = "0.20"
-bevy_ecs_tiled = { version = "0.15", features = ["avian"] }
+bevy_ecs_tiled = { version = "0.16", features = ["avian"] }
 </code></pre>
 <blockquote>
 <p><strong>Note:</strong>
@@ -239,21 +239,31 @@ fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
     commands.spawn(TiledMap(asset_server.load("map.tmx")));
 }</code></pre>
 <p>Colliders will be spawned for every object or tiles colliders in your map automatically.</p>
+<p>Colliders are derived from the map entities: if you add, modify or remove a tile or an object after the map has been loaded, the corresponding colliders are automatically spawned again.</p>
 <p>We provide two <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/trait.TiledPhysicsBackend.html"><code>TiledPhysicsBackend</code></a> that can be used out of the box:</p>
 <ul>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/avian/enum.TiledPhysicsAvianBackend.html"><code>TiledPhysicsAvianBackend</code></a>: for the Avian 2D physics engine</li>
-<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/rapier/enum.TiledPhysicsRapierBackend.html"><code>TiledPhysicsRapierBackend</code></a>: for the Rapier 2D physics engine</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/avian/struct.TiledPhysicsAvianBackend.html"><code>TiledPhysicsAvianBackend</code></a>: for the Avian 2D physics engine</li>
+<li><a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/rapier/struct.TiledPhysicsRapierBackend.html"><code>TiledPhysicsRapierBackend</code></a>: for the Rapier 2D physics engine</li>
 </ul>
 <blockquote>
 <p><strong>Note:</strong>
 You can actually use several physics backends at the same time if you register the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/struct.TiledPhysicsPlugin.html"><code>TiledPhysicsPlugin&lt;T&gt;</code></a> plugin multiple times, but with different <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/trait.TiledPhysicsBackend.html"><code>TiledPhysicsBackend</code></a>.</p>
 </blockquote>
 <hr>
-<h2 id="filtering-which-objects-get-colliders"><a class="header" href="#filtering-which-objects-get-colliders">Filtering Which Objects Get Colliders</a></h2>
-<p>By default, colliders are spawned for <strong>all</strong> objects (regular objects and tile colliders).
-If you want more control, use the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/settings/struct.TiledPhysicsSettings.html"><code>TiledPhysicsSettings</code></a> component.</p>
-<p>This component lets you filter which objects/layers should have colliders, based on their names.</p>
-<p><strong>Example: Only spawn colliders for certain objects/layers</strong></p>
+<h2 id="selecting-which-layers-and-objects-get-colliders"><a class="header" href="#selecting-which-layers-and-objects-get-colliders">Selecting Which Layers and Objects Get Colliders</a></h2>
+<p>By default, colliders are spawned for <strong>all</strong> tiles layers and objects.
+To select which ones get colliders, use <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderStrategy.html#variant.Disabled"><code>TiledColliderStrategy::Disabled</code></a>, the same way as any other <a href="#collider-strategy">collider strategy</a>:</p>
+<ul>
+<li>set it in <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/settings/struct.TiledPhysicsSettings.html"><code>TiledPhysicsSettings</code></a> to disable colliders for the whole map,</li>
+<li>insert it as a component on a layer or an object entity to disable colliders for this layer or object only,</li>
+<li>insert it as a component on a tile entity to exclude this tile from the colliders of its layer. On a tile, other strategies have no effect: the tile uses the strategy of its layer.
+Since tiles inherit the custom properties of their tile in the tileset, adding a <code>TiledColliderStrategy</code> custom property to a tile in the Tiled tileset editor (with the <code>user_properties</code> feature) excludes all the tiles of this kind.</li>
+</ul>
+<p>An object uses its own strategy if it has one, otherwise the one of its layer, otherwise the one of the map.
+For instance, you can disable colliders for the whole map and enable them for a few layers or objects only, by inserting another strategy on them.
+Colliders are spawned again, or despawned, when this component is inserted, modified or removed.</p>
+<p>Since it is a regular component, it can be set from Tiled using a custom property (see the <a href="properties.html">custom properties guide</a>), or inserted from an observer, for instance to select layers or objects by name:</p>
+<p><strong>Example: Only spawn colliders for certain layers and objects</strong></p>
 <pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
@@ -262,14 +272,53 @@ use bevy_ecs_tiled::prelude::*;
 
 fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
     commands.spawn(Camera2d);
+    commands
+        .spawn((
+            TiledMap(asset_server.load("finite.tmx")),
+            // Do not create colliders by default...
+            TiledPhysicsSettings::&lt;TiledPhysicsAvianBackend&gt; {
+                collider_strategy: TiledColliderStrategy::Disabled,
+                ..default()
+            },
+        ))
+        // ... but create them for the layer named 'collision'
+        .observe(
+            |layer_created: On&lt;TiledEvent&lt;LayerCreated&gt;&gt;,
+             layers_query: Query&lt;&amp;TiledName, With&lt;TiledLayer&gt;&gt;,
+             mut commands: Commands| {
+                let layer = layer_created.origin;
+                if layers_query.get(layer).is_ok_and(|name| name.0 == "collision") {
+                    commands.entity(layer).insert(TiledColliderStrategy::Polyline);
+                }
+            },
+        )
+        // ... and for the objects named 'hitbox'
+        .observe(
+            |object_created: On&lt;TiledEvent&lt;ObjectCreated&gt;&gt;,
+             objects_query: Query&lt;&amp;TiledName, With&lt;TiledObject&gt;&gt;,
+             mut commands: Commands| {
+                let object = object_created.origin;
+                if objects_query.get(object).is_ok_and(|name| name.0 == "hitbox") {
+                    commands.entity(object).insert(TiledColliderStrategy::Polyline);
+                }
+            },
+        );
+}
+<span class="boring">}</span></code></pre>
+<p>The collision shapes of tiles, defined in the Tiled tileset editor, are not entities: to only use some of them, filter them by name using <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/settings/struct.TiledPhysicsSettings.html#structfield.tile_shapes_filter"><code>TiledPhysicsSettings::tile_shapes_filter</code></a>.
+It applies to the tiles of tiles layers as well as to tile objects:</p>
+<pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use bevy::prelude::*;
+use avian2d::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
     commands.spawn((
         TiledMap(asset_server.load("finite.tmx")),
-        // Restrict colliders to:
-        // - objects named 'hitbox' or 'collision'
-        // - tile colliders in a layer named 'collision'
+        // Only use the tiles collision shapes named 'collision'
         TiledPhysicsSettings::&lt;TiledPhysicsAvianBackend&gt; {
-            objects_filter: TiledFilter::Names(vec!["hitbox".into(), "collision".into()]),
-            tiles_layer_filter: TiledFilter::Names(vec!["collision".into()]),
+            tile_shapes_filter: TiledFilter::from(["collision"]),
             ..default()
         },
     ));
@@ -280,25 +329,128 @@ fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
 <p>Tiled uses simple shapes (rectangles, ellipses, polygons) to define colliders.
 To reduce the number of physics colliders and improve performance, <code>bevy_ecs_tiled</code> tries to merge these simple shape colliders into a single complex one whenever possible.</p>
 <ul>
-<li><strong>Tiles:</strong> Merging is actually performed at the tilemap level.
-Eventhough you can use several shapes to define a tile’s collider, these shape will be merged into a single collider and all tile colliders for a given tilemap will also be merged together.
-The collider entity is spawned at the tilemap level.</li>
+<li><strong>Tiles:</strong> Merging is actually performed at the tiles layer level.
+Eventhough you can use several shapes to define a tile’s collider, these shape will be merged into a single collider and all tile colliders for a given tiles layer will also be merged together.
+The collider is inserted on the tiles layer entity, and spawned again whenever a tile of this layer is added, modified (including its <code>TileFlip</code>) or removed.
+Colliders of large layers can also be <a href="#colliders-chunks">split in chunks</a>.
+Tiles flips (horizontal, vertical and diagonal) are applied to their collider, the same way they are applied to their rendering.</li>
 <li><strong>Regular objects:</strong> If an object references a tile, it will inherit that tile’s collider and if the tile has several shapes, they will be merged.
-The collider entity is spawned at the object level and each object always gets its own collider.</li>
+The collider is inserted on the object entity and each object always gets its own collider.</li>
 </ul>
-<blockquote>
-<p><strong>Note:</strong>
-Both <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/avian/enum.TiledPhysicsAvianBackend.html"><code>TiledPhysicsAvianBackend</code></a> and <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/rapier/enum.TiledPhysicsRapierBackend.html"><code>TiledPhysicsRapierBackend</code></a> provide several strategies to aggregate colliders. You can see their respective documentation for more information.</p>
-</blockquote>
+<p>The first collider of a tiles layer or an object is inserted on the layer or object entity itself, so you can directly add other physics components to it.
+If there are several colliders (see below), the next ones are spawned as children of this entity.</p>
+<hr>
+<h2 id="collider-strategy"><a class="header" href="#collider-strategy">Collider Strategy</a></h2>
+<p>The <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderStrategy.html"><code>TiledColliderStrategy</code></a> selects how physics colliders are created from Tiled shapes:</p>
+<ul>
+<li><code>Polyline</code> (default): a single collider made of all the segments outlining the shapes. Bodies can end up inside of the shape.</li>
+<li><code>Triangulation</code>: shapes are triangulated and all triangles are aggregated in a single “solid” compound collider.</li>
+<li><code>LineStrip</code>: one collider for each ring outlining the shapes, so there can be several colliders.</li>
+<li><code>Disabled</code>: no collider at all (see <a href="#selecting-which-layers-and-objects-get-colliders">above</a>).</li>
+</ul>
+<p>The strategy is set for the whole map, in <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/settings/struct.TiledPhysicsSettings.html"><code>TiledPhysicsSettings</code></a>:</p>
+<pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
+    commands.spawn((
+        TiledMap(asset_server.load("map.tmx")),
+        TiledPhysicsSettings::&lt;TiledPhysicsAvianBackend&gt; {
+            collider_strategy: TiledColliderStrategy::Triangulation,
+            ..default()
+        },
+    ));
+}
+<span class="boring">}</span></code></pre>
+<p>It can be overridden for a given layer or object: <code>TiledColliderStrategy</code> is also a component, which you can insert on a layer or an object entity.
+An object uses its own strategy if it has one, otherwise the one of its layer, otherwise the one of the map.</p>
+<pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+// Use line strips for the tiles layer named "walls"
+fn on_layer_created(
+    layer_created: On&lt;TiledEvent&lt;LayerCreated&gt;&gt;,
+    layers_query: Query&lt;&amp;TiledName, With&lt;TiledLayer&gt;&gt;,
+    mut commands: Commands,
+) {
+    let layer = layer_created.origin;
+    if layers_query.get(layer).is_ok_and(|name| name.0 == "walls") {
+        commands.entity(layer).insert(TiledColliderStrategy::LineStrip);
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>Colliders are spawned again when this component is inserted, modified or removed.
+With the <code>user_properties</code> feature, you can also directly add it from Tiled as a <a href="properties.html">custom property</a> of the layer or object.</p>
+<hr>
+<h2 id="colliders-chunks"><a class="header" href="#colliders-chunks">Colliders Chunks</a></h2>
+<p>By default, all the tiles of a layer are merged in a single set of colliders.
+This is the best option for maps which are not modified once loaded, but it means that all the colliders of the layer are computed again whenever one of its tiles is added, modified or removed, which can take a while on large maps.</p>
+<p>If you <a href="dynamic_maps.html">modify your maps at runtime</a>, you can split the colliders of tiles layers in chunks: each chunk of tiles gets its own colliders and only the chunks whose tiles are modified are computed again.</p>
+<p>The chunk size, in tiles, is set for all the tiles layers of the map in <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/settings/struct.TiledPhysicsSettings.html"><code>TiledPhysicsSettings</code></a>:</p>
+<pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
+    commands.spawn((
+        TiledMap(asset_server.load("map.tmx")),
+        TiledPhysicsSettings::&lt;TiledPhysicsAvianBackend&gt; {
+            // Split tiles layers colliders in chunks of 32x32 tiles
+            tiles_chunk_size: TiledColliderChunkSize::Size(UVec2::splat(32)),
+            ..default()
+        },
+    ));
+}
+<span class="boring">}</span></code></pre>
+<p>It can be overridden for a given tiles layer by inserting a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderChunkSize.html"><code>TiledColliderChunkSize</code></a> component on the layer entity, either to use another size or to disable chunking for this layer (<code>TiledColliderChunkSize::Disabled</code>).
+You can also only use this component, to enable chunking for a single layer of the map:</p>
+<pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
+
+fn on_layer_created(
+    layer_created: On&lt;TiledEvent&lt;LayerCreated&gt;&gt;,
+    layers_query: Query&lt;&amp;TiledName, With&lt;TiledLayer&gt;&gt;,
+    mut commands: Commands,
+) {
+    let layer = layer_created.origin;
+    if layers_query.get(layer).is_ok_and(|name| name.0 == "destructible") {
+        commands
+            .entity(layer)
+            .insert(TiledColliderChunkSize::Size(UVec2::splat(16)));
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>When chunking is enabled for a layer:</p>
+<ul>
+<li>the layer entity does not hold any collider. Each chunk with at least one collider has its own <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.TiledColliderChunk.html"><code>TiledColliderChunk</code></a> entity, child of the layer, holding the collider of the chunk;</li>
+<li>colliders are not merged across chunks: two adjacent tiles which are not in the same chunk have separate colliders. With the <code>Polyline</code> and <code>LineStrip</code> strategies, the edges shared by two chunks are not part of their colliders, so the outline of the layer is the same than without chunks. With the <code>Triangulation</code> strategy, each chunk is a separate solid;</li>
+<li>a chunk boundary is still a junction between two colliders: depending on your physics engine, a body with a flat side (eg. a box) sliding over it can catch on the first vertex of the next collider (“ghost collision”). Give such bodies rounded corners, for instance using a <a href="https://docs.rs/avian2d/latest/avian2d/collision/collider/struct.CollisionMargin.html"><code>CollisionMargin</code></a> with Avian, or use larger chunks;</li>
+<li>smaller chunks make updates faster, but produce more colliders.</li>
+</ul>
+<p>With the <code>debug</code> feature, the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/debug/collider_chunks/index.html"><code>TiledDebugColliderChunksPlugin</code></a> displays the bounding box of each chunk colliders.</p>
 <hr>
 <h2 id="custom-physics-backends"><a class="header" href="#custom-physics-backends">Custom Physics Backends</a></h2>
 <p>For advanced use cases, you can implement your own physics backend.
-Just create a struct that implements the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/trait.TiledPhysicsBackend.html"><code>TiledPhysicsBackend</code></a> trait (i.e., provide a <code>spawn_colliders</code> function), and use it when registering the <code>TiledPhysicsPlugin&lt;T&gt;</code> plugin.</p>
-<p>See <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/physics_custom_backend.rs">this example</a> for more information.</p>
+Just create a struct that implements the <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/backend/trait.TiledPhysicsBackend.html"><code>TiledPhysicsBackend</code></a> trait, and use it when registering the <code>TiledPhysicsPlugin&lt;T&gt;</code> plugin.</p>
+<p>A backend only has to create colliders out of a geometry: it declares the component(s) making a collider (the <code>Collider</code> associated type) and provides a <code>colliders()</code> function returning them for a given geometry and <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/enum.TiledColliderStrategy.html"><code>TiledColliderStrategy</code></a>.
+<code>bevy_ecs_tiled</code> takes care of inserting these colliders on the right entities and of removing them when their source changes.
+The <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/geometry/fn.collider_shapes.html"><code>collider_shapes()</code></a> helper converts a geometry into simple shapes (polylines or triangles) according to the requested strategy.
+The geometry is a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/geometry/struct.TiledColliderGeometry.html"><code>TiledColliderGeometry</code></a>: besides its polygons, it holds the geometry of the adjacent <a href="#colliders-chunks">colliders chunks</a>, if any. Colliders made of segments should be built from its <code>outline()</code>, which does not include the edges shared with these chunks.</p>
+<p>See <a href="https://github.com/adrien-bon/bevy_ecs_tiled/blob/main/examples/physics_custom.rs">this example</a> for more information.</p>
 <hr>
 <h2 id="physics-events"><a class="header" href="#physics-events">Physics Events</a></h2>
 <p>When a collider entity is spawned, a <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/physics/collider/struct.ColliderCreated.html"><code>TiledEvent&lt;ColliderCreated&gt;</code></a> event is sent.
+Since colliders are spawned again when their source changes, you can receive this event several times for the same tiles layer or object.
 It contains information about the origin of the collider.</p>
+<p>This event is sent for each collider: a tiles layer or an object can have several colliders (for instance with <code>TiledColliderStrategy::LineStrip</code> or collider chunks), held by its entity or by its descendants.
+The event <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TiledEvent.html#structfield.origin"><code>origin</code></a> is the entity holding the collider, while <a href="https://docs.rs/bevy_ecs_tiled/latest/bevy_ecs_tiled/ecs/event/struct.TiledEvent.html#method.source_entity"><code>source_entity()</code></a> is the tiles layer or object it is created for.</p>
 <p>This can be useful to add custom components to your colliders.
 For instance, with Avian:</p>
 <pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
@@ -314,9 +466,10 @@ fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
         .observe(|collider_created: On&lt;TiledEvent&lt;ColliderCreated&gt;&gt;, mut commands: Commands| {
             // Filter collider created from Tiled objects
             if collider_created.event().event.source == TiledColliderSource::Object {
-                // Add a RigidBody::Static to the collider entity
+                // Add a RigidBody::Static to the object: insert it on the source entity rather than on
+                // each collider entity, so all the colliders of the object belong to a single rigid body
                 commands
-                    .entity(collider_created.event().origin)
+                    .entity(collider_created.source_entity())
                     .insert(RigidBody::Static);
             }
         });
@@ -327,7 +480,7 @@ fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../guides/spawn_reload.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../guides/dynamic_maps.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
@@ -341,7 +494,7 @@ fn startup(mut commands: Commands, asset_server: Res&lt;AssetServer&gt;) {
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../guides/spawn_reload.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../guides/dynamic_maps.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 

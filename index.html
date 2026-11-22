@@ -35,10 +35,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b86f2860.js";
+            window.path_to_searchindex_js = "searchindex-ba955552.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-53cb13dc.js"></script>
+        <script src="toc-a898eaa9.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -183,6 +183,7 @@
 <li><strong>Comprehensive Map Support:</strong><br>Load orthogonal, isometric, or hexagonal maps, with finite or infinite layers, using either external or embedded tilesets, atlases, or multiple images.</li>
 <li><strong>Rich Tiled Feature Integration:</strong><br>Supports animated tiles, image layers, tile objects, and <a href="https://doc.mapeditor.org/en/stable/manual/worlds/">Tiled worlds</a> for multi-map projects.</li>
 <li><strong>Entity-Based Architecture:</strong><br>Every Tiled item (layer, tile, object, etc.) is represented as a Bevy entity, organized in a clear hierarchy: layers are children of the map entity, tiles and objects are children of their respective layers. <code>Visibility</code> and <code>Transform</code> are automatically propagated.</li>
+<li><strong>Dynamic Maps:</strong><br>Spawn, despawn or modify tiles, objects and images after a map has been loaded: their rendering and physics colliders are automatically updated.</li>
 <li><strong>Flexible Map Lifecycle:</strong><br>Control how maps are spawned and despawned. Use Bevy events and observers to customize scene setup or react when a map is loaded and ready.</li>
 <li><strong>Automatic Physics Integration:</strong><br>Automatically spawn <a href="https://rapier.rs/">Rapier</a> or <a href="https://github.com/Jondolf/avian">Avian</a> physics colliders for tiles and objects, with support for custom backends.</li>
 <li><strong>Custom Properties as Components:</strong><br>Use <a href="https://doc.mapeditor.org/en/stable/manual/custom-properties/">Tiled custom properties</a> to automatically insert your own components on objects, tiles, or layers, enabling powerful data-driven workflows.</li>
